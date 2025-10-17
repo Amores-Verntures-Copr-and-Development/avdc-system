@@ -1,0 +1,381 @@
+import { CreateRequestDto, InsertItemsRequestDto } from "@/dtos/request.dto";
+import { getDBConnection } from "@/lib/db";
+import { Request, RequestItems, RequestStatus } from "@/types/request";
+import {
+  PoolConnection,
+  QueryResult,
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2/promise";
+
+export const insertRequest = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateRequestDto;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO RequestOrders(requestNo,storeId,requestById) VALUES(?,?,?)`;
+  const [results] = await pool.execute<ResultSetHeader>(sql, [
+    data.requestNo,
+    data.storeId,
+    data.requestById,
+  ]);
+  return results.insertId;
+};
+
+export const selectCountRequest = async ({
+  connection,
+}: {
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT COUNT(*) as total FROM RequestOrders`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql);
+  return rows[0];
+};
+
+export const insertRequestItemsBulk = async ({
+  connection,
+  data,
+}: {
+  connection: PoolConnection;
+  data: InsertItemsRequestDto[];
+}) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity) 
+            VALUES ${data.map(() => "(?, ?, ?)").join(", ")}`;
+  const values = data.flatMap((item) => [
+    item.requestId,
+    item.invItem,
+    item.reqItemQuantity,
+  ]);
+  const [results] = await pool.execute(sql, values);
+  return results;
+};
+
+export const selectRequestOrders = async ({
+  storeId,
+}: {
+  storeId?: number;
+}) => {
+  const pool = await getDBConnection();
+  const whereClauses: string[] = [];
+  const values: any[] = [];
+  console.log("StoreId: ", storeId);
+  if (storeId !== null && storeId !== undefined) {
+    whereClauses.push("ro.storeId = ?");
+    values.push(storeId);
+  }
+  const whereSQL =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const sql = `SELECT ro.*, COUNT(ri.reqItemId) AS totalItems,CONCAT_WS('',u.userFname,u.userLname) AS requestedByName,s.storeName FROM  RequestOrders ro
+LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
+LEFT JOIN Users u ON u.userId = ro.requestById
+LEFT JOIN Stores s ON s.storeId = ro.storeId ${whereSQL}
+GROUP BY ro.requestId;`;
+  const [rows] = await pool.execute(sql, values);
+  console.log("SQL: ", sql);
+  return rows;
+};
+
+export const selectRequestItems = async ({
+  requestId,
+}: {
+  requestId?: number;
+}) => {
+  const pool = await getDBConnection();
+  const whereClauses: string[] = [];
+  const values: any[] = [];
+  if (requestId) {
+    whereClauses.push("ri.requestId = ?");
+    values.push(requestId);
+  }
+  const whereSQL =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const sql = `SELECT ri.requestId,ri.reqItemId, i.itemName,i.itemUnit,i.itemPrice,ri.reqItemId,ri.reqItemQuantity,
+  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer, ri.invItem, ii.inventoryItemReferenceId FROM RequestItems ri
+  LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+  LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId ${whereSQL}`;
+  const [rows] = await pool.execute(sql, values);
+  return rows;
+};
+
+export const selectRequestItemsByIds = async ({
+  requestIds,
+}: {
+  requestIds?: number[];
+}) => {
+  const pool = await getDBConnection();
+
+  if (!requestIds || requestIds.length === 0) {
+    return [];
+  }
+
+  // Dynamically create placeholders like (?, ?, ?)
+  const placeholders = requestIds.map(() => "?").join(", ");
+
+  const sql = `
+    SELECT 
+  i.itemId,
+  i.itemName,
+  i.itemUnit,
+  i.itemPrice,
+  (
+    SELECT iis.inventoryItemQuantity
+    FROM InventoryItems iis
+    WHERE iis.inventoryId = 1
+      AND iis.inventoryItemReferenceId = i.itemId
+    LIMIT 1
+  ) AS stockItem,
+  SUM(ri.reqItemQuantity) AS totalQuantity,
+  SUM(ri.reqItemReceived) AS totalReceived
+FROM RequestItems ri
+LEFT JOIN InventoryItems ii 
+  ON ii.inventoryItemId = ri.invItem
+LEFT JOIN Items i 
+  ON i.itemId = ii.inventoryItemReferenceId
+    WHERE ri.requestId IN (${placeholders})
+    GROUP BY 
+      i.itemId,
+      i.itemName,
+      i.itemUnit,
+      i.itemPrice;
+  `;
+
+  const [rows] = await pool.execute(sql, requestIds);
+  return rows;
+};
+
+export const updateRequest = async ({
+  connection,
+  updates,
+  keyFields = ["requestId"], // default primary key
+}: {
+  connection?: PoolConnection;
+  updates: Partial<Request>[];
+  keyFields?: (keyof Request)[]; // which fields define the WHERE condition
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  // ✅ Determine all updatable fields (exclude keys)
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof Request)
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // ✅ Build CASE WHEN for each update field
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      // Build WHERE condition for each key (e.g., poItemId, itemId)
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add all key values + field value to params
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    setClauses.push(`${field} = CASE ${caseParts.join(" ")} END`);
+  }
+
+  // ✅ WHERE clause (unique combination of all key values)
+  const whereConditions: string[] = [];
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k])
+  );
+
+  // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  // Push all key values again for WHERE condition
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE RequestOrders
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
+};
+
+export const selectRequestOrdersByPONumber = async (poNumber: string) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT 
+  ro.*,
+  po.*,
+  (
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'itemName', i.itemName,
+        'itemId',i.itemId,
+        'itemPrice', i.itemPrice,
+        'itemUnit', i.itemUnit,
+        'inventoryItemQuantity', ii.inventoryItemQuantity,
+        'reqItemId', ri.reqItemId,
+        'requestId', ri.requestId,
+        'invItem', ri.invItem,
+        'reqItemRemarks', ri.reqItemRemarks,
+        'reqItemQuantity', ri.reqItemQuantity,
+        'reqItemTransfer', ri.reqItemTransfer,
+        'reqItemRemarks', ri.reqItemRemarks,
+        'warehouseInv', (
+          SELECT iis.inventoryItemQuantity
+          FROM InventoryItems iis
+          LEFT JOIN Inventory ity ON ity.inventoryId = iis.inventoryId
+          WHERE iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
+            AND ity.storeId IS NULL
+          LIMIT 1
+        )
+      )
+    )
+    FROM RequestItems ri
+    LEFT JOIN InventoryItems ii 
+      ON ii.inventoryItemId = ri.invItem
+    LEFT JOIN Items i 
+      ON i.itemId = ii.inventoryItemReferenceId
+    WHERE ri.requestId = ro.requestId
+  ) AS requestItemsData
+FROM RequestOrders ro 
+LEFT JOIN PurchaseOrderRequest por 
+  ON por.requestId = ro.requestId
+LEFT JOIN PurchaseOrders po 
+  ON po.poId = por.poId
+WHERE po.poNumber = ?`;
+  const [rows] = await pool.execute(sql, [poNumber]);
+  return rows;
+};
+
+export const updateRequestItem = async ({
+  connection,
+  updates,
+  keyFields = ["reqItemId"], // default primary key
+}: {
+  connection?: PoolConnection;
+  updates: Partial<RequestItems>[];
+  keyFields?: (keyof RequestItems)[]; // which fields define the WHERE condition
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  // ✅ Determine all updatable fields (exclude keys)
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof RequestItems)
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // ✅ Build CASE WHEN for each update field
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      // Build WHERE condition for each key (e.g., poItemId, itemId)
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add all key values + field value to params
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    setClauses.push(`${field} = CASE ${caseParts.join(" ")} END`);
+  }
+
+  // ✅ WHERE clause (unique combination of all key values)
+  const whereConditions: string[] = [];
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k])
+  );
+
+  // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  // Push all key values again for WHERE condition
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE RequestItems
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
+};
+
+export const selectRequestOrderItems = async ({
+  connection,
+  requestNo,
+}: {
+  connection?: PoolConnection;
+  requestNo: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let whereClauses: string[] = [];
+  let values: any[] = [];
+
+  if (requestNo) {
+    whereClauses.push("ro.requestNo = ?");
+    values.push(requestNo);
+  }
+
+  const whereSQL =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const sql = `SELECT ro.*,(
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'itemName', i.itemName,
+        'itemPrice', i.itemPrice,
+        'itemUnit', i.itemUnit,
+        'inventoryItemQuantity', ii.inventoryItemQuantity,
+        'reqItemId', ri.reqItemId,
+        'requestId', ri.requestId,
+        'invItem', ri.invItem,
+        'reqItemRemarks', ri.reqItemRemarks,
+        'reqItemQuantity', ri.reqItemQuantity,
+        'reqItemTransfer', ri.reqItemTransfer,
+        'reqItemRemarks', ri.reqItemRemarks
+      )
+    )
+    FROM RequestItems ri
+    LEFT JOIN InventoryItems ii 
+      ON ii.inventoryItemId = ri.invItem
+    LEFT JOIN Items i 
+      ON i.itemId = ii.inventoryItemReferenceId
+    WHERE ri.requestId = ro.requestId
+  ) AS requestItems
+   FROM RequestOrders ro ${whereSQL}`;
+  const [rows] = await pool.execute(sql, values);
+  return rows;
+};

@@ -1,0 +1,32 @@
+export const roleOptions = [
+  { label: "Select Role", value: "" },
+  { label: "Admin", value: "admin" },
+  { label: "Owner", value: "owner" },
+  { label: "Employee", value: "employee" },
+];
+
+export const positionOptions = [
+  { label: "Select Position", value: "" },
+  { label: "Purchaser", value: "purchaser" },
+  { label: "Supervisor", value: "supervisor" },
+  { label: "HR", value: "hr" },
+  { label: "Accounting", value: "accounting" },
+  { label: "Staff", value: "staff" },
+];
+
+export const categoryTypeOptions = [
+  { label: "Select Type", value: "" },
+  { label: "Item", value: "item" },
+  { label: "Product", value: "product" },
+];
+
+export const unitOptions = [
+  { label: "Select Unit", value: "" },
+  { label: "kg", value: "kg" },
+  { label: "pack", value: "pack" },
+  { label: "bot", value: "bot" },
+  { label: "gal", value: "gal" },
+  { label: "pc", value: "pc" },
+  { label: "can", value: "can" },
+  { label: "case", value: "case" },
+];

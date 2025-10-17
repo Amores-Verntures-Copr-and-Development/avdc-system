@@ -1,0 +1,83 @@
+import { ItemInterface } from "@/types/items";
+import {
+  PurchaseOrderItems,
+  PurchaseOrderRequest,
+  PurchaseOrders,
+} from "@/types/purchaseOrders";
+import { Supplier } from "@/types/supplier";
+import { InventoryItemInterface } from "@/types/inventory";
+import { Request, RequestItems } from "@/types/request";
+
+export type CreatePurchaseOrderDto = Pick<
+  PurchaseOrders,
+  "poCreatedBy" | "poNumber" | "poDescription"
+>;
+
+export type CreatePurchaseOrderRequestDto = Pick<
+  PurchaseOrderRequest,
+  "requestId" | "poId"
+>;
+
+export type CreatePurchaseOrderItemDto = Pick<
+  PurchaseOrderItems,
+  "itemId" | "poId" | "poItemOrderedQty" | "poItemReceivedQty" | "unitPrice"
+>;
+
+export interface CreatePurchaseOrderFormDto extends CreatePurchaseOrderDto {
+  purchaseOrderRequest: CreatePurchaseOrderRequestDto[];
+  purchaseOrderItems: CreatePurchaseOrderItemDto[];
+}
+
+export interface DisplayTotalRequestItem {
+  requestId: number;
+  reqItemId: number;
+  itemName: string;
+  itemUnit: string;
+  itemPrice: number;
+  reqItemQuantity: number;
+  reqItemReceived: number;
+  reqItemStock: number;
+  poItemOrder: number;
+}
+
+export type DisplayPurchaseOrderItemsDto = Pick<
+  PurchaseOrderItems,
+  | "poId"
+  | "itemId"
+  | "poItemId"
+  | "poItemOrderedQty"
+  | "poItemReceivedQty"
+  | "unitPrice"
+  | "suppId"
+> &
+  Pick<ItemInterface, "itemName"> & {
+    suppliers: SupplierItemDetails[] | null;
+    selectedSupplierId?: number;
+    totalPrice?: number;
+  };
+
+export type SupplierItemDetails = {
+  suppId: number;
+  suppName: string;
+  suppItemPrice: number;
+  suppItemCreatedBy: number;
+};
+
+export interface UpdatePurchaseOrdersDto extends Partial<PurchaseOrders> {
+  poItems?: PurchaseOrderItems[];
+}
+
+export interface DisplayPOItemsSupplier extends Supplier {
+  items: PurchaseOrderItems[];
+}
+
+export interface DisplayRequisitionWithItems extends Request, PurchaseOrders {
+  requestItemsData: RequestItemsCombine[];
+}
+
+export type RequestItemsCombine = Pick<
+  ItemInterface,
+  "itemName" | "itemPrice" | "itemUnit"
+> &
+  Pick<InventoryItemInterface, "inventoryItemQuantity"> &
+  RequestItems & { warehouseInv: number };

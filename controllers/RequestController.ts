@@ -1,0 +1,131 @@
+import { CreateRequestFormDto } from "@/dtos/request.dto";
+import { getRequestOrders } from "@/services/request/get-request";
+import { processCreateRequest } from "@/services/request/process-create-request";
+import { processDeliveredPO } from "@/services/request/process-deliver-request";
+import { processReceivedRequest } from "@/services/request/process-received-request";
+import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
+import {
+  getRequestItems,
+  getRequestItemsByIds,
+  getRequestOrderByPONumber,
+} from "@/services/requestServices";
+import { Request } from "@/types/request";
+
+export const postRequest = async (data: CreateRequestFormDto) => {
+  try {
+    await processCreateRequest(data);
+    return {
+      success: true,
+      message: "Request created successfully",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to create request",
+      error: e,
+    };
+  }
+};
+
+export const getRequest = async ({ storeId }: { storeId?: number }) => {
+  try {
+    const data = await getRequestOrders({ storeId });
+    console.log("Data: ", []);
+    return {
+      success: true,
+      message: "Request fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch request",
+      error: e,
+    };
+  }
+};
+
+export const getItemRequest = async ({ requestId }: { requestId?: number }) => {
+  try {
+    const data = await getRequestOrderItems({ requestId });
+    return {
+      success: true,
+      message: "Request fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch request",
+      error: e,
+    };
+  }
+};
+
+export const getItemRequestByIds = async ({
+  requestId,
+}: {
+  requestId?: number[];
+}) => {
+  try {
+    const data = await getRequestItemsByIds({ requestId });
+    return {
+      success: true,
+      message: "Request fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch request",
+      error: e,
+    };
+  }
+};
+
+export const getRequestOrderItemsPO = async (poNumber: string) => {
+  try {
+    const data = await getRequestOrderByPONumber(poNumber);
+    return {
+      success: true,
+      message: "Request fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch request",
+      error: e,
+    };
+  }
+};
+
+export const updateRequest = async (
+  controller: string,
+  requestOrder: Request[]
+) => {
+  try {
+    let message: string = "";
+    if (controller === "delivered") {
+      await processDeliveredPO(requestOrder);
+      message = `Request Order deliver successfully!`;
+    }
+    if (controller === "received") {
+      await processReceivedRequest(requestOrder);
+      message = "Request Order recieved successfully!";
+    }
+    return {
+      success: true,
+      message: message,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to update request",
+      error: e,
+    };
+  }
+};

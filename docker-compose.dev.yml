@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  next-app:
+    build:
+      dockerfile: Dockerfile
+      # target: production ##development ##production
+      target: development
+    container_name: avdc-system
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+
+  db:
+    image: mysql:8.0
+    restart: always
+    container_name: ${CONTAINER_DB_NAME}
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_avdc_data:/var/lib/mysql
+
+volumes:
+  mysql_avdc_data:
