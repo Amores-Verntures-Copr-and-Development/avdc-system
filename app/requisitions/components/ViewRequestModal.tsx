@@ -180,9 +180,10 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </span>
       ) : selectedReq?.requestStatus === "received" ? (
         <span className="text-sm text-blue-600 font-medium p-4">
-          Note: The request status is marked as Received. Please complete the
-          request to finalize the process and ensure that all items are properly
-          recorded.
+          Note: The request status is currently marked as Received. Please
+          complete the request to finalize the process, ensure that all items
+          are accurately recorded, and generate the corresponding inventory
+          report.
         </span>
       ) : selectedReq?.requestStatus === "completed" ? (
         <span className="text-sm text-blue-600 font-medium p-4">

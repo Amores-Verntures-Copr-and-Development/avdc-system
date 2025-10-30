@@ -17,7 +17,8 @@ export async function processCompleteRequest(data: Request[]) {
       updates: request,
     });
     await connection.commit();
-    //Update Request
+    //Get Item inventory before this request is received then make the received as In in inventory
+    //Generate Inventory Report
   } catch (e) {
     await connection.rollback();
     throw e;

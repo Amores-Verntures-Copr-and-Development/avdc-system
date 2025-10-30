@@ -124,6 +124,7 @@ const ProductPage = () => {
       <Modal
         title="Add Product"
         size="lg"
+        className="min-h-[50%]"
         isOpen={showAddProductModal}
         onClose={function (): void {
           setShowAddProductModal(false);

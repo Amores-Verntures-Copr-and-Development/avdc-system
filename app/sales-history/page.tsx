@@ -1,7 +1,8 @@
 import React from "react";
+import SalesHistoryPage from "./SalesHistoryPage";
 
 const page = () => {
-  return <div>page</div>;
+  return <SalesHistoryPage />;
 };
 
 export default page;
