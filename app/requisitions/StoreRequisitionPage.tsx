@@ -37,6 +37,7 @@ import { useSession } from "@/hooks/useSession";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import ViewRequestModal from "./components/ViewRequestModal";
 import toast from "react-hot-toast";
+import PageLayout from "@/components/shared/PageLayout";
 
 interface RequestItem {
   id: number;
@@ -118,7 +119,7 @@ const StoreRequisitionPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-dvh w-full bg-gradient-to-br overflow-hidden">
+    <PageLayout className="p-4">
       <PageHeader
         title={"Requisition"}
         subtitle="Manage request order from your store."
@@ -246,15 +247,18 @@ const StoreRequisitionPage = () => {
         className="bg-white"
         title={`Request Order (${selectedRow?.requestNo})`}
         modalDetails={
-          <div className="flex flex-col">
-            <span className="text-sm  text-gray-500">
-              {selectedRow?.storeName}
+          <div className="flex flex-col space-y-1">
+            <span className="text-sm font-medium text-gray-700">
+              Store:{" "}
+              <span className="font-normal text-gray-600">
+                {selectedRow?.storeName}
+              </span>
             </span>
-            <span className="text-xs  text-gray-500">
-              {selectedRow?.requestedByName}
+            <span className="text-xs text-gray-600">
+              Requestor: {selectedRow?.requestedByName}
             </span>
-            <span className="text-xs  text-gray-500">
-              {selectedRow?.requestStatus}
+            <span className="text-xs text-gray-600">
+              Status: {selectedRow?.requestStatus}
             </span>
           </div>
         }
@@ -264,9 +268,9 @@ const StoreRequisitionPage = () => {
           setIsShowViewRequest(false);
         }}
       >
-        <ViewRequestModal selectedReq={selectedRow} />
+        <ViewRequestModal selectedReq={selectedRow} mutateRequest={mutate} />
       </Modal>
-    </div>
+    </PageLayout>
   );
 };
 

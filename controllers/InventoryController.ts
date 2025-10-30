@@ -20,9 +20,13 @@ import {
   handleInsertItemInventoryBulk,
 } from "../services/inventoryItemServices";
 import { AddItemToStoreDto } from "@/app/inventory/InventoryPage";
-import { InventoryInterface } from "@/types/inventory";
+import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 import { findIventoryByFields } from "@/services/inventory/get-inventory";
-import { findInventoryItemsByField } from "@/services/inventory/inventory-items/get-inventory-tems";
+import {
+  findInventoryItemsByField,
+  getInventoryItemsStatus,
+} from "@/services/inventory/inventory-items/get-inventory-tems";
+import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
 
 export const createInventory = async (data: CreateInventoryDto) => {
   try {
@@ -150,6 +154,8 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
     if (!storeInventory) {
       throw new Error("No inventory found for that store");
     }
+    console.log("[data]: ", { data });
+    console.log("[handleFindInventoryByStoreId]: ", { storeInventory });
     const storeInventoryId = storeInventory[0].inventoryId;
     const newData: CreateInventoryItemDto[] = data.items.map((item) => ({
       inventoryId: storeInventoryId,
@@ -174,5 +180,43 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
     };
   } finally {
     connection.release();
+  }
+};
+
+export const getInventoryMovements = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  try {
+    const data = await getInventoryMovement({ keyFields });
+    return {
+      success: true,
+      message: "Item fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: e,
+      error: e,
+    };
+  }
+};
+
+export const getInventoryItemsStatusById = async (inventoryId: number) => {
+  try {
+    const data = await getInventoryItemsStatus(inventoryId);
+    return {
+      success: true,
+      message: "Item fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: e,
+      error: e,
+    };
   }
 };

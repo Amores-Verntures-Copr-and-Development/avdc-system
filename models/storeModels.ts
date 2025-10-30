@@ -39,3 +39,16 @@ export const selectStores = async ({
   const [result] = await pool.execute(sql, values);
   return result;
 };
+
+export const selectStoresByPoId = async (poId: number) => {
+  const pool = await getDBConnection();
+
+  const sql = `
+  SELECT * FROM Stores s
+  LEFT JOIN RequestOrders ro ON ro.storeId = s.storeId
+  LEFT JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
+  LEFT JOIN PurchaseOrders po ON po.poId = por.poId
+  WHERE po.poId = ?`;
+  const [rows] = await pool.execute(sql, [poId]);
+  return rows;
+};

@@ -99,52 +99,56 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`bg-background-white rounded-lg shadow-2xl overflow-hidden w-full ${sizeClasses[size]} ${className}`}
+        className={`bg-background-white rounded-lg shadow-2xl overflow-visible w-full flex flex-col ${sizeClasses[size]} ${className}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
       >
+        {/* Modal Header */}
         {(title || showCloseButton) && (
-          <div>
-            <div className="flex flex-col  justify-between p-4 border-b bg-white border-gray-200">
-              <div className="flex justify-between">
-                {title && (
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      {Icon && <Icon size={30} />}
-                      <h2
-                        id="modal-title"
-                        className="text-xl font-bold text-black"
-                      >
-                        {title}
-                      </h2>
-                    </div>
-                    <span className="text-gray-400 text-sm">{subtitle}</span>
+          <div className="flex flex-col justify-between p-4 border-b bg-white border-gray-200 shrink-0">
+            <div className="flex justify-between">
+              {title && (
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-2">
+                    {Icon && <Icon size={30} />}
+                    <h2
+                      id="modal-title"
+                      className="text-xl font-bold text-black"
+                    >
+                      {title}
+                    </h2>
                   </div>
-                )}
-                {showCloseButton && (
-                  <button
-                    onClick={onClose}
-                    className="p-1 rounded-full hover:bg-gray-700 transition-color"
-                    aria-label="Close modal"
-                  >
-                    <X className="w-6 h-6 text-black hover:text-white" />
-                  </button>
-                )}
-              </div>
-              <div className="flex"> {modalDetails}</div>
+                </div>
+              )}
+              {showCloseButton && (
+                <button
+                  onClick={onClose}
+                  className="p-1 rounded-full hover:bg-gray-700 transition-color"
+                  aria-label="Close modal"
+                >
+                  <X className="w-6 h-6 text-black hover:text-white" />
+                </button>
+              )}
             </div>
+            {subtitle && (
+              <span className="text-gray-400 text-sm">{subtitle}</span>
+            )}
+            {modalDetails && <div className="flex">{modalDetails}</div>}
           </div>
         )}
-        <div className=" max-h-[80vh]">
-          {/* Header */}
-          {header && <div className="border-b">{header}</div>}
-          <div className={`overflow-y-auto ${hasPadding ? "p-4" : ""}`}>
-            {children}
-          </div>
-          <div>{header}</div>
+
+        {/* Content Area (scrollable) */}
+        <div className={`flex-1 overflow-y-auto ${hasPadding ? "p-4" : ""}`}>
+          {children}
         </div>
+
         {/* Footer */}
+        {footer && (
+          <div className="border-t border-gray-200 p-4 bg-white shrink-0">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     portalRoot

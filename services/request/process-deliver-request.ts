@@ -6,6 +6,9 @@ import { updateRequests } from "./update-request";
 import { InventoryItemInterface } from "@/types/inventory";
 import { findIventoryByFields } from "../inventory/get-inventory";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
+import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
+import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
 export async function processDeliveredPO(data: Request[]) {
   const pool = await getDBConnection();
@@ -49,6 +52,30 @@ export async function processDeliveredPO(data: Request[]) {
       updates: decerementInv,
       keyFields: ["inventoryItemReferenceId", "inventoryId"],
     });
+    const storeInventoryMovement: CreateInventoryMovementDto[] =
+      await Promise.all(
+        data.flatMap((data) =>
+          data.requestItems.flatMap(async (req) => {
+            const inventoryItem = await findInventoryItemsByField({
+              keyFields: {
+                inventoryId: warehouseInv[0].inventoryId ?? 0,
+                inventoryItemReferenceId: req.itemId,
+              },
+            });
+            return {
+              inventoryId: warehouseInv[0].inventoryId,
+              inventoryItemId: inventoryItem[0].inventoryItemId, // fallback if not found
+              itemMovementType: "out",
+              itemMovementReferenceId: req.requestId ?? 0,
+              itemMovementReference: "ro",
+              itemMovementQuantity: Number(req.reqItemTransfer),
+              itemMovementRemarks: "Deliver item to store",
+            };
+          })
+        )
+      );
+    console.log("[createInventoryMovementDeliver]");
+    await createInventoryMovement({ connection, data: storeInventoryMovement });
     await connection.commit();
   } catch (e) {
     await connection.rollback();

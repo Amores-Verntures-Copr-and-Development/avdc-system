@@ -4,7 +4,7 @@ import {
   DisplayPurchaseOrderItemsDto,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
-import { PurchaseOrders } from "@/types/purchaseOrders";
+import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import React from "react";
 import useSWR from "swr";
@@ -18,9 +18,13 @@ import { Request } from "@/types/request";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
   data: PurchaseOrders | null;
+  mutate: () => void;
 }
 
-const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
+const ShowPOModal: React.FC<ShowPOModalPros> = ({
+  data,
+  mutate: mutateInventory,
+}) => {
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
   const api =
@@ -59,9 +63,36 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
       }
       toast.success(res.message);
       mutate();
+      mutateInventory();
       return true;
     } catch (e) {
       toast.error("Failed to add Inventory.");
+      return false;
+    }
+  };
+  const handleSendPOItem = async (items: PurchaseOrderItems[]) => {
+    try {
+      const apiBody = {
+        controller: "sent",
+        data: items,
+      };
+      const result = await fetch(`/api/purchase-order/po-items/${data?.poId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(apiBody),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutate();
+      mutateInventory();
+      return true;
+    } catch (e) {
+      toast.error("Failed to send to suppliers.");
       return false;
     }
   };
@@ -91,7 +122,8 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      // mutate();
+      mutate();
+      mutateInventory();
       return true;
     } catch (e) {
       toast.error("Failed to send to suppliers.");
@@ -122,6 +154,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
         throw new Error(res.err);
       }
       mutate();
+      mutateInventory();
       return true;
     } catch (e) {
       toast.error("Failed to add Inventory.");
@@ -149,6 +182,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
       }
       toast.success(res.message);
       mutate();
+      mutateInventory();
       return true;
     } catch (e) {
       toast.error("Failed to update Request.");
@@ -156,15 +190,15 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
     }
   };
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Stepper */}
-      <div className="bg-gray-50 p-4">
+      <div className="bg-gray-50 p-2">
         <div className="flex justify-between items-center max-w-3xl mx-auto">
           {statusSteps.map((step, index) => (
             <div key={step} className="flex items-center flex-1">
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-sm ${
                     index <= currentStepIndex
                       ? "bg-primary-1 text-white"
                       : "bg-gray-300 text-gray-600"
@@ -192,24 +226,35 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({ data }) => {
           data={itemResponse.data}
           poData={data}
           onSubmit={handleApprovedPO}
+          isLoading={isLoading}
+          mutate={mutate}
         />
       ) : data?.poStatus === "approved" ? (
-        <ApprovedPOView data={itemResponse.data} onSendPO={handleSendPO} />
+        <ApprovedPOView
+          data={itemResponse.data}
+          onSendPO={handleSendPO}
+          onSendPOItem={handleSendPOItem}
+          loading={isLoading}
+        />
       ) : data?.poStatus === "sent" ? (
         <ReceivedPOView
           data={itemResponse.data}
           onReceivePO={handleReceivePO}
+          isLoading={isLoading}
+          poId={data.poId}
         />
       ) : data?.poStatus === "received" ? (
         <CompletePOView
           data={itemResponse.data}
           onMarkDelivered={handleDeliveredRO}
+          isLoading={isLoading}
           // onReceivePO={handleReceivePO}
         />
       ) : (
         <CompletePOView
           data={itemResponse.data}
           onMarkDelivered={handleDeliveredRO}
+          isLoading={isLoading}
           // poData={data}
           // onSubmit={handleApprovedPO}
         />

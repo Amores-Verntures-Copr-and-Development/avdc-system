@@ -1,5 +1,6 @@
 import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { getRequestOrders } from "@/services/request/get-request";
+import { processCompleteRequest } from "@/services/request/process-complete-request";
 import { processCreateRequest } from "@/services/request/process-create-request";
 import { processDeliveredPO } from "@/services/request/process-deliver-request";
 import { processReceivedRequest } from "@/services/request/process-received-request";
@@ -117,6 +118,11 @@ export const updateRequest = async (
       await processReceivedRequest(requestOrder);
       message = "Request Order recieved successfully!";
     }
+    if (controller === "completed") {
+      await processCompleteRequest(requestOrder);
+      message = "Request Order completed successfully!";
+    }
+
     return {
       success: true,
       message: message,

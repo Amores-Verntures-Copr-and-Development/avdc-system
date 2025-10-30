@@ -56,7 +56,7 @@ const LoginPage = () => {
       />
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded shadow-md w-100 space-y-4"
+        className="bg-white p-2 rounded-lg shadow-md w-100 space-y-4"
       >
         <Image
           className="mx-auto mb-4"
@@ -73,37 +73,42 @@ const LoginPage = () => {
           </span>
         </div>
 
-        <Input
-          label={"Username"}
-          name="username"
-          sizes="md"
-          value={userAuthForm.username}
-          onChange={handleUserAuthChange}
-          // disabled={loading}
-        />
-        <Input
-          label={"Password"}
-          name="password"
-          sizes="md"
-          type="password"
-          value={userAuthForm.password}
-          onChange={handleUserAuthChange}
-          // disabled={loading}
-        />
-        <button
-          type="submit"
-          className={`w-full text-sm font-semibold text-white py-2 rounded ${
-            loading ? "bg-gray-400" : "bg-primary-1 hover:bg-primary-1-hover"
-          }`}
-          disabled={loading}
-        >
-          Log In
-        </button>
-        <h4 className="text-xs text-center text-gray-500 font-semibold">
-          <Link href="/forgot-password" className="hover:underline text-black">
-            Forgot Password
-          </Link>
-        </h4>
+        <div className="p-4 space-y-4">
+          <Input
+            label={"Username"}
+            name="username"
+            sizes="sm"
+            value={userAuthForm.username}
+            onChange={handleUserAuthChange}
+            // disabled={loading}
+          />
+          <Input
+            label={"Password"}
+            name="password"
+            sizes="sm"
+            type="password"
+            value={userAuthForm.password}
+            onChange={handleUserAuthChange}
+            // disabled={loading}
+          />
+          <button
+            type="submit"
+            className={`w-full text-sm font-semibold text-white py-2 rounded ${
+              loading ? "bg-gray-400" : "bg-primary-1 hover:bg-primary-1-hover"
+            }`}
+            disabled={loading}
+          >
+            Log In
+          </button>
+          <h4 className="text-xs text-center text-gray-500 font-semibold">
+            <Link
+              href="/forgot-password"
+              className="hover:underline text-black"
+            >
+              Forgot Password
+            </Link>
+          </h4>
+        </div>
       </form>
     </div>
   );

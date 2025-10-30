@@ -47,3 +47,15 @@ export interface InventoryLogInterface {
   logCreatedAt: string;
   logCreatedBy: number; // userId
 }
+
+export interface InventoryItemMovement {
+  invItemMovementId: number;
+  inventoryId: number;
+  inventoryItemId: number;
+  itemMovementType: "in" | "out";
+  itemMovementReferenceId: number;
+  itemMovementReference: "sales" | "po" | "adjustment" | "ro";
+  itemMovementQuantity: number;
+  itemMovementRemarks?: string;
+  itemMovementCreatedAt?: string;
+}

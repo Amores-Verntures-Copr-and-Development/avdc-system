@@ -18,13 +18,17 @@ interface EditableItem {
   reqItemQuantity: string; // string for input
   requestId: number;
   itemName: string;
+  itemUnit: string;
+  categoryName: string;
+  inventoryItemQuantity: number;
 }
 
 const columns: Column<EditableItem>[] = [
-  { name: "ID", key: "itemId" },
+  { name: "ID", key: "#", selector: (_row, index) => index + 1 },
   { name: "Item Name", key: "itemName" },
   { name: "Unit", key: "itemUnit" },
   { name: "Category", key: "categoryName" },
+  { name: "Stock Available", key: "inventoryItemQuantity" },
   {
     name: "Request Quantity",
     key: "reqItemQuantity",
@@ -53,6 +57,9 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       reqItemQuantity: "",
       requestId: 0,
       itemName: items.itemName,
+      itemUnit: items.itemUnit,
+      categoryName: items.categoryName,
+      inventoryItemQuantity: items.inventoryItemQuantity,
     })),
   };
 
@@ -94,7 +101,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         </div>
         <div>
           <Button
-            label="Add Item"
+            label="Submit Request"
             size="sm"
             onClick={handleSubmit}
             className="font-semibold"

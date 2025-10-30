@@ -4,8 +4,11 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   AlertTriangle,
   Box,
+  Clipboard,
   Eye,
+  FileChartColumn,
   Package,
+  Package2,
   Pencil,
   Plus,
   ShoppingCart,
@@ -42,6 +45,10 @@ import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
 import Popup from "@/components/shared/Popup";
 import IconButton from "@/components/shared/IconButton";
 import ViewInventoryItem from "./components/ViewInventoryItem";
+import CreateInventoryReport from "./components/CreateInventoryReport";
+import InventorySection from "./components/InventorySection/InventorySection";
+import StockMovementSection from "./components/StockMovementSection/StockMovementSection";
+import ReportSection from "./components/ReportSection/ReportSection";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -165,15 +172,11 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 ];
 
 const InventoryPage = () => {
-  const [showAddModal, setShowAdddModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
-  const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
+  const [selectionSection, setSelectionSection] = useState<
+    "inventory" | "movement" | "report"
+  >("inventory");
   const [inventoryId, setInventoryId] = useState(0);
   const { user, loading: userLoading, hasStore } = useSession();
-  const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
-  const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
-  const [showAddItemModal, setShowAddItemModal] = useState(false);
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/${user?.storeId}`
     : `/api/inventory`;
@@ -192,134 +195,15 @@ const InventoryPage = () => {
       setInventoryId(inventoryResponse.data[0].inventoryId);
     }
   }, [inventoryResponse]);
-  console.log("inventoryResponse: ", inventoryResponse);
   const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
+    data: inventoryItemResponse = { data: [] },
+    isLoading: itemIsLoading,
     mutate,
-  } = useSWR<{ data: DisplayInventoryItems[] }>(
-    inventoryId ? `/api/inventory/item/${inventoryId}` : null,
-    fetcher
-  );
-  console.log("itemResponse: ", itemResponse.data);
-  const handleCreateInventory = async (data: CreateInventoryDto) => {
-    console.log("CreateInventoryDto: ", data);
-    try {
-      const newData: CreateInventoryDto = {
-        ...data,
-        inventoryCreatedBy: user?.userId,
-        storeId: user?.storeId,
-      };
-      const result = await fetch("api/inventory", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Inventory added successfully!");
-      mutateInventory();
-      return true;
-    } catch (e) {
-      toast.error("Failed to add Inventory.");
-      return false;
-    }
-  };
-
-  const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
-    console.log("Selected rows:", selected);
-    // 👉 Here you can trigger bulk delete, bulk approve, etc.
-    if (selected.length > 0) {
-      setSelectedRows(selected);
-    }
-    if (selected.length === 0) {
-      setSelectedRows(undefined);
-    }
-  };
-  const handleCreateRequest = async (data: CreateRequestFormDto) => {
-    try {
-      const result = await fetch(`api/request/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Request created successfully!");
-      mutateInventory();
-      return true;
-    } catch (e) {
-      toast.error("Failed to add Inventory.");
-      return false;
-    }
-  };
-  const handleAddItemsToStore = async (data: AddItemToStoreDto) => {
-    try {
-      const newData: AddItemToStoreDto = {
-        ...data,
-        addedById: user?.userId ?? 0,
-      };
-      const result = await fetch(`api/inventory/${newData.storeId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Inventory added successfully!");
-      mutateInventory();
-      return true;
-    } catch (e) {
-      toast.error("Failed to add Inventory.");
-      return false;
-    }
-  };
-  const handleAddInventoryItem = async (data: CreateFirstItem) => {
-    try {
-      const newData: CreateFirstItem = {
-        ...data,
-        itemAddedBy: user?.userId ?? 0,
-        inventoryItemCreatedBy: user?.userId ?? 0,
-        inventoryId: inventoryId,
-      };
-      console.log("CreateFirstItem: ", newData);
-      const result = await fetch(`api/inventory/item/${inventoryId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Inventory added successfully!");
-      mutate();
-      return true;
-    } catch (e) {
-      toast.error("Failed to add item in inventory.");
-      return false;
-    }
-  };
+  } = useSWR(`api/inventory/item/${inventoryId}/details`, fetcher);
+  console.log("inventoryItemResponse: ", inventoryItemResponse);
+  const stats = inventoryItemResponse?.data?.[0] || {};
   return (
-    <PageLayout>
+    <PageLayout className="gap-2 p-4">
       <div className="flex justify-between items-center">
         <PageHeader
           title={"Inventory"}
@@ -331,234 +215,82 @@ const InventoryPage = () => {
       <div className="grid grid-cols-4 gap-4">
         <InventoryCard
           title="Total Items"
-          value={20}
+          value={stats.totalItems || 0}
           icon={<Box className="w-6 h-6 text-blue-500" />}
           iconBg="bg-blue-100"
         />
         <InventoryCard
+          title="Good Stock Items"
+          value={stats.goodStock || 0}
+          icon={<ShoppingCart className="w-6 h-6 text-green-500" />}
+          iconBg="bg-green-100"
+        />
+        <InventoryCard
           title="Low Stock Items"
-          value={20}
+          value={stats.lowStock || 0}
           icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
           iconBg="bg-yellow-100"
         />
 
         <InventoryCard
-          title="Total Items"
-          value={20}
-          icon={<ShoppingCart className="w-6 h-6 text-green-500" />}
-          iconBg="bg-green-100"
-        />
-        <InventoryCard
           title="Out of stock items"
-          value={20}
+          value={stats.outStock || 0}
           icon={<XCircle className="w-6 h-6 text-red-500" />}
           iconBg="bg-red-100"
         />
       </div>
-
-      <div className="flex-1 min-h-0  flex flex-col justify-between">
-        <Table
-          loading={loading || userLoading}
-          searchUrl="/inventory"
-          columns={hasStore ? inventoryItemColumns : adminInventoryItemColumns}
-          data={itemResponse.data}
-          showActions
-          maxHeight="h-full"
-          rowSize="h-10"
-          textSize="xs"
-          showCheckBox
-          onSelectionChange={handleSelectionChange}
-          renderTopActions={
-            <>
-              <div className="flex gap-4">
-                {selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  (user?.empPosition === "supervisor" ||
-                    user?.empPosition === "staff") && (
-                    <div>
-                      <Button
-                        icon={<Store size={17} />}
-                        label="Request Stock"
-                        onClick={() => {
-                          setShowCreateRequestModal(true);
-                        }}
-                        size="sm"
-                        className="font-semibold"
-                        color="tertiary"
-                      />
-                    </div>
-                  )}
-                {selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  user?.empPosition === "purchaser" && (
-                    <div className="">
-                      <Button
-                        icon={<Package size={17} />}
-                        label="Add Item to supplier"
-                        onClick={() => {
-                          setShowAddItemModal(true);
-                        }}
-                        size="sm"
-                        className="font-semibold"
-                        color="tertiary"
-                      />
-                    </div>
-                  )}
-                {selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  user?.empPosition === "purchaser" && (
-                    <div className="">
-                      <Button
-                        icon={<Store size={17} />}
-                        label="Add Item to store"
-                        onClick={() => {
-                          setShowAddItemModal(true);
-                        }}
-                        size="sm"
-                        className="font-semibold"
-                        color="success"
-                      />
-                    </div>
-                  )}
-                {inventoryResponse.data && inventoryResponse.data.length > 0 ? (
-                  <div>
-                    <Button
-                      icon={<Plus size={17} />}
-                      label="Add Item"
-                      onClick={() => {
-                        setShowAdddModal(true);
-                      }}
-                      size="sm"
-                      className="font-semibold"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <Button
-                      icon={<Plus size={17} />}
-                      label="Create Inventory"
-                      onClick={() => {
-                        setShowCreateModal(true);
-                      }}
-                      size="sm"
-                      className="font-semibold"
-                    />
-                  </div>
-                )}
-              </div>
-            </>
-          }
-          renderActions={(row) => (
-            <div className="flex gap-2 justify-center">
-              <IconButton
-                onClick={function (): void {
-                  setSelectedRow(row);
-                  setShowInventoryItemModal(true);
-                }}
-                label={"View"}
-                bg={"nobg"}
-                icon={<Eye size={18} />}
-              />
-              <IconButton
-                onClick={function (): void {
-                  setSelectedRow(row);
-                }}
-                label={"Delete"}
-                bg={"red"}
-                icon={<Trash size={18} />}
-              />
-            </div>
-          )}
-          totalCount={10}
-        />
+      <div className="flex">
+        <div className="flex border-1 border-gray-300">
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("inventory");
+              }}
+              color={selectionSection === "inventory" ? "primary" : "nocolor"}
+              label="Inventory"
+              className="text-xs font-semibold"
+              icon={<Package size={16} />}
+            />
+          </div>
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("movement");
+              }}
+              color={selectionSection === "movement" ? "primary" : "nocolor"}
+              label="Stock Movement"
+              className="text-xs font-semibold"
+              icon={<Package2 size={16} />}
+            />
+          </div>
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("report");
+              }}
+              color={selectionSection === "report" ? "primary" : "nocolor"}
+              label="Report"
+              className="text-xs font-semibold"
+              icon={<FileChartColumn size={16} />}
+            />
+          </div>
+        </div>
       </div>
-      <Modal
-        title={hasStore ? "Add Item from warehouse" : "Add Item"}
-        subtitle={
-          hasStore ? "Select items from warehouse" : "Enter item details below"
-        }
-        isOpen={showAddModal}
-        onClose={() => {
-          setShowAdddModal(false);
-        }}
-        size="lg"
-        className="bg-white"
-        children={
-          <AddItemModal
-            user={user}
-            onCancel={() => {
-              setShowAdddModal(false);
-            }}
-            onSubmit={handleAddInventoryItem}
-          />
-        }
-      />
-      <Modal
-        title="Create Inventory"
-        subtitle="Register Inventory for your store"
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-        }}
-        size="md"
-        className="bg-white"
-        children={
-          <CreateInventoryModal
-            onCancel={() => {
-              setShowCreateModal(false);
-            }}
-            onSubmit={handleCreateInventory}
-          />
-        }
-      />
-      <Modal
-        title="Add Item to store"
-        subtitle="Select store to add this item to their inventory"
-        isOpen={showAddItemModal}
-        onClose={() => {
-          setShowAddItemModal(false);
-        }}
-        size="lg"
-        className="bg-white"
-        children={
-          <AddItemStoreModal
-            data={selectedRows ?? []}
-            onCancel={() => {
-              setShowAddItemModal(false);
-            }}
-            onSubmit={handleAddItemsToStore}
-          />
-        }
-      />
-      <Modal
-        title="Create Request"
-        subtitle="Request stock for your store"
-        isOpen={showCreateRequestModal}
-        onClose={() => {
-          setShowCreateRequestModal(false);
-        }}
-        size="lg"
-        className="bg-white"
-        children={
-          <CreateRequestModal
-            data={selectedRows ?? []}
-            onCancel={() => {
-              setShowAddItemModal(false);
-            }}
-            onSubmit={handleCreateRequest}
-            user={user}
-          />
-        }
-      />
-      <Popup
-        title={selectedRow?.itemName}
-        background="transparent"
-        isOpen={showInventoryItemModal}
-        onClose={function (): void {
-          setShowInventoryItemModal(false);
-        }}
-        children={<ViewInventoryItem data={selectedRow ?? null} />}
-      />
+      <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+        {selectionSection === "inventory" && (
+          <InventorySection inventoryId={inventoryId} />
+        )}
+        {selectionSection === "movement" && (
+          <StockMovementSection inventoryId={inventoryId} />
+        )}
+        {selectionSection === "report" && <ReportSection />}
+      </div>
     </PageLayout>
   );
 };

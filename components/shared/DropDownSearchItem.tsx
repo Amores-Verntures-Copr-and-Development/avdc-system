@@ -3,10 +3,7 @@ import { DropdownSearch } from "./DropDownSearch";
 import { ItemInterface } from "@/types/items";
 
 interface DropDownSearchItemProps {
-  // searchFn: (query: string) => Promise<ItemInterface[]>;
   onSelect: (item: ItemInterface) => void;
-  // renderItem: (item: T) => React.ReactNode;
-  // displayValue: (item: T) => string;
   selectedValue?: string;
   placeholder?: string;
   label?: string;

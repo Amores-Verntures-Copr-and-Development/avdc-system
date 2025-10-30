@@ -6,6 +6,9 @@ import { updatePurchaseOrderItems } from "./purchase-items/update-purchase-items
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { InventoryItemInterface } from "@/types/inventory";
 import { findIventoryByFields } from "../inventory/get-inventory";
+import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
+import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
@@ -42,15 +45,39 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         inventoryItemQuantity: item.poItemReceivedQty,
         inventoryId: warehouseInv[0].inventoryId,
       })) || [];
-    updateInventoryItem({
+    await updateInventoryItem({
       connection,
       fieldModes: { inventoryItemQuantity: "increment" },
       updates: addItemsData,
       keyFields: ["inventoryItemReferenceId", "inventoryId"],
     });
+    const inventoryMovement: CreateInventoryMovementDto[] = await Promise.all(
+      (data.poItems ?? []).map(async (item) => {
+        // Assuming findInventoryItemsByField returns a single inventory item or array
+        const inventoryItem = await findInventoryItemsByField({
+          keyFields: {
+            inventoryId: warehouseInv[0].inventoryId ?? 0,
+            inventoryItemReferenceId: item.itemId,
+          },
+        });
+
+        return {
+          inventoryId: warehouseInv[0].inventoryId,
+          inventoryItemId: inventoryItem[0]?.inventoryItemId ?? 0, // fallback if not found
+          itemMovementType: "in",
+          itemMovementReferenceId: data.poId ?? 0,
+          itemMovementReference: "po",
+          itemMovementQuantity: Number(item.poItemReceivedQty),
+          itemMovementRemarks: "Received from supplier",
+        };
+      })
+    );
+    console.log("[createInventoryMovement]");
+    await createInventoryMovement({ connection, data: inventoryMovement });
     await connection.commit();
   } catch (e) {
     await connection.rollback();
+    throw e;
   } finally {
     connection.release();
   }

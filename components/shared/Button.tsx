@@ -15,7 +15,7 @@ type ButtonColor =
 interface ButtonProps {
   isRounded?: boolean;
   label?: string;
-  onClick: () => void;
+  onClick?: () => void;
   loading?: boolean;
   disabled?: boolean;
   icon?: React.ReactNode;
@@ -43,7 +43,7 @@ const colorClasses: Record<
   }
 > = {
   primary: {
-    base: "bg-primary-1",
+    base: "bg-primary-1 border border-primary-1/70",
     hover: "hover:bg-primary-1-hover",
     focus: "focus:ring-2 focus:ring-primary-1 focus:ring-offset-2",
     text: "text-white",
@@ -64,22 +64,23 @@ const colorClasses: Record<
     disabled: "bg-gray-400 text-gray-100",
   },
   danger: {
-    base: "bg-red-600",
+    base: "bg-red-600 border border-red-300",
     hover: "hover:bg-red-700",
     focus: "focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
     text: "text-white",
     disabled: "bg-red-400 text-white/70",
   },
   success: {
-    base: "bg-green-600",
+    base: "bg-green-800 border border-green-900",
     hover: "hover:bg-green-700",
     focus: "focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-green-200 text-green-700 cursor-pointer ",
+    disabled:
+      "bg-green-200 text-green-700 cursor-pointer border border-green-300 ",
   },
   // primary: "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 shadow-sm",
   tertiary: {
-    base: "bg-blue-600 shadow-sm",
+    base: "bg-blue-800 shadow-sm border border-blue",
     hover: "hover:bg-blue-700",
     focus: "focus:ring-2 focus:ring-blue-700 focus:ring-offset-2",
     text: "text-white",

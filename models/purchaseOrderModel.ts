@@ -120,8 +120,14 @@ LEFT JOIN Users u ON u.userId = po.poCreatedBy ${whereSQL} GROUP BY po.poId;`;
   return rows;
 };
 
-export const selectPurchaseOrderItems = async ({ poId }: { poId?: number }) => {
-  const pool = await getDBConnection();
+export const selectPurchaseOrderItems = async ({
+  connection,
+  poId,
+}: {
+  connection?: PoolConnection;
+  poId?: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
   let whereClauses: string[] = [];
   let values: any[] = [];
   if (poId) {
@@ -148,7 +154,7 @@ export const selectPurchaseOrderItems = async ({ poId }: { poId?: number }) => {
   ) AS suppliers
 FROM PurchaseOrderItems poi
 LEFT JOIN Items i ON i.itemId = poi.itemId ${whereSQL} `;
-  const [rows] = await pool.execute(sql, values);
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
   return rows;
 };
 
@@ -284,9 +290,6 @@ export const updatePOItems = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-
-  console.log("SQL:", sql);
-  console.log("Params:", params);
 
   const [result] = await pool.execute(sql, params);
   return result;

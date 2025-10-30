@@ -1,9 +1,14 @@
 import { Loader2 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, {
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  useRef,
+} from "react";
 import Pagination from "./Pagintation";
 import DatePicker from "react-datepicker";
 import SearchBar from "./SearchBar";
-import { useRef } from "react";
 
 export interface Column<T = any> {
   name: string;
@@ -18,7 +23,8 @@ export interface Column<T = any> {
   validate?: (value: any, row: T) => boolean; // Validation function
   format?: (value: any) => string;
   compute?: (row: T) => any;
-  dependsOn?: (keyof T | string)[]; // Format display value
+  dependsOn?: (keyof T | string)[];
+  // Format display value
 }
 
 interface TableProps<T> {
@@ -49,30 +55,35 @@ interface TableProps<T> {
   editMode?: "inline" | "row";
   isRounded?: boolean; // Edit mode: inline (cell by cell) or row (entire row)
 }
-
-const Table = <T extends Record<string, any>>({
-  columns,
-  data,
-  loading = false,
-  showActions = false,
-  renderActions,
-  renderTopActions,
-  Datalabel,
-  textSize = "xs",
-  rowSize = "h-10",
-  totalCount,
-  showCheckBox,
-  onSelectionChange,
-  onRowSelection,
-  searchUrl,
-  updateData,
-  onCellChange,
-  maxHeight = "400px",
-  debounceTime = 300,
-  editMode = "inline",
-  isRounded = true,
-  onClearSelection,
-}: TableProps<T>) => {
+export interface TableHandle {
+  clearSelection: () => void;
+}
+const TableInner = <T extends Record<string, any>>(
+  {
+    columns,
+    data,
+    loading = false,
+    showActions = false,
+    renderActions,
+    renderTopActions,
+    Datalabel,
+    textSize = "xs",
+    rowSize = "h-10",
+    totalCount,
+    showCheckBox,
+    onSelectionChange,
+    onRowSelection,
+    searchUrl,
+    updateData,
+    onCellChange,
+    maxHeight = "400px",
+    debounceTime = 300,
+    editMode = "inline",
+    isRounded = true,
+    onClearSelection,
+  }: TableProps<T>,
+  ref?: React.Ref<TableHandle>
+) => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editableData, setEditableData] = useState<T[]>(data);
   const [editingRow, setEditingRow] = useState<number | null>(null);
@@ -83,7 +94,15 @@ const Table = <T extends Record<string, any>>({
   }, [data]);
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
-
+  const clearSelection = () => {
+    setSelectedRows(new Set());
+    console.log("Table Clear");
+    if (onClearSelection) onClearSelection();
+    if (onSelectionChange) onSelectionChange([]);
+  };
+  useImperativeHandle(ref, () => ({
+    clearSelection,
+  }));
   const handleInputChange = (
     rowIndex: number,
     columnKey: string,
@@ -173,8 +192,6 @@ const Table = <T extends Record<string, any>>({
     }
   };
 
-  
-
   const renderCell = (column: Column<T>, row: T, rowIndex: number) => {
     const editable = isFieldEditable(column, row, rowIndex);
     const errorKey = `${rowIndex}-${column.key}`;
@@ -253,13 +270,13 @@ const Table = <T extends Record<string, any>>({
         {/* Table Container with Sticky Header */}
         <div className="flex-1 overflow-auto " style={{ maxHeight }}>
           <table className="w-full border-collapse text-black overflow-auto">
-            <thead className="sticky top-0 z-20 bg-gray-50">
+            <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-300">
               <tr
                 className={`${rowSize} text-${textSize} border-b-1 border-gray-300`}
               >
                 {/* Select-all column */}
                 {showCheckBox && (
-                  <th className="px-3 py-3 w-12 text-center bg-gray-50 border-r border-gray-200">
+                  <th className="px-2 py-3 w-12 text-center bg-gray-50 border-r border-gray-300">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -274,9 +291,9 @@ const Table = <T extends Record<string, any>>({
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-4 py-3 font-semibold text-left text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-2 py-3 font-semibold text-left text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
-                        ? "border-r border-gray-200"
+                        ? "border-r border-gray-300"
                         : ""
                     }`}
                   >
@@ -286,7 +303,7 @@ const Table = <T extends Record<string, any>>({
 
                 {showActions && (
                   <th
-                    className={`px-4 py-3 text-center font-semibold text-${textSize} text-gray-700 bg-gray-50`}
+                    className={`px-2 py-3 text-center border-l border-r border-gray-300  font-semibold text-${textSize} text-gray-700 bg-gray-50`}
                   >
                     Actions
                   </th>
@@ -343,7 +360,7 @@ const Table = <T extends Record<string, any>>({
                 editableData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={`hover:bg-gray-50 transition-colors duration-150 text-${textSize} border-b border-gray-100`}
+                    className={`hover:bg-gray-50 transition-colors duration-150 text-${textSize} border-b-2  border-gray-100`}
                     onClick={() => {
                       if (onRowSelection) {
                         onRowSelection(row);
@@ -352,7 +369,7 @@ const Table = <T extends Record<string, any>>({
                   >
                     {/* Row checkbox */}
                     {showCheckBox && (
-                      <td className="px-3 py-1 text-center border-r border-gray-100">
+                      <td className="px-2 py-1 text-center">
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -365,10 +382,8 @@ const Table = <T extends Record<string, any>>({
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-4 py-1 text-${textSize} ${
-                          colIndex < columns.length - 1
-                            ? "border-r border-b border-gray-100"
-                            : ""
+                        className={`px-2 py-1 border-r-2 border-gray-100 text-${textSize} ${
+                          colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >
                         {renderCell(column, row, rowIndex)}
@@ -376,9 +391,7 @@ const Table = <T extends Record<string, any>>({
                     ))}
 
                     {showActions && renderActions && (
-                      <td
-                        className={`px-4 py-1 border border-gray-100 text-center text-${textSize}`}
-                      >
+                      <td className={`py-1  text-center text-${textSize}`}>
                         {renderActions(row, rowIndex)}
                       </td>
                     )}
@@ -400,4 +413,6 @@ const Table = <T extends Record<string, any>>({
   );
 };
 
-export default Table;
+export default forwardRef(TableInner) as <T extends Record<string, any>>(
+  props: TableProps<T> & { ref?: React.Ref<TableHandle> }
+) => React.ReactElement;

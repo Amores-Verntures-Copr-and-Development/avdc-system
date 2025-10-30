@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface IconButtonProps {
   icon?: React.ReactNode;
   onClick: () => void;
   label: string;
   bg: string;
+  isRounded?: boolean;
 }
 
 const colorMap: Record<string, string> = {
@@ -22,23 +24,56 @@ const IconButton: React.FC<IconButtonProps> = ({
   onClick,
   label,
   bg,
+  isRounded = true,
 }) => {
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  const handleEnter = () => {
+    const rect = btnRef.current?.getBoundingClientRect();
+    if (rect) {
+      setPos({
+        top: rect.top - 30, // tooltip above the button
+        left: rect.left + rect.width / 2,
+      });
+    }
+    setShowTooltip(true);
+  };
+
+  const handleLeave = () => setShowTooltip(false);
+
   return (
-    <div className="relative group inline-block overflow-visible">
-      <button
-        onClick={onClick}
-        className={`px-2 py-1 border-gray-300 border-1 rounded flex items-center gap-2 ${
-          colorMap[bg] || ""
-        }`}
-      >
-        {icon}
-      </button>
-      <span
-        className={` absolute left-1/2 -translate-x-1/2 bottom-full mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none z-50`}
-      >
-        {label}
-      </span>
-    </div>
+    <>
+      <div className="inline-block">
+        <button
+          ref={btnRef}
+          onClick={onClick}
+          onMouseEnter={handleEnter}
+          onMouseLeave={handleLeave}
+          className={`px-2 py-1 border border-gray-200 flex items-center gap-2 ${
+            isRounded ? "rounded" : ""
+          } ${colorMap[bg] || ""}`}
+        >
+          {icon}
+        </button>
+      </div>
+
+      {showTooltip &&
+        createPortal(
+          <span
+            className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200"
+            style={{
+              top: `${pos.top}px`,
+              left: `${pos.left}px`,
+              transform: "translateX(-50%)",
+            }}
+          >
+            {label}
+          </span>,
+          document.body
+        )}
+    </>
   );
 };
 

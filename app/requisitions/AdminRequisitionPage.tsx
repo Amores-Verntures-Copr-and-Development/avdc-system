@@ -4,12 +4,12 @@ import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
-import Table, { Column } from "@/components/shared/Table";
+import Table, { Column, TableHandle } from "@/components/shared/Table";
 import { DisplayRequestOrderDto } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
 import { Eye, FileText, Pencil, Plus, Printer, Trash } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import useSWR from "swr";
 import CreatePOModal from "./components/CreatePOModal";
 import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
@@ -36,6 +36,11 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
 ];
 
 const AdminRequisitionPage = () => {
+  const tableRef = useRef<TableHandle>(null);
+  const handleClear = () => {
+    tableRef.current?.clearSelection();
+    console.log("Clear Data:");
+  };
   const { user } = useSession();
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [selectedtedRows, setSelectedRows] =
@@ -56,7 +61,6 @@ const AdminRequisitionPage = () => {
   const handleCreatePurchaseOrder = async (
     data: CreatePurchaseOrderFormDto
   ) => {
-    console.log("Create Purchase Order: ", data);
     try {
       const result = await fetch(`api/purchase-order`, {
         method: "POST",
@@ -70,9 +74,10 @@ const AdminRequisitionPage = () => {
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      toast.success("Request created successfully!");
+      toast.success("PO created successfully!");
       mutate();
-
+      handleClear();
+      setShowCreatePO(false);
       return true;
     } catch (e) {
       toast.error("Failed to add Inventory.");
@@ -80,15 +85,16 @@ const AdminRequisitionPage = () => {
     }
   };
   return (
-    <PageLayout>
+    <PageLayout className="p-4 gap-2">
       <PageHeader
         title={"Requisition"}
         subtitle="Manage request orders from stores."
       />
 
       <div className="flex-1 min-h-0  flex flex-col">
-        <Table
+        <Table<DisplayRequestOrderDto>
           columns={requisitionColumns}
+          ref={tableRef}
           data={itemResponse.data}
           totalCount={10}
           showActions
@@ -139,7 +145,7 @@ const AdminRequisitionPage = () => {
         />
       </div>
       <Modal
-        className="bg-white"
+        className="bg-white h-[80%]"
         title="Create Purchase Order"
         hasPadding={false}
         isOpen={showCreatePO}

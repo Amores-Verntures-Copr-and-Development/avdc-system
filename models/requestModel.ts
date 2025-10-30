@@ -66,7 +66,6 @@ export const selectRequestOrders = async ({
   const pool = await getDBConnection();
   const whereClauses: string[] = [];
   const values: any[] = [];
-  console.log("StoreId: ", storeId);
   if (storeId !== null && storeId !== undefined) {
     whereClauses.push("ro.storeId = ?");
     values.push(storeId);
@@ -79,16 +78,17 @@ LEFT JOIN Users u ON u.userId = ro.requestById
 LEFT JOIN Stores s ON s.storeId = ro.storeId ${whereSQL}
 GROUP BY ro.requestId;`;
   const [rows] = await pool.execute(sql, values);
-  console.log("SQL: ", sql);
   return rows;
 };
 
 export const selectRequestItems = async ({
   requestId,
+  connection,
 }: {
+  connection?: PoolConnection;
   requestId?: number;
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
   const whereClauses: string[] = [];
   const values: any[] = [];
   if (requestId) {
@@ -98,10 +98,39 @@ export const selectRequestItems = async ({
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const sql = `SELECT ri.requestId,ri.reqItemId, i.itemName,i.itemUnit,i.itemPrice,ri.reqItemId,ri.reqItemQuantity,
-  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer, ri.invItem, ii.inventoryItemReferenceId FROM RequestItems ri
+  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer, ri.invItem, ri.reqItemStatus, ii.inventoryItemReferenceId FROM RequestItems ri
   LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
   LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId ${whereSQL}`;
-  const [rows] = await pool.execute(sql, values);
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
+  return rows;
+};
+
+export const selectRequestItemsById = async ({
+  requestId,
+  itemId,
+}: {
+  requestId?: number;
+  itemId?: number;
+}) => {
+  const pool = await getDBConnection();
+  const whereClauses: string[] = [];
+  const values: any[] = [];
+  if (requestId) {
+    whereClauses.push("ri.requestId = ?");
+    values.push(requestId);
+  }
+  if (itemId) {
+    whereClauses.push(
+      "ii.inventoryItemReferenceId = ? AND ii.inventoryItemReferenceType = 'item'"
+    );
+    values.push(itemId);
+  }
+  const whereSQL =
+    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+  const sql = `SELECT * FROM RequestItems ri 
+  LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+  ${whereSQL}`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
   return rows;
 };
 
@@ -116,37 +145,68 @@ export const selectRequestItemsByIds = async ({
     return [];
   }
 
-  // Dynamically create placeholders like (?, ?, ?)
+  // Step 1: Get stores involved for those requestIds
   const placeholders = requestIds.map(() => "?").join(", ");
+  const [storeRows] = await pool.execute<RowDataPacket[]>(
+    `
+    SELECT DISTINCT s.storeId, s.storeName
+    FROM RequestOrders ro
+    INNER JOIN Stores s ON s.storeId = ro.storeId
+    WHERE ro.requestId IN (${placeholders})
+    `,
+    requestIds
+  );
 
+  if (storeRows.length === 0) {
+    return [];
+  }
+
+  // Step 2: Build dynamic pivot columns
+  const storeColumns = storeRows
+    .map(
+      (store: any) => `
+        SUM(CASE WHEN s.storeId = ${
+          store.storeId
+        } THEN ri.reqItemQuantity ELSE 0 END) AS \`${store.storeName.replace(
+        /\s+/g,
+        "_"
+      )}_Qty\`
+      `
+    )
+    .join(", ");
+
+  // Step 3: Build main SQL query dynamically
   const sql = `
     SELECT 
-  i.itemId,
-  i.itemName,
-  i.itemUnit,
-  i.itemPrice,
-  (
-    SELECT iis.inventoryItemQuantity
-    FROM InventoryItems iis
-    WHERE iis.inventoryId = 1
-      AND iis.inventoryItemReferenceId = i.itemId
-    LIMIT 1
-  ) AS stockItem,
-  SUM(ri.reqItemQuantity) AS totalQuantity,
-  SUM(ri.reqItemReceived) AS totalReceived
-FROM RequestItems ri
-LEFT JOIN InventoryItems ii 
-  ON ii.inventoryItemId = ri.invItem
-LEFT JOIN Items i 
-  ON i.itemId = ii.inventoryItemReferenceId
+      i.itemId,
+      i.itemName,
+      i.itemUnit,
+      i.itemPrice,
+      (
+        SELECT iis.inventoryItemQuantity
+        FROM InventoryItems iis
+        WHERE iis.inventoryId = 1
+          AND iis.inventoryItemReferenceId = i.itemId
+        LIMIT 1
+      ) AS stockItem,
+      ${storeColumns},
+      SUM(ri.reqItemQuantity) AS totalQuantity,
+      SUM(ri.reqItemReceived) AS totalReceived
+    FROM RequestItems ri
+    LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+    LEFT JOIN RequestOrders ro ON ro.requestId = ri.requestId
+    LEFT JOIN Stores s ON s.storeId = ro.storeId
+    LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
     WHERE ri.requestId IN (${placeholders})
     GROUP BY 
       i.itemId,
       i.itemName,
       i.itemUnit,
-      i.itemPrice;
+      i.itemPrice
+    ORDER BY i.itemName;
   `;
 
+  // Step 4: Execute final query
   const [rows] = await pool.execute(sql, requestIds);
   return rows;
 };

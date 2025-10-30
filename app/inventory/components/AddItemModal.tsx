@@ -24,6 +24,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   onSubmit,
   user,
 }) => {
+  const [selection, setSelection] = useState<"create" | "warehouse">("create");
   const [inventoryForm, setInventoryForm] = useState<CreateFirstItem>({
     inventoryId: 0,
     inventoryItemCreatedBy: 0,
@@ -47,68 +48,160 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   };
   return (
     <div className="space-y-2 w-full">
-      <div className="flex flex-wrap gap-4">
-        <Input
-          label={"Name"}
-          name="itemName"
-          sizes="xs"
-          onChange={handleItemChange}
-          value={inventoryForm.itemName}
-        />
-        <DropDownSelectCategory
-          categoryType="item"
-          name={"categoryId"}
-          sizes="xs"
-          label="Category"
-          value={`${inventoryForm.categoryId}`}
-          onChange={handleItemChange}
-        />
+      <div className="flex gap-2">
+        <div>
+          <Button
+            size="xs"
+            label="Create New Item"
+            color={selection === "create" ? "primary" : "nocolor"}
+            onClick={() => {
+              setSelection("create");
+            }}
+          />
+        </div>
+        <div>
+          <Button
+            size="xs"
+            label="Warehouse"
+            color={selection === "warehouse" ? "primary" : "nocolor"}
+            onClick={() => {
+              setSelection("warehouse");
+            }}
+          />
+        </div>
       </div>
-      <div className="flex flex-wrap gap-4">
-        <DropdownSelect
-          label={"Unit"}
-          name="itemUnit"
-          sizes="xs"
-          onChange={handleItemChange}
-          value={inventoryForm.itemUnit}
-          options={unitOptions}
-        />
-        <Input
-          label={"Price"}
-          type="number"
-          name="itemPrice"
-          sizes="xs"
-          onChange={handleItemChange}
-          value={inventoryForm.itemPrice}
-        />
-      </div>
-      <div className="flex flex-wrap gap-4">
-        <Textarea
-          label={"Description"}
-          name="itemDescription"
-          sizes="xs"
-          onChange={handleItemChange}
-          value={inventoryForm.itemDescription ?? ""}
-        />
-      </div>
-      <div className="flex flex-wrap gap-4">
-        <Input
-          label={"Quantity"}
-          type="number"
-          name="inventoryItemQuantity"
-          sizes="xs"
-          onChange={handleItemChange}
-          value={inventoryForm.inventoryItemQuantity}
-        />
-        <Input
-          label={"Minimum Stock"}
-          sizes="xs"
-          type="number"
-          onChange={handleItemChange}
-          value={inventoryForm.inventoryItemMin}
-          name="inventoryItemMin"
-        />
-      </div>
+      {selection === "create" && (
+        <>
+          <div className="flex flex-wrap gap-4">
+            <Input
+              label={"Name"}
+              name="itemName"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemName}
+            />
+            <DropDownSelectCategory
+              categoryType="item"
+              name={"categoryId"}
+              sizes="xs"
+              label="Category"
+              value={`${inventoryForm.categoryId}`}
+              onChange={handleItemChange}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <DropdownSelect
+              label={"Unit"}
+              name="itemUnit"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemUnit}
+              options={unitOptions}
+            />
+            <Input
+              label={"Price"}
+              type="number"
+              name="itemPrice"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemPrice}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Textarea
+              label={"Description"}
+              name="itemDescription"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemDescription ?? ""}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Input
+              label={"Quantity"}
+              type="number"
+              name="inventoryItemQuantity"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.inventoryItemQuantity}
+            />
+            <Input
+              label={"Minimum Stock"}
+              sizes="xs"
+              type="number"
+              onChange={handleItemChange}
+              value={inventoryForm.inventoryItemMin}
+              name="inventoryItemMin"
+            />
+          </div>
+        </>
+      )}
+      {selection === "warehouse" && (
+        <>
+          <div className="flex flex-wrap gap-4">
+            <Input
+              label={"Name"}
+              name="itemName"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemName}
+            />
+            <DropDownSelectCategory
+              categoryType="item"
+              name={"categoryId"}
+              sizes="xs"
+              label="Category"
+              value={`${inventoryForm.categoryId}`}
+              onChange={handleItemChange}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <DropdownSelect
+              label={"Unit"}
+              name="itemUnit"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemUnit}
+              options={unitOptions}
+            />
+            <Input
+              label={"Price"}
+              type="number"
+              name="itemPrice"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemPrice}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Textarea
+              label={"Description"}
+              name="itemDescription"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.itemDescription ?? ""}
+            />
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Input
+              label={"Quantity"}
+              type="number"
+              name="inventoryItemQuantity"
+              sizes="xs"
+              onChange={handleItemChange}
+              value={inventoryForm.inventoryItemQuantity}
+            />
+            <Input
+              label={"Minimum Stock"}
+              sizes="xs"
+              type="number"
+              onChange={handleItemChange}
+              value={inventoryForm.inventoryItemMin}
+              name="inventoryItemMin"
+            />
+          </div>
+        </>
+      )}
       <div className="flex justify-end gap-2 mt-10">
         <div>
           {" "}

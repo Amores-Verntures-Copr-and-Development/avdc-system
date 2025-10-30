@@ -5,6 +5,7 @@ import {
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { PurchaseOrders } from "@/types/purchaseOrders";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock, Send } from "lucide-react";
 import React, { useRef } from "react";
 
@@ -12,8 +13,15 @@ interface PendingPOViewProps {
   data: DisplayPurchaseOrderItemsDto[];
   poData: PurchaseOrders | null;
   onSubmit: (data: UpdatePurchaseOrdersDto) => Promise<boolean>;
+  isLoading?: boolean;
+  mutate: () => void;
 }
 const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
+  {
+    name: "#",
+    key: "#",
+    selector: (_row, index) => index + 1,
+  },
   {
     name: "Item Name",
     key: "itemName",
@@ -83,6 +91,8 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   data,
   poData,
   onSubmit,
+  isLoading,
+  mutate,
 }) => {
   const updatedItemsRef = useRef<DisplayPurchaseOrderItemsDto[]>([]);
   const handleDataUpdate = (updatedData: DisplayPurchaseOrderItemsDto[]) => {
@@ -96,40 +106,50 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     };
     const success = await onSubmit(newData);
     if (success) {
-      alert("Purchased Order Approved!");
+      mutate();
     }
   };
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-center border-t border-gray-300 mb-2">
-        <p className="text-gray-700 font-medium">
-          Assign suppliers to your items
-        </p>
-        <p className="text-gray-500 text-sm">
-          Choose a supplier for each item to proceed with your purchase order.
-        </p>
+    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
+      <div className="flex flex-col h-full w-full overflow-hidden pr-2 pl-2">
+        <div className="text-center border-t border-gray-300 p-2">
+          <p className="text-gray-700 font-medium">
+            Assign suppliers to your items
+          </p>
+          <p className="text-gray-500 text-sm">
+            Choose a supplier for each item to proceed with your purchase order.
+          </p>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <Table
+            isRounded={false}
+            loading={isLoading}
+            columns={columns}
+            data={data}
+            maxHeight="h-full"
+            updateData={handleDataUpdate}
+            onCellChange={(rowIndex, key, value, row) => {
+              // If supplier changed, update suppId and unitPrice too
+              if (key === "selectedSupplierId") {
+                const selected = row.suppliers?.find(
+                  (s) => s.suppId === Number(value)
+                );
+                if (selected) {
+                  row.suppId = selected.suppId; // ✅ mirror value
+                  row.unitPrice = selected.suppItemPrice; // ✅ keep price updated
+                }
+              }
+            }}
+          />
+        </div>
       </div>
-      {/* Table */}
-      <Table
-        columns={columns}
-        data={data}
-        updateData={handleDataUpdate}
-        onCellChange={(rowIndex, key, value, row) => {
-          // If supplier changed, update suppId and unitPrice too
-          if (key === "selectedSupplierId") {
-            const selected = row.suppliers?.find(
-              (s) => s.suppId === Number(value)
-            );
-            if (selected) {
-              row.suppId = selected.suppId; // ✅ mirror value
-              row.unitPrice = selected.suppItemPrice; // ✅ keep price updated
-            }
-          }
-        }}
-      />
-      <div className="border-t flex justify-between pl-2 pr-2 pt-4 pb-4 gap-4 items-center">
+      <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
         <span className="flex items-center">
-          <Clock size={15} /> <span className="text-xs ml-2"> Created: </span>
+          <Clock size={15} />{" "}
+          <span className="text-xs ml-2">
+            {" "}
+            Created: {formatDateToWords(poData?.poCreatedAt ?? "")}
+          </span>
         </span>
         <div>
           <Button

@@ -1,14 +1,18 @@
 import PageHeader from "@/components/shared/PageHeader";
 import React from "react";
+import AdminDashboard from "./Admin/AdminDashboard";
+import OwnerDashboard from "./Owner/OwnerDashboard";
+import PageLayout from "@/components/shared/PageLayout";
 
 const DashboardPage = () => {
   return (
-    <div className="">
+    <PageLayout className="p-2">
       <PageHeader
         title={"Dashboard"}
         subtitle="Welcome back! Here's your system overview."
       />
-    </div>
+      <OwnerDashboard />
+    </PageLayout>
   );
 };
 

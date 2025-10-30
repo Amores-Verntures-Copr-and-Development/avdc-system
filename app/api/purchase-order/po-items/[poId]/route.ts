@@ -1,5 +1,9 @@
-import { getPurchaseOrderItemById } from "@/controllers/PurchaseOrderController";
-import { NextResponse } from "next/server";
+import {
+  getPurchaseOrderItemById,
+  updatePurchaseOrder,
+  updatePurchaseOrderItem,
+} from "@/controllers/PurchaseOrderController";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
@@ -30,6 +34,42 @@ export async function GET(
       {
         success: false,
         message: "Failed to fetched inventory!",
+        error: err?.message || String(err),
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ poId: string }> }
+) {
+  try {
+    const po = await request.json();
+    const { data, controller } = po;
+    const slug = (await params).poId;
+    const poId = Number(slug);
+    if (!poId) {
+      throw new Error("No poId found!");
+    }
+    const res = await updatePurchaseOrderItem(controller, data);
+    if (!res.success) {
+      console.log(res.error);
+      throw new Error(res.message || "Failed to Update PO");
+    }
+    return NextResponse.json(
+      {
+        success: true,
+        message: res.message,
+      },
+      { status: 201 }
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch PO",
         error: err?.message || String(err),
       },
       { status: 500 }

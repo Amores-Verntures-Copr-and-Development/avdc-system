@@ -30,3 +30,10 @@ export const unitOptions = [
   { label: "can", value: "can" },
   { label: "case", value: "case" },
 ];
+
+export const paymentMethodOptions = [
+  { label: "Select Method", value: "" },
+  { label: "Cash", value: "cash" },
+  { label: "Gcash", value: "gcash" },
+  { label: "Bank", value: "bank" },
+];

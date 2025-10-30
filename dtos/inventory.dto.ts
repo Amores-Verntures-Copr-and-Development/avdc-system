@@ -1,5 +1,11 @@
-import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
+import {
+  InventoryInterface,
+  InventoryItemInterface,
+  InventoryItemMovement,
+} from "@/types/inventory";
 import { CreateItemDto } from "./items.dto";
+import { ItemInterface } from "@/types/items";
+import { CategoryInterface } from "@/types/categories";
 
 export type CreateInventoryDto = Pick<
   InventoryInterface,
@@ -26,7 +32,7 @@ export interface CreateFirstItem
 
 export interface DisplayInventoryItems {
   inventoryId: number;
-  itemId: string;
+  itemId: number;
   inventoryItemId: number;
   inventoryItemReferenceId: number;
   inventoryItemQuantity: number; // if you want numbers, parse it before use
@@ -36,4 +42,31 @@ export interface DisplayInventoryItems {
   itemUnit: string;
   categoryName: string;
   storeId: number | null;
+  inventoryItemReferenceType: string;
 }
+
+export type CreateInventoryMovementDto = Pick<
+  InventoryItemMovement,
+  | "inventoryId"
+  | "inventoryItemId"
+  | "itemMovementQuantity"
+  | "itemMovementReferenceId"
+  | "itemMovementReference"
+  | "itemMovementRemarks"
+  | "itemMovementType"
+>;
+
+export type DisplayInventoryMovementDto = Pick<
+  InventoryItemMovement,
+  | "invItemMovementId"
+  | "inventoryId"
+  | "inventoryItemId"
+  | "itemMovementType"
+  | "itemMovementReferenceId"
+  | "itemMovementReference"
+  | "itemMovementQuantity"
+  | "itemMovementRemarks"
+  | "itemMovementCreatedAt"
+> &
+  Pick<ItemInterface, "itemId" | "itemName" | "itemUnit" | "itemPrice"> &
+  Pick<CategoryInterface, "categoryName" | "categoryType">;

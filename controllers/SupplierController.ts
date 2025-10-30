@@ -1,4 +1,6 @@
 import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
+import { getSupplierBySearch } from "@/services/supplier/get-supplier";
+import { createSupplierItems } from "@/services/supplier/suppplier-items/create-supplier-items";
 import {
   addItemSupplierByID,
   createSupplier,
@@ -22,15 +24,22 @@ export const addSupplier = async (data: CreateSupplierDto) => {
   }
 };
 
-export const getSupplier = async () => {
+export const getSupplier = async ({ search }: { search?: string }) => {
   try {
-    const data = await findAllSuppliers();
+    let data;
+    if (search) {
+      data = await getSupplierBySearch(search);
+    } else {
+      data = await findAllSuppliers();
+    }
+
     return {
       success: true,
       message: "Supplier fetched successfully",
       data: data ?? null,
     };
   } catch (e) {
+    console.error(e);
     return {
       success: false,
       message: "Failed to fetched Supplier",
@@ -50,6 +59,23 @@ export const addItemSupplier = async (data: CreateSupplierItemDto) => {
     return {
       success: false,
       message: "Failed to add item in supplier!",
+      error: e,
+    };
+  }
+};
+
+export const addItemsSupplier = async (data: CreateSupplierItemDto[]) => {
+  try {
+    await createSupplierItems({ data });
+    return {
+      success: true,
+      message: "Items added to supplier successfully!",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to add items in supplier!",
       error: e,
     };
   }

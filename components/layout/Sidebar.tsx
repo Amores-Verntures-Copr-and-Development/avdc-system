@@ -34,13 +34,20 @@ const sideMenu = [
         name: "Dashboard",
         href: "/dashboard",
         icon: LayoutDashboard,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
       {
         name: "Point of Sale",
         href: "/pos",
         icon: ShoppingCart,
-        roles: ["admin", "employee"],
+        roles: ["admin", "supervisor", "staff"],
       },
     ],
   },
@@ -51,19 +58,40 @@ const sideMenu = [
         name: "Products",
         href: "/products",
         icon: Package,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
       {
         name: "Categories",
         href: "/categories",
         icon: Boxes,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
       {
         name: "Inventory",
         href: "/inventory",
         icon: ClipboardList,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
     ],
   },
@@ -74,13 +102,13 @@ const sideMenu = [
         name: "Sales History",
         href: "/sales-history",
         icon: History,
-        roles: ["admin", "employee"],
+        roles: ["admin", "supervisor", "accounting", "staff"],
       },
       {
         name: "Customers",
         href: "/customers",
         icon: Users,
-        roles: ["admin", "employee"],
+        roles: ["admin", "supervisor", "accounting", "staff"],
       },
     ],
   },
@@ -91,25 +119,32 @@ const sideMenu = [
         name: "Purchase Order",
         href: "/purchase-orders",
         icon: FileText,
-        roles: ["admin", "employee"],
+        roles: ["admin", "purchaser", "accounting", "staff"],
       },
       {
         name: "Requisitions",
         href: "/requisitions",
         icon: ShoppingBag,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
       {
         name: "Procurement History",
         href: "/procurement-history",
         icon: History,
-        roles: ["admin", "employee"],
+        roles: ["admin", "purchaser", "accounting", "hr"],
       },
       {
         name: "Suppliers",
         href: "/suppliers",
         icon: Truck,
-        roles: ["admin", "employee"],
+        roles: ["admin", "purchaser", "accounting", "hr"],
       },
     ],
   },
@@ -120,19 +155,33 @@ const sideMenu = [
         name: "Users",
         href: "/users",
         icon: ContactRound,
-        roles: ["admin", "employee"],
+        roles: ["admin", "accounting", "hr"],
       },
       {
         name: "Employees",
         href: "/employees",
         icon: UserCog,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
       {
         name: "Store",
         href: "/stores",
         icon: Building2,
-        roles: ["admin", "employee"],
+        roles: [
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+        ],
       },
     ],
   },
@@ -143,6 +192,7 @@ const Sidebar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isShowLogout, setShowLogout] = useState(false);
   const { user } = useSession();
+  console.log({ user });
   const handleLogout = async () => {
     setIsLoading(true);
     try {
@@ -165,16 +215,18 @@ const Sidebar = () => {
     );
   }
   const role = user?.userRole ?? "";
+  const position = user?.empPosition ?? "";
   const sections = sideMenu
     .map((group) => ({
       ...group,
       sections: group.sections.filter(
-        (s) => !s.roles || s.roles.includes(role) // allow if no roles OR matches
+        (s) =>
+          !s.roles ||
+          s.roles.includes(user?.userRole === "admin" ? role : position) // allow if no roles OR matches
       ),
     }))
     .filter((group) => group.sections.length > 0); // r
-  console.log("UserRole: ", user?.userRole);
-  console.log("Sections: ", sideMenu);
+
   return (
     <aside className="top-0 h-screen w-64 bg-white border-r border-gray-200 flex flex-col">
       <nav className="flex-1 p-5 space-y-6 overflow-y-auto">

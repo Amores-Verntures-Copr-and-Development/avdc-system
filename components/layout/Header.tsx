@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Bell } from "lucide-react";
 const Header = () => {
   return (
-    <div className="flex h-15 justify-between items-center pr-2 shadow bg-white">
+    <div className="flex h-15 justify-between items-center pr-2 shadow bg-white overflow-visible">
       <div className="relative w-64 h-15">
         <Image
           src="/avdclogo.png"

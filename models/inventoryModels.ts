@@ -1,6 +1,7 @@
 import {
   CreateInventoryDto,
   CreateInventoryItemDto,
+  CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
@@ -107,7 +108,7 @@ export const insertInventoryItemsBulk = async ({
 export const selectInventoryItems = async ({
   keyFields = {},
 }: {
-  keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   const pool = await getDBConnection();
 
@@ -115,6 +116,7 @@ export const selectInventoryItems = async ({
     SELECT 
       ii.inventoryItemId,
       ii.inventoryId,
+      ii.inventoryItemReferenceType,
       ii.inventoryItemReferenceId,
       ii.inventoryItemQuantity,
       ii.inventoryItemMin,
@@ -155,7 +157,7 @@ export const selectInventoryItems = async ({
       params.push(value);
     }
   }
-  console.log("SQL: ", { sql, params });
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
@@ -245,4 +247,88 @@ export const updateInventoryItems = async ({
 
   const [result] = await pool.execute(sql, params);
   return result;
+};
+
+export const insertInventoryMovement = async ({
+  connection,
+  data,
+}: {
+  connection: PoolConnection;
+  data: CreateInventoryMovementDto[];
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `
+    INSERT INTO InventoryItemMovements (
+      inventoryId,
+      inventoryItemId,
+      itemMovementType,
+      itemMovementReferenceId,
+      itemMovementReference,
+      itemMovementQuantity,
+      itemMovementRemarks
+    )
+    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?,?)").join(", ")}
+  `;
+  const values = data.flatMap((item) => [
+    item.inventoryId,
+    item.inventoryItemId,
+    item.itemMovementType,
+    item.itemMovementReferenceId,
+    item.itemMovementReference,
+    item.itemMovementQuantity,
+    item.itemMovementRemarks,
+  ]);
+
+  const [results] = await pool.execute(sql, values);
+  return results;
+};
+
+export const selectInventoryMovementItems = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT iim.invItemMovementId,iim.inventoryId,iim.inventoryItemId,iim.itemMovementType,iim.itemMovementReferenceId,iim.itemMovementReference,
+iim.itemMovementQuantity,iim.itemMovementRemarks,iim.itemMovementCreatedAt,i.itemId,i.itemName,i.itemUnit,i.itemPrice,c.categoryName,c.categoryType
+ FROM InventoryItemMovements iim
+LEFT JOIN InventoryItems ii ON ii.inventoryItemId = iim.inventoryItemId
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"
+LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
+  const params: any[] = [];
+
+  // ✅ Build WHERE dynamically
+  for (const [key, value] of Object.entries(keyFields)) {
+    // choose the right table alias depending on field
+    const tableAlias = ["inventoryId"].includes(key)
+      ? "iim"
+      : key === "inventoryId"
+      ? "iim"
+      : key === "categoryId"
+      ? "c"
+      : "it";
+
+    if (value === null) {
+      sql += ` AND ${tableAlias}.${key} IS NULL`;
+    } else {
+      sql += ` AND ${tableAlias}.${key} = ?`;
+      params.push(value);
+    }
+  }
+  sql += ` ORDER BY iim.itemMovementCreatedAt DESC`;
+  const [rows] = await pool.execute(sql, params);
+  return rows;
+};
+
+export const selectInventoryItemsStockStatus = async (inventoryId: number) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT 
+  COUNT(ii.inventoryItemId) AS totalItems,
+  SUM(CASE WHEN ii.inventoryItemQuantity > ii.inventoryItemMin THEN 1 ELSE 0 END) AS goodStock,
+  SUM(CASE WHEN ii.inventoryItemQuantity <= ii.inventoryItemMin AND ii.inventoryItemQuantity > 0 THEN 1 ELSE 0 END) AS lowStock,
+  SUM(CASE WHEN ii.inventoryItemQuantity = 0 THEN 1 ELSE 0 END) AS outStock
+  FROM Inventory i
+  LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId WHERE i.inventoryId = ?`;
+  const [rows] = await pool.execute(sql, [inventoryId]);
+  return rows;
 };

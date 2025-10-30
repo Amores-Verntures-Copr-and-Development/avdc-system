@@ -1,5 +1,6 @@
 import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { getDBConnection } from "@/lib/db";
+import { Supplier } from "@/types/supplier";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export const insertSupplier = async ({
@@ -34,12 +35,29 @@ export const selectCountSupplier = async (connection: PoolConnection) => {
 
 export const selectSupplier = async ({
   connection,
+  keyFields = {},
+  search,
 }: {
   connection?: PoolConnection;
+  keyFields?: Partial<Supplier>;
+  search?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `SELECT * FROM Suppliers`;
-  const [rows] = await pool.execute<RowDataPacket[]>(sql);
+  let sql = `SELECT * FROM Suppliers WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (search) {
+    sql += ` AND (suppName LIKE ? OR suppCode LIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
 
@@ -68,14 +86,19 @@ export const insertSupplierItems = async ({
   connection?: PoolConnection;
   data: CreateSupplierItemDto[];
 }) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SupplierItems(suppId,itemId,suppItemPrice,suppItemCreatedBy) VALUES(?,?,?,?)`;
-  const [results] = await pool.execute(sql, [
-    // data.suppId,
-    // data.itemId,
-    // data.suppItemPrice,
-    // data.suppItemCreatedBy,
+  const sql = `INSERT INTO SupplierItems(suppId,itemId,suppItemPrice,suppItemCreatedBy) 
+  VALUES ${data.map(() => "(?,?,?,?)")}`;
+  const values = data.flatMap((item) => [
+    item.suppId,
+    item.itemId,
+    item.suppItemPrice,
+    item.suppItemCreatedBy,
   ]);
+  const [results] = await pool.execute(sql, values);
   return results;
 };
 
@@ -93,8 +116,6 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
   const sql = `SELECT si.*,i.itemName,i.itemUnit,c.categoryName,c.categoryType FROM SupplierItems si
   LEFT JOIN Items i ON i.itemId = si.itemId
   LEFT JOIN Categories c ON c.categoryId = i.categoryId ${whereSQL}`;
-  console.log("SQL: ", sql);
   const [rows] = await pool.execute(sql, values);
-  console.log("Rows: ", rows);
   return rows;
 };

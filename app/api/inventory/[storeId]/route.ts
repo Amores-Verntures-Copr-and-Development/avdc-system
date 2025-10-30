@@ -14,9 +14,7 @@ export async function GET(
     const slug = (await params).storeId;
     const storeId = Number(slug);
     const res = await getInventory({ storeId });
-    console.log("inventory: ", { res, storeId });
     if (!res.success) {
-      // propagate the actual message if available
       console.log(res.message);
       throw new Error(`${res.error}`);
     }

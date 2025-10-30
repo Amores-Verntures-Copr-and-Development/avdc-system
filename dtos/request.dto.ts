@@ -1,4 +1,5 @@
 import { Request, RequestItems } from "@/types/request";
+import { StoreInterface } from "@/types/stores";
 
 export type CreateRequestDto = Pick<
   Request,
@@ -47,3 +48,9 @@ export interface DisplayTotalOrderItem extends DisplayGroupedRequestItem {
 }
 
 export type UpdateRequestDto = Partial<Request>;
+
+export type RequestOrderPdf = {
+  store: Partial<StoreInterface>;
+  requestOrder: Partial<Request>;
+  requestItems: DisplayRequestItems[];
+};

@@ -13,16 +13,38 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import ShowPOModal from "./components/ShowPOModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { getPOStatusInfo } from "@/utils/formatPOStatus";
 
 const purchaseOrderColumns: Column<PurchaseOrders>[] = [
-  { name: "PO No", key: "poNumber" },
+  {
+    name: "PO No",
+    key: "poNumber",
+    selector: (row) => (
+      <span className="text-xs font-semibold">{row.poNumber}</span>
+    ),
+  },
   {
     name: "Create At",
     key: "poCreatedAt",
     selector: (row) => formatDateToWords(row.poCreatedAt),
   },
   { name: "Created By", key: "poCreatedBy" },
-  { name: "Status", key: "poStatus" },
+  {
+    name: "Status",
+    key: "poStatus",
+    selector: (row) => {
+      const { status, bgClass, textClass, borderClass } = getPOStatusInfo(
+        row.poStatus
+      );
+      return (
+        <span
+          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+        >
+          {status}
+        </span>
+      );
+    },
+  },
 ];
 
 const PurchaseOrderPage = () => {
@@ -34,10 +56,12 @@ const PurchaseOrderPage = () => {
     mutate: mutateInventory,
   } = useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
   return (
-    <PageLayout>
+    <PageLayout className="p-4 gap-2">
       <PageHeader title={"Purchase Orders"} subtitle="Manage purchase orders" />
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table
+          searchUrl="/purchase-orders"
+          showCheckBox
           columns={purchaseOrderColumns}
           data={inventoryResponse.data}
           maxHeight="h-full"
@@ -75,37 +99,15 @@ const PurchaseOrderPage = () => {
         <Modal
           size="xl"
           hasPadding={false}
-          modalDetails={
-            <div className="flex justify-between items-center w-full ">
-              <div className="flex flex-col">
-                <span className="text-black text-sm">
-                  Date:{" "}
-                  {formatDateToWords(selectedPo?.poCreatedAt ?? "", {
-                    showMinute: false,
-                    showHour: false,
-                  })}
-                </span>
-                <span className="text-black text-sm">
-                  Requisition:{" "}
-                  {selectedPo?.purchaseOrderRequest
-                    ?.map((req) => req.requestNo)
-                    .join(", ")}
-                </span>
-              </div>
-
-              <div className="text-right">
-                <span className="text-black text-sm">
-                  Status: {selectedPo?.poStatus}
-                </span>
-              </div>
-            </div>
-          }
+          className="h-[90%]"
+          modalDetails={renderModalDetails(selectedPo)}
+          // getPOStatusInfo(selectedPo?.poStatus)
           title={`${selectedPo?.poNumber}`}
           isOpen={showViewPO}
           onClose={function (): void {
             setShowViewPO(false);
           }}
-          children={<ShowPOModal data={selectedPo ?? null} />}
+          children={<ShowPOModal data={selectedPo ?? null} mutate={mutateInventory} />}
         />
       </div>
     </PageLayout>
@@ -113,3 +115,34 @@ const PurchaseOrderPage = () => {
 };
 
 export default PurchaseOrderPage;
+
+const renderModalDetails = (selectedPo?: PurchaseOrders) => {
+  const { status, bgClass, textClass } = getPOStatusInfo(selectedPo?.poStatus!); // you can define variables here
+  return (
+    <div className="flex justify-between items-center w-full">
+      <div className="flex flex-col">
+        <span className="text-black text-sm">
+          Date:{" "}
+          {formatDateToWords(selectedPo?.poCreatedAt ?? "", {
+            showMinute: false,
+            showHour: false,
+          })}
+        </span>
+        <span className="text-black text-sm">
+          Requisition:{" "}
+          {selectedPo?.purchaseOrderRequest
+            ?.map((req) => req.requestNo)
+            .join(", ")}
+        </span>
+      </div>
+
+      <div className="text-right flex items-center gap-2">
+        <span className="text-sm"> Status: </span>
+        <div className={`${bgClass}  rounded-2xl px-2 `}>
+          {" "}
+          <span className={`${textClass} text-xs`}>{status}</span>
+        </div>
+      </div>
+    </div>
+  );
+};

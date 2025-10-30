@@ -24,51 +24,9 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
-const columns: Column<RequestItemsCombine>[] = [
-  {
-    name: "Item Name",
-    key: "itemName",
-  },
-  {
-    name: "Price",
-    key: "itemPrice",
-  },
-  {
-    name: "Unit",
-    key: "itemUnit",
-  },
-  {
-    name: "Inv Qty",
-    key: "inventoryItemQuantity",
-  },
-  {
-    name: "Request Qty",
-    key: "reqItemQuantity",
-  },
-  {
-    name: "Warehouse Qty",
-    key: "warehouseInv",
-  },
-  {
-    name: "Fulfill Qty",
-    key: "reqItemTransfer",
-    editable: true,
-    inputType: "number",
-  },
-  {
-    name: "Total",
-    key: "total",
-  },
-  {
-    name: "Remarks",
-    key: "reqItemRemarks",
-    editable: true,
-    inputType: "text",
-  },
-];
-
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
+  isLoading?: boolean;
   onFulfillRequest?: (
     requestId: string,
     items: RequestItemsCombine[]
@@ -92,7 +50,58 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   console.log("RequestItems: ", data);
-
+  const columns: Column<RequestItemsCombine>[] = [
+    {
+      name: "Item Name",
+      key: "itemName",
+    },
+    {
+      name: "Price",
+      key: "itemPrice",
+    },
+    {
+      name: "Unit",
+      key: "itemUnit",
+    },
+    {
+      name: "Inv Qty",
+      key: "inventoryItemQuantity",
+    },
+    {
+      name: "Request Qty",
+      key: "reqItemQuantity",
+    },
+    {
+      name: "Warehouse Qty",
+      key: "warehouseInv",
+    },
+    {
+      name: "Fulfill Qty",
+      key: "reqItemTransfer",
+      editable: (row) => {
+        const status = data.find(
+          (req) => req.requestId === row.requestId
+        )?.requestStatus;
+        return !["delivered", "completed"].includes(status ?? "");
+      },
+      inputType: "number",
+    },
+    {
+      name: "Total",
+      key: "total",
+    },
+    {
+      name: "Remarks",
+      key: "reqItemRemarks",
+      editable: (row) => {
+        const status = data.find(
+          (req) => req.requestId === row.requestId
+        )?.requestStatus;
+        return !["delivered", "completed"].includes(status ?? "");
+      },
+      inputType: "text",
+    },
+  ];
   const handleDataChange = (
     requestNo: string,
     updatedItems: RequestItemsCombine[]
@@ -148,18 +157,18 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   };
 
   return (
-    <div className="gap-5 bg-white h-full">
-      <div className="flex p-5  flex-col shadow h-full w-full overflow-auto">
+    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
+      <div className="flex p-2  flex-col h-full w-full overflow-y-auto">
         <div className="p-4 border-b-1 border-gray-200">
           <h1 className="text-md font-semibold">Requisition Fulfillment</h1>
           <p className="text-xs text-gray-500 mt-1">
             Review and fulfill requisition requests
           </p>
         </div>
-        <div className="flex flex-col p-4 gap-4">
+        <div className="flex flex-col p-4 gap-4 overflow-y-auto">
           {requestItems.map((reqData) => (
             <div
-              className="flex flex-col shadow w-full border-b-1 border-gray-200"
+              className="flex flex-col shadow w-full border-1 border-gray-200"
               key={reqData.requestId}
             >
               <div className="flex items-center justify-between p-2">
@@ -195,7 +204,11 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 <div>
                   <Table
                     columns={columns}
-                    showActions
+                    showActions={
+                      !["delivered", "completed"].includes(
+                        reqData.requestStatus ?? ""
+                      )
+                    }
                     renderActions={(row) => (
                       <div>
                         <IconButton
@@ -258,7 +271,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       }
                       icon={<CheckCircle size={14} />}
                       className="font-semibold text-xs px-2 py-2"
-                      disabled={isProcessing === reqData.requestNo}
+                      disabled={
+                        isProcessing === reqData.requestNo ||
+                        reqData.requestStatus === "delivered" ||
+                        reqData.requestStatus === "received" ||
+                        reqData.requestStatus === "completed"
+                      }
                       color="success"
                     />
                   </div>
@@ -275,7 +293,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       }
                       icon={<Truck size={14} />}
                       className="font-semibold text-xs px-2 py-2"
-                      disabled={isProcessing === reqData.requestNo}
+                      disabled={
+                        isProcessing === reqData.requestNo ||
+                        reqData.requestStatus === "delivered" ||
+                        reqData.requestStatus === "received" ||
+                        reqData.requestStatus === "completed"
+                      }
                     />
                   </div>
                 </div>
@@ -320,6 +343,13 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 // handleReceivePO();
               }}
               label="Complete PO"
+              disabled={data.every(
+                (req) =>
+                  req.poStatus === "received" ||
+                  req.poStatus === "approved" ||
+                  req.poStatus === "sent" ||
+                  req.poStatus === "pending"
+              )}
               icon={<PackageCheckIcon size={15} />}
               className="font-semibold  text-xs px-2 py-2"
             />

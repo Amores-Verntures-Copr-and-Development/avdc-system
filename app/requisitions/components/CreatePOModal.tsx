@@ -12,6 +12,7 @@ import {
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { XCircle, ClipboardCheck, Send } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
@@ -22,26 +23,6 @@ interface CreatePOModalPros {
   onCancel: () => void;
   onSubmit: (items: CreatePurchaseOrderFormDto) => Promise<boolean>;
 }
-
-const requestItemColumn: Column<DisplayTotalOrderItem>[] = [
-  { name: "Item ID", key: "itemId" },
-  { name: "Item Name", key: "itemName" },
-  { name: "Unit", key: "itemUnit" },
-  { name: "Price", key: "itemPrice" },
-  { name: "Stock Available", key: "stockItem" },
-  { name: "Quantity Requested", key: "totalQuantity" },
-  {
-    name: "Need to Order",
-    key: "orderNeed",
-    selector: (row) => row.stockItem - row.totalQuantity,
-  },
-  {
-    name: "Quantity to Order",
-    key: "poItemOrder",
-    editable: true,
-    inputType: "number",
-  },
-];
 
 const CreatePOModal: React.FC<CreatePOModalPros> = ({
   data,
@@ -75,7 +56,44 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       setOrderItem(newData);
     }
   }, [itemResponse.data?.length]);
-
+  const baseColumns: Column<DisplayTotalOrderItem>[] = [
+    { name: "Item ID", key: "itemId" },
+    { name: "Item Name", key: "itemName" },
+    { name: "Unit", key: "itemUnit" },
+    { name: "Price", key: "itemPrice" },
+    { name: "Stock Available", key: "stockItem" },
+    {
+      name: "Quantity Requested",
+      key: "totalQuantity",
+      selector: (row) => formatQuantityByUnit(row.totalQuantity, row.itemUnit),
+    },
+    {
+      name: "Need to Order",
+      key: "orderNeed",
+      selector: (row) =>
+        formatQuantityByUnit(row.stockItem - row.totalQuantity, row.itemUnit),
+    },
+    {
+      name: "Quantity to Order",
+      key: "poItemOrder",
+      editable: true,
+      inputType: "number",
+    },
+  ];
+  const dataKeys = Object.keys(itemResponse.data?.[0] || {});
+  const storeColumns = dataKeys
+    .filter((key) => key.endsWith("_Qty"))
+    .map((key) => ({
+      name: key.replace(/_/g, " ").replace("Qty", "Qty").trim(),
+      key,
+      selector: (row: any) => formatQuantityByUnit(row[key], row.itemUnit),
+    }));
+  console.log("Store Columns: ", storeColumns);
+  const requestItemColumn: Column<DisplayTotalOrderItem>[] = [
+    ...baseColumns.slice(0, 5), // before totals
+    ...storeColumns, // dynamically added per store
+    ...baseColumns.slice(5), // totals and editable fields
+  ];
   const handleSubmit = async () => {
     const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem.map(
       (item) => ({
@@ -111,16 +129,20 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="">
+    <div className="flex flex-col h-full">
+      {/* Scrollable Table Section */}
+      <div className="flex-1 overflow-y-auto">
         <Table
           isRounded={false}
           columns={requestItemColumn}
           data={orderItem}
           loading={loading}
+          maxHeight="h-full"
         />
       </div>
-      <div className="border-t border-gray-300 p-4 flex justify-end">
+
+      {/* Fixed Footer at Bottom */}
+      <div className="border-t border-gray-300 p-4 flex justify-end bg-white sticky bottom-0">
         <div className="flex gap-2">
           <div>
             {" "}
@@ -129,7 +151,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               onClick={onCancel}
               color="secondary"
               size="sm"
-              icon={<XCircle className="w-4 h-4" />} // ❌ Cancel icon
+              icon={<XCircle className="w-4 h-4" />}
             />
           </div>
 
@@ -139,7 +161,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               onClick={handleFillUpAll}
               color="success"
               size="sm"
-              icon={<ClipboardCheck className="w-4 h-4" />} // ✅ Fillup icon
+              icon={<ClipboardCheck className="w-4 h-4" />}
             />
           </div>
 
@@ -148,7 +170,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               label="Submit"
               onClick={handleSubmit}
               size="sm"
-              icon={<Send className="w-4 h-4" />} // 📤 Submit icon
+              icon={<Send className="w-4 h-4" />}
             />
           </div>
         </div>

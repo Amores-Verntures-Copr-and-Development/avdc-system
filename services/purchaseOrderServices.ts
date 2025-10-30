@@ -22,6 +22,7 @@ import {
 import { updateRequest } from "@/models/requestModel";
 import { InventoryItemInterface } from "@/types/inventory";
 import { PurchaseOrderItems } from "@/types/purchaseOrders";
+import { PoolConnection } from "mysql2/promise";
 
 // export async function createPurchaseOrder(data: CreatePurchaseOrderFormDto) {
 //   const pool = await getDBConnection();
@@ -79,9 +80,15 @@ export async function findAllPurchaseOrder() {
   }
 }
 
-export async function findPOItemsById(poId: number) {
+export async function findPOItemsById({
+  poId,
+  connection,
+}: {
+  poId: number;
+  connection?: PoolConnection;
+}) {
   try {
-    const data = await selectPurchaseOrderItems({ poId });
+    const data = await selectPurchaseOrderItems({ connection, poId });
     return data;
   } catch (e) {
     throw e;

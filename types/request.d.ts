@@ -7,7 +7,13 @@ export type RequestStatus =
   | "cancelled"
   | "delivered"
   | "received";
-
+export type RequestItemStatus =
+  | "pending"
+  | "completed"
+  | "cancelled"
+  | "delivered"
+  | "received"
+  | "partial";
 export interface Request {
   requestId: number;
   requestNo: string;
@@ -28,6 +34,7 @@ export interface RequestItems {
   reqItemTransfer: number;
   reqItemReceived: number;
   reqItemRemarks: string;
+  reqItemStatus: RequestItemStatus;
   inventoryItemReferenceId: number;
   itemId: number;
 }

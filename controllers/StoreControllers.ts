@@ -1,5 +1,6 @@
 import { CreateStoreDto } from "@/dtos/store.dto";
 import { insertStore, selectStores } from "../models/storeModels";
+import { findStoreByPOID } from "@/services/store/get-store";
 
 export const createStore = async (data: CreateStoreDto) => {
   try {
@@ -30,6 +31,23 @@ export const getStore = async ({
     return {
       success: true,
       message: "Store created successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to create store!",
+      error: e,
+    };
+  }
+};
+
+export const getStoreByPOId = async (poId: number) => {
+  try {
+    const data = await findStoreByPOID(poId);
+    return {
+      success: true,
+      message: "Store fetch successfully!",
       data: data ?? null,
     };
   } catch (e) {

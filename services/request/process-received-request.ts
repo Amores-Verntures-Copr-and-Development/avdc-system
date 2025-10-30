@@ -4,6 +4,10 @@ import { Request, RequestItems } from "@/types/request";
 import { updateRequests } from "./update-request";
 import { updateRequestItems } from "./request-items/update-request-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
+import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
+import { findIventoryByFields } from "../inventory/get-inventory";
+import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
 export async function processReceivedRequest(data: Request[]) {
   const pool = await getDBConnection();
@@ -20,11 +24,18 @@ export async function processReceivedRequest(data: Request[]) {
       keyFields: ["requestId"],
       updates: request,
     });
+    console.log(
+      "Data: ",
+      data.flatMap((req) => req.requestItems.flatMap((item) => item))
+    );
     const requestItems: Partial<RequestItems>[] = data.flatMap((req) =>
       req.requestItems.flatMap((item) => ({
         reqItemId: item.reqItemId,
         reqItemReceived: item.reqItemReceived,
         reqItemRemarks: item.reqItemRemarks,
+        ...(Number(item.reqItemTransfer) === 0
+          ? { reqItemTransfer: item.reqItemReceived }
+          : {}),
       }))
     );
     await updateRequestItems({
@@ -46,6 +57,27 @@ export async function processReceivedRequest(data: Request[]) {
       updates: addInventoryQty,
       keyFields: ["inventoryItemId"],
     });
+    const storeInventoryMovement: CreateInventoryMovementDto[] =
+      await Promise.all(
+        data.flatMap((data) =>
+          data.requestItems.flatMap(async (item) => {
+            const inventoryId = await findIventoryByFields({
+              keyFields: { storeId: data.storeId },
+            });
+            return {
+              inventoryId: inventoryId[0].inventoryId,
+              inventoryItemId: item.invItem, // fallback if not found
+              itemMovementType: "in",
+              itemMovementReferenceId: item.requestId ?? 0,
+              itemMovementReference: "ro",
+              itemMovementQuantity: Number(item.reqItemReceived),
+              itemMovementRemarks: "Received item from ro",
+            };
+          })
+        )
+      );
+    console.log("[createInventoryMovementDeliver]");
+    await createInventoryMovement({ connection, data: storeInventoryMovement });
     await connection.commit();
   } catch (e) {
     await connection.rollback();

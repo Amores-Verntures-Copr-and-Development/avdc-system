@@ -1,4 +1,3 @@
-import { generatePurchaseOrder } from "@/controllers/PurchaseOrderController";
 import { addSupplier, getSupplier } from "@/controllers/SupplierController";
 import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
 import { CreateSupplierDto } from "@/dtos/supplier.dto";
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const res = await getSupplier();
+    const res = await getSupplier({});
 
     if (!res.success) {
       console.log(res.message);
