@@ -1,8 +1,4 @@
-import {
-  postRequest,
-  getRequest,
-  updateRequest,
-} from "@/controllers/RequestController";
+import { postRequest, updateRequest } from "@/controllers/RequestController";
 import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { NextRequest, NextResponse } from "next/server";
 

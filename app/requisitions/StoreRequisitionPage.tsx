@@ -6,26 +6,18 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import Table, { Column } from "@/components/shared/Table";
 import {
-  FileText,
   Eye,
-  Printer,
   Plus,
   Trash,
-  Pencil,
-  AlertTriangle,
-  Box,
-  ShoppingCart,
-  XCircle,
   ListChecks,
   CheckCircle,
   Clock,
   Trash2,
-  ArrowLeft,
 } from "lucide-react";
 import React, { useState } from "react";
 import CreateRequestModal from "./components/CreateRequestModal";
 import Card from "@/components/shared/Card";
-import RequestForm from "./components/RequestForm";
+
 import {
   CreateRequestFormDto,
   CreateRequestItemDto,
@@ -38,13 +30,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import ViewRequestModal from "./components/ViewRequestModal";
 import toast from "react-hot-toast";
 import PageLayout from "@/components/shared/PageLayout";
-
-interface RequestItem {
-  id: number;
-  itemName: string;
-  description: string;
-  quantity: number;
-}
+import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order No", key: "requestNo" },
   { name: "Total Items", key: "totalItems" },
@@ -62,7 +48,21 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
       formatDateToWords(row.requestUpdatedAt),
   },
   { name: "Store", key: "storeName" },
-  { name: "Status", key: "requestStatus" },
+  {
+    name: "Status",
+    key: "requestStatus",
+    selector: (row) => {
+      const { status, bgClass, textClass, borderClass } =
+        getRequestStatusFormat(row.requestStatus);
+      return (
+        <span
+          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+        >
+          {status}
+        </span>
+      );
+    },
+  },
 ];
 
 const StoreRequisitionPage = () => {
@@ -113,6 +113,7 @@ const StoreRequisitionPage = () => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to create request order.");
       return false;
     }
@@ -152,6 +153,7 @@ const StoreRequisitionPage = () => {
       </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between mt-5">
         <Table
+          searchUrl="/requisitions"
           columns={requisitionColumns}
           data={itemResponse.data}
           totalCount={10}
@@ -211,14 +213,6 @@ const StoreRequisitionPage = () => {
                 bg={"red"}
                 icon={<Trash size={18} />}
               />
-              <IconButton
-                onClick={() => {
-                  handleEditRow(row);
-                }}
-                label={"Print"}
-                bg={"green"}
-                icon={<Printer size={18} />}
-              />
 
               {/* Delete Button */}
             </div>
@@ -244,24 +238,38 @@ const StoreRequisitionPage = () => {
       </Modal>
       <Modal
         hasPadding={false}
-        className="bg-white"
+        className="bg-white h-[95%]"
         title={`Request Order (${selectedRow?.requestNo})`}
-        modalDetails={
-          <div className="flex flex-col space-y-1">
-            <span className="text-sm font-medium text-gray-700">
-              Store:{" "}
-              <span className="font-normal text-gray-600">
-                {selectedRow?.storeName}
+        modalDetails={(() => {
+          const { status, bgClass, textClass, borderClass } =
+            getRequestStatusFormat(selectedRow?.requestStatus ?? "pending");
+          return (
+            <div className="flex flex-1 justify-between align-middle items-center">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-600">
+                  Store:{" "}
+                  <span className="font-bold text-black">
+                    {selectedRow?.storeName}
+                  </span>
+                </span>
+                <span className="text-xs text-gray-600">
+                  Requestor:{" "}
+                  <span className="font-bold text-black">
+                    {selectedRow?.requestedByName}
+                  </span>
+                </span>
+              </div>
+              <span className="text-xs text-gray-600">
+                Status:{" "}
+                <span
+                  className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+                >
+                  {status}
+                </span>
               </span>
-            </span>
-            <span className="text-xs text-gray-600">
-              Requestor: {selectedRow?.requestedByName}
-            </span>
-            <span className="text-xs text-gray-600">
-              Status: {selectedRow?.requestStatus}
-            </span>
-          </div>
-        }
+            </div>
+          );
+        })()}
         size="xl"
         isOpen={isShowViewRequest}
         onClose={() => {

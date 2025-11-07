@@ -31,14 +31,11 @@ const storeData: Store[] = [
   { id: 4, name: "Online Store", sales: 30320, growth: 7.5 },
 ];
 const OwnerDashboard = () => {
-  const {
-    data: dailyStoreSales = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<DailyStoreSalesResponse>(
-    `/api/dashboard/store-daily-sales/`,
-    fetcher
-  );
+  const { data: dailyStoreSales = { data: [] } } =
+    useSWR<DailyStoreSalesResponse>(
+      `/api/dashboard/store-daily-sales/`,
+      fetcher
+    );
   console.log({ dailyStoreSales });
   const storeSales: Store[] =
     dailyStoreSales?.data?.map((s) => {

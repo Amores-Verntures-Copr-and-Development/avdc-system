@@ -1,14 +1,13 @@
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import React, { useEffect, useState } from "react";
-import { AddItemToStoreDto } from "../InventoryPage";
+
 import Button from "@/components/shared/Button";
-import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
 
 import Table, { Column } from "@/components/shared/Table";
 import { Plus, X } from "lucide-react";
 import { DropDownSearchSupplier } from "@/components/shared/DropDownSearchSupplier";
-import { Supplier, SupplierItem } from "@/types/supplier";
+import { Supplier } from "@/types/supplier";
 import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
 interface AddItemSupplierModalProps {
   data: DisplayInventoryItems[];
@@ -70,6 +69,7 @@ const AddItemSupplierModal = ({
     },
   ];
   const handleSubmit = async () => {
+    console.log(selectedSupplier);
     if (!itemData) {
       return;
     }

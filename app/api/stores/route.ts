@@ -1,7 +1,5 @@
 import { CreateStoreDto } from "@/dtos/store.dto";
-import { CreateUserDto } from "@/dtos/user.dto";
 import { createStore, getStore } from "@/controllers/StoreControllers";
-import { createUser, getUsers } from "@/controllers/UserControllers";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {

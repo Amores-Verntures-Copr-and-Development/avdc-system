@@ -6,7 +6,7 @@ import {
   InsertItemsRequestDto,
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 interface CreateRequestModalProps {
   data: DisplayInventoryItems[];
   onCancel: () => void;
@@ -44,7 +44,6 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   onSubmit,
 }) => {
   const updatedItemsRef = useRef<EditableItem[]>([]);
-  console.log("Data: ", data);
   const handleDataUpdate = (updatedData: EditableItem[]) => {
     updatedItemsRef.current = updatedData; // Store without causing re-render
   };

@@ -4,48 +4,27 @@ import PageHeader from "@/components/shared/PageHeader";
 import {
   AlertTriangle,
   Box,
-  Clipboard,
-  Eye,
   FileChartColumn,
   Package,
   Package2,
-  Pencil,
-  Plus,
   ShoppingCart,
-  Store,
-  Trash,
-  View,
-  ViewIcon,
   XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import InventoryCard from "./components/InventoryCard";
-import Table, { Column } from "@/components/shared/Table";
-import { inventoryData } from "@/data/itemData";
-import Modal from "@/components/shared/Modal";
-import AddItemModal from "./components/AddItemModal";
-import Input from "@/components/shared/Input";
+import { Column } from "@/components/shared/Table";
+
 import PageLayout from "@/components/shared/PageLayout";
-import CreateInventoryModal from "./components/CreateInventoryModal";
-import {
-  CreateFirstItem,
-  CreateInventoryDto,
-  CreateInventoryItemDto,
-  DisplayInventoryItems,
-} from "@/dtos/inventory.dto";
+
+import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { useSession } from "@/hooks/useSession";
-import toast from "react-hot-toast";
+
 import useSWR from "swr";
 import { InventoryInterface } from "@/types/inventory";
 import { fetcher } from "@/utils/fetcher";
-import AddItemStoreModal from "./components/AddItemStoreModal";
-import CreateRequestModal from "./components/CreateRequestModal";
-import { CreateRequestFormDto } from "@/dtos/request.dto";
+
 import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
-import Popup from "@/components/shared/Popup";
-import IconButton from "@/components/shared/IconButton";
-import ViewInventoryItem from "./components/ViewInventoryItem";
-import CreateInventoryReport from "./components/CreateInventoryReport";
+
 import InventorySection from "./components/InventorySection/InventorySection";
 import StockMovementSection from "./components/StockMovementSection/StockMovementSection";
 import ReportSection from "./components/ReportSection/ReportSection";
@@ -176,15 +155,13 @@ const InventoryPage = () => {
     "inventory" | "movement" | "report"
   >("inventory");
   const [inventoryId, setInventoryId] = useState(0);
-  const { user, loading: userLoading, hasStore } = useSession();
+  const { user, hasStore } = useSession();
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/${user?.storeId}`
     : `/api/inventory`;
-  const {
-    data: inventoryResponse = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<{ data: InventoryInterface[] }>(inventoryBaseUrl, fetcher);
+  const { data: inventoryResponse = { data: [] } } = useSWR<{
+    data: InventoryInterface[];
+  }>(inventoryBaseUrl, fetcher);
 
   useEffect(() => {
     if (
@@ -195,11 +172,10 @@ const InventoryPage = () => {
       setInventoryId(inventoryResponse.data[0].inventoryId);
     }
   }, [inventoryResponse]);
-  const {
-    data: inventoryItemResponse = { data: [] },
-    isLoading: itemIsLoading,
-    mutate,
-  } = useSWR(`api/inventory/item/${inventoryId}/details`, fetcher);
+  const { data: inventoryItemResponse = { data: [] } } = useSWR(
+    `api/inventory/item/${inventoryId}/details`,
+    fetcher
+  );
   console.log("inventoryItemResponse: ", inventoryItemResponse);
   const stats = inventoryItemResponse?.data?.[0] || {};
   return (

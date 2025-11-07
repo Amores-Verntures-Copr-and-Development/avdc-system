@@ -8,30 +8,15 @@ import { Supplier } from "@/types/supplier";
 import React, { useState } from "react";
 import CreateSupplierModal from "./component/CreateSupplierModal";
 import Button from "@/components/shared/Button";
-import {
-  Eye,
-  FileText,
-  Locate,
-  MailIcon,
-  Map,
-  Package,
-  Phone,
-  Pin,
-  PinIcon,
-  Printer,
-  Store,
-  Trash2,
-} from "lucide-react";
+import { Eye, MailIcon, Package, Phone, Pin, Trash2 } from "lucide-react";
 import { CreateSupplierDto } from "@/dtos/supplier.dto";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
-import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import IconButton from "@/components/shared/IconButton";
 import ViewSupplierModal from "./component/ViewSupplierModal";
-import Popup from "@/components/shared/Popup";
 
 const supplierColumns: Column<Supplier>[] = [
   { name: "Supplier Code", key: "suppCode" },
@@ -54,7 +39,7 @@ const SupplierPage = () => {
   const { user } = useSession();
   const {
     data: itemResponse = { data: [] },
-    isLoading: loading,
+
     mutate,
   } = useSWR<{ data: Supplier[] }>(`/api/suppliers/`, fetcher);
   const handleCreateSupplier = async (data: CreateSupplierDto) => {
@@ -140,15 +125,14 @@ const SupplierPage = () => {
         onClose={function (): void {
           setShowCreateSupplier(false);
         }}
-        children={
-          <CreateSupplierModal
-            onSubmit={handleCreateSupplier}
-            onCancel={function (): void {
-              setShowCreateSupplier(false);
-            }}
-          />
-        }
-      />
+      >
+        <CreateSupplierModal
+          onSubmit={handleCreateSupplier}
+          onCancel={function (): void {
+            setShowCreateSupplier(false);
+          }}
+        />
+      </Modal>
       <Modal
         leadingIcon={Package}
         className="bg-white"
@@ -178,17 +162,16 @@ const SupplierPage = () => {
             </div>
           </div>
         }
-        children={
-          <ViewSupplierModal
-            // onSubmit={handleCreateSupplier}
-            // onCancel={function (): void {
-            //   setShowViewSupplier(false);
-            // }}
-            data={selectedSupplier || null}
-            user={user}
-          />
-        }
-      />
+      >
+        <ViewSupplierModal
+          // onSubmit={handleCreateSupplier}
+          // onCancel={function (): void {
+          //   setShowViewSupplier(false);
+          // }}
+          data={selectedSupplier || null}
+          user={user}
+        />
+      </Modal>
     </PageLayout>
   );
 };

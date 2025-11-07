@@ -31,7 +31,6 @@ export const postRequest = async (data: CreateRequestFormDto) => {
 export const getRequest = async ({ storeId }: { storeId?: number }) => {
   try {
     const data = await getRequestOrders({ storeId });
-    console.log("Data: ", []);
     return {
       success: true,
       message: "Request fetched successfully",

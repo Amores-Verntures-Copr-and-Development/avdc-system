@@ -19,6 +19,16 @@ const eslintConfig = [
       "build/**",
       "next-env.d.ts",
     ],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "jsx-a11y/alt-text": [
+        "error",
+        {
+          elements: ["img"],
+          components: ["Image"],
+        },
+      ], // ⛔️ Disables the rule globally
+    },
   },
 ];
 

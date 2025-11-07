@@ -5,7 +5,6 @@ import {
   CreatePurchaseOrderItemDto,
 } from "@/dtos/purchase.dto";
 import {
-  DisplayRequestItems,
   DisplayRequestOrderDto,
   DisplayTotalOrderItem,
   DisplayGroupedRequestItem,
@@ -14,7 +13,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { XCircle, ClipboardCheck, Send } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 interface CreatePOModalPros {
@@ -32,11 +31,9 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
 }) => {
   const [orderItem, setOrderItem] = useState<DisplayTotalOrderItem[]>([]);
 
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayGroupedRequestItem[] }>(
+  const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
+    data: DisplayGroupedRequestItem[];
+  }>(
     user
       ? `/api/requests/request-items-total?ids=${data
           .map((item) => item.requestId)

@@ -14,7 +14,6 @@ interface AddItemToSupplierModalProps {
 }
 
 const AddItemToSupplierModal: React.FC<AddItemToSupplierModalProps> = ({
-  data,
   onSubmit,
   onCancel,
 }) => {

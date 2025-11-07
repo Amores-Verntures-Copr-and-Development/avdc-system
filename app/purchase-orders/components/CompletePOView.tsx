@@ -5,17 +5,15 @@ import {
   DisplayRequisitionWithItems,
   RequestItemsCombine,
 } from "@/dtos/purchase.dto";
-import { PurchaseOrderItems } from "@/types/purchaseOrders";
+
 import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import {
   PrinterIcon,
   Edit,
-  Send,
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  DownloadCloud,
   FileText,
   Clock,
   PackageCheckIcon,
@@ -23,6 +21,7 @@ import {
   Truck,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
@@ -36,7 +35,6 @@ interface CompletePOViewProps {
 
 const CompletePOView: React.FC<CompletePOViewProps> = ({
   data,
-  onFulfillRequest,
   onMarkDelivered,
 }) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
@@ -44,9 +42,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   );
   const [requestItems, setRequestItems] =
     useState<DisplayRequisitionWithItems[]>(data);
-  const [editedData, setEditedData] = useState<{
-    [key: string]: RequestItemsCombine[];
-  }>({});
+
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   console.log("RequestItems: ", data);
@@ -121,22 +117,48 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   }, [data]);
 
   const handleAutoFillAll = (requestNo: string) => {
+    let inssuficientCount = 0;
+
+    // First, calculate the count
+    const currentItems = requestItems.find(
+      (items) => items.requestNo === requestNo
+    );
+    currentItems?.requestItemsData?.forEach((item) => {
+      if (item.reqItemQuantity > (item.warehouseInv || 0)) {
+        inssuficientCount++;
+      }
+    });
+
+    // Then update state
     setRequestItems((prev) =>
       prev.map((items) =>
         items.requestNo === requestNo
           ? {
               ...items,
-              requestItemsData: items.requestItemsData?.map((item) => ({
-                ...item,
-                reqItemTransfer: item.reqItemQuantity,
-              })),
+              requestItemsData: items.requestItemsData?.map((item) => {
+                if (item.reqItemQuantity > (item.warehouseInv || 0)) {
+                  return {
+                    ...item,
+                  };
+                } else {
+                  return {
+                    ...item,
+                    reqItemTransfer: item.reqItemQuantity,
+                  };
+                }
+              }),
             }
           : items
       )
     );
+
+    if (inssuficientCount > 0) {
+      toast.error(
+        `${inssuficientCount} items are not fulfilled due to out of stock!`
+      );
+    }
   };
   const handleMarkPaid = async (data: DisplayRequisitionWithItems) => {
-    console.log("DisplayRequisitionWithItems: ", data);
     const newRequestItems: RequestItems[] = data.requestItemsData.map(
       (items) => ({
         ...items,
@@ -148,6 +170,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         requestItems: newRequestItems,
       },
     ];
+
     if (onMarkDelivered) {
       const success = await onMarkDelivered(newRequest);
       if (success) {
@@ -213,7 +236,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       <div>
                         <IconButton
                           onClick={function (): void {
-                            throw new Error("Function not implemented.");
+                            setIsProcessing(reqData.requestNo);
                           }}
                           label={`Fulfill ${row.itemName}`}
                           icon={<Check size={18} />}

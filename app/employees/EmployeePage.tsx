@@ -26,7 +26,7 @@ const EmployeePage = () => {
               <div>
                 <IconButton
                   onClick={function (): void {
-                    throw new Error("Function not implemented.");
+                    console.log(row);
                   }}
                   label={"Edit"}
                   bg={"gray"}

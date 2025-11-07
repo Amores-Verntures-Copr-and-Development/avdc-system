@@ -1,10 +1,7 @@
 import Button from "@/components/shared/Button";
 import Table, { Column } from "@/components/shared/Table";
-import {
-  DisplayPOItemsSupplier,
-  DisplayPurchaseOrderItemsDto,
-} from "@/dtos/purchase.dto";
-import { PurchaseOrderItems } from "@/types/purchaseOrders";
+import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
+import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { formatPeso } from "@/utils/formatPeso";
 import {
   Check,
@@ -20,13 +17,32 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import StoreCardInSupplier from "./_components/StoreCardInSupplier";
+import useSWR from "swr";
+import { fetcher } from "@/utils/fetcher";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 interface ApprovedPOViewProps {
+  poData: PurchaseOrders | null;
   data: DisplayPOItemsSupplier[];
   onSendPO: (data: DisplayPOItemsSupplier[]) => Promise<boolean>;
   onSendPOItem: (data: PurchaseOrderItems[]) => Promise<boolean>;
   loading: boolean;
 }
+export interface StoreSupplierDetails {
+  storeId: number;
+  storeName: string;
+  items: Items[];
+}
+interface Items {
+  itemName: string;
+  itemUnit: string;
+  poItemOrderedQty: number;
+  unitPrice: number;
+  poItemStatus: string;
+  isSent: number;
+}
+
 const columns: Column<PurchaseOrderItems>[] = [
   {
     name: "#",
@@ -42,8 +58,14 @@ const columns: Column<PurchaseOrderItems>[] = [
     key: "unitPrice",
   },
   {
+    name: "itemUnit",
+    key: "itemUnit",
+  },
+  {
     name: "Quantity",
     key: "poItemOrderedQty",
+    selector: (row) =>
+      formatQuantityByUnit(row.poItemOrderedQty, row.itemUnit ?? ""),
   },
   {
     name: "Total",
@@ -56,9 +78,23 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   onSendPO,
   onSendPOItem,
   loading,
+  poData,
 }) => {
   const [expandedSupplier, setExpandedSupplier] = useState<number | null>(null);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
+  const [isView, setIsView] = useState<"all" | "store">("all");
+  const { data: itemResponse = { data: [] } } = useSWR<{
+    data: StoreSupplierDetails[];
+  }>(
+    isView === "store" && expandedSupplier
+      ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier}`
+      : null,
+    fetcher,
+    {
+      keepPreviousData: true, // This keeps the data when the key becomes null
+      revalidateOnFocus: false, // Optional: prevent refetch on window focus
+    }
+  );
   const handleSendBySupplier = async (
     poItems: PurchaseOrderItems[],
     suppId: number
@@ -125,6 +161,47 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                 <span>Phone: {data.suppPhone}</span>
                               )}
                             </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center">
+                          <div>
+                            {" "}
+                            <Button
+                              isRounded={false}
+                              size="xs"
+                              onClick={function (): void {
+                                setIsView("all");
+                              }}
+                              color={
+                                isView === "all" &&
+                                expandedSupplier === data.suppId
+                                  ? "primary"
+                                  : "nocolor"
+                              }
+                              label="All"
+                              icon={<Edit size={15} />}
+                              className="font-semibold text-gray-700 text-xs"
+                            />
+                          </div>
+                          <div>
+                            {" "}
+                            <Button
+                              isFocus
+                              isRounded={false}
+                              size="xs"
+                              onClick={function (): void {
+                                setIsView("store");
+                              }}
+                              color={
+                                isView === "store" &&
+                                expandedSupplier === data.suppId
+                                  ? "primary"
+                                  : "nocolor"
+                              }
+                              label="Store"
+                              icon={<Edit size={15} />}
+                              className="font-semibold text-gray-700 text-xs"
+                            />
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -270,12 +347,24 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                     </div>
                     {expandedSupplier === data.suppId && (
                       <div className="overflow-x-auto">
-                        <Table
-                          textSize="xs"
-                          columns={columns}
-                          data={data.items}
-                          isRounded={false}
-                        />
+                        {isView === "all" ? (
+                          <Table
+                            textSize="xs"
+                            columns={columns}
+                            data={data.items}
+                            isRounded={false}
+                            maxHeight="h-full"
+                          />
+                        ) : (
+                          <div className="flex p-2 gap-4">
+                            {itemResponse.data.map((data) => (
+                              <StoreCardInSupplier
+                                data={data}
+                                key={data.storeId}
+                              />
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

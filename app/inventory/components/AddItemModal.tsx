@@ -2,13 +2,9 @@ import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import DropDownSelectCategory from "@/components/shared/DropDownSelectCategory";
 import Input from "@/components/shared/Input";
-import Table from "@/components/shared/Table";
 import Textarea from "@/components/shared/TextArea";
 import { unitOptions } from "@/constants/dropdown-options";
-import {
-  CreateFirstItem,
-  CreateInventoryWithItemDto,
-} from "@/dtos/inventory.dto";
+import { CreateFirstItem } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
@@ -19,11 +15,7 @@ interface AddItemModalProps {
   user?: UserAuth | null;
 }
 
-const AddItemModal: React.FC<AddItemModalProps> = ({
-  onCancel,
-  onSubmit,
-  user,
-}) => {
+const AddItemModal: React.FC<AddItemModalProps> = ({ onCancel, onSubmit }) => {
   const [selection, setSelection] = useState<"create" | "warehouse">("create");
   const [inventoryForm, setInventoryForm] = useState<CreateFirstItem>({
     inventoryId: 0,
@@ -228,7 +220,3 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
 };
 
 export default AddItemModal;
-
-const addItemTable = () => {
-  return <Table columns={[]} data={[]} />;
-};

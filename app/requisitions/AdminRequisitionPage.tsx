@@ -8,7 +8,7 @@ import Table, { Column, TableHandle } from "@/components/shared/Table";
 import { DisplayRequestOrderDto } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import { Eye, FileText, Pencil, Plus, Printer, Trash } from "lucide-react";
+import { Eye, FileText, Printer } from "lucide-react";
 import React, { useState, useRef } from "react";
 import useSWR from "swr";
 import CreatePOModal from "./components/CreatePOModal";
@@ -16,6 +16,7 @@ import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
 import toast from "react-hot-toast";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import PageLayout from "@/components/shared/PageLayout";
+import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
@@ -32,7 +33,21 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     selector: (row) => formatDateToWords(row.requestUpdatedAt),
   },
   { name: "Store", key: "storeName" },
-  { name: "Status", key: "requestStatus" },
+  {
+    name: "Status",
+    key: "requestStatus",
+    selector: (row) => {
+      const { status, bgClass, textClass, borderClass } =
+        getRequestStatusFormat(row.requestStatus);
+      return (
+        <span
+          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+        >
+          {status}
+        </span>
+      );
+    },
+  },
 ];
 
 const AdminRequisitionPage = () => {
@@ -46,14 +61,9 @@ const AdminRequisitionPage = () => {
   const [selectedtedRows, setSelectedRows] =
     useState<DisplayRequestOrderDto[]>();
   const [selectedtedRow, setSelectedRow] = useState<DisplayRequestOrderDto>();
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayRequestOrderDto[] }>(
-    user ? `/api/requests/request-orders/` : null,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+    data: DisplayRequestOrderDto[];
+  }>(user ? `/api/requests/request-orders/` : null, fetcher);
 
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
@@ -80,6 +90,7 @@ const AdminRequisitionPage = () => {
       setShowCreatePO(false);
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -123,6 +134,7 @@ const AdminRequisitionPage = () => {
               <IconButton
                 onClick={() => {
                   setSelectedRow(row);
+                  console.log(selectedtedRow);
                 }}
                 label={"View"}
                 bg={"gray"}
@@ -158,18 +170,17 @@ const AdminRequisitionPage = () => {
         onClose={function (): void {
           setShowCreatePO(false);
         }}
-        children={
-          <CreatePOModal
-            data={selectedtedRows ?? []}
-            user={user}
-            onCancel={() => {
-              setShowCreatePO(false);
-            }}
-            onSubmit={handleCreatePurchaseOrder}
-          />
-        }
         size="xl"
-      />
+      >
+        <CreatePOModal
+          data={selectedtedRows ?? []}
+          user={user}
+          onCancel={() => {
+            setShowCreatePO(false);
+          }}
+          onSubmit={handleCreatePurchaseOrder}
+        />
+      </Modal>
     </PageLayout>
   );
 };

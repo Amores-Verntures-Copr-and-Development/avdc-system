@@ -301,10 +301,46 @@ export const selectPurchaseOrderItemsSupplier = async (poId: number) => {
                 poi.*,
                 (poi.poItemOrderedQty * poi.unitPrice) totalPrice,
                 s.*, 
-                i.itemName
+                i.itemName,
+                i.itemUnit
               FROM PurchaseOrderItems poi
               LEFT JOIN Suppliers s ON s.suppId = poi.suppId
               LEFT JOIN Items i ON i.itemId = poi.itemId WHERE poi.poId = ?`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [poId]);
+  return rows;
+};
+
+export const selectStoreItemsBySupplierAndPOId = async ({
+  suppId,
+  poId,
+}: {
+  poId: number;
+  suppId: number;
+}) => {
+  const pool = await getDBConnection();
+  const sql = `
+SELECT 
+    s.storeId,
+    s.storeName,
+    COUNT(poi.poItemId) as itemCount,
+    JSON_ARRAYAGG(
+        JSON_OBJECT(
+            'itemName', i.itemName,
+            'itemUnit', i.itemUnit,
+            'poItemOrderedQty', poi.poItemOrderedQty,
+				'unitPrice',poi.unitPrice,
+				'poItemStatus',poi.poItemStatus,
+				'isSent',poi.isSent
+        )
+    ) as items
+FROM PurchaseOrderItems poi
+LEFT JOIN Items i ON i.itemId = poi.itemId
+LEFT JOIN PurchaseOrderRequest por ON poi.poId = por.poId
+LEFT JOIN RequestOrders ro ON por.requestId = ro.requestId
+LEFT JOIN Stores s ON ro.storeId = s.storeId
+WHERE poi.suppId = ? AND poi.poId = ?
+GROUP BY s.storeId, s.storeName;
+`;
+  const [rows] = await pool.execute(sql, [suppId, poId]);
   return rows;
 };

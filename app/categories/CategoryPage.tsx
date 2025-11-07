@@ -25,7 +25,7 @@ const CategoryPage = () => {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const {
     data: response = { data: [] },
-    isLoading,
+
     mutate,
   } = useSWR<{ data: DisplayCategoryDto[] }>("/api/categories/", fetcher);
   const handleSubmit = async (data: CreateCategoryDto): Promise<boolean> => {
@@ -46,6 +46,7 @@ const CategoryPage = () => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add user.");
       return false;
     }
@@ -91,7 +92,7 @@ const CategoryPage = () => {
               />
               <IconButton
                 onClick={function (): void {
-                  throw new Error("Function not implemented.");
+                  console.log(row);
                 }}
                 label={"Delete"}
                 bg={"red"}
@@ -108,15 +109,14 @@ const CategoryPage = () => {
         onClose={() => {
           setShowAddCategoryModal(false);
         }}
-        children={
-          <AddCategoryModal
-            onCancel={() => {
-              setShowAddCategoryModal(false);
-            }}
-            onSubmit={handleSubmit}
-          />
-        }
-      />
+      >
+        <AddCategoryModal
+          onCancel={() => {
+            setShowAddCategoryModal(false);
+          }}
+          onSubmit={handleSubmit}
+        />
+      </Modal>
     </PageLayout>
   );
 };

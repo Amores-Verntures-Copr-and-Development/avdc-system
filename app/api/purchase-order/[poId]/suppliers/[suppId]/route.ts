@@ -1,18 +1,20 @@
-import { getStoreByPOId } from "@/controllers/StoreControllers";
+import { getStorePOItemsSupplierById } from "@/controllers/PurchaseOrderController";
 import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ poId: string }> }
+  { params }: { params: Promise<{ suppId: string; poId: string }> }
 ) {
   try {
-    const slug = (await params).poId;
-    const poId = Number(slug);
-    const res = await getStoreByPOId(poId);
+    const slug1 = (await params).poId;
+    const poId = Number(slug1);
+    const slug2 = (await params).suppId;
+    const suppId = Number(slug2);
+    const res = await getStorePOItemsSupplierById(poId, suppId);
 
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
+      console.error(res.message);
       throw new Error(`${res.error}`);
     }
 

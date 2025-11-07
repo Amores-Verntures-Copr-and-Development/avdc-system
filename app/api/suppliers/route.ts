@@ -1,5 +1,4 @@
 import { addSupplier, getSupplier } from "@/controllers/SupplierController";
-import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
 import { CreateSupplierDto } from "@/dtos/supplier.dto";
 import { NextRequest, NextResponse } from "next/server";
 

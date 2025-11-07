@@ -45,7 +45,7 @@ const AddProductModal = () => {
               <DropDownSearchItem
                 sizes="xs"
                 onSelect={function (item: ItemInterface): void {
-                  throw new Error("Function not implemented.");
+                  console.log(item);
                 }}
                 label="Search item"
               />{" "}
@@ -70,11 +70,7 @@ const AddProductModal = () => {
               sizes="xs"
               label="Category"
               value={undefined}
-              onChange={function (
-                e: React.ChangeEvent<HTMLSelectElement>
-              ): void {
-                throw new Error("Function not implemented.");
-              }} //   value={`${inventoryForm.categoryId}`}
+              //   value={`${inventoryForm.categoryId}`}
               //   onChange={handleItemChange}
             />
           </div>
@@ -87,11 +83,6 @@ const AddProductModal = () => {
               //   value={inventoryForm.itemUnit}
               //   options={unitOptions}
               value={undefined}
-              onChange={function (
-                e: React.ChangeEvent<HTMLSelectElement>
-              ): void {
-                throw new Error("Function not implemented.");
-              }}
               options={[]}
             />
             <Input

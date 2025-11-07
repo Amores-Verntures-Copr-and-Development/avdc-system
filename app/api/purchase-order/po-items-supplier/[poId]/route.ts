@@ -40,13 +40,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  _request: Request,
-  { params }: { params: Promise<{ poId: string }> }
-) {
+export async function PUT(_request: Request) {
   try {
-    const slug = (await params).poId;
-    const poId = Number(slug);
     const po = await _request.json();
     const { data, controller } = po;
     const res = await updatePurchaseOrder(controller, data);

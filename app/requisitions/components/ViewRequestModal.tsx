@@ -1,4 +1,3 @@
-import PDFReview from "@/components/pdf/PDFReview";
 import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
@@ -8,19 +7,13 @@ import {
   DisplayRequestOrderDto,
   RequestOrderPdf,
 } from "@/dtos/request.dto";
-import { Request, RequestItems } from "@/types/request";
+import { Request } from "@/types/request";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
+
 import { PDFViewer } from "@react-pdf/renderer";
-import {
-  Check,
-  CheckLine,
-  Clock,
-  Download,
-  Pencil,
-  Printer,
-} from "lucide-react";
+import { CheckLine, Clock, FileText, Pencil } from "lucide-react";
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -74,7 +67,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       name: "Received",
       key: "reqItemReceived",
       editable: (row) =>
-        row.reqItemStatus === "delivered" &&
+        row.reqItemStatus === "delivered" ||
         selectedReq?.requestStatus === "delivered",
       inputType: "number",
     },
@@ -110,6 +103,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to update Inventory.");
       return false;
     }
@@ -144,10 +138,12 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       mutateRequest();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to update Inventory.");
       return false;
     }
   };
+
   const handleDownloadPDF = () => {
     const pdfData: RequestOrderPdf = {
       requestItems: itemResponse.data,
@@ -158,12 +154,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         requestId: selectedReq?.requestId,
         requestNo: selectedReq?.requestNo,
         requestCreatedAt: selectedReq?.requestCreatedAt,
+        requestStatus: selectedReq?.requestStatus,
       },
+      requestedBy: selectedReq?.requestedByName ?? "",
     };
     setPdfData(pdfData);
   };
   return (
-    <div className="flex-col flex">
+    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       {selectedReq?.requestStatus === "pending" ||
       selectedReq?.requestStatus === "in_progress" ||
       selectedReq?.requestStatus === "approved" ? (
@@ -194,8 +192,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           Note: This request has been cancelled. No further action is required.
         </span>
       )}
-      <div className="p-4">
+      <div className="flex-1 overflow-auto p-4">
         <Table
+          maxHeight="h-full"
           isRounded={false}
           updateData={handleDataUpdate}
           columns={
@@ -210,7 +209,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           loading={loading}
         />
       </div>
-      <div className="border-t-1 border-gray-300 flex justify-between p-4 gap-4 items-center ">
+      <div className="border-t border-gray-300 flex justify-between p-4 gap-4 items-center mt-auto">
         <span className="flex items-center">
           <Clock size={15} />{" "}
           <span className="text-xs ml-2">
@@ -225,27 +224,26 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             <>
               <div>
                 <Button
-                  icon={<Download size={15} />}
+                  icon={<FileText size={15} />}
                   onClick={() => {
                     handleDownloadPDF();
                     setShowROPDF(true);
                   }}
                   size="sm"
-                  label="Download PDF"
+                  label="PDF"
                   className="text-xs font-semibold"
                   color="nocolor"
                 />
               </div>
-              <div>
+              {/* <div>
                 <Button
                   icon={<Printer size={15} />}
-                  onClick={handleReceivedRO}
                   size="sm"
                   label="Print"
                   className="text-xs font-semibold"
                   color="nocolor"
                 />
-              </div>
+              </div> */}
               <div>
                 <Button
                   icon={<Pencil size={15} />}
@@ -293,12 +291,13 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         onClose={function (): void {
           setShowROPDF(false);
         }}
-        children={
-          <PDFViewer width="100%" height="100%">
-            <RequestOrderPDF data={pdfData ?? null} />
-          </PDFViewer>
-        }
-      />
+        title="Request Order PDF"
+      >
+        {" "}
+        <PDFViewer width="100%" height="100%">
+          <RequestOrderPDF data={pdfData ?? null} />
+        </PDFViewer>
+      </Modal>
     </div>
   );
 };

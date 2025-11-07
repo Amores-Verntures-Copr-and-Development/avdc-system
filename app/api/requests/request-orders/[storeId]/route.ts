@@ -1,14 +1,14 @@
 import { getRequest, updateRequest } from "@/controllers/RequestController";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: number }> }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const slug = (await params).storeId;
 
-    const res = await getRequest({ storeId: slug });
+    const res = await getRequest({ storeId: Number(slug) });
     if (!res.success) {
       console.log(res.error);
       throw new Error(res.message || "Failed to create request");
@@ -31,16 +31,10 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  _request: Request,
-  { params }: { params: Promise<{ poId: string }> }
-) {
+export async function PUT(_request: Request) {
   try {
-    const slug = (await params).poId;
-    const poId = Number(slug);
     const data = await _request.json();
     const { items, controller } = data;
-    console.log("Data1: ", data);
     const res = await updateRequest(controller, items);
 
     if (!res.success) {

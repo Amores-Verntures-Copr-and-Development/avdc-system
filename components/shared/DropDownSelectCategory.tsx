@@ -8,7 +8,7 @@ interface DropDownSelectCategoryProps {
   categoryType: "item" | "product";
   name: string;
   value: string | undefined;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   label?: string;
   placeholder?: string;
   required?: boolean;

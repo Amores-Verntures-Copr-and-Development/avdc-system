@@ -5,11 +5,11 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table from "@/components/shared/Table";
-import { Edit, Plus, Trash, Trash2 } from "lucide-react";
-import React, { use, useState } from "react";
+import { Edit, Plus, Trash2 } from "lucide-react";
+import React, { useState } from "react";
 import AddUserModal from "./components/AddUserModal";
 import { CreateUserDto, DisplayUserDto } from "@/dtos/user.dto";
-import { UserInterface } from "@/types/users";
+
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import toast from "react-hot-toast";
@@ -66,6 +66,7 @@ const UserPage = () => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add user.");
       return false;
     }
@@ -100,7 +101,7 @@ const UserPage = () => {
             <div className="flex justify-center gap-2">
               <IconButton
                 onClick={function (): void {
-                  throw new Error("Function not implemented.");
+                  console.log(row);
                 }}
                 label={"Edit"}
                 bg={"gray"}
@@ -126,16 +127,15 @@ const UserPage = () => {
         onClose={() => {
           setShowAddUserModal(false);
         }}
-        children={
-          <AddUserModal
-            user={user}
-            onSubmit={handleAddUser}
-            onCancel={() => {
-              setShowAddUserModal(false);
-            }}
-          />
-        }
-      />
+      >
+        <AddUserModal
+          user={user}
+          onSubmit={handleAddUser}
+          onCancel={() => {
+            setShowAddUserModal(false);
+          }}
+        />
+      </Modal>
     </PageLayout>
   );
 };

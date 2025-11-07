@@ -1,7 +1,6 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { LucideIcon, X } from "lucide-react";
-import { Icon } from "next/dist/lib/metadata/types/metadata-types";
 
 interface ModalProps {
   isOpen: boolean;
@@ -25,7 +24,6 @@ const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   title,
-  header,
   footer,
   children,
   subtitle,

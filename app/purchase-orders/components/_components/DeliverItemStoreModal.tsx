@@ -1,5 +1,4 @@
 import Button from "@/components/shared/Button";
-import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
 import Table, { Column } from "@/components/shared/Table";
 import {
   DeliverItemsToStore,
@@ -34,14 +33,13 @@ const DeliverItemStoreModal = ({
   poId,
 }: DeliverItemStoreModalProps) => {
   const [store, setStore] = useState<StoreWithRequest | null>(null);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: any }>(`api/purchase-order/${poId}/stores`, fetcher);
+  const { data: itemResponse = { data: [] } } = useSWR<{ data: any }>(
+    `api/purchase-order/${poId}/stores`,
+    fetcher
+  );
   const handleSubmit = async () => {
     const deliverData: DeliverItemsToStore = {
-      poId:poId,
+      poId: poId,
       storeId: store?.storeId ?? 0,
       items: data?.items ?? [],
       requestId: store?.requestId ?? 0,

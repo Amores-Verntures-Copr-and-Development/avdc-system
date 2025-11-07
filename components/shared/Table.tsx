@@ -7,7 +7,6 @@ import React, {
   useRef,
 } from "react";
 import Pagination from "./Pagintation";
-import DatePicker from "react-datepicker";
 import SearchBar from "./SearchBar";
 
 export interface Column<T = any> {
@@ -86,7 +85,7 @@ const TableInner = <T extends Record<string, any>>(
 ) => {
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [editableData, setEditableData] = useState<T[]>(data);
-  const [editingRow, setEditingRow] = useState<number | null>(null);
+
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -197,7 +196,7 @@ const TableInner = <T extends Record<string, any>>(
     const errorKey = `${rowIndex}-${column.key}`;
     const hasError = errors.has(errorKey);
 
-    if (editable && (editMode === "inline" || editingRow === rowIndex)) {
+    if (editable && editMode === "inline") {
       if (column.inputType === "select") {
         // ✅ handle dynamic or static options
         const opts =

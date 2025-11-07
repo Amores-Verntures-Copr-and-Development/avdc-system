@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ suppId: number }> }
+  { params }: { params: Promise<{ suppId: string }> }
 ) {
   try {
     const slug = (await params).suppId;

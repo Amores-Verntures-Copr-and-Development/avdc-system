@@ -5,10 +5,9 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { InventoryInterface } from "@/types/inventory";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
-import { Eye, FileText, Pencil, Printer, Trash } from "lucide-react";
+import { Eye, FileText, Printer } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 import ShowPOModal from "./components/ShowPOModal";
@@ -23,12 +22,8 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
       <span className="text-xs font-semibold">{row.poNumber}</span>
     ),
   },
-  {
-    name: "Create At",
-    key: "poCreatedAt",
-    selector: (row) => formatDateToWords(row.poCreatedAt),
-  },
-  { name: "Created By", key: "poCreatedBy" },
+
+  { name: "Created By", key: "poCreatedByName" },
   {
     name: "Status",
     key: "poStatus",
@@ -45,16 +40,18 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
       );
     },
   },
+  {
+    name: "Create At",
+    key: "poCreatedAt",
+    selector: (row) => formatDateToWords(row.poCreatedAt),
+  },
 ];
 
 const PurchaseOrderPage = () => {
   const [showViewPO, setShowViewPO] = useState(false);
   const [selectedPo, setSelecetedPo] = useState<PurchaseOrders>();
-  const {
-    data: inventoryResponse = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
+  const { data: inventoryResponse = { data: [] }, mutate: mutateInventory } =
+    useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
   return (
     <PageLayout className="p-4 gap-2">
       <PageHeader title={"Purchase Orders"} subtitle="Manage purchase orders" />
@@ -107,8 +104,9 @@ const PurchaseOrderPage = () => {
           onClose={function (): void {
             setShowViewPO(false);
           }}
-          children={<ShowPOModal data={selectedPo ?? null} mutate={mutateInventory} />}
-        />
+        >
+          <ShowPOModal data={selectedPo ?? null} mutate={mutateInventory} />
+        </Modal>
       </div>
     </PageLayout>
   );
@@ -117,7 +115,9 @@ const PurchaseOrderPage = () => {
 export default PurchaseOrderPage;
 
 const renderModalDetails = (selectedPo?: PurchaseOrders) => {
-  const { status, bgClass, textClass } = getPOStatusInfo(selectedPo?.poStatus!); // you can define variables here
+  const { status, bgClass, textClass } = getPOStatusInfo(
+    selectedPo?.poStatus ?? "pending"
+  ); // you can define variables here
   return (
     <div className="flex justify-between items-center w-full">
       <div className="flex flex-col">

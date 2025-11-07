@@ -1,3 +1,4 @@
+import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
 import React from "react";
 import {
   Page,
@@ -7,10 +8,13 @@ import {
   StyleSheet,
   Image,
 } from "@react-pdf/renderer";
-import { RequestOrderPdf } from "@/dtos/request.dto";
-import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import { PurchaseOrders } from "@/types/purchaseOrders";
+
+interface POSupplierItemsProps {
+  data: DisplayPOItemsSupplier;
+  poData: PurchaseOrders | null;
+}
 
 const styles = StyleSheet.create({
   page: { padding: 30, fontSize: 10, fontFamily: "Helvetica" },
@@ -30,12 +34,10 @@ const styles = StyleSheet.create({
   },
   body: {
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    width: "100%",
+    justifyContent: "space-between",
   },
   supplierSection: {
-    flex: 1, // ← This ensures equal distribution
-    alignItems: "flex-start", // Align content to left within each section
+    width: "48%",
   },
   infoSection: {
     width: "48%",
@@ -107,12 +109,10 @@ const styles = StyleSheet.create({
   },
 });
 
-interface RequestOrderPFGProps {
-  data: RequestOrderPdf | null;
-}
 const ITEMS_PER_PAGE = 30;
-const TWO_COLUMN_THRESHOLD = 20;
-const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
+const TWO_COLUMN_THRESHOLD = 15;
+
+const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
   const chunkItems = (items: any[], chunkSize: number) => {
     const chunks = [];
     for (let i = 0; i < items.length; i += chunkSize) {
@@ -121,15 +121,15 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
     return chunks;
   };
 
-  const itemChunks = chunkItems(data?.requestItems || [], ITEMS_PER_PAGE);
+  const itemChunks = chunkItems(data?.items || [], ITEMS_PER_PAGE);
+
   const renderSingleColumnTable = (items: any[], startIndex: number = 0) => (
     <View>
       <View style={styles.tableHeader}>
         <Text style={styles.colIndex}>#</Text>
         <Text style={styles.colDesc}>Item</Text>
         <Text style={styles.colUnit}>Unit</Text>
-        <Text style={styles.colQty}>Order Qty</Text>
-        <Text style={styles.colQty}>Receive Qty</Text>
+        <Text style={styles.colQty}>Qty</Text>
       </View>
       {items.map((item, i) => (
         <View key={i} style={styles.row}>
@@ -137,17 +137,13 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit}</Text>
           <Text style={styles.colQty}>
-            {formatQuantityByUnit(item.reqItemQuantity, item.itemUnit ?? "")}
-          </Text>
-          <Text style={styles.twoColQty}>
-            {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-              ? ""
-              : formatQuantityByUnit(item.reqItemReceived, item.itemUnit ?? "")}
+            {formatQuantityByUnit(item.poItemOrderedQty, item.itemUnit ?? "")}
           </Text>
         </View>
       ))}
     </View>
   );
+
   const renderTwoColumnTable = (items: any[], startIndex: number = 0) => {
     const half = Math.ceil(items.length / 2);
     const leftItems = items.slice(0, half);
@@ -161,27 +157,18 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
             <Text style={styles.twoColIndex}>#</Text>
             <Text style={styles.twoColDesc}>Item</Text>
             <Text style={styles.twoColUnit}>Unit</Text>
-            <Text style={styles.twoColQty}>Order Qty</Text>
-            <Text style={styles.colQty}>Receive Qty</Text>
+            <Text style={styles.twoColQty}>Qty</Text>
           </View>
           {leftItems.map((item, i) => (
             <View key={i} style={styles.twoColRow}>
               <Text style={styles.twoColIndex}>{startIndex + i + 1}</Text>
               <Text style={styles.twoColDesc}>{item.itemName}</Text>
               <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
-              <Text style={styles.colQty}>
+              <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
-                  item.reqItemQuantity,
+                  item.poItemOrderedQty,
                   item.itemUnit ?? ""
                 )}
-              </Text>
-              <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-                  ? ""
-                  : formatQuantityByUnit(
-                      item.reqItemReceived,
-                      item.itemUnit ?? ""
-                    )}
               </Text>
             </View>
           ))}
@@ -193,8 +180,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
             <Text style={styles.twoColIndex}>#</Text>
             <Text style={styles.twoColDesc}>Item</Text>
             <Text style={styles.twoColUnit}>Unit</Text>
-            <Text style={styles.twoColQty}>Order Qty</Text>
-            <Text style={styles.colQty}>Receive Qty</Text>
+            <Text style={styles.twoColQty}>Qty</Text>
           </View>
           {rightItems.map((item, i) => (
             <View key={i} style={styles.twoColRow}>
@@ -203,19 +189,11 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
               </Text>
               <Text style={styles.twoColDesc}>{item.itemName}</Text>
               <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
-              <Text style={styles.colQty}>
+              <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
-                  item.reqItemQuantity,
+                  item.poItemOrderedQty,
                   item.itemUnit ?? ""
                 )}
-              </Text>
-              <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-                  ? ""
-                  : formatQuantityByUnit(
-                      item.reqItemReceived,
-                      item.itemUnit ?? ""
-                    )}
               </Text>
             </View>
           ))}
@@ -223,9 +201,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
       </View>
     );
   };
-  const { status } = getRequestStatusFormat(
-    data?.requestOrder.requestStatus ?? "pending"
-  );
+
   return (
     <Document>
       {itemChunks.map((items, pageIndex) => {
@@ -240,41 +216,26 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                 <View style={styles.header}>
                   <View style={styles.titleContainer}>
                     <Text style={{ fontSize: 17, fontWeight: "bold" }}>
-                      Request Order
+                      Purchase Order
                     </Text>
                     <Text style={{ fontSize: 13, fontWeight: "bold" }}>
-                      #{data?.requestOrder.requestNo}
+                      #{poData?.poNumber}
                     </Text>
                   </View>
-                  
                   <Image style={styles.logo} source={"/avdclogo.png"} />
                 </View>
 
                 <View style={styles.divider} />
 
+                {/* Body - Company & Supplier Info - Only on first page */}
                 <View style={styles.body}>
                   <View style={styles.supplierSection}>
                     <View style={styles.infoRow}>
-                      <Text style={styles.label}>Store</Text>
-                      <Text style={styles.value}>{data?.store.storeName}</Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Requestor</Text>
-                      <Text style={styles.value}>{data?.requestedBy}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.supplierSection}>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Date</Text>
-                      <Text style={styles.value}>
-                        {formatDateToWords(
-                          data?.requestOrder.requestCreatedAt ?? ""
-                        )}
-                      </Text>
-                    </View>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.label}>Status</Text>
-                      <Text style={styles.value}>{status}</Text>
+                      <Text style={styles.label}>Supplier</Text>
+                      <Text style={styles.value}>{data.suppName}</Text>
+                      <Text style={styles.label}>{data.suppPhone}</Text>
+                      <Text style={styles.label}>{data.suppAddress}</Text>
+                      <Text style={styles.label}>{data.suppEmail}</Text>
                     </View>
                   </View>
                 </View>
@@ -308,4 +269,4 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
   );
 };
 
-export default RequestOrderPDF;
+export default POSupplierItemsPDF;

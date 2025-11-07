@@ -1,17 +1,10 @@
 "use client";
 
-import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import React, { useEffect, useState } from "react";
-import ProductCard from "./components/ProductCard";
+
 import Button from "@/components/shared/Button";
-import {
-  Files,
-  History,
-  PhilippinePesoIcon,
-  Plus,
-  Receipt,
-} from "lucide-react";
+import { Files, History, PhilippinePesoIcon } from "lucide-react";
 import IconButton from "@/components/shared/IconButton";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { useSession } from "@/hooks/useSession";
@@ -21,14 +14,9 @@ import useSWR from "swr";
 import ProductContent from "./components/layout/ProductContent";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
-import Modal from "@/components/shared/Modal";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import { paymentMethodOptions } from "@/constants/dropdown-options";
-import {
-  CreateSaleDto,
-  CreateSaleItemDto,
-  CreateSalePaymentDto,
-} from "@/dtos/sales.dto";
+import { CreateSaleItemDto, CreateSalePaymentDto } from "@/dtos/sales.dto";
 import toast from "react-hot-toast";
 
 export interface OrderProduct extends DisplayProductsDtos {
@@ -37,18 +25,15 @@ export interface OrderProduct extends DisplayProductsDtos {
 
 const PosPage = () => {
   const [inventoryId, setInventoryId] = useState(0);
-  const { user, loading: userLoading, hasStore } = useSession();
-  const [showMakeOrder, setShowMakeOrder] = useState(false);
+  const { user, hasStore } = useSession();
   const [selectedProduct, setSelectedProduct] = useState<OrderProduct[]>([]);
   const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/${user?.storeId}`
     : `/api/inventory`;
-  const {
-    data: inventoryResponse = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<{ data: InventoryInterface[] }>(inventoryBaseUrl, fetcher);
+  const { data: inventoryResponse = { data: [] } } = useSWR<{
+    data: InventoryInterface[];
+  }>(inventoryBaseUrl, fetcher);
   useEffect(() => {
     if (
       inventoryResponse &&
@@ -58,14 +43,9 @@ const PosPage = () => {
       setInventoryId(inventoryResponse.data[0].inventoryId);
     }
   }, [inventoryResponse]);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayProductsDtos[] }>(
-    inventoryId ? `/api/products/${inventoryId}` : null,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+    data: DisplayProductsDtos[];
+  }>(inventoryId ? `/api/products/${inventoryId}` : null, fetcher);
   useEffect(() => {
     if (
       itemResponse &&
@@ -116,8 +96,8 @@ const PosPage = () => {
       )
     );
   };
-  const addQuantity = (product: DisplayProductsDtos) => {};
-  const removeQuantity = (product: DisplayProductsDtos) => {};
+  // const addQuantity = (product: DisplayProductsDtos) => {};
+  // const removeQuantity = (product: DisplayProductsDtos) => {};
   const getTotalAmount = () => {
     return selectedProduct.reduce((total, prod) => {
       const price = Number(prod.productPrice) || 0;
@@ -242,11 +222,6 @@ const PosPage = () => {
                 sizes="sm"
                 name={""}
                 value={undefined}
-                onChange={function (
-                  e: React.ChangeEvent<HTMLSelectElement>
-                ): void {
-                  throw new Error("Function not implemented.");
-                }}
                 options={paymentMethodOptions}
               />
               <IconButton
@@ -290,13 +265,6 @@ const PosPage = () => {
           </div>
         </div>
       </div>
-      <Modal
-        isOpen={false}
-        onClose={function (): void {
-          throw new Error("Function not implemented.");
-        }}
-        children={undefined}
-      />
     </PageLayout>
   );
 };

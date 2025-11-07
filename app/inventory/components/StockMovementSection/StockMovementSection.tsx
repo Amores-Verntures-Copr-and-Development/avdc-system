@@ -44,14 +44,9 @@ interface StockMovementSectionProps {
 const StockMovementSection: React.FC<StockMovementSectionProps> = ({
   inventoryId,
 }) => {
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayInventoryMovementDto[] }>(
-    inventoryId ? `/api/inventory/movement/${inventoryId}` : null,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
+    data: DisplayInventoryMovementDto[];
+  }>(inventoryId ? `/api/inventory/movement/${inventoryId}` : null, fetcher);
   return (
     <>
       <Table

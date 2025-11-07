@@ -1,9 +1,5 @@
-import {
-  addItemsSupplier,
-  addItemSupplier,
-  addSupplier,
-} from "@/controllers/SupplierController";
-import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
+import { addItemsSupplier } from "@/controllers/SupplierController";
+import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {

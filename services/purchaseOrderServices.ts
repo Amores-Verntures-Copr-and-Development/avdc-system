@@ -157,7 +157,7 @@ export async function findPOItemsSupplierById(poId: number) {
         itemName: row.itemName,
         unitPrice: row.unitPrice,
         poItemOrderedQty: row.poItemOrderedQty,
-
+        itemUnit: row.itemUnit,
         poItemReceivedQty: row.poItemReceivedQty,
         poItemStatus: row.poItemStatus,
         poId: row.poId,

@@ -1,6 +1,5 @@
 import PageHeader from "@/components/shared/PageHeader";
 import React from "react";
-import AdminDashboard from "./Admin/AdminDashboard";
 import OwnerDashboard from "./Owner/OwnerDashboard";
 import PageLayout from "@/components/shared/PageLayout";
 

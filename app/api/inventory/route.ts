@@ -1,6 +1,4 @@
 import { CreateInventoryDto } from "@/dtos/inventory.dto";
-import { CreateStoreDto } from "@/dtos/store.dto";
-import { CreateUserDto } from "@/dtos/user.dto";
 import {
   createInventory,
   getInventory,

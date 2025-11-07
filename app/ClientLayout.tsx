@@ -1,7 +1,7 @@
 "use client";
 
 import Sidebar from "@/components/layout/Sidebar";
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 
 import Header from "@/components/layout/Header";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,7 +34,9 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
       <Header />
       <div className="flex-1 min-h-0 flex flex-row">
         <Sidebar />
-        <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+        <Suspense fallback={<div>Loading...</div>}>
+          <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+        </Suspense>
       </div>
     </div>
   );

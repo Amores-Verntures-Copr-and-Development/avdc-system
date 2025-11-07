@@ -1,12 +1,10 @@
 import {
   createPurchaseOrder,
   getPurchaseOrder,
-  updateApprovedPurchaseOrder,
   updatePurchaseOrder,
 } from "@/controllers/PurchaseOrderController";
 import {
   CreatePurchaseOrderFormDto,
-  UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { NextRequest, NextResponse } from "next/server";
 

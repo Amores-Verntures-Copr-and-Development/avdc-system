@@ -1,6 +1,5 @@
-import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
-import Modal from "@/components/shared/Modal";
+
 import Popup from "@/components/shared/Popup";
 import Table, { Column } from "@/components/shared/Table";
 import {
@@ -9,17 +8,10 @@ import {
 } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import { ArrowLeft, Edit, Plus, PlusSquare, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 
-interface RequestItem {
-  id: number;
-  itemName: string;
-  description: string;
-  quantity: number;
-  received?: number;
-}
 interface RequestFormProps {
   selectedRow: DisplayRequestOrderDto | null;
   setSelectedRow: (data: DisplayRequestOrderDto | null) => void;
@@ -38,11 +30,9 @@ const RequestForm: React.FC<RequestFormProps> = ({
 }) => {
   const { user } = useSession();
   const [isShowAddModal, setIsShowAddModal] = useState(false);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayRequestItems[] }>(
+  const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
+    data: DisplayRequestItems[];
+  }>(
     user ? `/api/request/request-items/${selectedRow?.requestId}` : null,
     fetcher
   );

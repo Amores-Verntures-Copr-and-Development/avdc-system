@@ -34,8 +34,6 @@ export const selectCountSales = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const sql = `SELECT COUNT(*) as total FROM Sales WHERE storeId = ?`;
-  console.log("SQL: ", sql);
-  console.log("storeId: ", storeId);
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
   return rows[0];
 };

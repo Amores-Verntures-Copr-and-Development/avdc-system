@@ -2,7 +2,6 @@ import Table, { Column } from "@/components/shared/Table";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import React, { useEffect, useState } from "react";
-import { AddItemToStoreDto } from "../InventoryPage";
 import Button from "@/components/shared/Button";
 import { CreateProductDtos } from "@/dtos/products.dto";
 interface AddItemToProductModalProps {
@@ -16,7 +15,6 @@ const AddItemToProductModal = ({
   data,
   onCancel,
   onSubmit,
-  user,
 }: AddItemToProductModalProps) => {
   const [products, setProducts] = useState<CreateProductDtos[]>([]);
   const columns: Column<CreateProductDtos>[] = [

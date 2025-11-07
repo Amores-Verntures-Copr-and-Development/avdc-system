@@ -1,7 +1,5 @@
-import Table, { Column } from "@/components/shared/Table";
 import {
   DisplayPOItemsSupplier,
-  DisplayPurchaseOrderItemsDto,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
@@ -66,6 +64,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       mutateInventory();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -92,6 +91,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       mutateInventory();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to send to suppliers.");
       return false;
     }
@@ -126,6 +126,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       mutateInventory();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to send to suppliers.");
       return false;
     }
@@ -157,6 +158,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       mutateInventory();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -185,6 +187,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       mutateInventory();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to update Request.");
       return false;
     }
@@ -231,6 +234,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "approved" ? (
         <ApprovedPOView
+          poData={data}
           data={itemResponse.data}
           onSendPO={handleSendPO}
           onSendPOItem={handleSendPOItem}

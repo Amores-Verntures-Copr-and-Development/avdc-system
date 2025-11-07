@@ -54,7 +54,7 @@ export const PurchaseOrderPDF = (props: PurchaseOrderProps) => {
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Image style={styles.logo} src={props.logo} />
+          <Image style={styles.logo} source={props.logo} />
           <View>
             <Text style={styles.title}>{props.orderType}</Text>
             <Text>PO #: {props.poNumber}</Text>

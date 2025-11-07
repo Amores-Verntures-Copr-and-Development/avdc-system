@@ -8,6 +8,7 @@ import { processCreatePO } from "@/services/purchase/process-create-po";
 import { processDeliverItemToStore } from "@/services/purchase/process-deliver-po-store";
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
+import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
 import {
   findAllPurchaseOrder,
@@ -90,6 +91,27 @@ export const updateApprovedPurchaseOrder = async (
 export const getPOItemsSupplierById = async (poId: number) => {
   try {
     const data = await findPOItemsSupplierById(poId);
+    return {
+      success: true,
+      message: "Purchase Order fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch Purchase Order",
+      error: e,
+    };
+  }
+};
+
+export const getStorePOItemsSupplierById = async (
+  poId: number,
+  suppId: number
+) => {
+  try {
+    const data = await findStoreItemsBySupplierAndPOIds({ poId, suppId });
     return {
       success: true,
       message: "Purchase Order fetched successfully",

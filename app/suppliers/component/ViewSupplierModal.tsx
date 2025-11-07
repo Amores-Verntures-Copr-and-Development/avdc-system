@@ -5,7 +5,7 @@ import {
   CreateSupplierItemDto,
   DisplaySupplierItemDto,
 } from "@/dtos/supplier.dto";
-import { Supplier, SupplierItem } from "@/types/supplier";
+import { Supplier } from "@/types/supplier";
 import { PackagePlusIcon } from "lucide-react";
 import React, { useState } from "react";
 import AddItemToSupplierModal from "./AddItemToSupplierModal";
@@ -29,11 +29,9 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
   user,
 }) => {
   const [showAddItem, setShowAddItem] = useState(false);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplaySupplierItemDto[] }>(
+  const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+    data: DisplaySupplierItemDto[];
+  }>(
     data?.suppId ? `/api/suppliers/supplier-items/${data?.suppId}` : null,
     fetcher
   );
@@ -67,6 +65,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
       mutate();
       return true;
     } catch (e: any) {
+      console.log(e);
       toast.error("Failed to add item in supplier");
       return false;
     }
@@ -96,16 +95,15 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
         onClose={function (): void {
           setShowAddItem(false);
         }}
-        children={
-          <AddItemToSupplierModal
-            data={data}
-            onCancel={function (): void {
-              setShowAddItem(false);
-            }}
-            onSubmit={handleAddItemToSupplier}
-          />
-        }
-      />
+      >
+        <AddItemToSupplierModal
+          data={data}
+          onCancel={function (): void {
+            setShowAddItem(false);
+          }}
+          onSubmit={handleAddItemToSupplier}
+        />
+      </Popup>
     </div>
   );
 };

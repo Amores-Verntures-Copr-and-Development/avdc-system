@@ -14,7 +14,6 @@ import {
   PrinterIcon,
   Download,
   Check,
-  Send,
   ChevronUp,
   ChevronDown,
   Clock,
@@ -25,21 +24,7 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DeliverItemStoreModal from "./_components/DeliverItemStoreModal";
 import Popup from "@/components/shared/Popup";
-const dataPdf = {
-  logo: "/logo.png",
-  companyName: "Amores Ventures",
-  companyAddress: "123 Main St, Cebu City",
-  companyContact: "0917 123 4567 | info@amores.com",
-  orderType: "Purchase Order",
-  poNumber: "PO-001",
-  date: new Date().toLocaleDateString(),
-  supplierName: "Tech Supplies Co.",
-  supplierAddress: "Mandaue City, Cebu",
-  items: [
-    { description: "Printer Ink", quantity: 5, price: 250 },
-    { description: "A4 Paper", quantity: 10, price: 150 },
-  ],
-};
+
 const columns: Column<PurchaseOrderItems>[] = [
   { name: "Item Name", key: "itemName" },
   { name: "Price", key: "unitPrice" },
@@ -158,6 +143,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       toast.success(res.message);
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to process deliver.");
       return false;
     }
@@ -197,7 +183,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               return (
                 <div
                   key={supplier.suppId}
-                  className="border border-gray-300 rounded-lg overflow-hidden"
+                  className="border border-gray-300 rounded-lg overflow-auto"
                 >
                   <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 transition overflow-visible">
                     <div className="flex justify-between items-center overflow-visible">
@@ -400,7 +386,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   </div>
 
                   {isExpanded && (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto h-full">
                       <Table
                         textSize="xs"
                         columns={columns}
@@ -494,14 +480,14 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         onClose={function (): void {
           setShowDeliverToStore(null);
         }}
-        children={
-          <DeliverItemStoreModal
-            data={showDeliverToStore}
-            onSubmit={handleDeliverItemStore}
-            poId={poId}
-          />
-        }
-      />
+      >
+        {" "}
+        <DeliverItemStoreModal
+          data={showDeliverToStore}
+          onSubmit={handleDeliverItemStore}
+          poId={poId}
+        />
+      </Popup>
     </div>
   );
 };

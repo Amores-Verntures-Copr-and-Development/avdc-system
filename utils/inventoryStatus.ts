@@ -1,4 +1,4 @@
-export type StockStatus = "No Stock" | "Low Stock" | "Good";
+export type StockStatus = "No Stock" | "Low Stock" | "Good" | "Out of Stock";
 
 interface InventoryStatusInfo {
   status: StockStatus;
@@ -21,7 +21,7 @@ export function getInventoryStatusInfo(
   switch (status) {
     case "No Stock":
       return {
-        status,
+        status: "Out of Stock",
         bgClass: "bg-red-100",
         textClass: "text-red-700 ",
       };

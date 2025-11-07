@@ -5,9 +5,9 @@ import {
 } from "@/dtos/inventory.dto";
 import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
-import { InventoryInterface } from "@/types/inventory";
+
 import { fetcher } from "@/utils/fetcher";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import { AddItemToStoreDto } from "../../InventoryPage";
@@ -15,7 +15,15 @@ import Table, { Column } from "@/components/shared/Table";
 import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
 import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
-import { Store, Package, Plus, Eye, Trash, Clipboard } from "lucide-react";
+import {
+  Store,
+  Package,
+  Plus,
+  Eye,
+  Trash,
+  Clipboard,
+  ArrowLeftRight,
+} from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
 import AddItemModal from "../AddItemModal";
@@ -203,6 +211,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -237,6 +246,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       setShowCreateRequestModal(false);
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -263,6 +273,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -291,6 +302,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -307,7 +319,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         ...item,
         suppItemCreatedBy: user?.userId,
       }));
-      console.log("Data: ", newData);
       const result = await fetch(`api/suppliers/supplier-items/`, {
         method: "POST",
         headers: {
@@ -324,6 +335,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
     }
@@ -353,6 +365,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add item in inventory.");
       return false;
     }
@@ -497,6 +510,14 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               onClick={function (): void {
                 setSelectedRow(row);
               }}
+              label={"Convert"}
+              bg={"green"}
+              icon={<ArrowLeftRight size={18} />}
+            />
+            <IconButton
+              onClick={function (): void {
+                setSelectedRow(row);
+              }}
               label={"Delete"}
               bg={"red"}
               icon={<Trash size={18} />}
@@ -514,16 +535,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         size="lg"
         className="bg-white"
-        children={
-          <AddItemModal
-            user={user}
-            onCancel={() => {
-              setShowAdddModal(false);
-            }}
-            onSubmit={handleAddInventoryItem}
-          />
-        }
-      />
+      >
+        <AddItemModal
+          user={user}
+          onCancel={() => {
+            setShowAdddModal(false);
+          }}
+          onSubmit={handleAddInventoryItem}
+        />
+      </Modal>
       <Modal
         title="Create Inventory"
         subtitle="Register Inventory for your store"
@@ -533,15 +553,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         size="md"
         className="bg-white"
-        children={
-          <CreateInventoryModal
-            onCancel={() => {
-              setShowCreateModal(false);
-            }}
-            onSubmit={handleCreateInventory}
-          />
-        }
-      />
+      >
+        {" "}
+        <CreateInventoryModal
+          onCancel={() => {
+            setShowCreateModal(false);
+          }}
+          onSubmit={handleCreateInventory}
+        />
+      </Modal>
       <Modal
         title="Add Item to store"
         subtitle="Select store to add this item to their inventory"
@@ -551,16 +571,17 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         size="lg"
         className="bg-white"
-        children={
-          <AddItemStoreModal
-            data={selectedRows ?? []}
-            onCancel={() => {
-              setShowAddItemModal(false);
-            }}
-            onSubmit={handleAddItemsToStore}
-          />
-        }
-      />
+      >
+        {" "}
+        <AddItemStoreModal
+          data={selectedRows ?? []}
+          onCancel={() => {
+            setShowAddItemModal(false);
+          }}
+          onSubmit={handleAddItemsToStore}
+        />
+      </Modal>
+
       <Modal
         title="Assign items to supplier"
         subtitle="Select supplier to assign this item to their item list"
@@ -571,16 +592,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         hasPadding={false}
         size="xl"
         className="bg-white h-[80%]"
-        children={
-          <AddItemSupplierModal
-            data={selectedRows ?? []}
-            onCancel={() => {
-              setShowAddItemSupplierModal(false);
-            }}
-            onSubmit={handleAddItemsToSupplier}
-          />
-        }
-      />
+      >
+        <AddItemSupplierModal
+          data={selectedRows ?? []}
+          onCancel={() => {
+            setShowAddItemSupplierModal(false);
+          }}
+          onSubmit={handleAddItemsToSupplier}
+        />
+      </Modal>
       <Modal
         title="Create Request"
         subtitle="Request stock for your store"
@@ -590,17 +610,16 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         size="xl"
         className="bg-white"
-        children={
-          <CreateRequestModal
-            data={selectedRows ?? []}
-            onCancel={() => {
-              setShowAddItemModal(false);
-            }}
-            onSubmit={handleCreateRequest}
-            user={user}
-          />
-        }
-      />
+      >
+        <CreateRequestModal
+          data={selectedRows ?? []}
+          onCancel={() => {
+            setShowAddItemModal(false);
+          }}
+          onSubmit={handleCreateRequest}
+          user={user}
+        />
+      </Modal>
       <Modal
         title="Create Inventory Report"
         subtitle="Create daily inventory report"
@@ -610,17 +629,16 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         size="xl"
         className="bg-white h-[80%]"
-        children={
-          <CreateInventoryReport
-          // data={selectedRows ?? []}
-          // onCancel={() => {
-          //   setShowAddItemModal(false);
-          // }}
-          // onSubmit={handleCreateRequest}
-          // user={user}
-          />
-        }
-      />
+      >
+        <CreateInventoryReport
+        // data={selectedRows ?? []}
+        // onCancel={() => {
+        //   setShowAddItemModal(false);
+        // }}
+        // onSubmit={handleCreateRequest}
+        // user={user}
+        />
+      </Modal>
       <Modal
         isOpen={showAddProductModal}
         onClose={function (): void {
@@ -628,16 +646,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         }}
         title="Add products"
         size="xl"
-        children={
-          <AddItemToProductModal
-            data={selectedRows ?? []}
-            onCancel={function (): void {
-              setShowAddProductModal(false);
-            }}
-            onSubmit={handleAddItemsToProduct}
-          />
-        }
-      />
+      >
+        <AddItemToProductModal
+          data={selectedRows ?? []}
+          onCancel={function (): void {
+            setShowAddProductModal(false);
+          }}
+          onSubmit={handleAddItemsToProduct}
+        />
+      </Modal>
       <Popup
         title={selectedRow?.itemName}
         background="transparent"
@@ -645,8 +662,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         onClose={function (): void {
           setShowInventoryItemModal(false);
         }}
-        children={<ViewInventoryItem data={selectedRow ?? null} />}
-      />
+      >
+        <ViewInventoryItem data={selectedRow ?? null} />
+      </Popup>
     </>
   );
 };

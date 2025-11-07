@@ -28,6 +28,7 @@ export async function processDeliveredPO(data: Request[]) {
       req.requestItems.flatMap((item) => ({
         reqItemId: item.reqItemId,
         reqItemTransfer: item.reqItemTransfer,
+        reqItemStatus: "delivered",
       }))
     );
     await updateRequestItems({

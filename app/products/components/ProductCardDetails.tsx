@@ -10,7 +10,6 @@ interface ProductCardDetailsProps {
 
 const ProductCardDetails = ({
   title,
-  subtitle,
   value,
   icon,
   iconBg,

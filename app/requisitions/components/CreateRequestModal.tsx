@@ -1,26 +1,18 @@
 import Button from "@/components/shared/Button";
-import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
+
 import Input from "@/components/shared/Input";
 import Table, { Column } from "@/components/shared/Table";
-import { inventoryData } from "@/data/itemData";
+
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { CreateRequestItemDto } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
-import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
-import { ItemInterface } from "@/types/items";
+import { InventoryInterface } from "@/types/inventory";
+
 import { fetcher } from "@/utils/fetcher";
 import { Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-
-interface RequestItem {
-  id: number;
-  itemId: number;
-  itemName: string;
-  unit: string;
-  quanity: number;
-}
 
 const columns: Column<DisplayInventoryItems>[] = [
   { name: "ID", key: "inventoryItemId" },
@@ -78,27 +70,17 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   const [requestedItems, setRequestedItems] =
     useState<CreateRequestItemDto[]>();
   const [inventoryId, setInventoryId] = useState(0);
-  const {
-    data: inventoryResponse = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<{ data: InventoryInterface[] }>(
-    `/api/inventory/${user?.storeId}`,
-    fetcher
-  );
+  const { data: inventoryResponse = { data: [] } } = useSWR<{
+    data: InventoryInterface[];
+  }>(`/api/inventory/${user?.storeId}`, fetcher);
   useEffect(() => {
     if (inventoryResponse && inventoryResponse.data.length > 0) {
       setInventoryId(inventoryResponse.data[0].inventoryId);
     }
   }, [inventoryResponse]);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayInventoryItems[] }>(
-    inventoryId ? `/api/inventory/item/${inventoryId}` : null,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] } } = useSWR<{
+    data: DisplayInventoryItems[];
+  }>(inventoryId ? `/api/inventory/item/${inventoryId}` : null, fetcher);
 
   const handleAddItemRequest = async (data: DisplayInventoryItems) => {
     if (Number(requestQty) === 0) {

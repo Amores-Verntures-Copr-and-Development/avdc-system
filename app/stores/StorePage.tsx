@@ -29,7 +29,6 @@ const StorePage = () => {
     mutate,
   } = useSWR<{ data: StoreInterface[] }>("/api/stores/", fetcher);
   const handleSubmit = async (data: CreateStoreDto) => {
-    console.log("Data: ", data);
     try {
       const result = await fetch("api/stores", {
         method: "POST",
@@ -47,6 +46,7 @@ const StorePage = () => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add user.");
       return false;
     }
@@ -79,7 +79,7 @@ const StorePage = () => {
             <div className="flex justify-center gap-2">
               <IconButton
                 onClick={function (): void {
-                  throw new Error("Function not implemented.");
+                  console.log(row);
                 }}
                 label={"Edit"}
                 bg={"gray"}
@@ -106,15 +106,14 @@ const StorePage = () => {
         onClose={() => {
           setShowAddStoreModal(false);
         }}
-        children={
-          <AddStoreModal
-            onCancel={() => {
-              setShowAddStoreModal(false);
-            }}
-            onSubmit={handleSubmit}
-          />
-        }
-      />
+      >
+        <AddStoreModal
+          onCancel={() => {
+            setShowAddStoreModal(false);
+          }}
+          onSubmit={handleSubmit}
+        />
+      </Modal>
     </PageLayout>
   );
 };

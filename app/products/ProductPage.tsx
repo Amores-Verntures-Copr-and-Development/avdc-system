@@ -4,19 +4,11 @@ import PageHeader from "@/components/shared/PageHeader";
 import React, { useEffect, useState } from "react";
 import ProductCardDetails from "./components/ProductCardDetails";
 import PageLayout from "@/components/shared/PageLayout";
-import {
-  Boxes,
-  DollarSign,
-  Package2,
-  PhilippinePeso,
-  Plus,
-  Users,
-} from "lucide-react";
+import { Boxes, Package2, PhilippinePeso, Plus, Users } from "lucide-react";
 import Table, { Column } from "@/components/shared/Table";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import AddProductModal from "./components/AddProductModal";
-import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import useSWR from "swr";
 import { useSession } from "@/hooks/useSession";
 import { InventoryInterface } from "@/types/inventory";
@@ -45,15 +37,13 @@ const columns: Column<DisplayProductsDtos>[] = [
 const ProductPage = () => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [inventoryId, setInventoryId] = useState(0);
-  const { user, loading: userLoading, hasStore } = useSession();
+  const { user, hasStore } = useSession();
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/${user?.storeId}`
     : `/api/inventory`;
-  const {
-    data: inventoryResponse = { data: [] },
-    isLoading,
-    mutate: mutateInventory,
-  } = useSWR<{ data: InventoryInterface[] }>(inventoryBaseUrl, fetcher);
+  const { data: inventoryResponse = { data: [] } } = useSWR<{
+    data: InventoryInterface[];
+  }>(inventoryBaseUrl, fetcher);
   useEffect(() => {
     if (
       inventoryResponse &&
@@ -63,14 +53,9 @@ const ProductPage = () => {
       setInventoryId(inventoryResponse.data[0].inventoryId);
     }
   }, [inventoryResponse]);
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{ data: DisplayProductsDtos[] }>(
-    inventoryId ? `/api/products/${inventoryId}` : null,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] } } = useSWR<{
+    data: DisplayProductsDtos[];
+  }>(inventoryId ? `/api/products/${inventoryId}` : null, fetcher);
   return (
     <PageLayout className="gap-4 p-4">
       <PageHeader title={"Products"} subtitle="Add, edit, and track products" />
@@ -129,8 +114,9 @@ const ProductPage = () => {
         onClose={function (): void {
           setShowAddProductModal(false);
         }}
-        children={<AddProductModal />}
-      />
+      >
+        <AddProductModal />
+      </Modal>
     </PageLayout>
   );
 };

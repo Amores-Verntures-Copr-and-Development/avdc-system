@@ -1,6 +1,4 @@
 import Button from "@/components/shared/Button";
-import DropDownSelectCategory from "@/components/shared/DropDownSelectCategory";
-import Input from "@/components/shared/Input";
 import Textarea from "@/components/shared/TextArea";
 import { CreateInventoryDto } from "@/dtos/inventory.dto";
 import { handleChange } from "@/utils/handle-change";

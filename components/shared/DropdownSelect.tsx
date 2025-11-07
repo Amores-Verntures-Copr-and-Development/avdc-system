@@ -8,7 +8,7 @@ interface Option {
 interface DropdownSelectProps {
   name: string;
   value: string | undefined;
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   options: Option[];
   label?: string;
   placeholder?: string;

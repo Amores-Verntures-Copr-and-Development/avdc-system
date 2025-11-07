@@ -53,4 +53,5 @@ export type RequestOrderPdf = {
   store: Partial<StoreInterface>;
   requestOrder: Partial<Request>;
   requestItems: DisplayRequestItems[];
+  requestedBy: string;
 };

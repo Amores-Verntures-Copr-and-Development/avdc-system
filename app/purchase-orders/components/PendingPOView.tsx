@@ -6,7 +6,7 @@ import {
 } from "@/dtos/purchase.dto";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { Check, Clock, Send } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import React, { useRef } from "react";
 
 interface PendingPOViewProps {

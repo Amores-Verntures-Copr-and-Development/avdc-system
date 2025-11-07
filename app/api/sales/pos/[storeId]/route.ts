@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: Promise<{ storeId: number }> }
+  { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
     const slug = (await params).storeId;

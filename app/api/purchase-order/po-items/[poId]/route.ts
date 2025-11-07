@@ -1,6 +1,5 @@
 import {
   getPurchaseOrderItemById,
-  updatePurchaseOrder,
   updatePurchaseOrderItem,
 } from "@/controllers/PurchaseOrderController";
 import { NextRequest, NextResponse } from "next/server";

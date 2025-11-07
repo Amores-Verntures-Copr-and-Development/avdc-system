@@ -9,7 +9,6 @@ interface InventoryCardProps {
 }
 const InventoryCard: React.FC<InventoryCardProps> = ({
   title,
-  subtitle,
   value,
   icon,
   iconBg,

@@ -4,10 +4,9 @@ import DropDownSelectCategory from "@/components/shared/DropDownSelectCategory";
 import Input from "@/components/shared/Input";
 import Textarea from "@/components/shared/TextArea";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
-import { formatDateToWords } from "@/utils/formatDateToWords";
 import { handleChange } from "@/utils/handle-change";
 import { getInventoryStatus } from "@/utils/inventoryStatus";
-import { Edit2, Package, Package2 } from "lucide-react";
+import { Edit2, Package } from "lucide-react";
 import React, { useState } from "react";
 
 interface ViewInventoryItemPros {
@@ -148,7 +147,6 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
 
 const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
   data,
-  selectedButton,
   setSelectedButton,
   onChange,
 }) => {
@@ -164,11 +162,7 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
           value={data?.itemName ?? ""}
           name="itemName"
           sizes="xs"
-          onChange={() => {
-            if (onChange) {
-              onChange;
-            }
-          }}
+          onChange={onChange}
         />
         <label className="text-xs text-gray-500">Type:</label>
         <label className="text-xs font-semibold">
@@ -179,11 +173,6 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
           categoryType={"item"}
           name={"categoryName"}
           value={data?.categoryName ?? ""}
-          onChange={function (e: React.ChangeEvent<HTMLSelectElement>): void {
-            if (onChange) {
-              onChange;
-            }
-          }}
           sizes="xs"
         />
       </div>
@@ -216,7 +205,7 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
 
 const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
   data,
-  selectedButton,
+
   setSelectedButton,
   onChange,
 }) => {
@@ -240,34 +229,14 @@ const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
           value={data?.inventoryItemMin ?? ""}
           name="itemName"
           sizes="xs"
-          onChange={() => {
-            if (onChange) {
-              onChange;
-            }
-          }}
+          onChange={onChange}
         />
         <label className="text-xs text-gray-500">Adjustment Type</label>
 
-        <DropdownSelect
-          name={""}
-          value={undefined}
-          onChange={function (e: React.ChangeEvent<HTMLSelectElement>): void {
-            throw new Error("Function not implemented.");
-          }}
-          options={[]}
-          sizes="xs"
-        />
+        <DropdownSelect name={""} value={undefined} options={[]} sizes="xs" />
         <label className="text-xs text-gray-500">Quanity</label>
 
-        <DropdownSelect
-          name={""}
-          value={undefined}
-          onChange={function (e: React.ChangeEvent<HTMLSelectElement>): void {
-            throw new Error("Function not implemented.");
-          }}
-          options={[]}
-          sizes="xs"
-        />
+        <DropdownSelect name={""} value={undefined} options={[]} sizes="xs" />
         <label className="text-xs text-gray-500">Reason</label>
 
         <Textarea name={""} label={""} sizes="xs" />

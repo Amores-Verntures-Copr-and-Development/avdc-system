@@ -1,9 +1,5 @@
-import {
-  getItemRequest,
-  getItemRequestByIds,
-  getRequest,
-} from "@/controllers/RequestController";
-import { getRequestItems } from "@/services/requestServices";
+import { getItemRequestByIds } from "@/controllers/RequestController";
+
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {

@@ -1,7 +1,7 @@
 import { Supplier } from "@/types/supplier";
 import { DropdownSearch } from "./DropDownSearch";
 
-interface DropDownSearchSupplierProps<T> {
+interface DropDownSearchSupplierProps {
   onSelect: (item: Supplier) => void;
   selectedValue?: string;
   placeholder?: string;
@@ -15,7 +15,7 @@ interface DropDownSearchSupplierProps<T> {
   onQueryChange?: (query: string) => void;
 }
 
-export const DropDownSearchSupplier = <T,>({
+export const DropDownSearchSupplier = ({
   onSelect,
   onQueryChange,
   // renderItem,
@@ -29,7 +29,7 @@ export const DropDownSearchSupplier = <T,>({
   sizes = "md",
   disabled = false,
   loading = false,
-}: DropDownSearchSupplierProps<T>) => {
+}: DropDownSearchSupplierProps) => {
   const searchItems = async (query: string): Promise<Supplier[]> => {
     const res = await fetch(
       `/api/suppliers/search?search=${encodeURIComponent(query)}`

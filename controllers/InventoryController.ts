@@ -49,7 +49,6 @@ export const getInventory = async ({
   storeId?: number | null;
 }) => {
   try {
-    console.log("StoreId: ", storeId);
     const data = await findIventoryByFields({ keyFields: { storeId } });
     return {
       success: true,
