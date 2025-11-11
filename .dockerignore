@@ -1,0 +1,13 @@
+out/
+.next/
+node_modules
+*.log
+.env
+.env.local
+/dist
+Dockerfile*
+.dockerignore
+npm-debug.log*
+yarn-error.log*
+.cache/
+.git/

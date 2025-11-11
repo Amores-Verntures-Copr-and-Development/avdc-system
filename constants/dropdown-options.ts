@@ -37,3 +37,10 @@ export const paymentMethodOptions = [
   { label: "Gcash", value: "gcash" },
   { label: "Bank", value: "bank" },
 ];
+
+export const stockAdjustmentOptions = [
+  { label: "Select type", value: "" },
+  { label: "In", value: "in" },
+  { label: "Out", value: "out" },
+  { label: "Replace", value: "replace" },
+];

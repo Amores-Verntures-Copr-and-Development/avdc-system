@@ -1,7 +1,9 @@
 import React from "react";
 import Image from "next/image";
 import { Bell } from "lucide-react";
+import { useSession } from "@/hooks/useSession";
 const Header = () => {
+  const { user } = useSession();
   return (
     <div className="flex h-15 justify-between items-center pr-2 shadow bg-white overflow-visible">
       <div className="relative w-64 h-15">
@@ -20,7 +22,7 @@ const Header = () => {
           </span>
         </div>
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-1 text-xl font-bold text-white">
-          A
+          {user?.userFullName.charAt(0)}
         </div>
       </div>
     </div>

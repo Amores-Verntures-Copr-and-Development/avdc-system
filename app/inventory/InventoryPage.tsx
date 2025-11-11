@@ -260,7 +260,7 @@ const InventoryPage = () => {
       </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
         {selectionSection === "inventory" && (
-          <InventorySection inventoryId={inventoryId} />
+          <InventorySection inventoryId={inventoryId} user={user} />
         )}
         {selectionSection === "movement" && (
           <StockMovementSection inventoryId={inventoryId} />

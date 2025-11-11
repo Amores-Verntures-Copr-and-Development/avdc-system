@@ -5,6 +5,7 @@ import StoreCardSales from "../components/StoreCardSales";
 import Chart from "../components/Chart";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
+import { Calendar } from "lucide-react";
 interface Store {
   id: number;
   name: string;
@@ -56,10 +57,10 @@ const OwnerDashboard = () => {
     <div className="flex h-full overflow-hidden">
       <div className="flex-1 h-full flex flex-col gap-4  pr-5">
         <div className="grid grid-cols-4 gap-5">
-          <DashboardCard />
-          <DashboardCard />
-          <DashboardCard />
-          <DashboardCard />
+          <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
+          <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
+          <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
+          <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
         </div>
         <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
           <h1>Sales Chart</h1>

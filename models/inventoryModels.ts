@@ -5,7 +5,11 @@ import {
 } from "@/dtos/inventory.dto";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
-import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
+import {
+  InventoryInterface,
+  InventoryItemInterface,
+  InventoryItemMovement,
+} from "@/types/inventory";
 export type UpdateInventoryQtyMode = "replace" | "increment" | "decrement";
 export const insertInventory = async (data: CreateInventoryDto) => {
   const pool = await getDBConnection();
@@ -286,7 +290,7 @@ export const insertInventoryMovement = async ({
 export const selectInventoryMovementItems = async ({
   keyFields = {},
 }: {
-  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemMovement>; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   const pool = await getDBConnection();
   let sql = `SELECT iim.invItemMovementId,iim.inventoryId,iim.inventoryItemId,iim.itemMovementType,iim.itemMovementReferenceId,iim.itemMovementReference,
@@ -306,6 +310,8 @@ LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
       ? "iim"
       : key === "categoryId"
       ? "c"
+      : key === "inventoryItemId"
+      ? "iim"
       : "it";
 
     if (value === null) {

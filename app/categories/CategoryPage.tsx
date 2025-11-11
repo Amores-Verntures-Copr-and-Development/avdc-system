@@ -4,7 +4,7 @@ import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
-import Table from "@/components/shared/Table";
+import Table, { Column } from "@/components/shared/Table";
 import { Edit, Plus, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import AddCategoryModal from "./components/AddCategoryModal";
@@ -13,13 +13,18 @@ import { fetcher } from "@/utils/fetcher";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import IconButton from "@/components/shared/IconButton";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
-const categoriesColumn = [
+const categoriesColumn: Column<DisplayCategoryDto>[] = [
   { name: "ID", key: "categoryId" },
   { name: "Name", key: "categoryName" },
   { name: "Type", key: "categoryType" },
   { name: "Store", key: "storeId" },
-  { name: "Created", key: "categoryCreatedAt" },
+  {
+    name: "Created",
+    key: "categoryCreatedAt",
+    selector: (row) => formatDateToWords(row.categoryCreatedAt),
+  },
 ];
 const CategoryPage = () => {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
@@ -69,7 +74,7 @@ const CategoryPage = () => {
                   onClick={() => {
                     setShowAddCategoryModal(true);
                   }}
-                  size="sm"
+                  size="xs"
                   className="font-semibold"
                 />
               </div>

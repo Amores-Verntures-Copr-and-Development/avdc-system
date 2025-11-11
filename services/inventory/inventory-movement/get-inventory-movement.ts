@@ -1,10 +1,13 @@
 import { selectInventoryMovementItems } from "@/models/inventoryModels";
-import { InventoryItemInterface } from "@/types/inventory";
+import {
+  InventoryItemInterface,
+  InventoryItemMovement,
+} from "@/types/inventory";
 
 export async function getInventoryMovement({
   keyFields = {},
 }: {
-  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemMovement>; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
     const data = await selectInventoryMovementItems({

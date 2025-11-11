@@ -3,6 +3,7 @@ import {
   CreateFirstItem,
   CreateInventoryDto,
   CreateInventoryItemDto,
+  CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
 import {
   insertInventory,
@@ -20,13 +21,18 @@ import {
   handleInsertItemInventoryBulk,
 } from "../services/inventoryItemServices";
 import { AddItemToStoreDto } from "@/app/inventory/InventoryPage";
-import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
+import {
+  InventoryInterface,
+  InventoryItemInterface,
+  InventoryItemMovement,
+} from "@/types/inventory";
 import { findIventoryByFields } from "@/services/inventory/get-inventory";
 import {
   findInventoryItemsByField,
   getInventoryItemsStatus,
 } from "@/services/inventory/inventory-items/get-inventory-tems";
 import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
+import { processStockAdjustment } from "@/services/inventory/inventory-movement/process-stock-adjsutment";
 
 export const createInventory = async (data: CreateInventoryDto) => {
   try {
@@ -185,7 +191,7 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
 export const getInventoryMovements = async ({
   keyFields = {},
 }: {
-  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemMovement>; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   try {
     const data = await getInventoryMovement({ keyFields });
@@ -217,5 +223,16 @@ export const getInventoryItemsStatusById = async (inventoryId: number) => {
       message: e,
       error: e,
     };
+  }
+};
+
+export const processStockAdjustmetController = async (
+  data: CreateInventoryMovementDto
+) => {
+  try {
+    const res = await processStockAdjustment(data);
+    return { success: true, message: "Successfully adjust stock", result: res };
+  } catch (e) {
+    return { success: false, message: "Failed to adjust stock", error: e };
   }
 };

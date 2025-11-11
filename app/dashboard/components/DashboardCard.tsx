@@ -1,17 +1,34 @@
-import { ArrowRight, Calendar } from "lucide-react";
-import React from "react";
+import { ArrowRight, LucideIcon } from "lucide-react";
+import React, { ReactNode } from "react";
 
-const DashboardCard = () => {
+interface DashboardCardProps {
+  title: string;
+  icon: LucideIcon;
+  value: number;
+  bgColor?: string;
+}
+
+const DashboardCard = ({
+  title,
+  icon: Icon,
+  value,
+  bgColor = "bg-emerald-600",
+}: DashboardCardProps) => {
   return (
     <div className="flex flex-col justify-between p-4 border rounded-2xl shadow-sm border-gray-200 bg-white ">
       {/* Top Section */}
       <div className="flex items-center gap-3">
-        <div className="bg-emerald-600 p-2 rounded-lg flex items-center justify-center">
-          <Calendar className="text-white w-5 h-5" />
+        <div
+          className={`${bgColor} p-2 rounded-lg flex items-center justify-center`}
+        >
+          <Icon className="text-white w-5 h-5" />
         </div>
         <div className="flex flex-col align-middle items-start">
-          <span className="block text-lg font-semibold text-gray-900">560</span>
-          <span className="text-sm text-gray-500">Attendance</span>
+          <span className="block text-lg font-semibold text-gray-900">
+            {value} {/* Use the passed value prop */}
+          </span>
+          <span className="text-sm text-gray-500">{title}</span>{" "}
+          {/* Use the passed title prop */}
         </div>
       </div>
 

@@ -106,7 +106,6 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
   const pool = await getDBConnection();
   let whereClauses: string[] = [];
   let values: any[] = [];
-  console.log("Supp Id: ", suppId);
   if (suppId) {
     whereClauses.push("si.suppId = ?");
     values.push(suppId);

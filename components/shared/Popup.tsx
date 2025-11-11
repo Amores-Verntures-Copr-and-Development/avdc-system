@@ -9,6 +9,7 @@ interface PopupProps {
   position?: "left" | "right" | "top" | "bottom";
   background?: string;
   children: React.ReactNode;
+  subtitle?: string;
 }
 
 const Popup: React.FC<PopupProps> = ({
@@ -18,6 +19,7 @@ const Popup: React.FC<PopupProps> = ({
   position = "right",
   background = "bg-black bg-opacity-40 backdrop-blur-sm",
   children,
+  subtitle,
 }) => {
   const [show, setShow] = useState(isOpen);
 
@@ -64,11 +66,17 @@ const Popup: React.FC<PopupProps> = ({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">{title}</h2>
-          <button onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
+        <div className="flex flex-col  p-4 border-b border-gray-200">
+          <div className="flex  justify-between">
+            <h2 className="text-lg font-semibold">{title}</h2>
+            <button
+              onClick={onClose}
+              className=" p-1 rounded-full hover:bg-gray-700 transition-color"
+            >
+              <X className="w-5 h-5 hover:text-white" />
+            </button>
+          </div>
+          <span className="text-xs text-gray-500">{subtitle}</span>
         </div>
 
         {/* Scrollable content */}

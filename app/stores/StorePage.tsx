@@ -5,8 +5,8 @@ import IconButton from "@/components/shared/IconButton";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
-import Table from "@/components/shared/Table";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import Table, { Column } from "@/components/shared/Table";
+import { Edit, Eye, Plus, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import AddStoreModal from "./components/AddStoreModal";
 import { CreateStoreDto } from "@/dtos/store.dto";
@@ -14,15 +14,24 @@ import toast from "react-hot-toast";
 import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { StoreInterface } from "@/types/stores";
-const storeColumn = [
+import ViewStoreModal from "./components/ViewStoreModal";
+import { formatDateToWords } from "@/utils/formatDateToWords";
+const storeColumn: Column<StoreInterface>[] = [
   { name: "ID", key: "storeId" },
   { name: "Name", key: "storeName" },
   { name: "Location", key: "storeLocation" },
   { name: "Description", key: "storeDescription" },
-  { name: "Created", key: "storeCreatedAt" },
+  {
+    name: "Created",
+    key: "storeCreatedAt",
+    selector: (row) => formatDateToWords(row.storeCreatedAt),
+  },
 ];
 const StorePage = () => {
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<StoreInterface | null>(
+    null
+  );
   const {
     data: response = { data: [] },
     isLoading,
@@ -79,11 +88,11 @@ const StorePage = () => {
             <div className="flex justify-center gap-2">
               <IconButton
                 onClick={function (): void {
-                  console.log(row);
+                  setSelectedStore(row);
                 }}
-                label={"Edit"}
-                bg={"gray"}
-                icon={<Edit size={18} />}
+                label={"View"}
+                bg={"green"}
+                icon={<Eye size={18} />}
               />
               <IconButton
                 onClick={function (): void {
@@ -113,6 +122,17 @@ const StorePage = () => {
           }}
           onSubmit={handleSubmit}
         />
+      </Modal>
+      <Modal
+        size="xl"
+        className="h-[95%]"
+        title={`${selectedStore?.storeName}`}
+        isOpen={selectedStore !== null}
+        onClose={function (): void {
+          setSelectedStore(null);
+        }}
+      >
+        <ViewStoreModal data={selectedStore ?? null} />
       </Modal>
     </PageLayout>
   );

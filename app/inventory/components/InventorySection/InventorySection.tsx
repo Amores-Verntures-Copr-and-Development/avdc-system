@@ -2,9 +2,10 @@ import {
   DisplayInventoryItems,
   CreateInventoryDto,
   CreateFirstItem,
+  CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
 import { CreateRequestFormDto } from "@/dtos/request.dto";
-import { useSession } from "@/hooks/useSession";
+import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
 import React, { useState } from "react";
@@ -38,6 +39,7 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
 import AddItemToProductModal from "../AddItemToProductModal";
 import { CreateProductDtos } from "@/dtos/products.dto";
+import { InventoryItemMovement } from "@/types/inventory";
 export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
   { name: "ID", key: "inventoryItemId" },
   { name: "Item Name", key: "itemName" },
@@ -163,6 +165,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 ];
 interface InventorySectionProps {
   inventoryId: number | null;
+  user: UserAuth | null;
 }
 const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddModal, setShowAdddModal] = useState(false);
@@ -170,7 +173,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
-
+  const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
   const { user, loading: userLoading, hasStore } = useSession();
   const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
@@ -370,7 +373,35 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       return false;
     }
   };
-
+  const handleSubmitStockAdjustment = async (
+    data: CreateInventoryMovementDto
+  ) => {
+    console.log({ data });
+    setIsSubmittingAdjustment(true);
+    try {
+      const result = await fetch(
+        `/api/inventory/movement/${data.inventoryId}/${data.inventoryItemId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutate();
+      return true;
+    } catch (e) {
+      return false;
+    } finally {
+      setIsSubmittingAdjustment(false);
+    }
+  };
   return (
     <>
       <Table
@@ -657,13 +688,19 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       </Modal>
       <Popup
         title={selectedRow?.itemName}
+        subtitle="Inventory Item"
         background="transparent"
         isOpen={showInventoryItemModal}
         onClose={function (): void {
           setShowInventoryItemModal(false);
         }}
       >
-        <ViewInventoryItem data={selectedRow ?? null} />
+        <ViewInventoryItem
+          data={selectedRow ?? null}
+          user={user}
+          onSubmitStockAdjustment={handleSubmitStockAdjustment}
+          isSubmittingAdjustment={isSubmittingAdjustment}
+        />
       </Popup>
     </>
   );

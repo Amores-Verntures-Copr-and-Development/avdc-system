@@ -53,7 +53,7 @@ export interface InventoryItemMovement {
   inventoryId: number;
   inventoryItemId: number;
   itemMovementType: "in" | "out";
-  itemMovementReferenceId: number;
+  itemMovementReferenceId: number | null;
   itemMovementReference: "sales" | "po" | "adjustment" | "ro";
   itemMovementQuantity: number;
   itemMovementRemarks?: string;
