@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import AddPurchaserModal from "../component/AddPurchaserModal";
 import { UserAuth } from "@/hooks/useSession";
+import { CreateStockPurchaser } from "@/dtos/stockRoom.dto";
 
 interface StockPurchaserViewProps {
   data: StockRoom;
@@ -47,6 +48,11 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
     `/api/stock-room/${data.stockRoomId}/purchaser`,
     fetcher
   );
+  console.log({ user });
+  const handleAddPurchaser = async (purchaserData: CreateStockPurchaser[]) => {
+    console.log("CreateStockPurchaser: ", purchaserData);
+    return true;
+  };
   return (
     <div className="flex-1">
       <Table
@@ -79,7 +85,14 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
           setShowAdd(false);
         }}
       >
-        <AddPurchaserModal data={data} user={user} />
+        <AddPurchaserModal
+          data={data}
+          user={user}
+          onCancel={() => {
+            setShowAdd(false);
+          }}
+          onSubmit={handleAddPurchaser}
+        />
       </Modal>
     </div>
   );

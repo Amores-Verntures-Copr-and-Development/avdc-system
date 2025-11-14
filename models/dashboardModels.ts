@@ -7,7 +7,7 @@ export const selectPurchaserStats = async () => {
     (SELECT COUNT(*) FROM RequestOrders ro WHERE ro.requestStatus = 'pending') AS pendingRequest,
     (SELECT COUNT(*) 
      FROM InventoryItems ii 
-     LEFT JOIN Inventory i ON i.inventoryId = ii.inventoryId  
+     LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId  
      WHERE i.storeId IS NULL 
      AND ii.inventoryItemQuantity < ii.inventoryItemMin
     ) AS lowStock,

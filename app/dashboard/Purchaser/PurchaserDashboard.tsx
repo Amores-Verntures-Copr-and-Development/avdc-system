@@ -31,7 +31,7 @@ const PurchaserDashboard = () => {
     outOfStock: 0,
   };
 
-  const stats = dashboardStats?.data[0] || defaultStats;
+  // const stats = dashboardStats?.data[0] ?? defaultStats;
 
   return (
     <div className="flex h-full overflow-hidden">
@@ -39,25 +39,25 @@ const PurchaserDashboard = () => {
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard
             title="Total Purchase"
-            value={stats.totalPurchase}
+            value={0}
             icon={ShoppingCart}
             bgColor="bg-primary-1"
           />
           <DashboardCard
             title="Pending Request"
-            value={stats.pendingRequest}
+            value={0}
             icon={Calendar}
             bgColor="bg-purple-600"
           />
           <DashboardCard
             title="Low Stock"
-            value={stats.lowStock}
+            value={0}
             icon={AlertTriangle}
             bgColor="bg-amber-500"
           />
           <DashboardCard
             title="Out of Stock"
-            value={stats.outOfStock}
+            value={0}
             icon={Package}
             bgColor="bg-rose-600"
           />

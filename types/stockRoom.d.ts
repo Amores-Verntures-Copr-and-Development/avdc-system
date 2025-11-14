@@ -14,6 +14,7 @@ export interface StockPurchasers {
   stockPurchaserCreatedAt: string;
   stockPurchaserUpdatedAt: string;
   stockPurchaserDeletedAt: string;
+  stockPurchaserAddedBy: number;
   stockRoomId: number;
   userId: number;
 }
