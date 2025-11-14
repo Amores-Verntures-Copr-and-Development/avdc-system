@@ -7,7 +7,7 @@ import { InventoryItemInterface } from "@/types/inventory";
 import { findIventoryByFields } from "../inventory/get-inventory";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
-import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
 export async function processDeliveredPO(data: Request[]) {

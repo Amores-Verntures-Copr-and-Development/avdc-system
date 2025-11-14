@@ -4,22 +4,31 @@ import {
   CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
 import { getDBConnection } from "../lib/db";
-import { PoolConnection, RowDataPacket } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import {
   InventoryInterface,
   InventoryItemInterface,
   InventoryItemMovement,
 } from "@/types/inventory";
+import { StockPurchasers } from "@/types/stockRoom";
+import { StoreInterface } from "@/types/stores";
 export type UpdateInventoryQtyMode = "replace" | "increment" | "decrement";
-export const insertInventory = async (data: CreateInventoryDto) => {
-  const pool = await getDBConnection();
-  const sql = `INSERT INTO Inventory(inventoryDescription,storeId,inventoryCreatedBy) VALUES(?,?,?)`;
-  const [result] = await pool.execute(sql, [
+export const insertInventory = async ({
+  data,
+  connection,
+}: {
+  data: CreateInventoryDto;
+  connection: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO Inventories(inventoryDescription,inventoryReference,inventoryReferenceId,inventoryCreatedBy) VALUES(?,?,?,?)`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.inventoryDescription,
-    data.storeId,
+    data.inventoryReference,
+    data.inventotyReferenceId,
     data.inventoryCreatedBy,
   ]);
-  return result;
+  return result.insertId;
 };
 
 export const selectInventory = async ({
@@ -30,7 +39,9 @@ export const selectInventory = async ({
   const pool = await getDBConnection();
 
   // ✅ Start base SQL
-  let sql = `SELECT * FROM Inventory WHERE 1=1`;
+  let sql = `SELECT * FROM Inventories i
+  LEFT JOIN Stores s ON s.storeId = i.inventoryReferenceId AND i.inventoryReference = 'store'
+  LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'    WHERE 1=1`;
   const params: any[] = [];
 
   // ✅ Build WHERE dynamically
@@ -46,6 +57,51 @@ export const selectInventory = async ({
   // ✅ Execute query
   const [rows] = await pool.execute(sql, params);
   return rows as InventoryInterface[];
+};
+
+export const selectInventoryByStockPurchaserFields = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<StockPurchasers>; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [];
+  let sql = `SELECT i.* FROM Inventories i
+LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'
+LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId 
+WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND sp.${key} IS NULL`;
+    } else {
+      sql += ` AND sp.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const selectInventoryByStoreFields = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<StoreInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [];
+  let sql = `SELECT i.* FROM Inventories i
+LEFT JOIN Stores s ON s.storeId = i.inventoryReferenceId AND i.inventoryReference = 'store'
+WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND s.${key} IS NULL`;
+    } else {
+      sql += ` AND s.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };
 
 export const insertInventoryItem = async ({
@@ -112,7 +168,7 @@ export const insertInventoryItemsBulk = async ({
 export const selectInventoryItems = async ({
   keyFields = {},
 }: {
-  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   const pool = await getDBConnection();
 
@@ -127,11 +183,10 @@ export const selectInventoryItems = async ({
       it.itemName,
       it.itemUnit,
       c.categoryName,
-      i.storeId,
       it.itemPrice,
       it.itemId
     FROM InventoryItems ii
-    LEFT JOIN Inventory i ON i.inventoryId = ii.inventoryId
+    LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
     LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
     LEFT JOIN Categories c ON c.categoryId = it.categoryId
     WHERE 1=1
@@ -146,13 +201,14 @@ export const selectInventoryItems = async ({
       "inventoryId",
       "inventoryItemId",
       "inventoryItemReferenceId",
+      "inventoryItemReference",
     ].includes(key)
       ? "ii"
       : key === "storeId"
       ? "i"
       : key === "categoryId"
       ? "c"
-      : "it";
+      : "i";
 
     if (value === null) {
       sql += ` AND ${tableAlias}.${key} IS NULL`;
@@ -163,6 +219,7 @@ export const selectInventoryItems = async ({
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
   return rows;
 };
 
@@ -336,5 +393,16 @@ export const selectInventoryItemsStockStatus = async (inventoryId: number) => {
   FROM Inventory i
   LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId WHERE i.inventoryId = ?`;
   const [rows] = await pool.execute(sql, [inventoryId]);
+  return rows;
+};
+
+export const selectStockRoomInventoryItems = async (purchaserId: number) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT * FROM StockRooms sr
+  LEFT JOIN Inventories i ON i.inventoryReferenceId = sr.stockRoomId AND i.inventoryReference = 'stock-room' 		
+  LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId
+  LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
+  WHERE sp.userId = ?`;
+  const [rows] = await pool.execute(sql, [purchaserId]);
   return rows;
 };

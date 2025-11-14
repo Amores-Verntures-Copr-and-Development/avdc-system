@@ -3,9 +3,7 @@ import {
   getPurchaseOrder,
   updatePurchaseOrder,
 } from "@/controllers/PurchaseOrderController";
-import {
-  CreatePurchaseOrderFormDto,
-} from "@/dtos/purchase.dto";
+import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {

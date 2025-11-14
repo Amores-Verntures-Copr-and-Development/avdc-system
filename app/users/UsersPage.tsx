@@ -15,6 +15,7 @@ import { fetcher } from "@/utils/fetcher";
 import toast from "react-hot-toast";
 import IconButton from "@/components/shared/IconButton";
 import { useSession } from "@/hooks/useSession";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
 const userColumn = [
   { name: "ID", key: "userId" },
@@ -29,7 +30,11 @@ const userColumn = [
   { name: "Status", key: "status" },
   { name: "Added By", key: "addedBy" },
   { name: "Store", key: "storeId" },
-  { name: "Created", key: "userCreatedAt" },
+  {
+    name: "Created",
+    key: "userCreatedAt",
+    selector: (row: DisplayUserDto) => formatDateToWords(row.userCreatedAt),
+  },
 ];
 
 const UserPage = () => {
@@ -72,7 +77,7 @@ const UserPage = () => {
     }
   };
   return (
-    <PageLayout>
+    <PageLayout className="p-4 gap-2">
       <PageHeader title={"Users"} subtitle="Manage system users" />
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table

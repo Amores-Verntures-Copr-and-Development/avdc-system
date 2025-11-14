@@ -49,7 +49,7 @@ export function useSession() {
       error: error ?? null,
       refreshSession: mutate,
       isAuthenticated: !!data?.user,
-      isAdmin: data?.user?.userRole === "admin",
+      isAdmin: data?.user?.userRole === "superadmin",
       hasStore:
         data?.user?.userRole === "employee" &&
         (data?.user?.empPosition === "staff" ||

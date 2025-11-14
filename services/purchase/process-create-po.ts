@@ -18,6 +18,7 @@ export async function processCreatePO(data: CreatePurchaseOrderFormDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
+    await connection.beginTransaction();
     const poRows = await selectCountPurchaseOrder({ connection });
     const generateId = `PO-${(poRows.total + 1).toString().padStart(3, "0")}`;
     const purhcaseOrderData: CreatePurchaseOrderDto = {

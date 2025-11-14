@@ -1,6 +1,7 @@
 import { CreateRequestDto, InsertItemsRequestDto } from "@/dtos/request.dto";
 import { getDBConnection } from "@/lib/db";
 import { Request, RequestItems, RequestStatus } from "@/types/request";
+import { sq } from "date-fns/locale";
 import {
   PoolConnection,
   QueryResult,
@@ -302,7 +303,7 @@ export const selectRequestOrdersByPONumber = async (poNumber: string) => {
         'warehouseInv', (
           SELECT iis.inventoryItemQuantity
           FROM InventoryItems iis
-          LEFT JOIN Inventory ity ON ity.inventoryId = iis.inventoryId
+          LEFT JOIN Inventories ity ON ity.inventoryId = iis.inventoryId
           WHERE iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
             AND ity.storeId IS NULL
           LIMIT 1
@@ -437,5 +438,25 @@ export const selectRequestOrderItems = async ({
   ) AS requestItems
    FROM RequestOrders ro ${whereSQL}`;
   const [rows] = await pool.execute(sql, values);
+  return rows;
+};
+
+export const selectRequetItemsByPOId = async ({
+  connection,
+  poItemId,
+}: {
+  connection: PoolConnection;
+  poItemId: number[];
+}) => {
+  // Create placeholders for each item in the array
+  const placeholders = poItemId.map(() => "?").join(",");
+
+  const sql = `SELECT * FROM RequestItems ri
+LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
+LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId
+WHERE poi.poItemId IN (${placeholders})`;
+
+  const [rows] = await connection.execute<RowDataPacket[]>(sql, poItemId);
   return rows;
 };

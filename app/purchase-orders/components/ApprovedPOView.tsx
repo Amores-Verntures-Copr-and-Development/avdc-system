@@ -10,6 +10,7 @@ import {
   Clock,
   Download,
   Edit,
+  FileText,
   Loader2,
   Package,
   PrinterIcon,
@@ -21,6 +22,10 @@ import StoreCardInSupplier from "./_components/StoreCardInSupplier";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
+import { RequestItems } from "@/types/request";
+import Modal from "@/components/shared/Modal";
+import { PDFViewer } from "@react-pdf/renderer";
+import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -28,19 +33,17 @@ interface ApprovedPOViewProps {
   onSendPO: (data: DisplayPOItemsSupplier[]) => Promise<boolean>;
   onSendPOItem: (data: PurchaseOrderItems[]) => Promise<boolean>;
   loading: boolean;
+  onClose: () => void;
 }
+interface RequestItemWithPOItem extends RequestItems {
+  poItemId: number;
+}
+
 export interface StoreSupplierDetails {
   storeId: number;
   storeName: string;
-  items: Items[];
-}
-interface Items {
-  itemName: string;
-  itemUnit: string;
-  poItemOrderedQty: number;
-  unitPrice: number;
-  poItemStatus: string;
-  isSent: number;
+  requestId: number;
+  items: RequestItemWithPOItem[];
 }
 
 const columns: Column<PurchaseOrderItems>[] = [
@@ -79,10 +82,16 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   onSendPOItem,
   loading,
   poData,
+  onClose,
 }) => {
   const [expandedSupplier, setExpandedSupplier] = useState<number | null>(null);
+  const [showROPDF, setShowROPDF] = useState<
+    "po" | "supplier" | "store" | null
+  >(null);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
   const [isView, setIsView] = useState<"all" | "store">("all");
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<DisplayPOItemsSupplier | null>(null);
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: StoreSupplierDetails[];
   }>(
@@ -111,6 +120,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     const success = await onSendPO(data);
     if (success) {
       toast.success("Purchase Order successfully sent!");
+      onClose();
     }
   };
   return (
@@ -170,6 +180,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               isRounded={false}
                               size="xs"
                               onClick={function (): void {
+                                setExpandedSupplier(data.suppId);
                                 setIsView("all");
                               }}
                               color={
@@ -223,39 +234,19 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   className="font-semibold text-gray-700 text-xs"
                                 />
                               </div>
+
                               <div>
                                 <Button
                                   isRounded={false}
                                   size="xs"
                                   onClick={function (): void {
-                                    throw new Error(
-                                      "Function not implemented."
-                                    );
+                                    setSelectedSupplier(data);
+                                    setShowROPDF("supplier");
                                   }}
                                   color="nocolor"
-                                  label="Print"
+                                  label="PDF"
                                   icon={
-                                    <PrinterIcon
-                                      size={15}
-                                      className="text-gray-700"
-                                    />
-                                  }
-                                  className="font-semibold text-gray-700 text-xs"
-                                />
-                              </div>
-                              <div>
-                                <Button
-                                  isRounded={false}
-                                  size="xs"
-                                  onClick={function (): void {
-                                    throw new Error(
-                                      "Function not implemented."
-                                    );
-                                  }}
-                                  color="nocolor"
-                                  label="Download PDF"
-                                  icon={
-                                    <Download
+                                    <FileText
                                       size={15}
                                       className="text-gray-700"
                                     />
@@ -346,14 +337,13 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                       </div>
                     </div>
                     {expandedSupplier === data.suppId && (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-y-auto">
                         {isView === "all" ? (
                           <Table
                             textSize="xs"
                             columns={columns}
                             data={data.items}
                             isRounded={false}
-                            maxHeight="h-full"
                           />
                         ) : (
                           <div className="flex p-2 gap-4">
@@ -379,27 +369,15 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             <span className="text-xs ml-2"> Created: {}</span>
           </span>
           <div className="flex gap-3">
-            <div>
-              <Button
-                color="nocolor"
-                size="sm"
-                onClick={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
-                label="Print"
-                icon={<PrinterIcon size={15} />}
-                className="font-semibold text-gray-700 text-xs px-2 py-2"
-              />
-            </div>
             <div className="">
               <Button
                 color="nocolor"
                 size="sm"
                 onClick={function (): void {
-                  throw new Error("Function not implemented.");
+                  setShowROPDF("po");
                 }}
-                label="Download PDF"
-                icon={<Edit size={15} className="text-gray-700" />}
+                label="PDF"
+                icon={<FileText size={15} className="text-gray-700" />}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
@@ -417,6 +395,25 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           </div>
         </div>
       </div>
+      <Modal
+        className="h-[95%]"
+        isOpen={showROPDF !== null}
+        size="xl"
+        onClose={function (): void {
+          setShowROPDF(null);
+        }}
+        title="Request Order PDF"
+      >
+        {" "}
+        <PDFViewer width="100%" height="100%">
+          {/* <RequestOrderPDF data={pdfData ?? null} /> */}
+          {showROPDF === "supplier" ? (
+            <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
+          ) : (
+            <div></div>
+          )}
+        </PDFViewer>
+      </Modal>
     </div>
   );
 };

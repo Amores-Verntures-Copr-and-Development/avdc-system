@@ -276,7 +276,11 @@ const StoreRequisitionPage = () => {
           setIsShowViewRequest(false);
         }}
       >
-        <ViewRequestModal selectedReq={selectedRow} mutateRequest={mutate} />
+        <ViewRequestModal
+          selectedReq={selectedRow}
+          mutateRequest={mutate}
+          user={user}
+        />
       </Modal>
     </PageLayout>
   );

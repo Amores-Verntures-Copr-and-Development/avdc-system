@@ -27,7 +27,7 @@ const data = [
 
 const Chart = () => {
   return (
-    <div className="w-full h-[300px]">
+    <div className="w-full h-full flex flex-col">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
@@ -58,8 +58,8 @@ const Chart = () => {
           <Area
             type="monotone"
             dataKey="sales"
-            stroke="#10b981" // Tailwind green-500
-            fill="#d1fae5" // Tailwind green-100
+            stroke="#e63389" // Tailwind green-500
+            fill="#e081c5" // Tailwind green-100
             strokeWidth={2}
           />
         </AreaChart>

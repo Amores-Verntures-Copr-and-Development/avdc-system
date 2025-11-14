@@ -5,10 +5,14 @@ import { updatePurchase } from "./update-purchase-order";
 import { updatePurchaseOrderItems } from "./purchase-items/update-purchase-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { InventoryItemInterface } from "@/types/inventory";
-import { findIventoryByFields } from "../inventory/get-inventory";
+import {
+  findInventoryByStockPurchaserFields,
+  findInventoryByStoreFields,
+  findIventoryByFields,
+} from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
-import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
@@ -24,6 +28,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         poStatus: "received",
       },
     ];
+    console.log("UpdatePurchaseOrdersDto: ", data);
     await updatePurchase({ connection, keyFields: ["poId"], updates: poData });
     const poItemsData: Partial<PurchaseOrderItems>[] =
       data.poItems?.map((item) => ({
@@ -36,8 +41,9 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
       updates: poItemsData,
     });
     //add to warehouse inventory
-    const warehouseInv = await findIventoryByFields({
-      keyFields: { storeId: null },
+    console.log(`data.poCreatedBy: `, data.poCreatedBy);
+    const warehouseInv = await findInventoryByStockPurchaserFields({
+      keyFields: { userId: data.updatedBy },
     });
     const addItemsData: Partial<InventoryItemInterface>[] =
       data.poItems?.flatMap((item) => ({

@@ -12,7 +12,9 @@ export async function GET(
   try {
     const slug = (await params).inventoryId;
     const inventoryId = Number(slug);
-    const res = await getInventoryItems(inventoryId);
+    const res = await getInventoryItems({
+      keyFields: { inventoryId: inventoryId },
+    });
 
     if (!res.success) {
       // propagate the actual message if available

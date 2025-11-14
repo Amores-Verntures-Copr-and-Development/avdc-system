@@ -15,6 +15,7 @@ interface PendingPOViewProps {
   onSubmit: (data: UpdatePurchaseOrdersDto) => Promise<boolean>;
   isLoading?: boolean;
   mutate: () => void;
+  onClose: () => void;
 }
 const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
   {
@@ -93,6 +94,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   onSubmit,
   isLoading,
   mutate,
+  onClose,
 }) => {
   const updatedItemsRef = useRef<DisplayPurchaseOrderItemsDto[]>([]);
   const handleDataUpdate = (updatedData: DisplayPurchaseOrderItemsDto[]) => {
@@ -106,7 +108,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     };
     const success = await onSubmit(newData);
     if (success) {
-      mutate();
+      onClose();
     }
   };
   return (

@@ -4,6 +4,7 @@ import {
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { processApprovedPO } from "@/services/purchase/process-approved-purchase";
+import { processCompletePO } from "@/services/purchase/process-complete-purchase";
 import { processCreatePO } from "@/services/purchase/process-create-po";
 import { processDeliverItemToStore } from "@/services/purchase/process-deliver-po-store";
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
@@ -78,7 +79,7 @@ export const updateApprovedPurchaseOrder = async (
     await processApprovedPO(data);
     return {
       success: true,
-      message: "Purchase Order approved successfully!",
+      message: `Purchase Order ${data.poNumber} approved successfully!`,
     };
   } catch (e) {
     return {
@@ -138,16 +139,20 @@ export const updatePurchaseOrder = async (
     }
     if (controller === "approved") {
       await processApprovedPO(data);
-      message = "Purchase Order approved successfully!";
+      message = `Purchase Order ${data.poNumber} approved successfully!`;
     }
     if (controller === "sent") {
       await processSendPO(data);
-      message = "Purchase Order sent successfully!";
+      message = `Purchase Order ${data.poNumber} sent successfully!`;
     }
     if (controller === "received") {
       console.log("[received]: ", data);
       await processReceivedPO(data);
-      message = "Purchase Order items received successfully!";
+      message = `Purchase Order ${data.poNumber} items received successfully!`;
+    }
+    if (controller === "completed") {
+      await processCompletePO(data);
+      message = `Purchase Order ${data.poNumber} successfully completed!`;
     }
     return {
       success: true,
@@ -197,6 +202,7 @@ export const deliverItemToStore = async (data: DeliverItemsToStore) => {
       result: result,
     };
   } catch (e) {
+    console.log(e);
     return {
       success: false,
       message: "Failed to process deliver",

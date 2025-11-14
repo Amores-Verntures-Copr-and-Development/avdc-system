@@ -235,6 +235,7 @@ export const updatePOItems = async ({
   updates: Partial<PurchaseOrderItems>[];
   keyFields?: (keyof PurchaseOrderItems)[]; // which fields define the WHERE condition
 }) => {
+  console.log("Updates: ", updates);
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
@@ -319,28 +320,43 @@ export const selectStoreItemsBySupplierAndPOId = async ({
 }) => {
   const pool = await getDBConnection();
   const sql = `
-SELECT 
+SELECT   
     s.storeId,
     s.storeName,
-    COUNT(poi.poItemId) as itemCount,
-    JSON_ARRAYAGG(
-        JSON_OBJECT(
-            'itemName', i.itemName,
-            'itemUnit', i.itemUnit,
-            'poItemOrderedQty', poi.poItemOrderedQty,
-				'unitPrice',poi.unitPrice,
-				'poItemStatus',poi.poItemStatus,
-				'isSent',poi.isSent
-        )
-    ) as items
-FROM PurchaseOrderItems poi
-LEFT JOIN Items i ON i.itemId = poi.itemId
-LEFT JOIN PurchaseOrderRequest por ON poi.poId = por.poId
-LEFT JOIN RequestOrders ro ON por.requestId = ro.requestId
-LEFT JOIN Stores s ON ro.storeId = s.storeId
-WHERE poi.suppId = ? AND poi.poId = ?
-GROUP BY s.storeId, s.storeName;
+    ro.requestId,
+    COUNT(DISTINCT ri.reqItemId) AS requestCount,
+    COALESCE(
+        (
+            SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                    'itemName', i.itemName,
+                    'itemUnit',i.itemUnit,
+                    'reqItemId',ris.reqItemId,
+                    'categoryName',c.categoryName,
+                    'categoryType',c.categoryType,
+                    'reqItemQuantity', ris.reqItemQuantity,
+                    'reqItemStatus',ris.reqItemStatus,
+                    'reqItemRemarks',ris.reqItemRemarks,
+                    'poItemId',poi.poItemId
+                )
+            ) 
+            FROM RequestItems ris
+            LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ris.invItem
+            LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"
+            LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId 
+            LEFT JOIN Categories c ON c.categoryId = i.categoryId
+            WHERE ris.requestId = ro.requestId
+        ),
+        JSON_ARRAY()
+    ) AS items 
+FROM Stores s
+INNER JOIN RequestOrders ro ON ro.storeId = s.storeId
+LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
+LEFT JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
+LEFT JOIN PurchaseOrders po ON po.poId = por.poId AND po.poId = ?
+LEFT JOIN PurchaseOrderItems poi ON poi.poId = por.poId AND poi.suppId = ?
+GROUP BY s.storeId, s.storeName, ro.requestId;
 `;
-  const [rows] = await pool.execute(sql, [suppId, poId]);
+  const [rows] = await pool.execute(sql, [poId, suppId]);
   return rows;
 };

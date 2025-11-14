@@ -27,6 +27,8 @@ export interface Column<T = any> {
 }
 
 interface TableProps<T> {
+  title?: string;
+  subtitle?: string;
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
@@ -80,6 +82,8 @@ const TableInner = <T extends Record<string, any>>(
     editMode = "inline",
     isRounded = true,
     onClearSelection,
+    title,
+    subtitle,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
@@ -259,8 +263,16 @@ const TableInner = <T extends Record<string, any>>(
         } border border-gray-200`}
       >
         {/* Top Actions Bar */}
-        {(searchUrl || renderTopActions) && (
+        {(searchUrl || renderTopActions || subtitle || title) && (
           <div className="bg-white flex p-3 items-center justify-between border-b border-gray-200">
+            {(subtitle || title) && (
+              <div className="flex flex-col">
+                {title && <span className="text-black text-sm">{title}</span>}
+                {subtitle && (
+                  <span className="text-xs text-gray-600">{subtitle}</span>
+                )}
+              </div>
+            )}
             <div>{searchUrl && <SearchBar url={searchUrl} />}</div>
             <div className="flex gap-2">{renderTopActions}</div>
           </div>

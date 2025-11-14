@@ -13,6 +13,7 @@ import useSWR from "swr";
 import ShowPOModal from "./components/ShowPOModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { getPOStatusInfo } from "@/utils/formatPOStatus";
+import { useSession } from "@/hooks/useSession";
 
 const purchaseOrderColumns: Column<PurchaseOrders>[] = [
   {
@@ -50,8 +51,18 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
 const PurchaseOrderPage = () => {
   const [showViewPO, setShowViewPO] = useState(false);
   const [selectedPo, setSelecetedPo] = useState<PurchaseOrders>();
+  const { user } = useSession();
   const { data: inventoryResponse = { data: [] }, mutate: mutateInventory } =
     useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
+  const handleUpdateData = async () => {
+    mutateInventory();
+    const findSelectedPo = inventoryResponse.data.find(
+      (po) => po.poId === selectedPo?.poId
+    );
+    if (findSelectedPo) {
+      setSelecetedPo(findSelectedPo);
+    }
+  };
   return (
     <PageLayout className="p-4 gap-2">
       <PageHeader title={"Purchase Orders"} subtitle="Manage purchase orders" />
@@ -105,7 +116,14 @@ const PurchaseOrderPage = () => {
             setShowViewPO(false);
           }}
         >
-          <ShowPOModal data={selectedPo ?? null} mutate={mutateInventory} />
+          <ShowPOModal
+            user={user}
+            data={selectedPo ?? null}
+            mutate={handleUpdateData}
+            onClose={() => {
+              setShowViewPO(false);
+            }}
+          />
         </Modal>
       </div>
     </PageLayout>

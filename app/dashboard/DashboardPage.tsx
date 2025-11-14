@@ -6,6 +6,7 @@ import OwnerDashboard from "./Owner/OwnerDashboard";
 import PageLayout from "@/components/shared/PageLayout";
 import PurchaserDashboard from "./Purchaser/PurchaserDashboard";
 import { useSession } from "@/hooks/useSession";
+import SupervisorPage from "./Supervisor/SupervisorPage";
 
 const DashboardPage = () => {
   const { user, loading, isAdmin, isAuthenticated } = useSession();
@@ -34,12 +35,23 @@ const DashboardPage = () => {
     );
   }
   return (
-    <PageLayout className="p-2">
+    <PageLayout className="p-2 gap-2">
       <PageHeader
         title={"Dashboard"}
         subtitle="Welcome back! Here's your system overview."
       />
-      {isAdmin ? <OwnerDashboard /> : <PurchaserDashboard />}
+      {/* {isAdmin ? <OwnerDashboard /> : <PurchaserDashboard />} */}
+      {user?.userRole === "admin" ? (
+        <OwnerDashboard />
+      ) : user?.userRole == "owner" ? (
+        <OwnerDashboard />
+      ) : user?.empPosition === "purchaser" ? (
+        <PurchaserDashboard />
+      ) : user?.empPosition === "supervisor" ? (
+        <SupervisorPage />
+      ) : (
+        <SupervisorPage />
+      )}
     </PageLayout>
   );
 };

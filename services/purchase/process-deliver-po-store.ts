@@ -3,6 +3,7 @@ import { getDBConnection } from "@/lib/db";
 import { Request, RequestItems } from "@/types/request";
 import { updateRequestItems } from "../request/request-items/update-request-items";
 import {
+  findRequestItemsByPOItemId,
   findRequestOrderItemById,
   getRequestOrderItems,
 } from "../request/request-items/get-request-items";
@@ -18,37 +19,71 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+    console.log("DeliverItemsToStore: ", { data });
     //Get requestItems from poId and storeId
-    const requestItemData: Partial<RequestItems>[] = await Promise.all(
-      data.items.map(async (item) => {
-        // Example DB call — replace with your actual query or function
-        const reqItem = await findRequestOrderItemById({
-          requestId: data.requestId,
-          itemId: item.itemId,
-        });
+    // const requestItemData: Partial<RequestItems>[] = await Promise.all(
+    //   data.items.map(async (item) => {
+    //     // Example DB call — replace with your actual query or function
+    //     const reqItem = await findRequestOrderItemById({
+    //       requestId: data.requestId,
+    //       itemId: item.itemId,
+    //     });
 
-        return {
-          reqItemId: reqItem[0].reqItemId,
-          reqItemStatus: "delivered",
-        };
-      })
-    );
+    //     return {
+    //       reqItemId: reqItem[0].reqItemId,
+    //       reqItemStatus: "delivered",
+    //     };
+    //   })
+    // );
+    const requestItemData: Partial<RequestItems>[] = data.items.map((item) => ({
+      reqItemId: item.reqItemId,
+      reqItemStatus: "delivered",
+    }));
+    console.log("requestItemData: ", { requestItemData });
     await updateRequestItems({
       connection,
       updates: requestItemData,
       keyFields: ["reqItemId"],
     });
-    //Plug Request Items to delivered status
-    const poItemsData: Partial<PurchaseOrderItems>[] =
-      data.items?.map((item) => ({
-        poItemId: item.poItemId,
-        poItemStatus: "delivered",
-      })) || [];
-    await updatePurchaseOrderItems({
+
+    const requestItemsInPOItem = await findRequestItemsByPOItemId({
       connection,
-      keyFields: ["poItemId"],
-      updates: poItemsData,
+      poItemId: data.poItems
+        ? data.poItems
+            .map((item) => item.poItemId)
+            .filter((id): id is number => id !== undefined)
+        : [],
     });
+
+    // Get unique poItemIds that have delivered status
+    const poItemGroups = requestItemsInPOItem.reduce((acc, reqItem) => {
+      const poItemId = reqItem.poItemId;
+      if (!acc[poItemId]) {
+        acc[poItemId] = [];
+      }
+      acc[poItemId].push(reqItem);
+      return acc;
+    }, {} as Record<number, typeof requestItemsInPOItem>);
+
+    const fullyDeliveredPoItemIds = Object.entries(poItemGroups)
+      .filter(([poItemId, items]) =>
+        items.every((item) => item.reqItemStatus === "delivered")
+      )
+      .map(([poItemId]) => parseInt(poItemId));
+
+    console.log({ fullyDeliveredPoItemIds });
+    if (fullyDeliveredPoItemIds.length > 0) {
+      const poItemsData: Partial<PurchaseOrderItems>[] =
+        fullyDeliveredPoItemIds.map((item) => ({
+          poItemId: item,
+          poItemStatus: "delivered",
+        })) || [];
+      await updatePurchaseOrderItems({
+        connection,
+        keyFields: ["poItemId"],
+        updates: poItemsData,
+      });
+    }
     const requestItems = await getRequestOrderItems({
       requestId: data.requestId,
       connection,

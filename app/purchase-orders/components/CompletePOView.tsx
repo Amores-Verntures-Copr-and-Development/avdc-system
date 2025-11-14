@@ -5,6 +5,7 @@ import {
   DisplayRequisitionWithItems,
   RequestItemsCombine,
 } from "@/dtos/purchase.dto";
+import { PurchaseOrders } from "@/types/purchaseOrders";
 
 import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
@@ -22,20 +23,27 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { mutate } from "swr";
 
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
+  poData: PurchaseOrders | null;
   isLoading?: boolean;
   onFulfillRequest?: (
     requestId: string,
     items: RequestItemsCombine[]
   ) => Promise<boolean>;
   onMarkDelivered: (request: Request[]) => Promise<boolean>;
+  onCompleteRequest: (po: PurchaseOrders) => Promise<boolean>;
+  onClose: () => void;
 }
 
 const CompletePOView: React.FC<CompletePOViewProps> = ({
   data,
   onMarkDelivered,
+  poData,
+  onCompleteRequest,
+  onClose,
 }) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null
@@ -176,6 +184,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       if (success) {
         alert(`${newRequest[0].requestNo} mark as delivered!`);
       }
+    }
+  };
+
+  const handleCompletePO = async () => {
+    console.log({ poData });
+    if (!poData) {
+      return;
+    }
+    const success = await onCompleteRequest(poData);
+    if (success) {
+      onClose();
     }
   };
 
@@ -332,21 +351,13 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       </div>
       <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
         <span className="flex items-center">
-          <Clock size={15} /> <span className="text-xs ml-2"> Created: {}</span>
+          <Clock size={15} />{" "}
+          <span className="text-xs ml-2">
+            {" "}
+            Created: {formatDateToWords(poData?.poCreatedAt ?? "")}
+          </span>
         </span>
         <div className="flex gap-3">
-          <div>
-            <Button
-              color="nocolor"
-              size="sm"
-              onClick={function (): void {
-                throw new Error("Function not implemented.");
-              }}
-              label="Print"
-              icon={<PrinterIcon size={15} />}
-              className="font-semibold text-gray-700 text-xs px-2 py-2"
-            />
-          </div>
           <div className="">
             <Button
               color="nocolor"
@@ -354,29 +365,27 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               onClick={function (): void {
                 throw new Error("Function not implemented.");
               }}
-              label="Download PDF"
+              label="PDF"
               icon={<Edit size={15} className="text-gray-700" />}
               className="font-semibold text-gray-700 text-xs px-2 py-2"
             />
           </div>
-          <div>
-            <Button
-              size="sm"
-              onClick={function (): void {
-                // handleReceivePO();
-              }}
-              label="Complete PO"
-              disabled={data.every(
-                (req) =>
-                  req.poStatus === "received" ||
-                  req.poStatus === "approved" ||
-                  req.poStatus === "sent" ||
-                  req.poStatus === "pending"
-              )}
-              icon={<PackageCheckIcon size={15} />}
-              className="font-semibold  text-xs px-2 py-2"
-            />
-          </div>
+          {poData?.poStatus !== "completed" && (
+            <div>
+              <Button
+                size="sm"
+                onClick={function (): void {
+                  handleCompletePO();
+                }}
+                label="Complete PO"
+                disabled={data.every(
+                  (req) => req.requestStatus !== "completed"
+                )}
+                icon={<PackageCheckIcon size={15} />}
+                className="font-semibold  text-xs px-2 py-2"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -51,7 +51,7 @@ export function getRequestStatusFormat(
         status: "Completed",
         bgClass: "bg-pink-100",
         textClass: "text-primary-1 ",
-        borderClass: "border border-yellow-200",
+        borderClass: "border border-primary-1-hover",
       };
     default:
       return {

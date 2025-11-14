@@ -1,6 +1,7 @@
 import {
   selectInventoryItems,
   selectInventoryItemsStockStatus,
+  selectStockRoomInventoryItems,
 } from "@/models/inventoryModels";
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 
@@ -20,6 +21,15 @@ export async function findInventoryItemsByField({
 export async function getInventoryItemsStatus(inventoryId: number) {
   try {
     const data = await selectInventoryItemsStockStatus(inventoryId);
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findStockRoomInventoryByPurchaserId(purchaserId: number) {
+  try {
+    const data = await selectStockRoomInventoryItems(purchaserId);
     return data;
   } catch (e) {
     throw e;

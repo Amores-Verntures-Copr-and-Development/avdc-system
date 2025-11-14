@@ -20,42 +20,66 @@ import {
   handleInsertItemInventory,
   handleInsertItemInventoryBulk,
 } from "../services/inventoryItemServices";
-import { AddItemToStoreDto } from "@/app/inventory/InventoryPage";
+
 import {
   InventoryInterface,
   InventoryItemInterface,
   InventoryItemMovement,
 } from "@/types/inventory";
-import { findIventoryByFields } from "@/services/inventory/get-inventory";
+import {
+  findInventoryByStockPurchaserFields,
+  findInventoryByStoreFields,
+  findIventoryByFields,
+} from "@/services/inventory/get-inventory";
 import {
   findInventoryItemsByField,
   getInventoryItemsStatus,
-} from "@/services/inventory/inventory-items/get-inventory-tems";
+} from "@/services/inventory/inventory-items/get-inventory-items";
 import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
 import { processStockAdjustment } from "@/services/inventory/inventory-movement/process-stock-adjsutment";
+import { StockPurchasers } from "@/types/stockRoom";
+import { StoreInterface } from "@/types/stores";
+import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
 
-export const createInventory = async (data: CreateInventoryDto) => {
-  try {
-    await insertInventory(data);
-    return {
-      success: true,
-      message: "Inventory created successfully!",
-    };
-  } catch (e) {
-    return {
-      success: false,
-      message: "Failed to create inventory!",
-      error: e,
-    };
-  }
-};
+// export const createInventory = async (data: CreateInventoryDto) => {
+//   try {
+//     await insertInventory({ data });
+//     return {
+//       success: true,
+//       message: "Inventory created successfully!",
+//     };
+//   } catch (e) {
+//     return {
+//       success: false,
+//       message: "Failed to create inventory!",
+//       error: e,
+//     };
+//   }
+// };
 export const getInventory = async ({
-  storeId = null,
+  keyFields = {},
+  controller,
+  keySpFields = {},
+  keyStoreFields = {},
 }: {
-  storeId?: number | null;
+  controller?: "stockPurchaser" | "store" | "stock-room";
+  keyFields?: Partial<InventoryInterface>;
+  keySpFields?: Partial<StockPurchasers>;
+  keyStoreFields?: Partial<StoreInterface>;
 }) => {
   try {
-    const data = await findIventoryByFields({ keyFields: { storeId } });
+    let data;
+    if (controller === "stockPurchaser") {
+      data = await findInventoryByStockPurchaserFields({
+        keyFields: keySpFields,
+      });
+    } else if (controller === "store") {
+      data = await findInventoryByStoreFields({
+        keyFields: keyStoreFields,
+      });
+    } else {
+      data = await findIventoryByFields({ keyFields });
+    }
     return {
       success: true,
       message: "Inventory fetched successfully!",
@@ -85,11 +109,16 @@ export const createInventoryItem = async (data: CreateInventoryItemDto) => {
     };
   }
 };
-export const getInventoryItems = async (inventoryId: number) => {
+export const getInventoryItems = async ({
+  keyFields,
+}: {
+  keyFields: Partial<InventoryInterface>;
+}) => {
   try {
     const data = await findInventoryItemsByField({
-      keyFields: { inventoryId },
+      keyFields: keyFields,
     });
+
     return {
       success: true,
       message: "Item fetched successfully!",

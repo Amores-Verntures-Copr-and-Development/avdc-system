@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import PageLayout from "@/components/shared/PageLayout";
 import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import ViewRequestModal from "./components/ViewRequestModal";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
@@ -52,6 +53,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
 
 const AdminRequisitionPage = () => {
   const tableRef = useRef<TableHandle>(null);
+  const [isShowRequest, setIsShowRequest] = useState(false);
   const handleClear = () => {
     tableRef.current?.clearSelection();
     console.log("Clear Data:");
@@ -60,7 +62,8 @@ const AdminRequisitionPage = () => {
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [selectedtedRows, setSelectedRows] =
     useState<DisplayRequestOrderDto[]>();
-  const [selectedtedRow, setSelectedRow] = useState<DisplayRequestOrderDto>();
+  const [selectedtedRow, setSelectedRow] =
+    useState<DisplayRequestOrderDto | null>();
   const { data: itemResponse = { data: [] }, mutate } = useSWR<{
     data: DisplayRequestOrderDto[];
   }>(user ? `/api/requests/request-orders/` : null, fetcher);
@@ -115,15 +118,33 @@ const AdminRequisitionPage = () => {
           renderTopActions={
             selectedtedRows &&
             selectedtedRows.length > 0 && (
-              <div className="">
-                <Button
-                  icon={<FileText size={18} />}
-                  label="Convert to PO"
-                  onClick={() => {
-                    setShowCreatePO(true);
-                  }}
-                  size="sm"
-                />
+              <div className="flex gap-4">
+                <div>
+                  {" "}
+                  <Button
+                    icon={<FileText size={18} />}
+                    label="View Request"
+                    onClick={() => {
+                      // setShowCreatePO(true);
+                    }}
+                    size="xs"
+                    color="nocolor"
+                  />
+                </div>
+                {selectedtedRows.every(
+                  (ro) => ro.requestStatus === "pending"
+                ) && (
+                  <div>
+                    <Button
+                      icon={<FileText size={18} />}
+                      label="Convert to PO"
+                      onClick={() => {
+                        setShowCreatePO(true);
+                      }}
+                      size="xs"
+                    />
+                  </div>
+                )}
               </div>
             )
           }
@@ -134,6 +155,7 @@ const AdminRequisitionPage = () => {
               <IconButton
                 onClick={() => {
                   setSelectedRow(row);
+                  setIsShowRequest(true);
                   console.log(selectedtedRow);
                 }}
                 label={"View"}
@@ -179,6 +201,52 @@ const AdminRequisitionPage = () => {
             setShowCreatePO(false);
           }}
           onSubmit={handleCreatePurchaseOrder}
+        />
+      </Modal>
+      <Modal
+        hasPadding={false}
+        className="bg-white h-[95%]"
+        title={`Request Order (${selectedtedRow?.requestNo})`}
+        modalDetails={(() => {
+          const { status, bgClass, textClass, borderClass } =
+            getRequestStatusFormat(selectedtedRow?.requestStatus ?? "pending");
+          return (
+            <div className="flex flex-1 justify-between align-middle items-center">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-600">
+                  Store:{" "}
+                  <span className="font-bold text-black">
+                    {selectedtedRow?.storeName}
+                  </span>
+                </span>
+                <span className="text-xs text-gray-600">
+                  Requestor:{" "}
+                  <span className="font-bold text-black">
+                    {selectedtedRow?.requestedByName}
+                  </span>
+                </span>
+              </div>
+              <span className="text-xs text-gray-600">
+                Status:{" "}
+                <span
+                  className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+                >
+                  {status}
+                </span>
+              </span>
+            </div>
+          );
+        })()}
+        size="xl"
+        isOpen={isShowRequest}
+        onClose={() => {
+          setIsShowRequest(false);
+        }}
+      >
+        <ViewRequestModal
+          selectedReq={selectedtedRow || null}
+          mutateRequest={mutate}
+          user={user}
         />
       </Modal>
     </PageLayout>

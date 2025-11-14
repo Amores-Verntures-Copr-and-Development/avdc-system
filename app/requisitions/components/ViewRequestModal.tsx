@@ -7,6 +7,7 @@ import {
   DisplayRequestOrderDto,
   RequestOrderPdf,
 } from "@/dtos/request.dto";
+import { UserAuth } from "@/hooks/useSession";
 import { Request } from "@/types/request";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
@@ -21,10 +22,12 @@ import useSWR from "swr";
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
   mutateRequest: () => void;
+  user: UserAuth | null;
 }
 const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   selectedReq,
   mutateRequest,
+  user,
 }) => {
   const [showROPDF, setShowROPDF] = useState(false);
   const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
@@ -43,6 +46,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     updatedItemsRef.current = updatedData;
   };
   console.log({ selectedReq });
+  const isRequestor =
+    user?.empPosition === "staff" || user?.empPosition === "supervisor";
   const columnPending: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
@@ -54,6 +59,19 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         formatQuantityByUnit(row.reqItemQuantity, row.itemUnit),
     },
     { name: "Status", key: "reqItemStatus" },
+  ];
+  const adminColumn: Column<DisplayRequestItems>[] = [
+    { key: "#", name: "#", selector: (_row, index) => index + 1 },
+    { name: "Name", key: "itemName" },
+    { name: "Unit", key: "itemUnit" },
+    { name: "Request Qty", key: "reqItemQuantity" },
+    { name: "Delivered Qty", key: "reqItemTransfer" },
+    { name: "Status", key: "reqItemStatus" },
+    { name: "Remarks", key: "reqItemRemarks" },
+    {
+      name: "Received",
+      key: "reqItemReceived",
+    },
   ];
   const column: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -198,12 +216,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           isRounded={false}
           updateData={handleDataUpdate}
           columns={
-            selectedReq?.requestStatus === "pending" ||
-            selectedReq?.requestStatus === "in_progress"
-              ? columnPending
-              : selectedReq?.requestStatus === "delivered"
-              ? column
-              : column
+            isRequestor
+              ? selectedReq?.requestStatus === "pending" ||
+                selectedReq?.requestStatus === "in_progress"
+                ? columnPending
+                : selectedReq?.requestStatus === "delivered"
+                ? column
+                : column
+              : adminColumn
           }
           data={itemResponse.data}
           loading={loading}
@@ -244,16 +264,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   color="nocolor"
                 />
               </div> */}
-              <div>
-                <Button
-                  icon={<Pencil size={15} />}
-                  onClick={handleReceivedRO}
-                  size="sm"
-                  label="Edit"
-                  className="text-xs font-semibold"
-                  color="nocolor"
-                />
-              </div>
+              {isRequestor && (
+                <div>
+                  <Button
+                    icon={<Pencil size={15} />}
+                    onClick={handleReceivedRO}
+                    size="sm"
+                    label="Edit"
+                    className="text-xs font-semibold"
+                    color="nocolor"
+                  />
+                </div>
+              )}
 
               {/* Conditional buttons based on status */}
               {selectedReq?.requestStatus === "received" && (

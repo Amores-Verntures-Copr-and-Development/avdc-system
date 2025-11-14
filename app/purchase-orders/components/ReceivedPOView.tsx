@@ -6,7 +6,7 @@ import {
   DeliverItemsToStore,
   DisplayPOItemsSupplier,
 } from "@/dtos/purchase.dto";
-import { PurchaseOrderItems } from "@/types/purchaseOrders";
+import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { formatPeso } from "@/utils/formatPeso";
 import {
   Package,
@@ -19,11 +19,21 @@ import {
   Clock,
   PackageCheck,
   PackageCheckIcon,
+  X,
+  Truck,
+  Store,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DeliverItemStoreModal from "./_components/DeliverItemStoreModal";
 import Popup from "@/components/shared/Popup";
+import useSWR from "swr";
+import { StoreSupplierDetails } from "./ApprovedPOView";
+import { fetcher } from "@/utils/fetcher";
+import StoreCardInSupplier from "./_components/StoreCardInSupplier";
+import Modal from "@/components/shared/Modal";
+import { Supplier } from "@/types/supplier";
+import { RequestItems } from "@/types/request";
 
 const columns: Column<PurchaseOrderItems>[] = [
   { name: "Item Name", key: "itemName" },
@@ -52,28 +62,68 @@ const columns: Column<PurchaseOrderItems>[] = [
   },
 ];
 
+const storeColumns: Column<RequestItems>[] = [
+  { name: "#", key: "#", selector: (row, index) => index + 1 },
+  { name: "Item Name", key: "itemName" },
+  { name: "Price", key: "itemPrice" },
+  { name: "Ordered Qty", key: "reqItemQuantity" },
+  {
+    name: "Status",
+    key: "reqItemStatus",
+  },
+  {
+    name: "Remarks",
+    key: "reqItemRemarks",
+  },
+];
+
 interface ReceivedPOViewProps {
   data: DisplayPOItemsSupplier[];
   onReceivePO: (data: DisplayPOItemsSupplier[]) => Promise<boolean>;
   isLoading?: boolean;
   poId: number;
+  poData: PurchaseOrders | null;
+  onClose: () => void;
 }
 
+interface StoreInSupplierDetails {
+  data: StoreSupplierDetails;
+  supplier: Supplier;
+}
 const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   data,
   onReceivePO,
   isLoading,
   poId,
+  poData,
+  onClose,
 }) => {
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier[]>(data);
+  const [isView, setIsView] = useState<"all" | "store">("all");
   const [expandedSupplier, setExpandedSupplier] = useState<number | null>(null);
+  const [isShowDeliverConfirmation, setIsShowDeliverConfirmation] =
+    useState(false);
   const [showDeliverToStore, setShowDeliverToStore] =
     useState<DisplayPOItemsSupplier | null>(null);
+  const [selectedStoreSupplier, setSelectedStoreSupplier] =
+    useState<StoreInSupplierDetails | null>(null);
+  const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+    data: StoreSupplierDetails[];
+  }>(
+    isView === "store" && expandedSupplier
+      ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier}`
+      : null,
+    fetcher,
+    {
+      keepPreviousData: false, // This keeps the data when the key becomes null
+      revalidateOnFocus: false, // Optional: prevent refetch on window focus
+    }
+  );
   const handleReceivePO = async () => {
     const success = await onReceivePO(supplierData);
     if (success) {
-      alert("PO received!");
+      onClose();
     }
   };
   const updateSupplierItems = (
@@ -141,6 +191,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         throw new Error(res.err);
       }
       toast.success(res.message);
+      mutate();
+      setIsShowDeliverConfirmation(false);
+      setSelectedStoreSupplier(null);
       return true;
     } catch (e) {
       console.log(e);
@@ -206,7 +259,49 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                           </div>
                         </div>
                       </div>
-
+                      <div className="flex items-center">
+                        <div>
+                          {" "}
+                          <Button
+                            isRounded={false}
+                            size="xs"
+                            onClick={function (): void {
+                              setExpandedSupplier(supplier.suppId);
+                              setIsView("all");
+                            }}
+                            color={
+                              isView === "all" &&
+                              expandedSupplier === supplier.suppId
+                                ? "primary"
+                                : "nocolor"
+                            }
+                            label="All"
+                            icon={<Edit size={15} />}
+                            className="font-semibold text-gray-700 text-xs"
+                          />
+                        </div>
+                        <div>
+                          {" "}
+                          <Button
+                            isFocus
+                            isRounded={false}
+                            size="xs"
+                            onClick={function (): void {
+                              setExpandedSupplier(supplier.suppId);
+                              setIsView("store");
+                            }}
+                            color={
+                              isView === "store" &&
+                              expandedSupplier === supplier.suppId
+                                ? "primary"
+                                : "nocolor"
+                            }
+                            label="Store"
+                            icon={<Store size={15} />}
+                            className="font-semibold text-gray-700 text-xs"
+                          />
+                        </div>
+                      </div>
                       <div className="flex items-center gap-4">
                         <div>
                           <div className=" bg-white border-gray-200">
@@ -228,32 +323,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 />
                               </div>
                               <div>
-                                {" "}
                                 <Button
                                   isRounded={false}
                                   size="xs"
                                   color="nocolor"
-                                  label="Print"
-                                  icon={
-                                    <PrinterIcon
-                                      size={15}
-                                      className="text-gray-700"
-                                    />
-                                  }
-                                  className="font-semibold text-gray-700 text-xs"
-                                  onClick={function (): void {
-                                    throw new Error(
-                                      "Function not implemented."
-                                    );
-                                  }}
-                                />
-                              </div>
-                              <div>
-                                <Button
-                                  isRounded={false}
-                                  size="xs"
-                                  color="nocolor"
-                                  label="Download PDF"
+                                  label="PDF"
                                   icon={
                                     <Download
                                       size={15}
@@ -270,23 +344,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               </div>
                               {isSupplierItemsSent ? (
                                 <>
-                                  <div>
-                                    {" "}
-                                    <div>
-                                      {" "}
-                                      <Button
-                                        isRounded={false}
-                                        size="xs"
-                                        onClick={() => {
-                                          setShowDeliverToStore(supplier);
-                                        }}
-                                        color="success"
-                                        label="Deliver to Store"
-                                        icon={<Package size={15} />}
-                                        className="font-semibold"
-                                      />
-                                    </div>
-                                  </div>
                                   <div>
                                     {" "}
                                     <div>
@@ -386,44 +443,106 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   </div>
 
                   {isExpanded && (
-                    <div className="overflow-x-auto h-full">
-                      <Table
-                        textSize="xs"
-                        columns={columns}
-                        data={supplier.items}
-                        isRounded={false}
-                        showActions
-                        updateData={(newData) =>
-                          updateSupplierItems(supplier.suppId, newData)
-                        }
-                        loading={isLoading}
-                        renderTopActions={
-                          !isAllItemsDelivered && (
-                            <Button
-                              color="primary"
-                              size="xs"
-                              onClick={() => handleAutoFillAll(supplier.suppId)}
-                              label="Auto-Fill All"
-                              icon={<PackageCheck size={15} />}
-                              className="font-semibold text-white text-xs"
-                            />
-                          )
-                        }
-                        renderActions={(row, rowIndex) =>
-                          row.poItemStatus === "sent" ? (
-                            <IconButton
-                              icon={<PackageCheck size={18} />}
-                              onClick={() =>
-                                handleAutoFill(row.suppId, rowIndex)
-                              }
-                              label="Auto-Fill Received Qty"
-                              bg="primary"
-                            />
-                          ) : (
-                            <></>
-                          )
-                        }
-                      />
+                    <div className="overflow-x-auto">
+                      {selectedStoreSupplier === null ? (
+                        isView === "all" ? (
+                          <Table
+                            textSize="xs"
+                            columns={columns}
+                            data={supplier.items}
+                            isRounded={false}
+                            showActions
+                            updateData={(newData) =>
+                              updateSupplierItems(supplier.suppId, newData)
+                            }
+                            loading={isLoading}
+                            renderTopActions={
+                              !isAllItemsDelivered && (
+                                <Button
+                                  color="primary"
+                                  size="xs"
+                                  onClick={() =>
+                                    handleAutoFillAll(supplier.suppId)
+                                  }
+                                  label="Auto-Fill All"
+                                  icon={<PackageCheck size={15} />}
+                                  className="font-semibold text-white text-xs"
+                                />
+                              )
+                            }
+                            renderActions={(row, rowIndex) =>
+                              row.poItemStatus === "sent" ? (
+                                <IconButton
+                                  icon={<PackageCheck size={18} />}
+                                  onClick={() =>
+                                    handleAutoFill(row.suppId, rowIndex)
+                                  }
+                                  label="Auto-Fill Received Qty"
+                                  bg="primary"
+                                />
+                              ) : (
+                                <></>
+                              )
+                            }
+                          />
+                        ) : (
+                          <div className="flex flex-1 p-2 gap-4 overflow-auto-y">
+                            {itemResponse.data.map((data) => (
+                              <StoreCardInSupplier
+                                data={data}
+                                key={data.storeId}
+                                onClick={(row: StoreSupplierDetails) => {
+                                  console.log(row);
+                                  setSelectedStoreSupplier({
+                                    data: row,
+                                    supplier: supplier,
+                                  });
+                                }}
+                              />
+                            ))}
+                          </div>
+                        )
+                      ) : (
+                        <Table
+                          title={selectedStoreSupplier.data.storeName}
+                          subtitle={`${selectedStoreSupplier.data.items.length} items`}
+                          renderTopActions={
+                            <div className="flex">
+                              <div className="mr-50">
+                                {" "}
+                                <div>
+                                  {" "}
+                                  <Button
+                                    isRounded={false}
+                                    size="xs"
+                                    onClick={() => {
+                                      // setShowDeliverToStore(supplier);
+                                      setIsShowDeliverConfirmation(true);
+                                    }}
+                                    color="success"
+                                    label="Deliver to Store"
+                                    icon={<Package size={15} />}
+                                    className="font-semibold"
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                {" "}
+                                <button
+                                  onClick={() => {
+                                    setSelectedStoreSupplier(null);
+                                  }}
+                                  className="rounded-full hover:bg-gray-500 py-2 px-2"
+                                >
+                                  <X className="text-black" size={15} />
+                                </button>
+                              </div>
+                            </div>
+                          }
+                          columns={storeColumns}
+                          data={selectedStoreSupplier.data.items}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -488,6 +607,55 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           poId={poId}
         />
       </Popup>
+      <Modal
+        leadingIcon={Truck} // or Shipping
+        title="Confirm Delivery"
+        isOpen={isShowDeliverConfirmation}
+        onClose={function (): void {
+          setIsShowDeliverConfirmation(false);
+        }}
+      >
+        <div className="flex flex-col gap-6 p-4">
+          <div className="text-center">
+            <p className="text-gray-700">
+              Deliver {selectedStoreSupplier?.data.items.length} items from{" "}
+              <span className="font-semibold">
+                {selectedStoreSupplier?.supplier.suppName}
+              </span>{" "}
+              (Supplier) to{" "}
+              <span className="font-semibold">
+                {selectedStoreSupplier?.data.storeName}
+              </span>{" "}
+              (Store)?
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <Button size="sm" label="No, Cancel" color="nocolor" />
+            <Button
+              size="sm"
+              label="Yes, Deliver"
+              color="primary"
+              onClick={() => {
+                console.log({ selectedStoreSupplier });
+                if (!selectedStoreSupplier) {
+                  return;
+                }
+                const data: DeliverItemsToStore = {
+                  storeId: selectedStoreSupplier?.data.storeId ?? 0,
+                  poId: poData?.poId ?? 0,
+                  requestId: selectedStoreSupplier.data.requestId,
+                  items: selectedStoreSupplier?.data.items,
+                  poItems:
+                    selectedStoreSupplier?.data.items.map((poItem) => ({
+                      poItemId: poItem.poItemId,
+                    })) ?? [],
+                };
+                handleDeliverItemStore(data);
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

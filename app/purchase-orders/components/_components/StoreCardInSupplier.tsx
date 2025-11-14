@@ -3,11 +3,19 @@ import { StoreSupplierDetails } from "../ApprovedPOView";
 
 interface StoreCardInSupplierProps {
   data: StoreSupplierDetails;
+  onClick?: (row: StoreSupplierDetails) => void;
 }
 
-const StoreCardInSupplier = ({ data }: StoreCardInSupplierProps) => {
+const StoreCardInSupplier = ({ data, onClick }: StoreCardInSupplierProps) => {
   return (
-    <div className="flex flex-col p-3 border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer w-64">
+    <div
+      onClick={() => {
+        if (onClick) {
+          onClick(data);
+        }
+      }}
+      className="flex flex-col p-3 border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer w-64"
+    >
       {/* Store Header */}
       <div className="flex justify-between items-start mb-2">
         <span className="font-semibold text-gray-800">{data.storeName}</span>
@@ -22,7 +30,7 @@ const StoreCardInSupplier = ({ data }: StoreCardInSupplierProps) => {
           <span>Pending:</span>
           <span className="font-medium">
             {
-              data.items.filter((item) => item.poItemStatus === "pending")
+              data.items.filter((item) => item.reqItemStatus === "pending")
                 .length
             }
           </span>
@@ -32,7 +40,7 @@ const StoreCardInSupplier = ({ data }: StoreCardInSupplierProps) => {
           <span className="font-medium">
             {" "}
             {
-              data.items.filter((item) => item.poItemStatus === "delivered")
+              data.items.filter((item) => item.reqItemStatus === "delivered")
                 .length
             }
           </span>
@@ -42,7 +50,7 @@ const StoreCardInSupplier = ({ data }: StoreCardInSupplierProps) => {
           <span className="font-medium">
             {" "}
             {
-              data.items.filter((item) => item.poItemStatus === "received")
+              data.items.filter((item) => item.reqItemStatus === "received")
                 .length
             }
           </span>

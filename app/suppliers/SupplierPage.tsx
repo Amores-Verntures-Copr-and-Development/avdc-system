@@ -70,7 +70,7 @@ const SupplierPage = () => {
     }
   };
   return (
-    <PageLayout>
+    <PageLayout className="p-2 gap-2">
       <PageHeader title={"Supplier"} subtitle="Manage suppliers" />
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table

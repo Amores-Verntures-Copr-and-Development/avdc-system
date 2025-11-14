@@ -42,9 +42,7 @@ export async function handleFindInventoryByStoreId({
 
   // Pass connection if available
   const inventory = await selectInventory({
-    keyFields: {
-      storeId,
-    },
+    keyFields: { inventoryReference: "store", inventoryReferenceId: storeId },
   });
 
   return inventory;

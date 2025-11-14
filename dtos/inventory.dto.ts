@@ -9,7 +9,10 @@ import { CategoryInterface } from "@/types/categories";
 
 export type CreateInventoryDto = Pick<
   InventoryInterface,
-  "inventoryCreatedBy" | "storeId" | "inventoryDescription"
+  | "inventoryCreatedBy"
+  | "inventoryDescription"
+  | "inventoryReference"
+  | "inventotyReferenceId"
 >;
 
 export type CreateInventoryItemDto = Pick<

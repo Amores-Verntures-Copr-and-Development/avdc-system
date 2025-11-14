@@ -5,7 +5,7 @@ import { updateRequests } from "./update-request";
 import { updateRequestItems } from "./request-items/update-request-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
-import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-tems";
+import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { findIventoryByFields } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
@@ -32,6 +32,7 @@ export async function processReceivedRequest(data: Request[]) {
       req.requestItems.flatMap((item) => ({
         reqItemId: item.reqItemId,
         reqItemReceived: item.reqItemReceived,
+        reqItemStatus: "received",
         reqItemRemarks: item.reqItemRemarks,
         ...(Number(item.reqItemTransfer) === 0
           ? { reqItemTransfer: item.reqItemReceived }
@@ -71,7 +72,7 @@ export async function processReceivedRequest(data: Request[]) {
               itemMovementReferenceId: item.requestId ?? 0,
               itemMovementReference: "ro",
               itemMovementQuantity: Number(item.reqItemReceived),
-              itemMovementRemarks: "Received item from ro",
+              itemMovementRemarks: "Received item from request order",
             };
           })
         )

@@ -64,6 +64,7 @@ export type SupplierItemDetails = {
 };
 
 export interface UpdatePurchaseOrdersDto extends Partial<PurchaseOrders> {
+  updatedBy: number;
   poItems?: PurchaseOrderItems[];
 }
 
@@ -86,5 +87,6 @@ export interface DeliverItemsToStore {
   poId: number;
   storeId: number;
   requestId: number;
-  items: PurchaseOrderItems[];
+  items: RequestItems[];
+  poItems: Partial<PurchaseOrderItems>[];
 }

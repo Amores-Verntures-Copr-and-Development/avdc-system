@@ -1,17 +1,24 @@
 import { CreateStoreDto } from "@/dtos/store.dto";
 import { getDBConnection } from "../lib/db";
 import { skip } from "node:test";
+import { PoolConnection, ResultSetHeader } from "mysql2/promise";
 
-export const insertStore = async (data: CreateStoreDto) => {
-  const pool = await getDBConnection();
+export const insertStore = async ({
+  data,
+  connection,
+}: {
+  data: CreateStoreDto;
+  connection: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO Stores(storeName,storeLocation,storeDescription,storeCreatedBy) VALUES(?,?,?,?)`;
-  const [rows] = await pool.execute(sql, [
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.storeName,
     data.storeLocation,
     data.storeDescription,
     data.storeCreatedBy,
   ]);
-  return rows;
+  return result.insertId;
 };
 
 export const selectStores = async ({

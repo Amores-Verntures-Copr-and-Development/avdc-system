@@ -1,12 +1,13 @@
 export const roleOptions = [
   { label: "Select Role", value: "" },
-  { label: "Admin", value: "admin" },
+  { label: "Super Admin", value: "superadmin" },
   { label: "Owner", value: "owner" },
   { label: "Employee", value: "employee" },
 ];
 
 export const positionOptions = [
   { label: "Select Position", value: "" },
+  { label: "Admin", value: "admin" },
   { label: "Purchaser", value: "purchaser" },
   { label: "Supervisor", value: "supervisor" },
   { label: "HR", value: "hr" },

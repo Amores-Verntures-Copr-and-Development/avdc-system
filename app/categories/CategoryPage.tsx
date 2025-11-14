@@ -58,7 +58,7 @@ const CategoryPage = () => {
   };
 
   return (
-    <PageLayout>
+    <PageLayout className="p-4 gap-2">
       <PageHeader
         title={"Categories"}
         subtitle="Manage your categories for your items."

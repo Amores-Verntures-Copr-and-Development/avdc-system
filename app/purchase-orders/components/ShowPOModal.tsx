@@ -12,16 +12,22 @@ import toast from "react-hot-toast";
 import ReceivedPOView from "./ReceivedPOView";
 import CompletePOView from "./CompletePOView";
 import { Request } from "@/types/request";
+import { UserAuthInterface } from "@/types/auth";
+import { UserAuth } from "@/hooks/useSession";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
   data: PurchaseOrders | null;
   mutate: () => void;
+  onClose: () => void;
+  user: UserAuth | null;
 }
 
 const ShowPOModal: React.FC<ShowPOModalPros> = ({
   data,
   mutate: mutateInventory,
+  onClose,
+  user,
 }) => {
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
@@ -34,7 +40,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       ? `/api/purchase-order/po-items-supplier/${data?.poId}`
       : data?.poStatus === "received"
       ? `/api/purchase-order/po-request-order/${data?.poNumber}`
-      : `/api/purchase-order/po-items-supplier/${data?.poId}`;
+      : `/api/purchase-order/po-request-order/${data?.poNumber}`;
 
   const {
     data: itemResponse = { data: [] },
@@ -60,8 +66,8 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         throw new Error(res.err);
       }
       toast.success(res.message);
-      mutate();
       mutateInventory();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);
@@ -87,8 +93,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      mutate();
+      toast.success(res.message);
       mutateInventory();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);
@@ -102,6 +109,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       items.flatMap((i) => i.items)
     );
     const newData: UpdatePurchaseOrdersDto = {
+      updatedBy: user?.userId ?? 0,
       poId: data?.poId,
       poItems: items.flatMap((i) => i.items),
     };
@@ -122,8 +130,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      mutate();
+      toast.success(res.message);
       mutateInventory();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);
@@ -134,6 +143,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   const handleReceivePO = async (items: DisplayPOItemsSupplier[]) => {
     try {
       const updatePO: UpdatePurchaseOrdersDto = {
+        updatedBy: user?.userId ?? 0,
         poId: data?.poId,
         poItems: items.flatMap((i) => i.items),
       };
@@ -154,8 +164,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      mutate();
+      toast.success(res.message);
       mutateInventory();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);
@@ -183,8 +194,37 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         throw new Error(res.err);
       }
       toast.success(res.message);
-      mutate();
       mutateInventory();
+      mutate();
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to update Request.");
+      return false;
+    }
+  };
+  const handleCompleteRO = async (data: PurchaseOrders) => {
+    // console.log("Data: ", dataReq[0].requestItemsData);
+    const body = {
+      data: data,
+      controller: "completed",
+    };
+    try {
+      const result = await fetch(`api/purchase-order/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutateInventory();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);
@@ -226,6 +266,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       {/* Step instruction */}
       {data?.poStatus === "pending" ? (
         <PendingPOView
+          onClose={onClose}
           data={itemResponse.data}
           poData={data}
           onSubmit={handleApprovedPO}
@@ -234,6 +275,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "approved" ? (
         <ApprovedPOView
+          onClose={onClose}
           poData={data}
           data={itemResponse.data}
           onSendPO={handleSendPO}
@@ -242,6 +284,8 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "sent" ? (
         <ReceivedPOView
+          onClose={onClose}
+          poData={data}
           data={itemResponse.data}
           onReceivePO={handleReceivePO}
           isLoading={isLoading}
@@ -249,13 +293,19 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "received" ? (
         <CompletePOView
+          poData={data}
           data={itemResponse.data}
           onMarkDelivered={handleDeliveredRO}
+          onCompleteRequest={handleCompleteRO}
           isLoading={isLoading}
+          onClose={onClose}
           // onReceivePO={handleReceivePO}
         />
       ) : (
         <CompletePOView
+          poData={data}
+          onClose={onClose}
+          onCompleteRequest={handleCompleteRO}
           data={itemResponse.data}
           onMarkDelivered={handleDeliveredRO}
           isLoading={isLoading}

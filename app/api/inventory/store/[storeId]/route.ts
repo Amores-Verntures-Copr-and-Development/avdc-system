@@ -12,7 +12,10 @@ export async function GET(
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
-    const res = await getInventory({ storeId });
+    const res = await getInventory({
+      controller: "store",
+      keyStoreFields: { storeId: storeId },
+    });
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);

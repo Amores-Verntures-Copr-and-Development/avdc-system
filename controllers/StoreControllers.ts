@@ -1,10 +1,11 @@
 import { CreateStoreDto } from "@/dtos/store.dto";
-import { insertStore, selectStores } from "../models/storeModels";
+import { selectStores } from "../models/storeModels";
 import { findStoreByPOID } from "@/services/store/get-store";
+import { processCreateStore } from "@/services/store/process-create-store";
 
 export const createStore = async (data: CreateStoreDto) => {
   try {
-    await insertStore(data);
+    await processCreateStore(data);
     return {
       success: true,
       message: "Store created successfully!",

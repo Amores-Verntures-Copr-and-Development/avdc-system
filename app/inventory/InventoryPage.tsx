@@ -3,6 +3,8 @@ import Button from "@/components/shared/Button";
 import PageHeader from "@/components/shared/PageHeader";
 import {
   AlertTriangle,
+  ArrowBigLeft,
+  ArrowLeft,
   Box,
   FileChartColumn,
   Package,
@@ -11,262 +13,118 @@ import {
   XCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import InventoryCard from "./components/InventoryCard";
-import { Column } from "@/components/shared/Table";
 
 import PageLayout from "@/components/shared/PageLayout";
-
-import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { useSession } from "@/hooks/useSession";
-
-import useSWR from "swr";
+import InventoryDetailsCard from "./components/InventoryDetailsCard";
+import InventoryView from "./view/InventoryView";
 import { InventoryInterface } from "@/types/inventory";
 import { fetcher } from "@/utils/fetcher";
+import useSWR from "swr";
+import { StoreInterface } from "@/types/stores";
+import { StockRoom } from "@/types/stockRoom";
 
-import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
-
-import InventorySection from "./components/InventorySection/InventorySection";
-import StockMovementSection from "./components/StockMovementSection/StockMovementSection";
-import ReportSection from "./components/ReportSection/ReportSection";
-
-export interface AddItemToStoreDto {
-  storeId: number;
-  addedById: number;
-  items: DisplayInventoryItems[];
-}
-
-export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
-  { name: "ID", key: "inventoryItemId" },
-  { name: "Item Name", key: "itemName" },
-  {
-    name: "Quantity",
-    key: "inventoryItemQuantity",
-  },
-  { name: "Price", key: "itemPrice" },
-  { name: "Minimum", key: "inventoryItemMin" },
-
-  { name: "Unit", key: "itemUnit" },
-  { name: "Category", key: "categoryName" },
-  { name: "Store ID", key: "storeId" },
-  {
-    name: "Status",
-    key: "status",
-    selector: (row) => {
-      const { status, bgClass, textClass } = getInventoryStatusInfo(
-        row.inventoryItemQuantity,
-        row.inventoryItemMin
-      );
-
-      return (
-        <span
-          className={`px-2 py-1 rounded-lg font-semibold ${bgClass} ${textClass}`}
-        >
-          {status}
-        </span>
-      );
-    },
-  },
-];
-export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
-  {
-    name: "ID",
-    key: "inventoryItemId",
-    selector: (row) => (
-      <span className="text-gray-700 font-medium">{row.inventoryItemId}</span>
-    ),
-  },
-  {
-    name: "Item Name",
-    key: "itemName",
-    selector: (row) => (
-      <span className="text-gray-800 font-semibold">{row.itemName}</span>
-    ),
-  },
-  {
-    name: "Quantity",
-    key: "inventoryItemQuantity",
-    selector: (row) => (
-      <span
-        className={`font-semibold ${
-          row.inventoryItemQuantity <= 0
-            ? "text-red-600"
-            : row.inventoryItemQuantity < row.inventoryItemMin
-            ? "text-yellow-600"
-            : "text-green-600"
-        }`}
-      >
-        {row.inventoryItemQuantity}
-      </span>
-    ),
-  },
-  {
-    name: "Price",
-    key: "itemPrice",
-    selector: (row) => (
-      <span className="text-gray-700">
-        ₱
-        {Number(row.itemPrice || 0).toLocaleString("en-PH", {
-          minimumFractionDigits: 2,
-        })}
-      </span>
-    ),
-  },
-  {
-    name: "Minimum",
-    key: "inventoryItemMin",
-    selector: (row) => (
-      <span className="text-gray-600">{row.inventoryItemMin}</span>
-    ),
-  },
-  {
-    name: "Unit",
-    key: "itemUnit",
-    selector: (row) => <span className=" text-gray-600">{row.itemUnit}</span>,
-  },
-  {
-    name: "Category",
-    key: "categoryName",
-    selector: (row) => (
-      <span className="text-gray-700">{row.categoryName || "—"}</span>
-    ),
-  },
-  {
-    name: "Status",
-    key: "status",
-    selector: (row) => {
-      const { status, bgClass, textClass } = getInventoryStatusInfo(
-        row.inventoryItemQuantity,
-        row.inventoryItemMin
-      );
-
-      return (
-        <span
-          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${bgClass} ${textClass}`}
-        >
-          {status}
-        </span>
-      );
-    },
-  },
-];
-
+export interface DisplayAllInventory
+  extends InventoryInterface,
+    StoreInterface,
+    StockRoom {}
 const InventoryPage = () => {
-  const [selectionSection, setSelectionSection] = useState<
-    "inventory" | "movement" | "report"
-  >("inventory");
   const [inventoryId, setInventoryId] = useState(0);
+  const [selectedInventory, setSelectedInventory] =
+    useState<DisplayAllInventory | null>();
   const { user, hasStore } = useSession();
+  console.log({ user });
   const inventoryBaseUrl = hasStore
-    ? `/api/inventory/${user?.storeId}`
+    ? `/api/inventory/store/${user?.storeId}`
+    : user?.empPosition === "purchaser"
+    ? `/api/inventory/stock-room/${user?.userId}`
     : `/api/inventory`;
   const { data: inventoryResponse = { data: [] } } = useSWR<{
-    data: InventoryInterface[];
+    data: DisplayAllInventory[];
   }>(inventoryBaseUrl, fetcher);
-
   useEffect(() => {
     if (
-      inventoryResponse &&
-      Array.isArray(inventoryResponse.data) &&
-      inventoryResponse.data.length > 0
+      user?.empPosition === "supervisor" ||
+      user?.empPosition === "purchaser" ||
+      user?.empPosition === "staff"
     ) {
-      setInventoryId(inventoryResponse.data[0].inventoryId);
+      if (
+        inventoryResponse &&
+        Array.isArray(inventoryResponse.data) &&
+        inventoryResponse.data.length > 0
+      ) {
+        setInventoryId(inventoryResponse.data[0].inventoryId);
+      }
     }
-  }, [inventoryResponse]);
-  const { data: inventoryItemResponse = { data: [] } } = useSWR(
-    `api/inventory/item/${inventoryId}/details`,
-    fetcher
-  );
-  console.log("inventoryItemResponse: ", inventoryItemResponse);
-  const stats = inventoryItemResponse?.data?.[0] || {};
+  }, [inventoryResponse, user?.empPosition]);
   return (
     <PageLayout className="gap-2 p-4">
-      <div className="flex justify-between items-center">
-        <PageHeader
-          title={"Inventory"}
-          subtitle="Track and manage your stock levels"
-        />
-      </div>
-
-      {/* Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <InventoryCard
-          title="Total Items"
-          value={stats.totalItems || 0}
-          icon={<Box className="w-6 h-6 text-blue-500" />}
-          iconBg="bg-blue-100"
-        />
-        <InventoryCard
-          title="Good Stock Items"
-          value={stats.goodStock || 0}
-          icon={<ShoppingCart className="w-6 h-6 text-green-500" />}
-          iconBg="bg-green-100"
-        />
-        <InventoryCard
-          title="Low Stock Items"
-          value={stats.lowStock || 0}
-          icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
-          iconBg="bg-yellow-100"
-        />
-
-        <InventoryCard
-          title="Out of stock items"
-          value={stats.outStock || 0}
-          icon={<XCircle className="w-6 h-6 text-red-500" />}
-          iconBg="bg-red-100"
-        />
-      </div>
-      <div className="flex">
-        <div className="flex border-1 border-gray-300">
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("inventory");
-              }}
-              color={selectionSection === "inventory" ? "primary" : "nocolor"}
-              label="Inventory"
-              className="text-xs font-semibold"
-              icon={<Package size={16} />}
-            />
-          </div>
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("movement");
-              }}
-              color={selectionSection === "movement" ? "primary" : "nocolor"}
-              label="Stock Movement"
-              className="text-xs font-semibold"
-              icon={<Package2 size={16} />}
-            />
-          </div>
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("report");
-              }}
-              color={selectionSection === "report" ? "primary" : "nocolor"}
-              label="Report"
-              className="text-xs font-semibold"
-              icon={<FileChartColumn size={16} />}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-        {selectionSection === "inventory" && (
-          <InventorySection inventoryId={inventoryId} user={user} />
-        )}
-        {selectionSection === "movement" && (
-          <StockMovementSection inventoryId={inventoryId} />
-        )}
-        {selectionSection === "report" && <ReportSection />}
-      </div>
+      {user?.empPosition === "purchaser" ||
+      user?.empPosition === "supervisor" ||
+      user?.empPosition === "staff" ? (
+        <>
+          <PageHeader
+            title={"Inventory"}
+            subtitle="Track and manage your stock levels"
+          />
+          <InventoryView inventoryId={inventoryId} user={user} />
+        </>
+      ) : (
+        <>
+          {selectedInventory ? (
+            <>
+              <div className="flex justify-between">
+                <PageHeader
+                  title={`${
+                    selectedInventory.storeName ??
+                    selectedInventory.stockRoomName
+                  }`}
+                  subtitle={`${
+                    selectedInventory.inventoryReference === "stock-room"
+                      ? "Stock Room"
+                      : "Store"
+                  }`}
+                />
+                <div>
+                  {" "}
+                  <Button
+                    label="Back"
+                    size="sm"
+                    icon={<ArrowLeft size={20} />}
+                    onClick={() => {
+                      setSelectedInventory(null);
+                      console.log("Clicked");
+                    }}
+                  />
+                </div>
+              </div>
+              <InventoryView
+                inventoryId={selectedInventory.inventoryId}
+                user={user}
+              />
+            </>
+          ) : (
+            <>
+              <PageHeader
+                title={"Inventory"}
+                subtitle="Track and manage stock room and store inventory"
+              />
+              <div className="grid grid-cols-4 gap-4">
+                {inventoryResponse.data.map((inventory) => (
+                  <InventoryDetailsCard
+                    key={inventory.inventoryId}
+                    data={inventory}
+                    onClick={(row: DisplayAllInventory) => {
+                      setSelectedInventory(row);
+                      console.log("Row: ", { row });
+                    }}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
     </PageLayout>
   );
 };

@@ -1,7 +1,9 @@
+type InvetoryRefence = "stock-room" | "store";
 export interface InventoryInterface {
   inventoryId: number;
   inventoryDescription: string;
-  storeId?: number | null;
+  inventoryReference: InvetoryRefence;
+  inventoryReferenceId: number;
   inventoryCreatedAt: string;
   inventoryUpdatedAt: string;
   inventoryDeletedAt?: string | null;

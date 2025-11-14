@@ -1,6 +1,5 @@
 import {
   DisplayInventoryItems,
-  CreateInventoryDto,
   CreateFirstItem,
   CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
@@ -11,7 +10,7 @@ import { fetcher } from "@/utils/fetcher";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-import { AddItemToStoreDto } from "../../InventoryPage";
+
 import Table, { Column } from "@/components/shared/Table";
 import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
 import Button from "@/components/shared/Button";
@@ -27,19 +26,24 @@ import {
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
-import AddItemModal from "../AddItemModal";
-import AddItemStoreModal from "../AddItemStoreModal";
-import CreateInventoryModal from "../CreateInventoryModal";
-import CreateInventoryReport from "../CreateInventoryReport";
-import CreateRequestModal from "../CreateRequestModal";
-import ViewInventoryItem from "../ViewInventoryItem";
-import AddItemSupplierModal from "../AddItemSupplierModal";
+import AddItemModal from "../../components/AddItemModal";
+import AddItemStoreModal from "../../components/AddItemStoreModal";
+import CreateInventoryModal from "../../components/CreateInventoryModal";
+import CreateInventoryReport from "../../components/CreateInventoryReport";
+import CreateRequestModal from "../../components/CreateRequestModal";
+import ViewInventoryItem from "../../components/ViewInventoryItem";
+import AddItemSupplierModal from "../../components/AddItemSupplierModal";
 import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
-import AddItemToProductModal from "../AddItemToProductModal";
+import AddItemToProductModal from "../../components/AddItemToProductModal";
 import { CreateProductDtos } from "@/dtos/products.dto";
-import { InventoryItemMovement } from "@/types/inventory";
+
+export interface AddItemToStoreDto {
+  storeId: number;
+  addedById: number;
+  items: DisplayInventoryItems[];
+}
 export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
   { name: "ID", key: "inventoryItemId" },
   { name: "Item Name", key: "itemName" },
@@ -181,6 +185,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
+  // get the stock inventory if purchaser
+
   const {
     data: itemResponse = { data: [] },
     isLoading: loading,
@@ -190,35 +196,35 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     fetcher
   );
   console.log("itemResponse: ", { itemResponse, inventoryId });
-  const handleCreateInventory = async (data: CreateInventoryDto) => {
-    console.log("CreateInventoryDto: ", data);
-    try {
-      const newData: CreateInventoryDto = {
-        ...data,
-        inventoryCreatedBy: user?.userId,
-        storeId: user?.storeId,
-      };
-      const result = await fetch("api/inventory", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Inventory added successfully!");
-      mutate();
-      return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add Inventory.");
-      return false;
-    }
-  };
+  // const handleCreateInventory = async (data: CreateInventoryDto) => {
+  //   console.log("CreateInventoryDto: ", data);
+  //   try {
+  //     const newData: CreateInventoryDto = {
+  //       ...data,
+  //       inventoryCreatedBy: user?.userId,
+  //       storeId: user?.storeId,
+  //     };
+  //     const result = await fetch("api/inventory", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(newData),
+  //     });
+  //     const res = await result.json();
+  //     if (!res.success) {
+  //       console.log("Res: ", res);
+  //       throw new Error(res.err);
+  //     }
+  //     toast.success("Inventory added successfully!");
+  //     mutate();
+  //     return true;
+  //   } catch (e) {
+  //     console.log(e);
+  //     toast.error("Failed to add Inventory.");
+  //     return false;
+  //   }
+  // };
 
   const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
     console.log("Selected rows:", selected);
@@ -260,7 +266,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         ...data,
         addedById: user?.userId ?? 0,
       };
-      const result = await fetch(`api/inventory/${newData.storeId}`, {
+      const result = await fetch(`api/inventory/store/${newData.storeId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -496,14 +502,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                     />
                   </div>
                 )}
-              {inventoryId ||
-              inventoryId !== 0 ||
-              itemResponse.data.length > 0 ? (
+              {user?.empPosition === "purchaser" ? (
                 <div>
                   <Button
                     icon={<Plus size={17} />}
                     label="Add Item"
                     onClick={() => {
+                      //add for stock room
                       setShowAdddModal(true);
                     }}
                     size="xs"
@@ -514,9 +519,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                 <div>
                   <Button
                     icon={<Plus size={17} />}
-                    label="Create Inventory"
+                    // add for store item
+                    label="Add Item"
                     onClick={() => {
-                      setShowCreateModal(true);
+                      setShowAdddModal(true);
                     }}
                     size="xs"
                     className="font-semibold"
@@ -575,7 +581,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           onSubmit={handleAddInventoryItem}
         />
       </Modal>
-      <Modal
+      {/* <Modal
         title="Create Inventory"
         subtitle="Register Inventory for your store"
         isOpen={showCreateModal}
@@ -592,7 +598,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           }}
           onSubmit={handleCreateInventory}
         />
-      </Modal>
+      </Modal> */}
       <Modal
         title="Add Item to store"
         subtitle="Select store to add this item to their inventory"

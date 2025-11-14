@@ -11,9 +11,19 @@ const ItemMovementCard = ({ data, index }: ItemMovementCardProps) => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="text-gray-500 font-medium">{index + 1}</span>
-          <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium">
-            {data.itemMovementType}
-          </span>
+          {data.itemMovementType === "in" ? (
+            <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded-full font-medium">
+              {data.itemMovementType}
+            </span>
+          ) : data.itemMovementType === "out" ? (
+            <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium">
+              {data.itemMovementType}
+            </span>
+          ) : (
+            <span className="bg-red-100 text-red-800 px-1 py-0.5 rounded-full font-medium">
+              {data.itemMovementType}
+            </span>
+          )}
           <span className="text-gray-600 truncate max-w-[100px]">
             {data.itemMovementRemarks}
           </span>
