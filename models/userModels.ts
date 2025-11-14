@@ -64,7 +64,7 @@ export const deleteUser = async () => {};
 
 export const selectPurchaserNotInStockPurchaser = async () => {
   const pool = await getDBConnection();
-  const sql = `SELECT * FROM Users u
+  const sql = `SELECT u.* FROM Users u
 LEFT JOIN Employees e ON e.userId = u.userId
 LEFT JOIN StockPurchasers sp ON u.userId = sp.userId
 WHERE sp.stockRoomId IS NULL`;
