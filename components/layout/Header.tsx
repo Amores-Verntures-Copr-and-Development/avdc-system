@@ -5,7 +5,7 @@ import { useSession } from "@/hooks/useSession";
 const Header = () => {
   const { user } = useSession();
   return (
-    <div className="flex justify-end h-15 items-center pr-2 shadow  bg-white overflow-visible">
+    <div className="flex justify-end sm:h-15 items-center pr-2 shadow  bg-white overflow-visible">
       <div className="flex gap-5 items-center">
         <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-300 text-white">
           <Bell size={18} />

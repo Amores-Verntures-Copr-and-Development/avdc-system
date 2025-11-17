@@ -98,7 +98,7 @@ const Pagination: React.FC<PaginationProps> = ({
   }, [page, totalPages]);
 
   return (
-    <div className="flex flex-row items-center justify-between sm:justify-between gap-3 text-black pl-5 pr-5">
+    <div className="flex flex-row items-center justify-between sm:justify-between gap-3 text-black sm:pl-5 sm:pr-5">
       {/* Row selector */}
       <div className="flex items-center gap-2">
         <label htmlFor="limit" className="text-xs font-semibold">

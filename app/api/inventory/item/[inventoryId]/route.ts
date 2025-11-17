@@ -46,7 +46,7 @@ export async function GET(
 export async function POST(request: Request) {
   try {
     const data = (await request.json()) as CreateFirstItem;
-    console.log("CreateFirstItem: ", data);
+
     const res = await addItemToInventory(data);
 
     if (!res.success) {

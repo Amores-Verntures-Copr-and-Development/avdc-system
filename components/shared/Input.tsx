@@ -35,15 +35,15 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
     const showLabel = !placeholder;
     const labelClass = {
       xs: "text-xs",
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
+      sm: "text-xs sm:text-sm",
+      md: "text-md md:text-base",
+      lg: "text-md sm:text-lg",
     }[sizes];
     const sizeClass = {
       xs: "h-8 text-xs px-2",
-      sm: "h-8 text-sm px-2",
+      sm: "h-8 text-xs sm:text-sm  px-2",
       md: "h-10 text-base px-3",
-      lg: "h-12 text-lg px-4",
+      lg: "h-12 text-md sm:text-lg px-4",
     }[sizes];
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

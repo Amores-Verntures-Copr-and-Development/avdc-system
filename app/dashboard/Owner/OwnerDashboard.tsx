@@ -54,24 +54,24 @@ const OwnerDashboard = () => {
       };
     }) ?? [];
   return (
-    <div className="flex h-full overflow-hidden">
-      <div className="flex-1 h-full flex flex-col gap-4  pr-5">
+    <div className="flex flex-col h-full overflow-y-auto sm:flex-col lg:flex-row gap-2">
+      <div className="flex-1 h-full flex flex-col gap-4">
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
         </div>
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
+        <div className="border rounded-2xl shadow-sm min-h-50 border-gray-200 bg-white h-full p-4 sm:p-4">
           <h1>Sales Chart</h1>
           <Chart />
         </div>
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
+        <div className="border rounded-2xl shadow-sm min-h-50  border-gray-200 bg-white h-full p-4">
           <h1>Top Performer</h1>
         </div>
       </div>
 
-      <div className="flex-[.30] flex flex-col h-full  gap-4">
+      <div className="flex-[.40] flex flex-col h-full  gap-4">
         <div className="flex-1 flex flex-col min-h-0 p-4 border rounded-2xl shadow-sm border-gray-200 bg-white">
           <h1 className="font-semibold text-sm">Daily Store Sales</h1>
           <div className="flex-1 flex flex-col gap-2 overflow-auto">

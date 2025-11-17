@@ -13,7 +13,7 @@ export async function GET(
   try {
     const slug = (await params).requestId;
     const requsetId = Number(slug);
-    console.log("Agi here getRequest");
+
     const res = await getItemRequest({ requestId: requsetId });
     if (!res.success) {
       console.log(res.error);

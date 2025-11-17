@@ -264,7 +264,7 @@ const TableInner = <T extends Record<string, any>>(
       >
         {/* Top Actions Bar */}
         {(searchUrl || renderTopActions || subtitle || title) && (
-          <div className="bg-white flex p-3 items-center justify-between border-b border-gray-200">
+          <div className="bg-white flex p-1 sm:p-3 gap-5 items-center justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
                 {title && <span className="text-black text-sm">{title}</span>}
@@ -273,8 +273,10 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div>{searchUrl && <SearchBar url={searchUrl} />}</div>
-            <div className="flex gap-2">{renderTopActions}</div>
+            <div className="w-30">
+              {searchUrl && <SearchBar url={searchUrl} />}
+            </div>
+            <div className="flex gap-1 sm:gap-2">{renderTopActions}</div>
           </div>
         )}
 
@@ -287,7 +289,7 @@ const TableInner = <T extends Record<string, any>>(
               >
                 {/* Select-all column */}
                 {showCheckBox && (
-                  <th className="px-2 py-3 w-12 text-center bg-gray-50 border-r border-gray-300">
+                  <th className="px-1 py-1.5 w-8 sm:px-2 sm:py-3 sm:w-12 text-center bg-gray-50 border-r border-gray-300">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -302,7 +304,7 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-2 py-3 font-semibold text-left text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-1 py-1.5 sm:px-2 sm:py-3 font-semibold text-left text-xs sm:text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
                         ? "border-r border-gray-300"
                         : ""

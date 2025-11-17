@@ -37,30 +37,34 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
   return (
     <PageLayout className="gap-2">
       {/* Cards */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4">
         <InventoryCard
           title="Total Items"
           value={0}
-          icon={<Box className="w-6 h-6 text-blue-500" />}
+          icon={<Box className="h-3 w-3 sm:w-6 sm:h-6 text-blue-500" />}
           iconBg="bg-blue-100"
         />
         <InventoryCard
           title="Good Stock Items"
           value={0}
-          icon={<ShoppingCart className="w-6 h-6 text-green-500" />}
+          icon={
+            <ShoppingCart className="h-3 w-3 sm:w-6 sm:h-6 text-green-500" />
+          }
           iconBg="bg-green-100"
         />
         <InventoryCard
           title="Low Stock Items"
           value={0}
-          icon={<AlertTriangle className="w-6 h-6 text-yellow-500" />}
+          icon={
+            <AlertTriangle className="h-3 w-3 sm:w-6 sm:h-6 text-yellow-500" />
+          }
           iconBg="bg-yellow-100"
         />
 
         <InventoryCard
           title="Out of stock items"
           value={0}
-          icon={<XCircle className="w-6 h-6 text-red-500" />}
+          icon={<XCircle className="h-3 w-3 sm:w-6 sm:h-6 text-red-500" />}
           iconBg="bg-red-100"
         />
       </div>

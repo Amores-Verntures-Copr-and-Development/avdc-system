@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const res = await getSupplier({ search });
-    console.log("Search Supplier");
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);

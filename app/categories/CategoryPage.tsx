@@ -51,7 +51,7 @@ const CategoryPage = () => {
     user ? categoriesUrl : null,
     fetcher
   );
-  console.log({ response });
+
   const handleSubmit = async (data: CreateCategoryDto): Promise<boolean> => {
     const newData: CreateCategoryDto = {
       ...data,
@@ -60,7 +60,7 @@ const CategoryPage = () => {
         ? stockRoom.stockRoomId
         : stores?.storeId ?? 0,
     };
-    console.log({ newData });
+
     try {
       const result = await fetch("api/categories", {
         method: "POST",

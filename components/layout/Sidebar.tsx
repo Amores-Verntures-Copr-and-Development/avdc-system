@@ -285,7 +285,7 @@ const Sidebar = () => {
       )}
 
       <aside
-        className={`fixed  lg:static top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-50  ${
+        className={`fixed  lg:static top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-50 overflow-y-auto  ${
           isCollapsed
             ? isMobile
               ? "-translate-x-full lg:translate-x-0 lg:w-20"
