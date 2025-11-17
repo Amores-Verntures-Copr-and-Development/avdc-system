@@ -76,7 +76,7 @@ const LoginPage = () => {
           </span>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="p-4 space-y-1 sm:space-y-4">
           <Input
             label={"Username"}
             name="username"
@@ -96,7 +96,7 @@ const LoginPage = () => {
           />
           <button
             type="submit"
-            className={`w-full text-sm font-semibold text-white py-2 rounded ${
+            className={`w-full text-[10px] sm:text-sm font-semibold text-white py-2 sm:py-2 rounded ${
               loading ? "bg-gray-400" : "bg-primary-1 hover:bg-primary-1-hover"
             }`}
             disabled={loading}

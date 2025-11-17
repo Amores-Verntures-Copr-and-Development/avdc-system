@@ -34,7 +34,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
 
     const showLabel = !placeholder;
     const labelClass = {
-      xs: "text-xs",
+      xs: "text-[10px] sm:text-xs",
       sm: "text-xs sm:text-sm",
       md: "text-md md:text-base",
       lg: "text-md sm:text-lg",
@@ -79,7 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             required={required}
             readOnly={readOnly}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black  rounded-md py-2 pl-3 pr-10 focus:outline-none focus:ring-2 ${
+            className={`w-full border border-gray-300 text-black  rounded-md py-1 sm:py-2 sm:pl-3 sm:pr-10 focus:outline-none focus:ring-2 ${
               readOnly
                 ? "bg-gray-100 cursor-not-allowed"
                 : "focus:ring-blue-400"

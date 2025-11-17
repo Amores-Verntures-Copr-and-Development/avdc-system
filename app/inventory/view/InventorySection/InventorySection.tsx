@@ -425,7 +425,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             <div className="flex gap-4">
               <div>
                 <Button
-                  icon={<Clipboard size={17} />}
+                  icon={
+                    <Clipboard className="w-4 h-4 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                  }
                   label="Inventory Report"
                   onClick={() => {
                     setShowCreateReportModal(true);
