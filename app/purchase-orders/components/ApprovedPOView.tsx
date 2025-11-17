@@ -8,12 +8,10 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Download,
   Edit,
   FileText,
   Loader2,
   Package,
-  PrinterIcon,
   Send,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -113,6 +111,12 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     const success = await onSendPOItem(poItems);
     if (success) {
       toast.success(`Items for ${supplierName}  sent!`);
+      console.log({ data });
+      if (
+        data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
+      ) {
+        onClose();
+      }
     }
     setSendingSupplier(null);
   };

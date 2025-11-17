@@ -1,5 +1,8 @@
 import { CreateRequestFormDto } from "@/dtos/request.dto";
-import { getRequestOrders } from "@/services/request/get-request";
+import {
+  getRequestOrderFromStockRoomByPurchaserFields,
+  getRequestOrders,
+} from "@/services/request/get-request";
 import { processCompleteRequest } from "@/services/request/process-complete-request";
 import { processCreateRequest } from "@/services/request/process-create-request";
 import { processDeliveredPO } from "@/services/request/process-deliver-request";
@@ -28,9 +31,25 @@ export const postRequest = async (data: CreateRequestFormDto) => {
   }
 };
 
-export const getRequest = async ({ storeId }: { storeId?: number }) => {
+export const getRequest = async ({
+  storeId,
+  userId,
+  controller,
+}: {
+  storeId?: number;
+  userId?: number;
+  controller?: "stock-room" | "store" | null;
+}) => {
+  let data;
   try {
-    const data = await getRequestOrders({ storeId });
+    if (controller === "stock-room" && userId) {
+      data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
+      console.log("Agi here");
+    } else if (controller === "store") {
+      data = await getRequestOrders({ storeId });
+    } else {
+      data = await getRequestOrders({});
+    }
     return {
       success: true,
       message: "Request fetched successfully",
@@ -105,12 +124,13 @@ export const getRequestOrderItemsPO = async (poNumber: string) => {
 
 export const updateRequest = async (
   controller: string,
-  requestOrder: Request[]
+  requestOrder: Request[],
+  controllerId?: number
 ) => {
   try {
     let message: string = "";
-    if (controller === "delivered") {
-      await processDeliveredPO(requestOrder);
+    if (controller === "delivered" && controllerId) {
+      await processDeliveredPO(requestOrder, controllerId);
       message = `Request Order deliver successfully!`;
     }
     if (controller === "received") {

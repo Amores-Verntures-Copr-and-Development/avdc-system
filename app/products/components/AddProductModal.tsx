@@ -70,7 +70,7 @@ const AddProductModal = () => {
               sizes="xs"
               label="Category"
               value={undefined}
-              //   value={`${inventoryForm.categoryId}`}
+              referenceType={null} //   value={`${inventoryForm.categoryId}`}
               //   onChange={handleItemChange}
             />
           </div>

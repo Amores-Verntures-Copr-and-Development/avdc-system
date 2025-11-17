@@ -34,8 +34,8 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const ro = await request.json();
-    const { data, controller } = ro;
-    const res = await updateRequest(controller, data);
+    const { data, controller, userId } = ro;
+    const res = await updateRequest(controller, data, userId);
     if (!res.success) {
       console.log(res.error);
       throw new Error(res.message || "Failed to Update Request");

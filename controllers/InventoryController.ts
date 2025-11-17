@@ -27,9 +27,9 @@ import {
   InventoryItemMovement,
 } from "@/types/inventory";
 import {
+  findInventoryByFields,
   findInventoryByStockPurchaserFields,
   findInventoryByStoreFields,
-  findIventoryByFields,
 } from "@/services/inventory/get-inventory";
 import {
   findInventoryItemsByField,
@@ -78,7 +78,7 @@ export const getInventory = async ({
         keyFields: keyStoreFields,
       });
     } else {
-      data = await findIventoryByFields({ keyFields });
+      data = await findInventoryByFields({ keyFields });
     }
     return {
       success: true,

@@ -101,6 +101,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         unitPrice: item.itemPrice,
       })
     );
+    console.log({ purchaseItems });
     const purchaseFormData: CreatePurchaseOrderFormDto = {
       poCreatedBy: user?.userId ?? 0,
       poDescription: "",
@@ -135,6 +136,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           data={orderItem}
           loading={loading}
           maxHeight="h-full"
+          updateData={setOrderItem}
         />
       </div>
 

@@ -12,7 +12,7 @@ export type CreateInventoryDto = Pick<
   | "inventoryCreatedBy"
   | "inventoryDescription"
   | "inventoryReference"
-  | "inventotyReferenceId"
+  | "inventoryReferenceId"
 >;
 
 export type CreateInventoryItemDto = Pick<

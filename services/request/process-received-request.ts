@@ -6,7 +6,7 @@ import { updateRequestItems } from "./request-items/update-request-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
-import { findIventoryByFields } from "../inventory/get-inventory";
+import { findInventoryByFields } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
 export async function processReceivedRequest(data: Request[]) {
@@ -62,8 +62,11 @@ export async function processReceivedRequest(data: Request[]) {
       await Promise.all(
         data.flatMap((data) =>
           data.requestItems.flatMap(async (item) => {
-            const inventoryId = await findIventoryByFields({
-              keyFields: { storeId: data.storeId },
+            const inventoryId = await findInventoryByFields({
+              keyFields: {
+                inventoryReferenceId: data.storeId,
+                inventoryReference: "store",
+              },
             });
             return {
               inventoryId: inventoryId[0].inventoryId,

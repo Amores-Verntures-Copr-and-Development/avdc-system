@@ -5,7 +5,9 @@ import Input from "@/components/shared/Input";
 import Textarea from "@/components/shared/TextArea";
 import { unitOptions } from "@/constants/dropdown-options";
 import { CreateFirstItem } from "@/dtos/inventory.dto";
+import { useStores } from "@/hooks/userStore";
 import { UserAuth } from "@/hooks/useSession";
+import { useStockRoom } from "@/hooks/useStockRoom";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 
@@ -15,7 +17,14 @@ interface AddItemModalProps {
   user?: UserAuth | null;
 }
 
-const AddItemModal: React.FC<AddItemModalProps> = ({ onCancel, onSubmit }) => {
+const AddItemModal: React.FC<AddItemModalProps> = ({
+  onCancel,
+  onSubmit,
+  user,
+}) => {
+  const { stockRoom } = useStockRoom(user?.userId ?? null);
+  const { stores } = useStores(user?.storeId ? user?.storeId : null);
+  const isUserStores = user?.storeId !== null;
   const [selection, setSelection] = useState<"create" | "warehouse">("create");
   const [inventoryForm, setInventoryForm] = useState<CreateFirstItem>({
     inventoryId: 0,
@@ -73,6 +82,10 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onCancel, onSubmit }) => {
               value={inventoryForm.itemName}
             />
             <DropDownSelectCategory
+              referenceType={isUserStores ? "stores" : "stock-room"}
+              id={
+                (isUserStores ? stores?.storeId : stockRoom?.stockRoomId) ?? 0
+              }
               categoryType="item"
               name={"categoryId"}
               sizes="xs"
@@ -139,6 +152,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({ onCancel, onSubmit }) => {
               value={inventoryForm.itemName}
             />
             <DropDownSelectCategory
+              id={stockRoom?.stockRoomId}
+              referenceType={"stock-room"}
               categoryType="item"
               name={"categoryId"}
               sizes="xs"

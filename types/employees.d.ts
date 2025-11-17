@@ -4,6 +4,7 @@ export type EmployeePosition =
   | "accounting"
   | "hr"
   | "staff"
+  | "admin"
   | null;
 
 export interface EmployeeInterface {

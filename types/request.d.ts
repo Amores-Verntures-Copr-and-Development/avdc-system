@@ -17,7 +17,7 @@ export type RequestItemStatus =
 export interface Request {
   requestId: number;
   requestNo: string;
-  storeId: number;
+  storeId?: number | null;
   requestById: number;
   requestStatus: RequestStatus;
   requestCreatedAt: string;

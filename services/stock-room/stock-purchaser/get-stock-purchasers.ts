@@ -4,6 +4,7 @@
 //   } catch (e) {}
 // };
 
+import { CreateStockPurchaser } from "@/dtos/stockRoom.dto";
 import { selectStockPurchaser } from "@/models/stockRoomModels";
 import { selectPurchaserNotInStockPurchaser } from "@/models/userModels";
 import { StockPurchasers } from "@/types/stockRoom";

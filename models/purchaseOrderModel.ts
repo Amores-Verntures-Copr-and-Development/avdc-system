@@ -330,33 +330,36 @@ SELECT
             SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
                     'itemName', i.itemName,
-                    'itemUnit',i.itemUnit,
-                    'reqItemId',ris.reqItemId,
-                    'categoryName',c.categoryName,
-                    'categoryType',c.categoryType,
+                    'itemUnit', i.itemUnit,
+                    'reqItemId', ris.reqItemId,
+                    'categoryName', c.categoryName,
+                    'categoryType', c.categoryType,
                     'reqItemQuantity', ris.reqItemQuantity,
-                    'reqItemStatus',ris.reqItemStatus,
-                    'reqItemRemarks',ris.reqItemRemarks,
-                    'poItemId',poi.poItemId
+                    'reqItemStatus', ris.reqItemStatus,
+                    'reqItemRemarks', ris.reqItemRemarks,
+                    'poItemId', poi.poItemId
                 )
             ) 
             FROM RequestItems ris
             LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ris.invItem
-            LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"
-            LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId 
+            LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId 
+                AND ii.inventoryItemReferenceType = "item"
             LEFT JOIN Categories c ON c.categoryId = i.categoryId
+            LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId 
+                AND poi.poId = ?  -- Add this condition to avoid cross-join
             WHERE ris.requestId = ro.requestId
+            GROUP BY ris.reqItemId  -- This prevents duplicates
         ),
         JSON_ARRAY()
     ) AS items 
 FROM Stores s
 INNER JOIN RequestOrders ro ON ro.storeId = s.storeId
 LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
-LEFT JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
-LEFT JOIN PurchaseOrders po ON po.poId = por.poId AND po.poId = ?
-LEFT JOIN PurchaseOrderItems poi ON poi.poId = por.poId AND poi.suppId = ?
+INNER JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
+INNER JOIN PurchaseOrders po ON po.poId = por.poId
+WHERE po.poId = ?
 GROUP BY s.storeId, s.storeName, ro.requestId;
 `;
-  const [rows] = await pool.execute(sql, [poId, suppId]);
+  const [rows] = await pool.execute(sql, [poId, poId]);
   return rows;
 };

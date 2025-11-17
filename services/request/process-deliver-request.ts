@@ -4,13 +4,14 @@ import { updateRequestItems } from "../request/request-items/update-request-item
 import { Request, RequestItems } from "@/types/request";
 import { updateRequests } from "./update-request";
 import { InventoryItemInterface } from "@/types/inventory";
-import { findIventoryByFields } from "../inventory/get-inventory";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
+import { findStockRoomBySPFields } from "../stock-room/get-stock-room";
+import { findInventoryByFields } from "../inventory/get-inventory";
 
-export async function processDeliveredPO(data: Request[]) {
+export async function processDeliveredPO(data: Request[], userId: number) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
@@ -36,8 +37,14 @@ export async function processDeliveredPO(data: Request[]) {
       updates: requestItemData,
       keyFields: ["reqItemId"],
     });
-    const warehouseInv = await findIventoryByFields({
-      keyFields: { storeId: null },
+    const stockRoom = await findStockRoomBySPFields({
+      keyFields: { userId: userId },
+    });
+    const warehouseInv = await findInventoryByFields({
+      keyFields: {
+        inventoryReference: "stock-room",
+        inventoryReferenceId: stockRoom[0].stockRoomId,
+      },
     });
     const decerementInv: Partial<InventoryItemInterface>[] = data.flatMap(
       (req) =>

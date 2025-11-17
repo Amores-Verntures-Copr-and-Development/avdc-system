@@ -64,9 +64,13 @@ const AdminRequisitionPage = () => {
     useState<DisplayRequestOrderDto[]>();
   const [selectedtedRow, setSelectedRow] =
     useState<DisplayRequestOrderDto | null>();
+
+  // const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+  //   data: DisplayRequestOrderDto[];
+  // }>(user ? `/api/requests/request-orders/` : null, fetcher);
   const { data: itemResponse = { data: [] }, mutate } = useSWR<{
     data: DisplayRequestOrderDto[];
-  }>(user ? `/api/requests/request-orders/` : null, fetcher);
+  }>(user ? `/api/requests/stock-room/userId/${user?.userId}` : null, fetcher);
 
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
@@ -106,77 +110,86 @@ const AdminRequisitionPage = () => {
       />
 
       <div className="flex-1 min-h-0  flex flex-col">
-        <Table<DisplayRequestOrderDto>
-          columns={requisitionColumns}
-          ref={tableRef}
-          data={itemResponse.data}
-          totalCount={10}
-          showActions
-          showCheckBox
-          maxHeight="h-full"
-          onSelectionChange={handleSelectionChange}
-          renderTopActions={
-            selectedtedRows &&
-            selectedtedRows.length > 0 && (
-              <div className="flex gap-4">
-                <div>
-                  {" "}
-                  <Button
-                    icon={<FileText size={18} />}
-                    label="View Request"
-                    onClick={() => {
-                      // setShowCreatePO(true);
-                    }}
-                    size="xs"
-                    color="nocolor"
-                  />
-                </div>
-                {selectedtedRows.every(
-                  (ro) => ro.requestStatus === "pending"
-                ) && (
+        {itemResponse.data && itemResponse.data.length > 0 ? (
+          <Table<DisplayRequestOrderDto>
+            columns={requisitionColumns}
+            ref={tableRef}
+            data={itemResponse.data}
+            totalCount={10}
+            showActions
+            showCheckBox
+            maxHeight="h-full"
+            onSelectionChange={handleSelectionChange}
+            renderTopActions={
+              selectedtedRows &&
+              selectedtedRows.length > 0 && (
+                <div className="flex gap-4">
                   <div>
+                    {" "}
                     <Button
                       icon={<FileText size={18} />}
-                      label="Convert to PO"
+                      label="View Request"
                       onClick={() => {
-                        setShowCreatePO(true);
+                        // setShowCreatePO(true);
                       }}
                       size="xs"
+                      color="nocolor"
                     />
                   </div>
-                )}
+                  {selectedtedRows.every(
+                    (ro) => ro.requestStatus === "pending"
+                  ) && (
+                    <div>
+                      <Button
+                        icon={<FileText size={18} />}
+                        label="Convert to PO"
+                        onClick={() => {
+                          setShowCreatePO(true);
+                        }}
+                        size="xs"
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            }
+            searchUrl="/requisitions"
+            renderActions={(row) => (
+              <div className="flex gap-2 justify-center">
+                {/* View Button */}
+                <IconButton
+                  onClick={() => {
+                    setSelectedRow(row);
+                    setIsShowRequest(true);
+                    console.log(selectedtedRow);
+                  }}
+                  label={"View"}
+                  bg={"gray"}
+                  icon={<Eye size={18} />}
+                />
+                <IconButton
+                  onClick={() => {}}
+                  label={"Print"}
+                  bg={"green"}
+                  icon={<Printer size={18} />}
+                />
+                <IconButton
+                  onClick={() => {}}
+                  label={"Convert to PO"}
+                  bg={"blue"}
+                  icon={<FileText size={18} />}
+                />
               </div>
-            )
-          }
-          searchUrl="/requisitions"
-          renderActions={(row) => (
-            <div className="flex gap-2 justify-center">
-              {/* View Button */}
-              <IconButton
-                onClick={() => {
-                  setSelectedRow(row);
-                  setIsShowRequest(true);
-                  console.log(selectedtedRow);
-                }}
-                label={"View"}
-                bg={"gray"}
-                icon={<Eye size={18} />}
-              />
-              <IconButton
-                onClick={() => {}}
-                label={"Print"}
-                bg={"green"}
-                icon={<Printer size={18} />}
-              />
-              <IconButton
-                onClick={() => {}}
-                label={"Convert to PO"}
-                bg={"blue"}
-                icon={<FileText size={18} />}
-              />
-            </div>
-          )}
-        />
+            )}
+          />
+        ) : (
+          <div className="flex flex-1 justify-center items-center">
+            <span>
+              To view store requests, please ask admin first to assign stores to
+              your stock room.
+            </span>
+          </div>
+        )}
       </div>
       <Modal
         className="bg-white h-[80%]"

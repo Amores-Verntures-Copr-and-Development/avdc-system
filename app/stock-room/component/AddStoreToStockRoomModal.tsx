@@ -53,7 +53,7 @@ const AddStoreToStockRoomModal = ({
       selectedRows?.map((store) => ({
         stockRoomId: data.stockRoomId,
         stockStoresAddedBy: user?.userId ?? 0,
-        storeId: store.storeId,
+        storeId: store.storeId ?? 0,
       })) ?? [];
     console.log("stockStoreData: ", stockStoreData);
     const success = await onSubmit(stockStoreData);

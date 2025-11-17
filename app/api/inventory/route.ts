@@ -1,6 +1,5 @@
-import { CreateInventoryDto } from "@/dtos/inventory.dto";
 import { getInventory } from "@/controllers/InventoryController";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 // export async function POST(request: NextRequest) {
 //   try {

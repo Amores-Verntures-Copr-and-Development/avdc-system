@@ -15,7 +15,8 @@ const CreateInventoryModal: React.FC<CreateInventoryModalProps> = ({
   const [inventoryForm, setInventoryForm] = useState<CreateInventoryDto>({
     inventoryDescription: "",
     inventoryCreatedBy: 0,
-    storeId: null,
+    inventoryReference: "store",
+    inventoryReferenceId: null,
   });
   const handleInventoryChange = handleChange(inventoryForm, setInventoryForm);
   const handleSubmit = async () => {

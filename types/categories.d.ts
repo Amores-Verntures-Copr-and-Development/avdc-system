@@ -1,10 +1,11 @@
-export type CategoryType = "product" | "item" | null;
+export type CategoryType = "product" | "item" | "services" | null;
 
 export interface CategoryInterface {
   categoryId: number;
   categoryName: string;
   categoryType: CategoryType;
-  storeId: number;
+  categoryReferenceType: "stores" | "stock-room" | null;
+  categoryReferenceId: number;
   categoryCreatedAt: string;
   categoryUpdatedAt: string;
   categoryDeletedAt: string;

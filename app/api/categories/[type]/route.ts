@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const type = (await params).type;
-    const res = await getCategories({ categoryType: type });
+    const res = await getCategories({ controller: null });
 
     if (!res.success) {
       // propagate the actual message if available

@@ -1,17 +1,7 @@
 "use client";
 import Button from "@/components/shared/Button";
 import PageHeader from "@/components/shared/PageHeader";
-import {
-  AlertTriangle,
-  ArrowBigLeft,
-  ArrowLeft,
-  Box,
-  FileChartColumn,
-  Package,
-  Package2,
-  ShoppingCart,
-  XCircle,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import PageLayout from "@/components/shared/PageLayout";
@@ -36,9 +26,10 @@ const InventoryPage = () => {
   console.log({ user });
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/store/${user?.storeId}`
-    : user?.empPosition === "purchaser"
+    : user?.userRole === "employee"
     ? `/api/inventory/stock-room/${user?.userId}`
     : `/api/inventory`;
+
   const { data: inventoryResponse = { data: [] } } = useSWR<{
     data: DisplayAllInventory[];
   }>(inventoryBaseUrl, fetcher);
@@ -61,7 +52,8 @@ const InventoryPage = () => {
     <PageLayout className="gap-2 p-4">
       {user?.empPosition === "purchaser" ||
       user?.empPosition === "supervisor" ||
-      user?.empPosition === "staff" ? (
+      user?.empPosition === "staff" ||
+      user?.empPosition === "admin" ? (
         <>
           <PageHeader
             title={"Inventory"}

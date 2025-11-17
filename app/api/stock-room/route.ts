@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const res = await getStockRooms();
+    const res = await getStockRooms({} );
     if (!res.success) {
       console.log(res.error);
       throw new Error("Failed fetched stock rooms!");

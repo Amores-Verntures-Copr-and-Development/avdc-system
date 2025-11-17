@@ -9,7 +9,7 @@ import { useSession } from "@/hooks/useSession";
 import SupervisorPage from "./Supervisor/SupervisorPage";
 
 const DashboardPage = () => {
-  const { user, loading, isAdmin, isAuthenticated } = useSession();
+  const { user, loading, isAuthenticated } = useSession();
   if (loading) {
     return (
       <PageLayout className="p-2">
@@ -41,7 +41,7 @@ const DashboardPage = () => {
         subtitle="Welcome back! Here's your system overview."
       />
       {/* {isAdmin ? <OwnerDashboard /> : <PurchaserDashboard />} */}
-      {user?.userRole === "admin" ? (
+      {user?.userRole === "superadmin" ? (
         <OwnerDashboard />
       ) : user?.userRole == "owner" ? (
         <OwnerDashboard />

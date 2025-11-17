@@ -1,6 +1,14 @@
-import { CreateStockRoom, CreateStockStore } from "@/dtos/stockRoom.dto";
-import { getStockRoom } from "@/services/stock-room/get-stock-room";
+import {
+  CreateStockPurchaser,
+  CreateStockRoom,
+  CreateStockStore,
+} from "@/dtos/stockRoom.dto";
+import {
+  findStockRoomBySPFields,
+  getStockRoom,
+} from "@/services/stock-room/get-stock-room";
 import { processCreateStockRoom } from "@/services/stock-room/process-create-stock-room";
+import { createStockPurchaser } from "@/services/stock-room/stock-purchaser/create-stock-purchaser";
 import {
   findUsersNotInStockPurchaser,
   selectStockPurchaserBySPKeyFields,
@@ -46,9 +54,37 @@ export const createStockStore = async (data: CreateStockStore[]) => {
   }
 };
 
-export const getStockRooms = async () => {
+export const createStockPurchasers = async (data: CreateStockPurchaser[]) => {
   try {
-    const data = await getStockRoom({});
+    const res = await createStockPurchaser({ data });
+    return {
+      success: true,
+      result: res,
+      message: "Stock Purchaser added successfully!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to add Stock Purchaser!",
+    };
+  }
+};
+
+export const getStockRooms = async ({
+  keySPFields = {},
+}: {
+  keySPFields?: Partial<StockPurchasers>;
+}) => {
+  try {
+    let data;
+    if (keySPFields) {
+      data = await findStockRoomBySPFields({ keyFields: keySPFields });
+      console.log("Agi here");
+    } else {
+      data = await getStockRoom({});
+    }
+
     return {
       success: true,
       data: data,
@@ -152,4 +188,3 @@ export const getPurchaserNotInStockPurchaser = async () => {
     };
   }
 };
-

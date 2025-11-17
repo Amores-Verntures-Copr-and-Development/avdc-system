@@ -19,6 +19,7 @@ export const categoryTypeOptions = [
   { label: "Select Type", value: "" },
   { label: "Item", value: "item" },
   { label: "Product", value: "product" },
+  { label: "Services", value: "services" },
 ];
 
 export const unitOptions = [

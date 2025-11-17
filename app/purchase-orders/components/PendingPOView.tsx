@@ -4,6 +4,7 @@ import {
   DisplayPurchaseOrderItemsDto,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
+import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock } from "lucide-react";
@@ -16,6 +17,7 @@ interface PendingPOViewProps {
   isLoading?: boolean;
   mutate: () => void;
   onClose: () => void;
+  user: UserAuth | null;
 }
 const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
   {
@@ -95,6 +97,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   isLoading,
   mutate,
   onClose,
+  user,
 }) => {
   const updatedItemsRef = useRef<DisplayPurchaseOrderItemsDto[]>([]);
   const handleDataUpdate = (updatedData: DisplayPurchaseOrderItemsDto[]) => {
@@ -105,6 +108,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     const newData: UpdatePurchaseOrdersDto = {
       ...poData,
       poItems: updatedItems,
+      updatedBy: user?.userId ?? 0,
     };
     const success = await onSubmit(newData);
     if (success) {

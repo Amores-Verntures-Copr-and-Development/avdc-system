@@ -23,7 +23,7 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
     return <div className="w-full h-dvh">{children}</div>;
   }
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden">
+    <div className="h-screen w-screen flex overflow-hidden">
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -31,12 +31,15 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
           className: "font-semibold",
         }}
       />
-      <Header />
       <div className="flex-1 min-h-0 flex flex-row">
         <Sidebar />
-        <Suspense fallback={<div>Loading...</div>}>
-          <div className="flex-1 min-h-0 flex flex-col">{children}</div>
-        </Suspense>
+        <div className="flex flex-col flex-1">
+          {" "}
+          <Header />
+          <Suspense fallback={<div>Loading...</div>}>
+            <div className="flex-1 min-h-0 flex flex-col">{children}</div>
+          </Suspense>
+        </div>
       </div>
     </div>
   );

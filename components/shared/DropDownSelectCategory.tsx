@@ -1,8 +1,9 @@
 import React from "react";
 import DropdownSelect from "./DropdownSelect";
-import { DisplayCategoryDto } from "@/dtos/category.dto";
+
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
+import { CategoryInterface } from "@/types/categories";
 
 interface DropDownSelectCategoryProps {
   categoryType: "item" | "product";
@@ -16,6 +17,8 @@ interface DropDownSelectCategoryProps {
   sizes?: "xs" | "sm" | "md" | "lg";
   disabled?: boolean;
   loading?: boolean;
+  referenceType: "stores" | "stock-room" | null;
+  id?: number;
 }
 const DropDownSelectCategory: React.FC<DropDownSelectCategoryProps> = ({
   categoryType,
@@ -28,10 +31,18 @@ const DropDownSelectCategory: React.FC<DropDownSelectCategoryProps> = ({
   required = false,
   error,
   sizes,
+  referenceType,
+  id,
 }) => {
+  const categoryBaseUrl =
+    referenceType === "stock-room"
+      ? `api/categories/stock-room/${id}`
+      : referenceType === "stores"
+      ? `api/categories/stock-room/${id}`
+      : `api/categories`;
   const { data: response = { data: [] }, isLoading } = useSWR<{
-    data: DisplayCategoryDto[];
-  }>("/api/categories/", fetcher);
+    data: CategoryInterface[];
+  }>(id ? categoryBaseUrl : null, fetcher);
   const options = [
     { label: "Select Category", value: "" }, // 👈 empty option first
     ...(response?.data

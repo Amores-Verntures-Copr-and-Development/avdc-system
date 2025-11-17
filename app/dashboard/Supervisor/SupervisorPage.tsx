@@ -1,4 +1,3 @@
-import PageLayout from "@/components/shared/PageLayout";
 import React from "react";
 import DashboardCard from "../components/DashboardCard";
 import Chart from "../components/Chart";

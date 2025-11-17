@@ -1,5 +1,6 @@
 import { CreateCategoryDto } from "@/dtos/category.dto";
 import { insertCategory, selectCategories } from "../models/categoryModels";
+import { getCategoriesById } from "@/services/caregories/get-categories";
 
 export const createCategory = async (data: CreateCategoryDto) => {
   try {
@@ -18,18 +19,27 @@ export const createCategory = async (data: CreateCategoryDto) => {
 };
 
 export const getCategories = async ({
-  categoryType,
+  controller,
+  id,
 }: {
-  categoryType?: string;
+  controller: "storeId" | "stockRoomId" | null;
+  id?: number;
 }) => {
   try {
-    const data = await selectCategories({ categoryType });
+    let data;
+    if (controller === "storeId") {
+      console.log({ id });
+      data = await getCategoriesById({ storeId: id });
+    } else if (controller === "stockRoomId") {
+      data = await getCategoriesById({ stockRoomId: id });
+    }
     return {
       success: true,
       message: "Category fetched successfully!",
       data: data ?? null,
     };
   } catch (e) {
+    console.error(e);
     return {
       success: false,
       message: "Failed to fetch category!",

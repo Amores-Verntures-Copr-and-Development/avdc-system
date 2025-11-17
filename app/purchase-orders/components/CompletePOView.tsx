@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { mutate } from "swr";
 
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
@@ -76,8 +75,8 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       key: "reqItemQuantity",
     },
     {
-      name: "Warehouse Qty",
-      key: "warehouseInv",
+      name: "Stock Room Qty",
+      key: "stockRoomQty",
     },
     {
       name: "Fulfill Qty",
@@ -86,7 +85,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         const status = data.find(
           (req) => req.requestId === row.requestId
         )?.requestStatus;
-        return !["delivered", "completed"].includes(status ?? "");
+        return !["delivered", "completed", "received"].includes(status ?? "");
       },
       inputType: "number",
     },
@@ -101,7 +100,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         const status = data.find(
           (req) => req.requestId === row.requestId
         )?.requestStatus;
-        return !["delivered", "completed"].includes(status ?? "");
+        return !["delivered", "completed", "received"].includes(status ?? "");
       },
       inputType: "text",
     },
@@ -132,7 +131,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       (items) => items.requestNo === requestNo
     );
     currentItems?.requestItemsData?.forEach((item) => {
-      if (item.reqItemQuantity > (item.warehouseInv || 0)) {
+      if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
         inssuficientCount++;
       }
     });
@@ -144,7 +143,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           ? {
               ...items,
               requestItemsData: items.requestItemsData?.map((item) => {
-                if (item.reqItemQuantity > (item.warehouseInv || 0)) {
+                if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
                   return {
                     ...item,
                   };
@@ -247,7 +246,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   <Table
                     columns={columns}
                     showActions={
-                      !["delivered", "completed"].includes(
+                      !["delivered", "completed", "received"].includes(
                         reqData.requestStatus ?? ""
                       )
                     }

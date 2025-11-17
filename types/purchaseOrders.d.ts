@@ -27,6 +27,7 @@ export interface PurchaseOrders {
   purchaseOrderRequest: PurchaseOrderRequest[];
   purchaseOrderItems: PurchaseOrderItems[];
   poCreatedByName;
+  updatedBy: number;
 }
 
 export interface PurchaseOrderRequest {

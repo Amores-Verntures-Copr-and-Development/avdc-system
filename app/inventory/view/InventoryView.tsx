@@ -1,8 +1,7 @@
 import Button from "@/components/shared/Button";
-import PageHeader from "@/components/shared/PageHeader";
+
 import PageLayout from "@/components/shared/PageLayout";
-import { UserAuth, useSession } from "@/hooks/useSession";
-import { InventoryInterface } from "@/types/inventory";
+import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
 import {
   Box,
@@ -13,7 +12,7 @@ import {
   Package2,
   FileChartColumn,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 import InventoryCard from "../components/InventoryCard";
 import InventorySection from "./InventorySection/InventorySection";
@@ -34,6 +33,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
   );
   console.log({ inventoryId });
   const stats = inventoryItemResponse?.data?.[0] || {};
+  console.log({ stats });
   return (
     <PageLayout className="gap-2">
       {/* Cards */}

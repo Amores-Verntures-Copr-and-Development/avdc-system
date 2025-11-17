@@ -1,11 +1,8 @@
-import {
-  getInventory,
-  getInventoryItems,
-} from "@/controllers/InventoryController";
+import { getInventory } from "@/controllers/InventoryController";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ purchaserId: string }> }
 ) {
   try {

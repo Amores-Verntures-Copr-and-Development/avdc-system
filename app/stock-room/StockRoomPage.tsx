@@ -14,7 +14,6 @@ import { useSession } from "@/hooks/useSession";
 import useSWR from "swr";
 import { StockRoom } from "@/types/stockRoom";
 import { fetcher } from "@/utils/fetcher";
-import Link from "next/link";
 import StockInventoryView from "./view/StockInventoryView";
 import StockPurchaserView from "./view/StockPurchaserView";
 import StockStoresView from "./view/StockStoresView";
@@ -28,11 +27,10 @@ const StockRoomPage = () => {
   const [selectedStockRoom, setSelectedStockRoom] = useState<StockRoom | null>(
     null
   );
-  const {
-    data: response = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: StockRoom[] }>("/api/stock-room/", fetcher);
+  const { data: response = { data: [] }, mutate } = useSWR<{
+    data: StockRoom[];
+  }>("/api/stock-room/", fetcher);
+
   const handleSubmitCreate = async (data: CreateStockRoom) => {
     const newData: CreateStockRoom = {
       ...data,
@@ -52,7 +50,7 @@ const StockRoomPage = () => {
         throw new Error(res.err);
       }
       toast.success(res.message);
-      // mutate();
+      mutate();
       return true;
     } catch (e) {
       console.log(e);

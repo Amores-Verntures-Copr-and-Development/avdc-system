@@ -605,6 +605,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           data={showDeliverToStore}
           onSubmit={handleDeliverItemStore}
           poId={poId}
+          onCancel={() => {
+            setShowDeliverToStore(null);
+          }}
         />
       </Popup>
       <Modal

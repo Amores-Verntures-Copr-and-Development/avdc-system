@@ -43,8 +43,8 @@ export async function GET(
 export async function PUT(_request: Request) {
   try {
     const data = await _request.json();
-    const { request, controller } = data;
-    const res = await updateRequest(controller, request);
+    const { request, controller, userId } = data;
+    const res = await updateRequest(controller, request, userId);
 
     if (!res.success) {
       console.log(res.message);

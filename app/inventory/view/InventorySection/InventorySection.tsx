@@ -28,7 +28,6 @@ import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
 import AddItemModal from "../../components/AddItemModal";
 import AddItemStoreModal from "../../components/AddItemStoreModal";
-import CreateInventoryModal from "../../components/CreateInventoryModal";
 import CreateInventoryReport from "../../components/CreateInventoryReport";
 import CreateRequestModal from "../../components/CreateRequestModal";
 import ViewInventoryItem from "../../components/ViewInventoryItem";
@@ -173,7 +172,6 @@ interface InventorySectionProps {
 }
 const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddModal, setShowAdddModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
@@ -403,6 +401,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       return false;
     } finally {
       setIsSubmittingAdjustment(false);

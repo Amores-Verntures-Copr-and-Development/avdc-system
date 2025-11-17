@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const res = await getCategories({});
+    const res = await getCategories({ controller: null });
 
     if (!res.success) {
       // propagate the actual message if available

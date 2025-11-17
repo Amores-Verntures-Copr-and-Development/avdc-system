@@ -5,11 +5,7 @@ import { updatePurchase } from "./update-purchase-order";
 import { updatePurchaseOrderItems } from "./purchase-items/update-purchase-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { InventoryItemInterface } from "@/types/inventory";
-import {
-  findInventoryByStockPurchaserFields,
-  findInventoryByStoreFields,
-  findIventoryByFields,
-} from "../inventory/get-inventory";
+import { findInventoryByStockPurchaserFields } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";

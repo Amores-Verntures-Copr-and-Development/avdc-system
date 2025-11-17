@@ -8,7 +8,6 @@ interface InventoryDetailsCardProps {
 
 const InventoryDetailsCard = ({ data, onClick }: InventoryDetailsCardProps) => {
   const isStoreInventory = data.inventoryReference === "store";
-  const isStockRoomInventory = data.inventoryReference === "stock-room";
 
   const inventoryName = data.stockRoomName ?? data.storeName;
   const inventoryLocation = data.stockRoomLocation ?? data.storeLocation;

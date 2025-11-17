@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import ReceivedPOView from "./ReceivedPOView";
 import CompletePOView from "./CompletePOView";
 import { Request } from "@/types/request";
-import { UserAuthInterface } from "@/types/auth";
+
 import { UserAuth } from "@/hooks/useSession";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
@@ -93,7 +93,6 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      toast.success(res.message);
       mutateInventory();
       mutate();
       return true;
@@ -179,6 +178,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     const body = {
       data: dataReq,
       controller: "delivered",
+      userId: user?.userId,
     };
     try {
       const result = await fetch(`api/requests/`, {
@@ -272,6 +272,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           onSubmit={handleApprovedPO}
           isLoading={isLoading}
           mutate={mutate}
+          user={user}
         />
       ) : data?.poStatus === "approved" ? (
         <ApprovedPOView

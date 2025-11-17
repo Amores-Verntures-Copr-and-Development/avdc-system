@@ -1,4 +1,4 @@
-import { AddItemToStoreDto } from "@/app/inventory/InventoryPage";
+import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
 import {
   addItemToStoreInventory,
   getInventory,

@@ -3,7 +3,7 @@ export interface InventoryInterface {
   inventoryId: number;
   inventoryDescription: string;
   inventoryReference: InvetoryRefence;
-  inventoryReferenceId: number;
+  inventoryReferenceId: number | null;
   inventoryCreatedAt: string;
   inventoryUpdatedAt: string;
   inventoryDeletedAt?: string | null;

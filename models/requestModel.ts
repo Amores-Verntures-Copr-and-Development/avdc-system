@@ -282,7 +282,7 @@ export const updateRequest = async ({
 
 export const selectRequestOrdersByPONumber = async (poNumber: string) => {
   const pool = await getDBConnection();
-  const sql = `SELECT 
+  const sql = `   SELECT 
   ro.*,
   po.*,
   (
@@ -300,12 +300,14 @@ export const selectRequestOrdersByPONumber = async (poNumber: string) => {
         'reqItemQuantity', ri.reqItemQuantity,
         'reqItemTransfer', ri.reqItemTransfer,
         'reqItemRemarks', ri.reqItemRemarks,
-        'warehouseInv', (
+        'stockRoomQty', (
           SELECT iis.inventoryItemQuantity
           FROM InventoryItems iis
-          LEFT JOIN Inventories ity ON ity.inventoryId = iis.inventoryId
+         LEFT JOIN Inventories ity ON ity.inventoryId = iis.inventoryId
+         LEFT JOIN StockRooms sr ON sr.stockRoomId = ity.inventoryReferenceId AND ity.inventoryReference = "stock-room"
+         LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId 
           WHERE iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
-            AND ity.storeId IS NULL
+            AND sp.userId = po.poCreatedBy
           LIMIT 1
         )
       )
@@ -458,5 +460,23 @@ LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId
 WHERE poi.poItemId IN (${placeholders})`;
 
   const [rows] = await connection.execute<RowDataPacket[]>(sql, poItemId);
+  return rows;
+};
+
+export const selectRequestOrderFromStockRoom = async (userId: number) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT ro.*,s.* ,CONCAT_WS('',u.userFname,u.userLname) AS requestedByName
+FROM RequestOrders ro
+LEFT JOIN Stores s ON s.storeId = ro.storeId
+LEFT JOIN Users u ON u.userId = ro.requestById
+WHERE ro.storeId IN (
+    SELECT s.storeId 
+    FROM StockPurchasers sp 
+    INNER JOIN StockRooms sr ON sr.stockRoomId = sp.stockRoomId
+    INNER JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
+    INNER JOIN Stores s ON s.storeId = ss.storeId
+    WHERE sp.userId = ?
+)`;
+  const [rows] = await pool.execute(sql, [userId]);
   return rows;
 };

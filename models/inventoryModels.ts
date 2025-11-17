@@ -25,7 +25,7 @@ export const insertInventory = async ({
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.inventoryDescription,
     data.inventoryReference,
-    data.inventotyReferenceId,
+    data.inventoryReferenceId,
     data.inventoryCreatedBy,
   ]);
   return result.insertId;

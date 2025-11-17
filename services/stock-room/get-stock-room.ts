@@ -1,5 +1,8 @@
-import { selectStockRoom } from "@/models/stockRoomModels";
-import { StockRoom } from "@/types/stockRoom";
+import {
+  selectStockRoom,
+  selectStockRoomSPFields,
+} from "@/models/stockRoomModels";
+import { StockPurchasers, StockRoom } from "@/types/stockRoom";
 
 export async function getStockRoom({
   keyFields = {},
@@ -9,7 +12,9 @@ export async function getStockRoom({
   try {
     const data = await selectStockRoom({ keyFields });
     return data;
-  } catch (e) {}
+  } catch (e) {
+    throw e;
+  }
 }
 
 export async function getStockRoomInventoryItems({
@@ -17,3 +22,29 @@ export async function getStockRoomInventoryItems({
 }: {
   keyFields?: Partial<StockRoom>;
 }) {}
+
+export async function findStockRoomBySPFields({
+  keyFields = {},
+}: {
+  keyFields?: Partial<StockPurchasers>;
+}) {
+  try {
+    const data = await selectStockRoomSPFields({ keyFields });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+// export async function findStockRoomBySSFields({
+//   keyFields = {},
+// }: {
+//   keyFields?: Partial<StockPurchasers>;
+// }) {
+//   try {
+//     const data = await selectStockRoomSSFields({ keyFields });
+//     return data;
+//   } catch (e) {
+//     throw e;
+//   }
+// }

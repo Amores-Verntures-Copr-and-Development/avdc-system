@@ -20,21 +20,6 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   try {
     await connection.beginTransaction();
     console.log("DeliverItemsToStore: ", { data });
-    //Get requestItems from poId and storeId
-    // const requestItemData: Partial<RequestItems>[] = await Promise.all(
-    //   data.items.map(async (item) => {
-    //     // Example DB call — replace with your actual query or function
-    //     const reqItem = await findRequestOrderItemById({
-    //       requestId: data.requestId,
-    //       itemId: item.itemId,
-    //     });
-
-    //     return {
-    //       reqItemId: reqItem[0].reqItemId,
-    //       reqItemStatus: "delivered",
-    //     };
-    //   })
-    // );
     const requestItemData: Partial<RequestItems>[] = data.items.map((item) => ({
       reqItemId: item.reqItemId,
       reqItemStatus: "delivered",
@@ -54,7 +39,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
             .filter((id): id is number => id !== undefined)
         : [],
     });
-
+    console.log({ requestItemsInPOItem });
     // Get unique poItemIds that have delivered status
     const poItemGroups = requestItemsInPOItem.reduce((acc, reqItem) => {
       const poItemId = reqItem.poItemId;
@@ -67,7 +52,11 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
 
     const fullyDeliveredPoItemIds = Object.entries(poItemGroups)
       .filter(([poItemId, items]) =>
-        items.every((item) => item.reqItemStatus === "delivered")
+        items.every(
+          (item) =>
+            item.reqItemStatus === "delivered" ||
+            item.reqItemStatus === "received"
+        )
       )
       .map(([poItemId]) => parseInt(poItemId));
 

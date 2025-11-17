@@ -1,5 +1,5 @@
 "use client";
-
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -234,6 +234,7 @@ const Sidebar = () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       toast.success("Successfully logged out!");
+      localStorage.clear();
       setIsLoading(false);
 
       // // Redirect to login page after clearing state
@@ -284,7 +285,7 @@ const Sidebar = () => {
       )}
 
       <aside
-        className={`fixed lg:static top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-50 ${
+        className={`fixed  lg:static top-0 left-0 h-screen bg-white border-r border-gray-200 flex flex-col transition-all duration-300 z-50  ${
           isCollapsed
             ? isMobile
               ? "-translate-x-full lg:translate-x-0 lg:w-20"
@@ -295,14 +296,24 @@ const Sidebar = () => {
         }`}
       >
         {/* Toggle Button */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 h-15 shadow">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
-              <h2 className="text-lg font-semibold text-gray-800">Menu</h2>
+              <div className="relative w-32 h-8 flex-shrink-0">
+                {" "}
+                {/* Fixed dimensions */}
+                <Image
+                  src="/avdclogo.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              className="p-1.5 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
               title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               {isCollapsed ? (
@@ -314,8 +325,8 @@ const Sidebar = () => {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 overflow-y-auto">
-          <div className={isCollapsed ? "space-y-2" : "space-y-5"}>
+        <nav className="flex-1 flex flex-col p-4">
+          <div className={isCollapsed ? "space-y-2" : "space-y-3"}>
             {sections.map((menu) => (
               <div key={menu.key}>
                 {!isCollapsed && (
@@ -414,8 +425,8 @@ const Sidebar = () => {
                       Confirm Logout
                     </h1>
                     <p className="mt-1 text-sm text-primary-1">
-                      Are you sure you want to logout? You'll need to sign in
-                      again to continue.
+                      Are you sure you want to logout? You&apos;ll need to sign
+                      in again to continue.
                     </p>
                   </div>
                 </div>

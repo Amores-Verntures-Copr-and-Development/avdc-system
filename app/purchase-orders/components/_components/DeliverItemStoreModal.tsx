@@ -17,6 +17,7 @@ interface DeliverItemStoreModalProps {
   data: DisplayPOItemsSupplier | null;
   poId: number;
   onSubmit: (row: DeliverItemsToStore) => Promise<boolean>;
+  onCancel: () => void;
 }
 const storeColumn: Column<StoreWithRequest>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -31,6 +32,7 @@ const DeliverItemStoreModal = ({
   data,
   onSubmit,
   poId,
+  onCancel,
 }: DeliverItemStoreModalProps) => {
   const [store, setStore] = useState<StoreWithRequest | null>(null);
   const { data: itemResponse = { data: [] } } = useSWR<{ data: any }>(
@@ -43,10 +45,11 @@ const DeliverItemStoreModal = ({
       storeId: store?.storeId ?? 0,
       items: data?.items ?? [],
       requestId: store?.requestId ?? 0,
+      poItems: [],
     };
     const success = await onSubmit(deliverData);
     if (success) {
-      alert("Done Diliver");
+      onCancel();
     }
   };
   return (

@@ -81,12 +81,12 @@ export type RequestItemsCombine = Pick<
   "itemName" | "itemPrice" | "itemUnit"
 > &
   Pick<InventoryItemInterface, "inventoryItemQuantity"> &
-  RequestItems & { warehouseInv: number };
+  RequestItems & { stockRoomQty: number };
 
 export interface DeliverItemsToStore {
   poId: number;
   storeId: number;
   requestId: number;
-  items: RequestItems[];
+  items: Partial<RequestItems>[];
   poItems: Partial<PurchaseOrderItems>[];
 }

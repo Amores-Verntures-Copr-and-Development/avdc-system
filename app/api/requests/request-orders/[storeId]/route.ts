@@ -8,7 +8,10 @@ export async function GET(
   try {
     const slug = (await params).storeId;
 
-    const res = await getRequest({ storeId: Number(slug) });
+    const res = await getRequest({
+      storeId: Number(slug),
+      controller: "store",
+    });
     if (!res.success) {
       console.log(res.error);
       throw new Error(res.message || "Failed to create request");

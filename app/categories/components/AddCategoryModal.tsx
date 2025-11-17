@@ -18,6 +18,8 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
     categoryName: "",
     categoryType: null,
     categoryCreatedBy: 1,
+    categoryReferenceId: 0,
+    categoryReferenceType: null,
   });
   const handleAddCategory = async () => {
     const success = await onSubmit(categoryForm);

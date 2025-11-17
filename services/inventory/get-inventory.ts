@@ -8,7 +8,7 @@ import { InventoryInterface } from "@/types/inventory";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 
-export async function findIventoryByFields({
+export async function findInventoryByFields({
   keyFields = {},
 }: {
   keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}

@@ -1,4 +1,8 @@
-import { CreateStockRoom, CreateStockStore } from "@/dtos/stockRoom.dto";
+import {
+  CreateStockPurchaser,
+  CreateStockRoom,
+  CreateStockStore,
+} from "@/dtos/stockRoom.dto";
 import { getDBConnection } from "@/lib/db";
 import { StockPurchasers, StockRoom, StockStores } from "@/types/stockRoom";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
@@ -19,6 +23,52 @@ export const insertStockRoom = async ({
     data.stockRoomCreatedBy,
   ]);
   return result.insertId;
+};
+
+export const selectStockRoomSSFields = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<StockPurchasers>;
+}) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT sr.* FROM StockRooms sr 
+LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
+WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND sp.${key} IS NULL`;
+    } else {
+      sql += ` AND sp.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log("SQL: ", sql);
+  return rows;
+};
+
+export const selectStockRoomSPFields = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<StockPurchasers>;
+}) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT sr.* FROM StockRooms sr 
+LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
+WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND sp.${key} IS NULL`;
+    } else {
+      sql += ` AND sp.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log("SQL: ", sql);
+  return rows;
 };
 
 export const selectStockRoom = async ({
@@ -118,6 +168,29 @@ export const insertStockStores = async ({
     stores.stockStoresAddedBy,
     stores.stockRoomId,
     stores.storeId,
+  ]);
+  const [results] = await pool.execute(sql, values);
+  return results;
+};
+export const insertStockPurchasers = async ({
+  data,
+  connection,
+}: {
+  connection?: PoolConnection;
+  data: CreateStockPurchaser[];
+}) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO StockPurchasers(stockRoomId,userId,stockPurchaserAddedBy) VALUES ${data
+    .map(() => "(?,?,?)")
+    .join(", ")}`;
+
+  const values = data.flatMap((stores) => [
+    stores.stockRoomId,
+    stores.userId,
+    stores.stockPurchaserAddedBy,
   ]);
   const [results] = await pool.execute(sql, values);
   return results;

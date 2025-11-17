@@ -11,13 +11,10 @@ import {
 import { UserAuth } from "@/hooks/useSession";
 import { handleChange } from "@/utils/handle-change";
 import { getInventoryStatus } from "@/utils/inventoryStatus";
-import { Edit2, Package, Package2 } from "lucide-react";
+import { Edit2, Package } from "lucide-react";
 import React, { useState } from "react";
 import ItemMovementCard from "./ItemMovementCard";
-import {
-  InventoryItemInterface,
-  InventoryItemMovement,
-} from "@/types/inventory";
+import { InventoryItemInterface } from "@/types/inventory";
 import { stockAdjustmentOptions } from "@/constants/dropdown-options";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
@@ -109,11 +106,9 @@ export default ViewInventoryItem;
 
 const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
   //localhost:3010/api/inventory/movement/1/1
-  const {
-    data: inventoryMovement,
-    error,
-    isLoading,
-  } = useSWR<ApiResponse<DisplayInventoryMovementDto[]>>(
+  const { data: inventoryMovement } = useSWR<
+    ApiResponse<DisplayInventoryMovementDto[]>
+  >(
     `/api/inventory/movement/${data?.inventoryId}/${data?.inventoryItemId}`,
     fetcher
   );
@@ -181,7 +176,6 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
   data,
   setSelectedButton,
   user,
-  onChange,
 }) => {
   const [editedInventoryItem, setEditenInventryItem] = useState<
     Partial<InventoryItemInterface>
@@ -238,6 +232,7 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
             name={"categoryName"}
             value={data?.categoryName ?? ""}
             sizes="xs"
+            referenceType={null}
           />
         </div>
       )}

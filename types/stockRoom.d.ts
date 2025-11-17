@@ -26,5 +26,5 @@ export interface StockStores {
   stockStoresDeletedAt: string;
   stockStoresAddedBy: number;
   stockRoomId: number;
-  storeId: number | null;
+  storeId?: number | null;
 }

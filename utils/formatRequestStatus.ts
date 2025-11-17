@@ -50,8 +50,8 @@ export function getRequestStatusFormat(
       return {
         status: "Completed",
         bgClass: "bg-pink-100",
-        textClass: "text-primary-1 ",
-        borderClass: "border border-primary-1-hover",
+        textClass: "text-primary-1",
+        borderClass: "border border-pink-200",
       };
     default:
       return {

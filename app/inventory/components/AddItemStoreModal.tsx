@@ -4,8 +4,8 @@ import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { StoreInterface } from "@/types/stores";
 import React, { useState } from "react";
-import { AddItemToStoreDto } from "../InventoryPage";
 import Button from "@/components/shared/Button";
+import { AddItemToStoreDto } from "../view/InventorySection/InventorySection";
 interface AddItemStoreModalProps {
   data: DisplayInventoryItems[];
   onCancel: () => void;
@@ -55,7 +55,7 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
           onSelect={(store) => {
             setAddItemStoreForm({
               ...addItemStoreForm,
-              storeId: store.storeId,
+              storeId: store.storeId ?? 0,
             });
           }}
           renderItem={(store) => (

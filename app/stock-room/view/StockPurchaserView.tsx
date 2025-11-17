@@ -12,6 +12,7 @@ import useSWR from "swr";
 import AddPurchaserModal from "../component/AddPurchaserModal";
 import { UserAuth } from "@/hooks/useSession";
 import { CreateStockPurchaser } from "@/dtos/stockRoom.dto";
+import toast from "react-hot-toast";
 
 interface StockPurchaserViewProps {
   data: StockRoom;
@@ -51,11 +52,34 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
   console.log({ user });
   const handleAddPurchaser = async (purchaserData: CreateStockPurchaser[]) => {
     console.log("CreateStockPurchaser: ", purchaserData);
-    return true;
+    try {
+      const result = await fetch(
+        `api/stock-room/${data.stockRoomId}/purchaser`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(purchaserData),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutate();
+      return true;
+    } catch (e) {
+      toast.error("Failed to add store.");
+      return false;
+    }
   };
   return (
     <div className="flex-1">
       <Table
+        loading={isLoading}
         renderTopActions={
           <div>
             <div>

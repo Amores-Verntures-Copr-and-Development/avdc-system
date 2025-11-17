@@ -14,22 +14,18 @@ interface DashboardStats {
 }
 
 const PurchaserDashboard = () => {
-  const {
-    data: dashboardStats,
-    error,
-    isLoading,
-  } = useSWR<ApiResponse<DashboardStats[]>>(
+  const {} = useSWR<ApiResponse<DashboardStats[]>>(
     `/api/dashboard/purchaser/total-cards`,
     fetcher
   );
 
   // Provide proper default values
-  const defaultStats: DashboardStats = {
-    totalPurchase: 0,
-    pendingRequest: 0,
-    lowStock: 0,
-    outOfStock: 0,
-  };
+  // const defaultStats: DashboardStats = {
+  //   totalPurchase: 0,
+  //   pendingRequest: 0,
+  //   lowStock: 0,
+  //   outOfStock: 0,
+  // };
 
   // const stats = dashboardStats?.data[0] ?? defaultStats;
 

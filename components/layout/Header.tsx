@@ -1,23 +1,11 @@
 import React from "react";
-import Image from "next/image";
+
 import { Bell } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 const Header = () => {
   const { user } = useSession();
   return (
-    <div className="flex h-15 justify-between items-center pr-2 shadow bg-white overflow-visible">
-      <div className="flex items-center justify-start w-64 h-15">
-        <div className="relative w-32 h-15">
-          {" "}
-          {/* Adjust width/height as needed */}
-          <Image
-            src="/avdclogo.png"
-            alt="Logo"
-            fill
-            className="object-contain"
-          />
-        </div>
-      </div>
+    <div className="flex justify-end h-15 items-center pr-2 shadow  bg-white overflow-visible">
       <div className="flex gap-5 items-center">
         <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-gray-300 text-white">
           <Bell size={18} />

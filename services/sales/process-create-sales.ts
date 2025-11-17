@@ -11,7 +11,7 @@ import { createSaleItems } from "./sale-items/create-sale-items";
 import { createSalePayments } from "./sale-payments/create-sale-payments";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
-import { findIventoryByFields } from "../inventory/get-inventory";
+import { findInventoryByFields } from "../inventory/get-inventory";
 import { InventoryItemInterface } from "@/types/inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
@@ -50,9 +50,10 @@ export async function processCreateSales(data: CreateSaleDto) {
     await createSalePayments({ connection, data: newSalePayments });
     //Deduct inventory Items
     //Insert item Movement
-    const itemInventoryId = await findIventoryByFields({
+    const itemInventoryId = await findInventoryByFields({
       keyFields: {
-        storeId: data.storeId,
+        inventoryReferenceId: data.storeId,
+        inventoryReference: "store",
       },
     });
     const minusInventoryQty: Partial<InventoryItemInterface>[] =

@@ -13,7 +13,7 @@ export async function processCreateStockRoom(data: CreateStockRoom) {
     const inventoryData: CreateInventoryDto = {
       inventoryDescription: `${data.stockRoomName} Inventory`,
       inventoryReference: "stock-room",
-      inventotyReferenceId: id,
+      inventoryReferenceId: id,
       inventoryCreatedBy: data.stockRoomCreatedBy,
     };
     await createInvetory({ connection, data: inventoryData });
