@@ -30,8 +30,8 @@ const PurchaserDashboard = () => {
   // const stats = dashboardStats?.data[0] ?? defaultStats;
 
   return (
-    <div className="flex h-full overflow-hidden">
-      <div className="flex-1 h-full flex flex-col gap-4 pr-5">
+    <div className="flex flex-col sm:flex-row h-full overflow-hidden">
+      <div className="flex-1 h-full flex flex-col gap-4 sm:pr-5">
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard
             title="Total Purchase"

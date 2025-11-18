@@ -23,6 +23,7 @@ import {
   Trash,
   Clipboard,
   ArrowLeftRight,
+  Import,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -37,6 +38,10 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
 import AddItemToProductModal from "../../components/AddItemToProductModal";
 import { CreateProductDtos } from "@/dtos/products.dto";
+import ImportItemModa from "../../components/ImportItemModal";
+import ImportItemModal from "../../components/ImportItemModal";
+import { ImportItemDto, ImportItemInfo } from "@/dtos/items.dto";
+import { capitalizeWords } from "@/utils/capitalizeWords";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -175,7 +180,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
+  const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const { user, loading: userLoading, hasStore } = useSession();
   const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
@@ -193,7 +200,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     inventoryId ? `/api/inventory/item/${inventoryId}` : null,
     fetcher
   );
-  console.log("itemResponse: ", { itemResponse, inventoryId });
+
   // const handleCreateInventory = async (data: CreateInventoryDto) => {
   //   console.log("CreateInventoryDto: ", data);
   //   try {
@@ -399,12 +406,55 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         throw new Error(res.err);
       }
       mutate();
+      toast.success(res.message);
       return true;
     } catch (e) {
       console.log(e);
       return false;
     } finally {
       setIsSubmittingAdjustment(false);
+    }
+  };
+  const handleImportItem = async (data: any[]) => {
+    setIsSubmittingImport(true);
+    if (!inventoryId) {
+      console.log({ inventoryId });
+      return false;
+    }
+    const newData: ImportItemInfo = {
+      importedBy: user?.userId ?? 0,
+      inventoryId: inventoryId,
+      items: data.map((item) => ({
+        itemName: capitalizeWords(item.Name),
+        categoryName: item.Category,
+        itemAddedBy: user?.userId ?? 0,
+        itemPrice: item.Price,
+        itemUnit: item.Unit,
+        itemDescription: item.Description,
+      })),
+    };
+    console.log({ newData });
+    try {
+      const result = await fetch(`/api/items/import-item/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutate();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    } finally {
+      setIsSubmittingImport(false);
     }
   };
   return (
@@ -428,11 +478,23 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   icon={<Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />}
                   label="Inventory Report"
                   onClick={() => {
-                    setShowCreateReportModal(true);
+                    setShowImportModal(true);
                   }}
                   size="xs"
                   className="font-semibold"
                   color="nocolor"
+                />
+              </div>
+              <div>
+                <Button
+                  icon={<Import className="w-3 h-3 sm:w-5 sm:h-5" />}
+                  label="Import Item"
+                  onClick={() => {
+                    setShowImportModal(true);
+                  }}
+                  size="xs"
+                  className="font-semibold"
+                  color="secondary"
                 />
               </div>
               {selectedRows?.length &&
@@ -689,6 +751,21 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             setShowAddProductModal(false);
           }}
           onSubmit={handleAddItemsToProduct}
+        />
+      </Modal>
+      <Modal
+        isOpen={showImportModal}
+        onClose={function (): void {
+          setShowImportModal(false);
+        }}
+        title="Import Item"
+        size="xl"
+        className="h-[95%]"
+      >
+        <ImportItemModal
+          onSubmit={handleImportItem}
+          loading={isSubmittingImport}
+          onClose={() => setShowImportModal(false)}
         />
       </Modal>
       <Popup

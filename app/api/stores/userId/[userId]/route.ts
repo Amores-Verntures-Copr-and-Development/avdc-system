@@ -7,10 +7,8 @@ export async function GET(
 ) {
   try {
     const slug = (await params).userId;
-    console.log({ slug });
     const res = await getStore({ empKeyfields: { userId: Number(slug) } });
     if (!res.success) {
-      console.log(res.error);
       throw new Error("Failed fetched stock rooms!");
     }
     return NextResponse.json({

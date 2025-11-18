@@ -78,8 +78,6 @@ const PosPage = () => {
 
       setSelectedProduct((prev) => [...prev, { ...newProduct, quantity: 1 }]);
     }
-
-    console.log("SelectedProduct:", selectedProduct);
   };
   const removeQuantityProductList = (product: DisplayProductsDtos) => {
     setProductList((prev) =>

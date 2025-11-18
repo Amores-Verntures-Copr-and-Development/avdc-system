@@ -112,7 +112,7 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
     `/api/inventory/movement/${data?.inventoryId}/${data?.inventoryItemId}`,
     fetcher
   );
-  console.log({ inventoryMovement });
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col border-b border-gray-300">
@@ -281,7 +281,6 @@ const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
       itemMovementReference: "adjustment",
     });
   const handleSubmit = async () => {
-    console.log({ adjustmentForm, data });
     if (
       adjustmentForm.itemMovementType === "out" &&
       Number(adjustmentForm.itemMovementQuantity) >

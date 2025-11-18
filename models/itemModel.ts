@@ -1,13 +1,14 @@
-import { CreateItemDto } from "@/dtos/items.dto";
+import { CreateItemDto, ImportItemInfo } from "@/dtos/items.dto";
 import { ResultSetHeader } from "mysql2/promise";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection } from "mysql2/promise";
+import { processImportItems } from "@/services/items/processImportItems";
 
 export const insertItem = async ({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreateItemDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
@@ -23,6 +24,29 @@ export const insertItem = async ({
   ]);
   return results.insertId;
 };
+
+// export const insertItems = async ({
+//   connection,
+//   data,
+// }: {
+//   connection?: PoolConnection;
+//   data: CreateItemDto[];
+// }) => {
+//   const pool = connection ? connection : await getDBConnection();
+//   const sql = `INSERT INTO Items(itemName,itemDescription,itemPrice,itemUnit,itemAddedBy,
+//   categoryId)
+//    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?)").join(", ")}`;
+//   const values = data.map((item) => [
+//     item.itemName,
+//     item.itemDescription,
+//     item.itemPrice,
+//     item.itemUnit,
+//     item.itemAddedBy,
+//     item.categoryId,
+//   ]);
+//   const [results] = await pool.execute(sql, values);
+//   return results;
+// };
 
 export const selectItems = async ({
   connection,

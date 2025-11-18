@@ -1,6 +1,6 @@
 import { CreateCategoryDto } from "@/dtos/category.dto";
 import { insertCategory, selectCategories } from "../models/categoryModels";
-import { getCategoriesById } from "@/services/caregories/get-categories";
+import { getCategoriesById } from "@/services/categories/get-categories";
 
 export const createCategory = async (data: CreateCategoryDto) => {
   try {
