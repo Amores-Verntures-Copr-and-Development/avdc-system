@@ -177,6 +177,7 @@ export const selectRequestItemsByIds = async ({
     .join(", ");
 
   // Step 3: Build main SQL query dynamically
+  console.log({ placeholders });
   const sql = `
     SELECT 
       i.itemId,
@@ -186,8 +187,10 @@ export const selectRequestItemsByIds = async ({
       (
         SELECT iis.inventoryItemQuantity
         FROM InventoryItems iis
-        WHERE iis.inventoryId = 1
-          AND iis.inventoryItemReferenceId = i.itemId
+        LEFT JOIN Inventories i ON i.inventoryId = iis.inventoryId
+        LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'
+        LEFT JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
+        WHERE ss.storeId = ro.storeId
         LIMIT 1
       ) AS stockItem,
       ${storeColumns},
@@ -203,7 +206,8 @@ export const selectRequestItemsByIds = async ({
       i.itemId,
       i.itemName,
       i.itemUnit,
-      i.itemPrice
+      i.itemPrice,
+      ro.storeId
     ORDER BY i.itemName;
   `;
 

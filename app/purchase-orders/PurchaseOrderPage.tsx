@@ -20,7 +20,9 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
     name: "PO No",
     key: "poNumber",
     selector: (row) => (
-      <span className="text-xs font-semibold">{row.poNumber}</span>
+      <span className="text-[10px] sm:text-xs font-semibold">
+        {row.poNumber}
+      </span>
     ),
   },
 
@@ -34,7 +36,7 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
       );
       return (
         <span
-          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+          className={`${bgClass} ${textClass} ${borderClass} text-[10px] sm:text-xs rounded px-1 py-1 text-center font-semibold`}
         >
           {status}
         </span>
@@ -60,6 +62,7 @@ const PurchaseOrderPage = () => {
       (po) => po.poId === selectedPo?.poId
     );
     if (findSelectedPo) {
+      console.log("Selected PO: ", findSelectedPo);
       setSelecetedPo(findSelectedPo);
     }
   };
@@ -78,7 +81,7 @@ const PurchaseOrderPage = () => {
           textSize="xs"
           showActions
           renderActions={(row) => (
-            <div className="flex gap-2 justify-center">
+            <div className="flex gap-1 sm:gap-2 px-1 justify-center">
               {/* View Button */}
               <IconButton
                 onClick={() => {
@@ -87,19 +90,19 @@ const PurchaseOrderPage = () => {
                 }}
                 label={"View"}
                 bg={"gray"}
-                icon={<Eye size={18} />}
+                icon={<Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
               />
               <IconButton
                 onClick={() => {}}
                 label={"Print"}
                 bg={"green"}
-                icon={<Printer size={18} />}
+                icon={<Printer className=" w-3 h-3  sm:w-4 sm:h-4" />}
               />
               <IconButton
                 onClick={() => {}}
                 label={"Convert to PO"}
                 bg={"blue"}
-                icon={<FileText size={18} />}
+                icon={<FileText className=" w-3 h-3  sm:w-4 sm:h-4" />}
               />
             </div>
           )}

@@ -273,7 +273,7 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div className="w-30">
+            <div className="w-25 sm:w-30">
               {searchUrl && <SearchBar url={searchUrl} />}
             </div>
             <div className="flex gap-1 sm:gap-2">{renderTopActions}</div>
@@ -285,7 +285,7 @@ const TableInner = <T extends Record<string, any>>(
           <table className="w-full border-collapse text-black overflow-auto">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-300">
               <tr
-                className={`${rowSize} text-${textSize} border-b-1 border-gray-300`}
+                className={`${rowSize} text-[10px] sm:text-${textSize} border-b-1 border-gray-300`}
               >
                 {/* Select-all column */}
                 {showCheckBox && (
@@ -304,7 +304,7 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-1 py-1.5 sm:px-2 sm:py-3 font-semibold text-left text-xs sm:text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-1 py-1.5 sm:px-2 sm:py-3 font-semibold text-left text-[10px] sm:text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
                         ? "border-r border-gray-300"
                         : ""
@@ -316,7 +316,7 @@ const TableInner = <T extends Record<string, any>>(
 
                 {showActions && (
                   <th
-                    className={`px-2 py-3 text-center border-l border-r border-gray-300  font-semibold text-${textSize} text-gray-700 bg-gray-50`}
+                    className={`px-2 py-3 text-center border-l border-r border-gray-300  font-semibold text-[10px] sm:text-${textSize} text-gray-700 bg-gray-50`}
                   >
                     Actions
                   </th>
@@ -373,7 +373,7 @@ const TableInner = <T extends Record<string, any>>(
                 editableData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={`hover:bg-gray-50 transition-colors duration-150 text-${textSize} border-b-2  border-gray-100`}
+                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] sm:text-${textSize} border-b-2  border-gray-100`}
                     onClick={() => {
                       if (onRowSelection) {
                         onRowSelection(row);
@@ -382,7 +382,7 @@ const TableInner = <T extends Record<string, any>>(
                   >
                     {/* Row checkbox */}
                     {showCheckBox && (
-                      <td className="px-2 py-1 text-center">
+                      <td className="px-2 py-1 text-center border-r border-gray-100">
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -395,7 +395,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-2 py-1 border-r-2 border-gray-100 text-${textSize} ${
+                        className={`px-2 py-1 border-r-2 border-gray-100 text-[10px] sm:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >
@@ -404,7 +404,9 @@ const TableInner = <T extends Record<string, any>>(
                     ))}
 
                     {showActions && renderActions && (
-                      <td className={`py-1  text-center text-${textSize}`}>
+                      <td
+                        className={`py-1  text-center text-[10px] sm:text-${textSize}`}
+                      >
                         {renderActions(row, rowIndex)}
                       </td>
                     )}

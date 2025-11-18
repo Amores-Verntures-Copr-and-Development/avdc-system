@@ -82,7 +82,13 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   poData,
   onClose,
 }) => {
-  const [expandedSupplier, setExpandedSupplier] = useState<number | null>(null);
+  const [expandedSupplier, setExpandedSupplier] = useState<{
+    suppId: number;
+    index: null | number;
+  }>({
+    suppId: 0,
+    index: null,
+  });
   const [showROPDF, setShowROPDF] = useState<
     "po" | "supplier" | "store" | null
   >(null);
@@ -104,20 +110,22 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   );
   const handleSendBySupplier = async (
     poItems: PurchaseOrderItems[],
-    suppId: number
+    suppId: number,
+    index: number
   ) => {
-    setSendingSupplier(suppId);
+    setSendingSupplier(index);
+    console.log({ index });
     const supplierName = data.find((req) => req.suppId === suppId)?.suppName;
-    const success = await onSendPOItem(poItems);
-    if (success) {
-      toast.success(`Items for ${supplierName}  sent!`);
-      console.log({ data });
-      if (
-        data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
-      ) {
-        onClose();
-      }
-    }
+    // const success = await onSendPOItem(poItems);
+    // if (success) {
+    //   toast.success(`Items for ${supplierName}  sent!`);
+    //   console.log({ data });
+    //   if (
+    //     data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
+    //   ) {
+    //     onClose();
+    //   }
+    // }
     setSendingSupplier(null);
   };
   const handleSendToSupliers = async (data: DisplayPOItemsSupplier[]) => {
@@ -150,8 +158,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 <span className="text-gray-500 text-sm">Loading...</span>
               </div>
             ) : (
-              data.map((data) => {
-                return (
+              data.map((data, index) => {
+                return data.suppId ? (
                   <div
                     className="border border-gray-300 rounded-lg overflow-hidden"
                     key={data.suppId}
@@ -184,12 +192,15 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               isRounded={false}
                               size="xs"
                               onClick={function (): void {
-                                setExpandedSupplier(data.suppId);
+                                setExpandedSupplier({
+                                  index: index,
+                                  suppId: data.suppId,
+                                });
                                 setIsView("all");
                               }}
                               color={
                                 isView === "all" &&
-                                expandedSupplier === data.suppId
+                                expandedSupplier.suppId === data.suppId
                                   ? "primary"
                                   : "nocolor"
                               }
@@ -209,7 +220,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               }}
                               color={
                                 isView === "store" &&
-                                expandedSupplier === data.suppId
+                                expandedSupplier.suppId === data.suppId
                                   ? "primary"
                                   : "nocolor"
                               }
@@ -284,13 +295,14 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                 <div>
                                   {" "}
                                   <Button
-                                    loading={sendingSupplier === data.suppId}
+                                    loading={sendingSupplier === index}
                                     isRounded={false}
                                     size="xs"
                                     onClick={() =>
                                       handleSendBySupplier(
                                         data.items,
-                                        data.suppId
+                                        data.suppId,
+                                        index
                                       )
                                     }
                                     color="nocolor"
@@ -324,14 +336,19 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                           </div>
                           <div
                             onClick={() =>
-                              setExpandedSupplier(
-                                expandedSupplier === data.suppId
-                                  ? null
-                                  : data.suppId
-                              )
+                              setExpandedSupplier({
+                                suppId:
+                                  expandedSupplier.suppId === data.suppId
+                                    ? 0
+                                    : data.suppId,
+                                index:
+                                  expandedSupplier.index === index
+                                    ? null
+                                    : index,
+                              })
                             }
                           >
-                            {expandedSupplier === data.suppId ? (
+                            {expandedSupplier.suppId === data.suppId ? (
                               <ChevronUp size={20} />
                             ) : (
                               <ChevronDown size={20} />
@@ -340,7 +357,121 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                         </div>
                       </div>
                     </div>
-                    {expandedSupplier === data.suppId && (
+                    {expandedSupplier.suppId === data.suppId && (
+                      <div className="overflow-y-auto">
+                        {isView === "all" ? (
+                          <Table
+                            textSize="xs"
+                            columns={columns}
+                            data={data.items}
+                            isRounded={false}
+                          />
+                        ) : (
+                          <div className="flex p-2 gap-4">
+                            {itemResponse.data.map((data) => (
+                              <StoreCardInSupplier
+                                data={data}
+                                key={data.storeId}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    className="border border-gray-300 rounded-lg overflow-hidden"
+                    key={index}
+                  >
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Package className="text-primary-1" size={24} />
+                          <h1 className="font-semibold text-sm">
+                            No Supplier Items
+                          </h1>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <div className=" bg-white border-gray-200 border-0 flex">
+                              <div>
+                                {" "}
+                                <Button
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={function (): void {
+                                    throw new Error(
+                                      "Function not implemented."
+                                    );
+                                  }}
+                                  color="nocolor"
+                                  label="Edit"
+                                  icon={<Edit size={15} />}
+                                  className="font-semibold text-gray-700 text-xs"
+                                />
+                              </div>
+
+                              <div>
+                                <Button
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={function (): void {
+                                    setSelectedSupplier(data);
+                                    setShowROPDF("supplier");
+                                  }}
+                                  color="nocolor"
+                                  label="PDF"
+                                  icon={
+                                    <FileText
+                                      size={15}
+                                      className="text-gray-700"
+                                    />
+                                  }
+                                  className="font-semibold text-gray-700 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs">
+                              {data.items?.length} item(s)
+                            </span>
+                            <p className="font-bold text-primary-1 text-sm">
+                              {formatPeso(
+                                data.items.reduce((total, item) => {
+                                  const price = Number(item.unitPrice) || 0;
+                                  const qty =
+                                    Number(item.poItemOrderedQty) || 0;
+                                  return total + price * qty;
+                                }, 0)
+                              )}
+                            </p>
+                          </div>
+                          <div
+                            onClick={() =>
+                              setExpandedSupplier({
+                                suppId:
+                                  expandedSupplier.suppId === data.suppId
+                                    ? 0
+                                    : data.suppId,
+                                index:
+                                  expandedSupplier.index === index
+                                    ? null
+                                    : index,
+                              })
+                            }
+                          >
+                            {expandedSupplier.index === index ? (
+                              <ChevronUp size={20} />
+                            ) : (
+                              <ChevronDown size={20} />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {expandedSupplier.index === index && (
                       <div className="overflow-y-auto">
                         {isView === "all" ? (
                           <Table
@@ -385,13 +516,26 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
+            {data.some((supp) => supp.suppId) && (
+              <div>
+                <Button
+                  size="sm"
+                  onClick={function (): void {
+                    handleSendToSupliers(data);
+                  }}
+                  label="Send to Suppliers"
+                  icon={<Send size={15} />}
+                  className="font-semibold  text-xs px-2 py-2"
+                />
+              </div>
+            )}
             <div>
               <Button
                 size="sm"
                 onClick={function (): void {
                   handleSendToSupliers(data);
                 }}
-                label="Send to Suppliers"
+                label="Update Status"
                 icon={<Send size={15} />}
                 className="font-semibold  text-xs px-2 py-2"
               />
@@ -406,7 +550,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
         onClose={function (): void {
           setShowROPDF(null);
         }}
-        title="Request Order PDF"
+        title="Purchase Order PDF"
       >
         {" "}
         <PDFViewer width="100%" height="100%">

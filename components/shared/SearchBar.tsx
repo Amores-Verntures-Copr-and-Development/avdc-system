@@ -62,7 +62,7 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex w-full items-center gap-2">
+    <div className="flex w-full h-h-full items-center gap-2">
       {label && (
         <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
           {label}

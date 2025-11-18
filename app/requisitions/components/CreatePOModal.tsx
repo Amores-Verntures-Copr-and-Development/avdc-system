@@ -42,6 +42,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     fetcher
   );
   useEffect(() => {
+    console.log("ASD", { orderItem });
     if (itemResponse.data) {
       const newData: DisplayTotalOrderItem[] = itemResponse.data.map(
         (item) => ({
@@ -53,6 +54,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       setOrderItem(newData);
     }
   }, [itemResponse.data?.length]);
+
   const baseColumns: Column<DisplayTotalOrderItem>[] = [
     { name: "Item ID", key: "itemId" },
     { name: "Item Name", key: "itemName" },
@@ -67,8 +69,26 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     {
       name: "Need to Order",
       key: "orderNeed",
-      selector: (row) =>
-        formatQuantityByUnit(row.stockItem - row.totalQuantity, row.itemUnit),
+      selector: (row) => {
+        console.log("Stock Item: ", row.stockItem);
+        console.log("Total Quantity: ", row.totalQuantity);
+        const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
+        console.log({ isGreater });
+        if (Number(row.stockItem) > Number(row.totalQuantity)) {
+          return (
+            <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
+              Available
+            </span>
+          );
+        } else {
+          const quantity = row.totalQuantity - row.stockItem; // Fixed: should be total - stock
+          return (
+            <span className="text-red-600 font-medium">
+              {formatQuantityByUnit(quantity, row.itemUnit)}
+            </span>
+          );
+        }
+      },
     },
     {
       name: "Quantity to Order",
@@ -121,7 +141,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     setOrderItem((prev) =>
       prev.map((item) => ({
         ...item,
-        poItemOrder: item.totalQuantity - item.stockItem, // 👈 copy totalQuantity
+        poItemOrder: item.stockItem - item.totalQuantity, // 👈 copy totalQuantity
       }))
     );
   };

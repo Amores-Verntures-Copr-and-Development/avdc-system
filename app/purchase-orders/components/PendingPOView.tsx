@@ -8,7 +8,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock } from "lucide-react";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface PendingPOViewProps {
   data: DisplayPurchaseOrderItemsDto[];
@@ -99,15 +99,17 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   onClose,
   user,
 }) => {
-  const updatedItemsRef = useRef<DisplayPurchaseOrderItemsDto[]>([]);
-  const handleDataUpdate = (updatedData: DisplayPurchaseOrderItemsDto[]) => {
-    updatedItemsRef.current = updatedData; // Store without causing re-render
-  };
+  const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>(data);
+  useEffect(() => {
+    if (data && data.length > 0) {
+      setPoItems(data);
+    }
+  }, [data]);
   const handleApprovedPo = async () => {
-    const updatedItems = updatedItemsRef.current;
+    console.log({ poItems });
     const newData: UpdatePurchaseOrdersDto = {
       ...poData,
-      poItems: updatedItems,
+      poItems: poItems,
       updatedBy: user?.userId ?? 0,
     };
     const success = await onSubmit(newData);
@@ -133,7 +135,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
             columns={columns}
             data={data}
             maxHeight="h-full"
-            updateData={handleDataUpdate}
+            updateData={setPoItems}
             onCellChange={(rowIndex, key, value, row) => {
               // If supplier changed, update suppId and unitPrice too
               if (key === "selectedSupplierId") {
