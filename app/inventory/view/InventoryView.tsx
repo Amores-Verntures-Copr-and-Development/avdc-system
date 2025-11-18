@@ -37,16 +37,16 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
   return (
     <PageLayout className="gap-2">
       {/* Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <InventoryCard
           title="Total Items"
-          value={0}
+          value={stats.totalItems}
           icon={<Box className="h-3 w-3 sm:w-6 sm:h-6 text-blue-500" />}
           iconBg="bg-blue-100"
         />
         <InventoryCard
           title="Good Stock Items"
-          value={0}
+          value={stats.goodStock}
           icon={
             <ShoppingCart className="h-3 w-3 sm:w-6 sm:h-6 text-green-500" />
           }
@@ -54,7 +54,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
         />
         <InventoryCard
           title="Low Stock Items"
-          value={0}
+          value={stats.lowStock}
           icon={
             <AlertTriangle className="h-3 w-3 sm:w-6 sm:h-6 text-yellow-500" />
           }
@@ -63,7 +63,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
 
         <InventoryCard
           title="Out of stock items"
-          value={0}
+          value={stats.outStock}
           icon={<XCircle className="h-3 w-3 sm:w-6 sm:h-6 text-red-500" />}
           iconBg="bg-red-100"
         />

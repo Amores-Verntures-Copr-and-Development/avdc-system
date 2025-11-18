@@ -110,7 +110,8 @@ const AdminRequisitionPage = () => {
       />
 
       <div className="flex-1 min-h-0  flex flex-col">
-        {itemResponse.data && itemResponse.data.length > 0 ? (
+        {(itemResponse.data && itemResponse.data.length > 0) ||
+        user?.empPosition !== "purchaser" ? (
           <Table<DisplayRequestOrderDto>
             columns={requisitionColumns}
             ref={tableRef}

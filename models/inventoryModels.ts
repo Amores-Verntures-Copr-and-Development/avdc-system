@@ -390,7 +390,7 @@ export const selectInventoryItemsStockStatus = async (inventoryId: number) => {
   SUM(CASE WHEN ii.inventoryItemQuantity > ii.inventoryItemMin THEN 1 ELSE 0 END) AS goodStock,
   SUM(CASE WHEN ii.inventoryItemQuantity <= ii.inventoryItemMin AND ii.inventoryItemQuantity > 0 THEN 1 ELSE 0 END) AS lowStock,
   SUM(CASE WHEN ii.inventoryItemQuantity = 0 THEN 1 ELSE 0 END) AS outStock
-  FROM Inventory i
+  FROM Inventories i
   LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId WHERE i.inventoryId = ?`;
   const [rows] = await pool.execute(sql, [inventoryId]);
   return rows;

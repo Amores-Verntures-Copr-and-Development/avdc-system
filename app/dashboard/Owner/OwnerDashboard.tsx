@@ -54,35 +54,48 @@ const OwnerDashboard = () => {
       };
     }) ?? [];
   return (
-    <div className="flex flex-col h-full overflow-y-auto sm:flex-col lg:flex-row gap-2">
-      <div className="flex-1 h-full flex flex-col gap-4">
-        <div className="grid grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full overflow-y-auto p-2">
+      {/* Main Content - 3/4 on desktop, full on mobile */}
+      <div className="lg:col-span-3  flex flex-1 flex-col gap-4">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
           <DashboardCard title="Total Purchase" value={10} icon={Calendar} />
         </div>
-        <div className="border rounded-2xl shadow-sm min-h-50 border-gray-200 bg-white h-full p-4 sm:p-4">
-          <h1>Sales Chart</h1>
-          <Chart />
-        </div>
-        <div className="border rounded-2xl shadow-sm min-h-50  border-gray-200 bg-white h-full p-4">
-          <h1>Top Performer</h1>
+
+        {/* Charts - Stack on mobile, side by side on larger screens */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+            <h1 className="font-semibold mb-2">Sales Chart</h1>
+            <div className="h-64">
+              <Chart />
+            </div>
+          </div>
+          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+            <h1 className="font-semibold mb-2">Top Performer</h1>
+            <div className="h-64">
+              <Chart />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex-[.40] flex flex-col h-full  gap-4">
-        <div className="flex-1 flex flex-col min-h-0 p-4 border rounded-2xl shadow-sm border-gray-200 bg-white">
-          <h1 className="font-semibold text-sm">Daily Store Sales</h1>
-          <div className="flex-1 flex flex-col gap-2 overflow-auto">
+      {/* Sidebar - 1/4 on desktop, full on mobile */}
+      <div className="lg:col-span-1 flex flex-col gap-4">
+        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <h1 className="font-semibold text-sm mb-3">Daily Store Sales</h1>
+          <div className="h-64 overflow-y-auto">
             {storeSales.map((store) => (
               <StoreCardSales data={store} key={store.id} />
             ))}
           </div>
-        </div>{" "}
-        <div className="flex-1 flex flex-col min-h-0 p-4 border rounded-2xl shadow-sm border-gray-200 bg-white">
-          <h1 className="font-semibold text-sm">Top Performer Store</h1>
-          <div className="flex-1 flex flex-col gap-2 overflow-auto">
+        </div>
+
+        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <h1 className="font-semibold text-sm mb-3">Top Performer Store</h1>
+          <div className="h-64 overflow-y-auto">
             {storeData.map((store) => (
               <StoreCardSales data={store} key={store.id} />
             ))}

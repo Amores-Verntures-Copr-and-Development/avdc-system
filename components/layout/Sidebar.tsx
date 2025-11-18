@@ -40,6 +40,7 @@ const sideMenu = [
         icon: LayoutDashboard,
         roles: [
           "superadmin",
+          "owner",
           "admin",
           "purchaser",
           "supervisor",
@@ -52,7 +53,7 @@ const sideMenu = [
         name: "Point of Sale",
         href: "/pos",
         icon: ShoppingCart,
-        roles: ["admin", "supervisor", "staff"],
+        roles: ["admin", "supervisor", "owner", "staff"],
       },
     ],
   },
@@ -63,7 +64,7 @@ const sideMenu = [
         name: "Stock Room",
         href: "/stock-room",
         icon: Warehouse,
-        roles: ["superadmin", "admin", "accounting", "hr"],
+        roles: ["superadmin", "owner", "admin", "accounting", "hr"],
       },
       {
         name: "Products",
@@ -77,6 +78,7 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
       {
@@ -91,6 +93,7 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
       {
@@ -105,6 +108,7 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
     ],
@@ -116,13 +120,28 @@ const sideMenu = [
         name: "Sales History",
         href: "/sales-history",
         icon: History,
-        roles: ["superadmin", , "admin", "supervisor", "accounting", "staff"],
+        roles: [
+          "superadmin",
+          ,
+          "admin",
+          "supervisor",
+          "accounting",
+          "staff",
+          "owner",
+        ],
       },
       {
         name: "Customers",
         href: "/customers",
         icon: Users,
-        roles: ["superadmin", "admin", "supervisor", "accounting", "staff"],
+        roles: [
+          "superadmin",
+          "admin",
+          "supervisor",
+          "accounting",
+          "staff",
+          "owner",
+        ],
       },
     ],
   },
@@ -133,7 +152,14 @@ const sideMenu = [
         name: "Purchase Order",
         href: "/purchase-orders",
         icon: FileText,
-        roles: ["superadmin", "admin", "purchaser", "accounting", "staff"],
+        roles: [
+          "superadmin",
+          "admin",
+          "purchaser",
+          "accounting",
+          "staff",
+          "owner",
+        ],
       },
       {
         name: "Requisitions",
@@ -147,19 +173,34 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
       {
         name: "Procurement History",
         href: "/procurement-history",
         icon: History,
-        roles: ["superadmin", "admin", "purchaser", "accounting", "hr"],
+        roles: [
+          "superadmin",
+          "admin",
+          "purchaser",
+          "accounting",
+          "hr",
+          "owner",
+        ],
       },
       {
         name: "Suppliers",
         href: "/suppliers",
         icon: Truck,
-        roles: ["superadmin", "admin", "purchaser", "accounting", "hr"],
+        roles: [
+          "superadmin",
+          "admin",
+          "purchaser",
+          "accounting",
+          "hr",
+          "owner",
+        ],
       },
     ],
   },
@@ -170,7 +211,7 @@ const sideMenu = [
         name: "Users",
         href: "/users",
         icon: ContactRound,
-        roles: ["superadmin", "admin", "accounting", "hr"],
+        roles: ["superadmin", "admin", "accounting", "hr", "owner"],
       },
       {
         name: "Employees",
@@ -184,6 +225,7 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
       {
@@ -198,6 +240,7 @@ const sideMenu = [
           "accounting",
           "hr",
           "staff",
+          "owner",
         ],
       },
     ],
@@ -259,7 +302,7 @@ const Sidebar = () => {
       sections: group.sections.filter(
         (s) =>
           !s.roles ||
-          s.roles.includes(user?.userRole === "superadmin" ? role : position) // allow if no roles OR matches
+          s.roles.includes(user?.userRole !== "employee" ? role : position) // allow if no roles OR matches
       ),
     }))
     .filter((group) => group.sections.length > 0); // r
@@ -296,14 +339,24 @@ const Sidebar = () => {
         }`}
       >
         {/* Toggle Button */}
-        <div className="p-4 h-15 shadow">
-          <div className="flex items-center justify-between">
-            {!isCollapsed && (
+        <div className="flex justify-between h-15 pr-2 pl-2 shadow">
+          <div className="flex flex-1 items-center justify-between">
+            {!isCollapsed ? (
               <div className="relative w-32 h-8 flex-shrink-0">
                 {" "}
                 {/* Fixed dimensions */}
                 <Image
                   src="/avdclogo.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className="relative w-10 h-15 flex-shrink-0">
+                <Image
+                  src="/avdcSVG.svg"
                   alt="Logo"
                   fill
                   className="object-contain"
@@ -406,7 +459,7 @@ const Sidebar = () => {
             setShowLogout(false);
           }}
         >
-          <div className="h-30">
+          <div className="flex flex-col">
             {isLoading ? (
               <div className="flex justify-center items-center h-full">
                 <Loader2 className="w-5 h-5 animate-spin text-primary-1" />
@@ -416,15 +469,15 @@ const Sidebar = () => {
                 <div className="flex items-center gap-4 p-2">
                   <div className="flex-none">
                     <XCircle
-                      className="h-10 w-10 text-red-500"
+                      className=" h-8 w-8 sm:h-10 sm:w-10 text-red-500"
                       aria-hidden="true"
                     />
                   </div>
                   <div className="flex-1">
-                    <h1 className="text-lg font-semibold text-primary-1">
+                    <h1 className="text-sm sm:text-lg font-semibold text-primary-1">
                       Confirm Logout
                     </h1>
-                    <p className="mt-1 text-sm text-primary-1">
+                    <p className="mt-1 text-xs sm:text-sm text-primary-1">
                       Are you sure you want to logout? You&apos;ll need to sign
                       in again to continue.
                     </p>
@@ -433,6 +486,7 @@ const Sidebar = () => {
 
                 <div className="flex gap-4 justify-end">
                   <Button
+                    size="sm"
                     color="danger"
                     label="Keep me login!"
                     onClick={() => {
@@ -440,6 +494,7 @@ const Sidebar = () => {
                     }}
                   />
                   <Button
+                    size="sm"
                     color="secondary"
                     label="Logout"
                     onClick={handleLogout}

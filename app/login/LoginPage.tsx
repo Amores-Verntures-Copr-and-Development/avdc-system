@@ -46,7 +46,7 @@ const LoginPage = () => {
     }
   };
   return (
-    <div className="flex text-black justify-center items-center h-screen">
+    <div className="flex text-black justify-center items-center h-screen flex-col ">
       <Toaster
         position="top-right"
         toastOptions={{
@@ -56,14 +56,14 @@ const LoginPage = () => {
       />
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-2 rounded-lg shadow-md w-50 sm:w-100 space-y-4"
+        className="bg-white p-2 rounded-lg shadow-md w-70 sm:w-100 space-y-2 sm:space-y-4"
       >
         <Image
           className="mx-auto mb-4 sm:mb-6 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-22 lg:w-32 lg:h-30"
           src="/avdcSVG.svg"
           alt="Logo"
-          width={128} // Largest size for reference
-          height={104} // Largest size for reference
+          width={150} // Largest size for reference
+          height={110} // Largest size for reference
           priority
         />
         <div className="text-center">
@@ -76,7 +76,7 @@ const LoginPage = () => {
           </span>
         </div>
 
-        <div className="p-4 space-y-1 sm:space-y-4">
+        <div className="p-4 space-y-2 sm:space-y-4">
           <Input
             label={"Username"}
             name="username"
