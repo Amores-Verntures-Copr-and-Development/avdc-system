@@ -70,10 +70,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       key: "itemUnit",
     },
     {
-      name: "Inv Qty",
-      key: "inventoryItemQuantity",
-    },
-    {
       name: "Request Qty",
       key: "reqItemQuantity",
     },
