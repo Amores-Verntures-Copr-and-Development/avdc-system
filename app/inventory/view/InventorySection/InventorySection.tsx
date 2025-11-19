@@ -399,7 +399,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         itemAddedBy: user?.userId ?? 0,
         itemPrice: item.Price,
         itemUnit: item.Unit,
-        itemDescription: item.Description,
+        itemDescription: item.Description ?? "",
       })),
     };
     console.log({ newData });
@@ -421,6 +421,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       return true;
     } catch (e) {
       console.log(e);
+      toast.error("Failed to import item");
       return false;
     } finally {
       setIsSubmittingImport(false);
