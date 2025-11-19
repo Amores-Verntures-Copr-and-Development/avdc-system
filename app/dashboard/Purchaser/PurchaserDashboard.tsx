@@ -66,11 +66,10 @@ const PurchaserDashboard = () => {
               <Chart />
             </div>
           </div>
-        </div>
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
-          <div>
-            <h1>Top Performer</h1>
+          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+            <h1>Current Schedule Request</h1>
             <div className="h-64 ">
+              {" "}
               <Chart />
             </div>
           </div>
