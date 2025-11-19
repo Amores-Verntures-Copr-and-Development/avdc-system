@@ -7,6 +7,7 @@ import {
 import { Supplier } from "@/types/supplier";
 import { InventoryItemInterface } from "@/types/inventory";
 import { Request, RequestItems } from "@/types/request";
+import { StoreInterface } from "@/types/stores";
 
 export type CreatePurchaseOrderDto = Pick<
   PurchaseOrders,
@@ -72,7 +73,10 @@ export interface DisplayPOItemsSupplier extends Supplier {
   items: PurchaseOrderItems[];
 }
 
-export interface DisplayRequisitionWithItems extends Request, PurchaseOrders {
+export interface DisplayRequisitionWithItems
+  extends Request,
+    PurchaseOrders,
+    StoreInterface {
   requestItemsData: RequestItemsCombine[];
 }
 

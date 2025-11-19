@@ -120,10 +120,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       revalidateOnFocus: false, // Optional: prevent refetch on window focus
     }
   );
-  const handleReceivePO = async () => {
-    const success = await onReceivePO(supplierData);
+  const handleReceivePO = async (row: DisplayPOItemsSupplier[]) => {
+    const success = await onReceivePO(row);
     if (success) {
-      onClose();
+      // onClose();
     }
   };
   const updateSupplierItems = (
@@ -351,13 +351,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       <Button
                                         isRounded={false}
                                         size="xs"
-                                        onClick={function (): void {
-                                          throw new Error(
-                                            "Function not implemented."
-                                          );
+                                        onClick={() => {
+                                          handleReceivePO([supplier]);
                                         }}
                                         color="primary"
-                                        label="Received"
+                                        label="Receive PO"
                                         icon={<Package size={15} />}
                                         className="font-semibold"
                                       />
@@ -394,12 +392,13 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     onClick={() =>
                                       handleSendBySupplier(supplier.items)
                                     }
-                                    color="nocolor"
-                                    label="Receive"
+                                    color="success"
+                                    label="Received"
+                                    disabled={true}
                                     icon={
                                       <PackageCheck
                                         size={15}
-                                        className="text-primary-1 "
+                                        className="text-black "
                                       />
                                     }
                                     className="font-semibold"
@@ -575,17 +574,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                 label={"Download PDF"}
                 icon={<Edit size={15} className="text-gray-700" />}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
-              />
-            </div>
-            <div>
-              <Button
-                size="sm"
-                onClick={function (): void {
-                  handleReceivePO();
-                }}
-                label="Received PO"
-                icon={<PackageCheckIcon size={15} />}
-                className="font-semibold  text-xs px-2 py-2"
               />
             </div>
           </div>

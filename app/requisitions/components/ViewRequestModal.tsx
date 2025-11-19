@@ -179,38 +179,38 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     setPdfData(pdfData);
   };
   return (
-    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
+    <div className="bg-white h-full flex flex-col overflow-hidden">
       {selectedReq?.requestStatus === "pending" ||
       selectedReq?.requestStatus === "in_progress" ||
       selectedReq?.requestStatus === "approved" ? (
-        <span className="text-sm text-gray-600 font-medium p-4">
+        <span className="text-[10px] xl:text-sm text-gray-600 font-medium p-4">
           Note: Please wait for the order request to be delivered before
           receiving it. If it takes longer than expected, kindly contact your
           Purchasing Department.
         </span>
       ) : selectedReq?.requestStatus === "delivered" ? (
-        <span className="text-sm text-blue-600 font-medium p-4">
+        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
           Note: Please verify all delivered items and accurately input the
           received quantities into the system to keep your inventory records up
           to date.
         </span>
       ) : selectedReq?.requestStatus === "received" ? (
-        <span className="text-sm text-blue-600 font-medium p-4">
+        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
           Note: The request status is currently marked as Received. Please
           complete the request to finalize the process, ensure that all items
           are accurately recorded, and generate the corresponding inventory
           report.
         </span>
       ) : selectedReq?.requestStatus === "completed" ? (
-        <span className="text-sm text-blue-600 font-medium p-4">
+        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
           Note: This request order is completed.
         </span>
       ) : (
-        <span className="text-sm text-red-600 font-medium p-4">
+        <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
           Note: This request has been cancelled. No further action is required.
         </span>
       )}
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-y-auto pr-4 pl-4">
         <Table
           maxHeight="h-full"
           isRounded={false}

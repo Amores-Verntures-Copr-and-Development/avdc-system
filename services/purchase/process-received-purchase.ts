@@ -9,6 +9,7 @@ import { findInventoryByStockPurchaserFields } from "../inventory/get-inventory"
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
+import { findPurchaserOrder } from "./purchase-items/get-purchase-tems";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
@@ -18,14 +19,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
     if (data.poItems?.length === 0) {
       throw new Error("No items found");
     }
-    const poData: Partial<PurchaseOrders>[] = [
-      {
-        poId: data.poId,
-        poStatus: "received",
-      },
-    ];
-    console.log("UpdatePurchaseOrdersDto: ", data);
-    await updatePurchase({ connection, keyFields: ["poId"], updates: poData });
+
     const poItemsData: Partial<PurchaseOrderItems>[] =
       data.poItems?.map((item) => ({
         poItemId: item.poItemId,
@@ -76,6 +70,29 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
     );
     console.log("[createInventoryMovement]");
     await createInventoryMovement({ connection, data: inventoryMovement });
+    const poItems = await findPurchaserOrder({
+      connection,
+      keyfields: { poId: data.poId, suppId: 0 },
+    });
+    const isAllDeliverd = poItems.every(
+      (item) => item.poItemStatus === "received"
+    );
+    console.log({ poItems });
+    console.log({ isAllDeliverd });
+    if (isAllDeliverd) {
+      const poData: Partial<PurchaseOrders>[] = [
+        {
+          poId: data.poId,
+          poStatus: "received",
+        },
+      ];
+      console.log("UpdatePurchaseOrdersDto: ", data);
+      await updatePurchase({
+        connection,
+        keyFields: ["poId"],
+        updates: poData,
+      });
+    }
     await connection.commit();
   } catch (e) {
     await connection.rollback();

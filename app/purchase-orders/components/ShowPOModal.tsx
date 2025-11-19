@@ -164,7 +164,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      toast.success(res.message);
+      toast.success(
+        `PO Items from ${items[0].suppName} received successfully!`
+      );
       mutateInventory();
       mutate();
       return true;
@@ -233,6 +235,10 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
+  const handleUpdateData = async () => {
+    mutateInventory();
+    mutate();
+  };
   return (
     <div className="flex flex-col h-full">
       {/* Stepper */}
@@ -277,6 +283,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "approved" ? (
         <ApprovedPOView
+          mutate={handleUpdateData}
           onClose={onClose}
           poData={data}
           data={itemResponse.data}
@@ -295,6 +302,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "received" ? (
         <CompletePOView
+          mutate={mutateInventory}
           poData={data}
           data={itemResponse.data}
           onMarkDelivered={handleDeliveredRO}
@@ -305,6 +313,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : (
         <CompletePOView
+          mutate={mutateInventory}
           poData={data}
           onClose={onClose}
           onCompleteRequest={handleCompleteRO}

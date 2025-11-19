@@ -210,7 +210,7 @@ const TableInner = <T extends Record<string, any>>(
 
         return (
           <select
-            className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-sm border-gray-300"
+            className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
             value={editableData[rowIndex]?.[column.key] ?? ""}
             onChange={(e) =>
               handleInputChange(rowIndex, column.key, e.target.value, column)
@@ -234,7 +234,7 @@ const TableInner = <T extends Record<string, any>>(
               onChange={(e) =>
                 handleInputChange(rowIndex, column.key, e.target.value, column)
               }
-              className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-sm text-gray-800 caret-black
+              className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
     ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
     w-auto
   `}
@@ -395,7 +395,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[9px] lg:text-${textSize} ${
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[10px] xl:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >
@@ -405,7 +405,7 @@ const TableInner = <T extends Record<string, any>>(
 
                     {showActions && renderActions && (
                       <td
-                        className={`px-1 py-0.5 xl:px-2 xl:py-1 text-center text-[10px] lg:text-${textSize}`}
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 text-center text-[10px] xl:text-${textSize}`}
                       >
                         {renderActions(row, rowIndex)}
                       </td>

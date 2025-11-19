@@ -11,6 +11,7 @@ import {
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
+import { formatPeso } from "@/utils/formatPeso";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { XCircle, ClipboardCheck, Send } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -56,11 +57,19 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
   }, [itemResponse.data?.length]);
 
   const baseColumns: Column<DisplayTotalOrderItem>[] = [
-    { name: "Item ID", key: "itemId" },
+    { name: "#", key: "#", selector: (_row, index) => index + 1 },
     { name: "Item Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
-    { name: "Price", key: "itemPrice" },
-    { name: "Stock Available", key: "stockItem" },
+    {
+      name: "Price",
+      key: "itemPrice",
+      selector: (row) => formatPeso(row.itemPrice),
+    },
+    {
+      name: "Stock Available",
+      key: "stockItem",
+      selector: (row) => formatQuantityByUnit(row.stockItem, row.itemUnit),
+    },
     {
       name: "Quantity Requested",
       key: "totalQuantity",
@@ -74,14 +83,14 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         console.log("Total Quantity: ", row.totalQuantity);
         const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
         console.log({ isGreater });
-        if (Number(row.stockItem) > Number(row.totalQuantity)) {
+        if (Number(row.stockItem) >= Number(row.totalQuantity)) {
           return (
             <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
               Available
             </span>
           );
         } else {
-          const quantity = row.totalQuantity - row.stockItem; // Fixed: should be total - stock
+          const quantity = row.stockItem - row.totalQuantity; // Fixed: should be total - stock
           return (
             <span className="text-red-600 font-medium">
               {formatQuantityByUnit(quantity, row.itemUnit)}
@@ -141,7 +150,10 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     setOrderItem((prev) =>
       prev.map((item) => ({
         ...item,
-        poItemOrder: item.stockItem - item.totalQuantity, // 👈 copy totalQuantity
+        poItemOrder:
+          item.totalQuantity > item.stockItem
+            ? item.totalQuantity - item.stockItem
+            : 0, // keep the existing value if condition is false
       }))
     );
   };

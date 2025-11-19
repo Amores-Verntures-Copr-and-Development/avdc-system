@@ -166,7 +166,7 @@ export const selectRequestItemsByIds = async ({
   const storeColumns = storeRows
     .map(
       (store: any) => `
-        SUM(CASE WHEN s.storeId = ${
+        SUM(CASE WHEN ro.storeId = ${
           store.storeId
         } THEN ri.reqItemQuantity ELSE 0 END) AS \`${store.storeName.replace(
         /\s+/g,
@@ -179,38 +179,36 @@ export const selectRequestItemsByIds = async ({
   // Step 3: Build main SQL query dynamically
   console.log({ placeholders });
   const sql = `
-    SELECT 
-      i.itemId,
-      i.itemName,
-      i.itemUnit,
-      i.itemPrice,
-      (
-        SELECT iis.inventoryItemQuantity
-        FROM InventoryItems iis
-        LEFT JOIN Inventories i ON i.inventoryId = iis.inventoryId
-        LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'
-        LEFT JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
-        WHERE ss.storeId = ro.storeId
-        LIMIT 1
-      ) AS stockItem,
-      ${storeColumns},
-      SUM(ri.reqItemQuantity) AS totalQuantity,
-      SUM(ri.reqItemReceived) AS totalReceived
-    FROM RequestItems ri
-    LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
-    LEFT JOIN RequestOrders ro ON ro.requestId = ri.requestId
-    LEFT JOIN Stores s ON s.storeId = ro.storeId
-    LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
+SELECT 
+  i.itemId,
+  i.itemName,
+  i.itemUnit,
+  i.itemPrice,
+  COALESCE((
+	   SELECT DISTINCT 
+	  iis.inventoryItemQuantity 
+	FROM InventoryItems iis
+	LEFT JOIN Inventories its ON its.inventoryId = iis.inventoryId
+	LEFT JOIN StockRooms sr ON sr.stockRoomId = its.inventoryReferenceId AND its.inventoryReference = 'stock-room'
+	LEFT JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
+	LEFT JOIN RequestOrders ro ON ro.storeId = ss.storeId
+	WHERE ro.requestId IN (1,2) AND iis.inventoryItemReferenceId = i.itemId
+  ), 0) AS stockItem,
+   ${storeColumns},
+  SUM(ri.reqItemQuantity) AS totalQuantity,
+  SUM(ri.reqItemReceived) AS totalReceived
+FROM RequestItems ri
+INNER JOIN RequestOrders ro ON ro.requestId = ri.requestId
+INNER JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
     WHERE ri.requestId IN (${placeholders})
     GROUP BY 
       i.itemId,
       i.itemName,
       i.itemUnit,
-      i.itemPrice,
-      ro.storeId
+      i.itemPrice
     ORDER BY i.itemName;
   `;
-
   // Step 4: Execute final query
   const [rows] = await pool.execute(sql, requestIds);
   return rows;
@@ -286,9 +284,10 @@ export const updateRequest = async ({
 
 export const selectRequestOrdersByPONumber = async (poNumber: string) => {
   const pool = await getDBConnection();
-  const sql = `   SELECT 
+  const sql = `     SELECT 
   ro.*,
   po.*,
+  s.*,
   (
     SELECT JSON_ARRAYAGG(
       JSON_OBJECT(
@@ -323,7 +322,8 @@ export const selectRequestOrdersByPONumber = async (poNumber: string) => {
       ON i.itemId = ii.inventoryItemReferenceId
     WHERE ri.requestId = ro.requestId
   ) AS requestItemsData
-FROM RequestOrders ro 
+FROM RequestOrders ro
+LEFT JOIN Stores s ON s.storeId = ro.storeId 
 LEFT JOIN PurchaseOrderRequest por 
   ON por.requestId = ro.requestId
 LEFT JOIN PurchaseOrders po 

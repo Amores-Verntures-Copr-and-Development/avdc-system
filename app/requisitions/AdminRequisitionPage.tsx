@@ -56,7 +56,6 @@ const AdminRequisitionPage = () => {
   const [isShowRequest, setIsShowRequest] = useState(false);
   const handleClear = () => {
     tableRef.current?.clearSelection();
-    console.log("Clear Data:");
   };
   const { user } = useSession();
   const [showCreatePO, setShowCreatePO] = useState(false);

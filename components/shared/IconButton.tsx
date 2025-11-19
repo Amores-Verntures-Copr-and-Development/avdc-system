@@ -62,7 +62,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       {showTooltip &&
         createPortal(
           <span
-            className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200"
+            className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200 hidden xl:inline"
             style={{
               top: `${pos.top}px`,
               left: `${pos.left}px`,

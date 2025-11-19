@@ -7,11 +7,11 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
-import Table, { Column } from "@/components/shared/Table";
+import Table, { Column, TableHandle } from "@/components/shared/Table";
 import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
 import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
@@ -176,6 +176,7 @@ interface InventorySectionProps {
   user: UserAuth | null;
 }
 const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
+  const tableRef = useRef<TableHandle>(null);
   const [showAddModal, setShowAdddModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
@@ -200,7 +201,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     inventoryId ? `/api/inventory/item/${inventoryId}` : null,
     fetcher
   );
-
+  const handleClear = () => {
+    tableRef.current?.clearSelection();
+  };
   const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     if (selected.length > 0) {
@@ -227,6 +230,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       toast.success("Request created successfully!");
       mutate();
       setShowCreateRequestModal(false);
+      handleClear();
       return true;
     } catch (e) {
       console.log(e);
@@ -431,6 +435,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     <>
       <Table
         loading={loading || userLoading}
+        ref={tableRef}
         searchUrl="/inventory"
         columns={hasStore ? inventoryItemColumns : adminInventoryItemColumns}
         data={itemResponse.data}

@@ -17,7 +17,7 @@ import {
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import StoreCardInSupplier from "./_components/StoreCardInSupplier";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { RequestItems } from "@/types/request";
@@ -32,6 +32,7 @@ interface ApprovedPOViewProps {
   onSendPOItem: (data: PurchaseOrderItems[]) => Promise<boolean>;
   loading: boolean;
   onClose: () => void;
+  mutate: () => void;
 }
 interface RequestItemWithPOItem extends RequestItems {
   poItemId: number;
@@ -81,6 +82,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   loading,
   poData,
   onClose,
+  mutate,
 }) => {
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number;
@@ -116,16 +118,17 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     setSendingSupplier(index);
     console.log({ index });
     const supplierName = data.find((req) => req.suppId === suppId)?.suppName;
-    // const success = await onSendPOItem(poItems);
-    // if (success) {
-    //   toast.success(`Items for ${supplierName}  sent!`);
-    //   console.log({ data });
-    //   if (
-    //     data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
-    //   ) {
-    //     onClose();
-    //   }
-    // }
+    const success = await onSendPOItem(poItems);
+    if (success) {
+      toast.success(`Items for ${supplierName}  sent!`);
+      console.log({ data });
+      if (
+        data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
+      ) {
+        onClose();
+      }
+    }
+    mutate();
     setSendingSupplier(null);
   };
   const handleSendToSupliers = async (data: DisplayPOItemsSupplier[]) => {

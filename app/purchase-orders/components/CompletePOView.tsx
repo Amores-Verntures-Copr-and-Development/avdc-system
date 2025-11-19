@@ -9,6 +9,7 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 
 import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
 import {
   PrinterIcon,
   Edit,
@@ -35,6 +36,7 @@ interface CompletePOViewProps {
   onMarkDelivered: (request: Request[]) => Promise<boolean>;
   onCompleteRequest: (po: PurchaseOrders) => Promise<boolean>;
   onClose: () => void;
+  mutate: () => void;
 }
 
 const CompletePOView: React.FC<CompletePOViewProps> = ({
@@ -43,6 +45,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   poData,
   onCompleteRequest,
   onClose,
+  mutate,
 }) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null
@@ -181,7 +184,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     if (onMarkDelivered) {
       const success = await onMarkDelivered(newRequest);
       if (success) {
-        alert(`${newRequest[0].requestNo} mark as delivered!`);
+        mutate();
       }
     }
   };
@@ -207,145 +210,155 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           </p>
         </div>
         <div className="flex flex-col p-4 gap-4 overflow-y-auto">
-          {requestItems.map((reqData) => (
-            <div
-              className="flex flex-col shadow w-full border-1 border-gray-200"
-              key={reqData.requestId}
-            >
-              <div className="flex items-center justify-between p-2">
-                <div className="flex flex-col border-gray-200">
-                  <h1 className="text-sm font-semibold">{reqData.requestNo}</h1>
-                  <span className="text-xs text-gray-500">St. Martins</span>
-                </div>
-                <div
-                  onClick={() =>
-                    setIsRequestExpanded(
-                      isRequestExpanded === reqData.requestNo
-                        ? null
-                        : reqData.requestNo
-                    )
-                  }
-                  className="cursor-pointer"
-                >
-                  <div className="flex gap-2 items-center">
-                    <div>
-                      <span className="text-xs font-medium">
-                        {reqData.requestStatus}
-                      </span>
-                    </div>
-                    {isRequestExpanded === reqData.requestNo ? (
-                      <ChevronUp size={20} />
-                    ) : (
-                      <ChevronDown size={20} />
-                    )}
+          {requestItems.map((reqData) => {
+            const { textClass, bgClass, status, borderClass } =
+              getRequestStatusFormat(reqData.requestStatus);
+            return (
+              <div
+                className="flex flex-col shadow w-full border-1 border-gray-200"
+                key={reqData.requestId}
+              >
+                <div className="flex items-center justify-between p-2">
+                  <div className="flex flex-col border-gray-200">
+                    <h1 className="text-sm font-semibold">
+                      {reqData.requestNo}
+                    </h1>
+                    <span className="text-xs text-gray-500">
+                      {reqData.storeName}
+                    </span>
                   </div>
-                </div>
-              </div>
-              {isRequestExpanded === reqData.requestNo && (
-                <div>
-                  <Table
-                    columns={columns}
-                    showActions={
-                      !["delivered", "completed", "received"].includes(
-                        reqData.requestStatus ?? ""
+                  <div
+                    onClick={() =>
+                      setIsRequestExpanded(
+                        isRequestExpanded === reqData.requestNo
+                          ? null
+                          : reqData.requestNo
                       )
                     }
-                    renderActions={(row) => (
+                    className="cursor-pointer"
+                  >
+                    <div className="flex gap-2 items-center">
                       <div>
-                        <IconButton
-                          onClick={function (): void {
-                            setIsProcessing(reqData.requestNo);
-                          }}
-                          label={`Fulfill ${row.itemName}`}
-                          icon={<Check size={18} />}
-                          bg={""}
-                        />
+                        <span
+                          className={`text-xs font-medium ${bgClass} py-1 px-1 rounded-2xl ${textClass} ${borderClass}`}
+                        >
+                          {status}
+                        </span>
                       </div>
-                    )}
-                    data={reqData.requestItemsData}
-                    isRounded={false}
-                    updateData={(updatedItems) =>
-                      handleDataChange(reqData.requestNo, updatedItems)
-                    }
-                  />
+                      {isRequestExpanded === reqData.requestNo ? (
+                        <ChevronUp size={20} />
+                      ) : (
+                        <ChevronDown size={20} />
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="flex border-t-1 p-2 justify-between border-gray-200 items-center">
-                <span className="text-xs">
-                  Created: {formatDateToWords(reqData.poCreatedAt)}
-                </span>
-                <div className="flex gap-3">
+                {isRequestExpanded === reqData.requestNo && (
                   <div>
-                    <Button
-                      color="nocolor"
-                      size="xs"
-                      onClick={() => {
-                        console.log("Print request:", reqData.requestNo);
-                      }}
-                      label="Print"
-                      icon={<PrinterIcon size={14} />}
-                      className="font-semibold text-gray-700 text-xs px-2 py-2"
+                    <Table
+                      columns={columns}
+                      showActions={
+                        !["delivered", "completed", "received"].includes(
+                          reqData.requestStatus ?? ""
+                        )
+                      }
+                      renderActions={(row) => (
+                        <div>
+                          <IconButton
+                            onClick={function (): void {
+                              setIsProcessing(reqData.requestNo);
+                            }}
+                            label={`Fulfill ${row.itemName}`}
+                            icon={<Check size={18} />}
+                            bg={""}
+                          />
+                        </div>
+                      )}
+                      data={reqData.requestItemsData}
+                      isRounded={false}
+                      updateData={(updatedItems) =>
+                        handleDataChange(reqData.requestNo, updatedItems)
+                      }
                     />
                   </div>
-                  <div>
-                    <Button
-                      color="nocolor"
-                      size="xs"
-                      onClick={() => {
-                        console.log("Download PDF:", reqData.requestNo);
-                      }}
-                      label="Download PDF"
-                      icon={<FileText size={14} className="text-gray-700" />}
-                      className="font-semibold text-gray-700 text-xs px-2 py-2"
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      size="xs"
-                      onClick={() => {
-                        handleAutoFillAll(reqData.requestNo);
-                      }}
-                      label={
-                        isProcessing === reqData.requestNo
-                          ? "Processing..."
-                          : `Fulfill ${reqData.requestNo}`
-                      }
-                      icon={<CheckCircle size={14} />}
-                      className="font-semibold text-xs px-2 py-2"
-                      disabled={
-                        isProcessing === reqData.requestNo ||
-                        reqData.requestStatus === "delivered" ||
-                        reqData.requestStatus === "received" ||
-                        reqData.requestStatus === "completed"
-                      }
-                      color="success"
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      size="xs"
-                      onClick={() => {
-                        handleMarkPaid(reqData);
-                      }}
-                      label={
-                        isProcessing === reqData.requestNo
-                          ? "Processing..."
-                          : `Mark as Delivered`
-                      }
-                      icon={<Truck size={14} />}
-                      className="font-semibold text-xs px-2 py-2"
-                      disabled={
-                        isProcessing === reqData.requestNo ||
-                        reqData.requestStatus === "delivered" ||
-                        reqData.requestStatus === "received" ||
-                        reqData.requestStatus === "completed"
-                      }
-                    />
+                )}
+                <div className="flex border-t-1 p-2 justify-between border-gray-200 items-center">
+                  <span className="text-xs">
+                    Created: {formatDateToWords(reqData.poCreatedAt)}
+                  </span>
+                  <div className="flex gap-3">
+                    <div>
+                      <Button
+                        color="nocolor"
+                        size="xs"
+                        onClick={() => {
+                          console.log("Print request:", reqData.requestNo);
+                        }}
+                        label="Print"
+                        icon={<PrinterIcon size={14} />}
+                        className="font-semibold text-gray-700 text-xs px-2 py-2"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        color="nocolor"
+                        size="xs"
+                        onClick={() => {
+                          console.log("Download PDF:", reqData.requestNo);
+                        }}
+                        label="Download PDF"
+                        icon={<FileText size={14} className="text-gray-700" />}
+                        className="font-semibold text-gray-700 text-xs px-2 py-2"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        size="xs"
+                        onClick={() => {
+                          handleAutoFillAll(reqData.requestNo);
+                        }}
+                        label={
+                          isProcessing === reqData.requestNo
+                            ? "Processing..."
+                            : `Fulfill ${reqData.requestNo}`
+                        }
+                        icon={<CheckCircle size={14} />}
+                        className="font-semibold text-xs px-2 py-2"
+                        disabled={
+                          isProcessing === reqData.requestNo ||
+                          reqData.requestStatus === "delivered" ||
+                          reqData.requestStatus === "received" ||
+                          reqData.requestStatus === "completed"
+                        }
+                        color="success"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        size="xs"
+                        onClick={() => {
+                          handleMarkPaid(reqData);
+                        }}
+                        label={
+                          isProcessing === reqData.requestNo
+                            ? "Processing..."
+                            : `Mark as Delivered`
+                        }
+                        icon={<Truck size={14} />}
+                        className="font-semibold text-xs px-2 py-2"
+                        disabled={
+                          isProcessing === reqData.requestNo ||
+                          reqData.requestStatus === "delivered" ||
+                          reqData.requestStatus === "received" ||
+                          reqData.requestStatus === "completed"
+                        }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">

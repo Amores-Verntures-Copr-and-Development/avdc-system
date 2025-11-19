@@ -57,8 +57,9 @@ const PurchaseOrderPage = () => {
   const { data: inventoryResponse = { data: [] }, mutate: mutateInventory } =
     useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
   const handleUpdateData = async () => {
-    mutateInventory();
-    const findSelectedPo = inventoryResponse.data.find(
+    const updatedData = await mutateInventory();
+    // The updatedData should contain the fresh data
+    const findSelectedPo = updatedData?.data.find(
       (po) => po.poId === selectedPo?.poId
     );
     if (findSelectedPo) {

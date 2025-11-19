@@ -363,3 +363,31 @@ GROUP BY s.storeId, s.storeName, ro.requestId;
   const [rows] = await pool.execute(sql, [poId, poId]);
   return rows;
 };
+
+export const selectPurchaserOrderItems = async ({
+  connection,
+  keyfields = {},
+}: {
+  connection?: PoolConnection;
+  keyfields: Partial<PurchaseOrderItems>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT * FROM PurchaseOrderItems WHERE 1=1`;
+
+  const params: any[] = [];
+
+  // ✅ Build WHERE dynamically
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else if (value === 0) {
+      // Handle IS NOT NULL
+      sql += ` AND ${key} IS NOT NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute(sql, params);
+  return rows as PurchaseOrderItems[];
+};

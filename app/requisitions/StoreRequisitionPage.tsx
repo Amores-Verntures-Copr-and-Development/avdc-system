@@ -4,7 +4,7 @@ import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
-import Table, { Column } from "@/components/shared/Table";
+import Table, { Column, TableHandle } from "@/components/shared/Table";
 import {
   Eye,
   Plus,
@@ -14,7 +14,7 @@ import {
   Clock,
   Trash2,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import CreateRequestModal from "./components/CreateRequestModal";
 import Card from "@/components/shared/Card";
 
@@ -66,6 +66,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
 ];
 
 const StoreRequisitionPage = () => {
+  const tableRef = useRef<TableHandle>(null);
   const [selectedtedRows, setSelectedRows] =
     useState<DisplayRequestOrderDto[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayRequestOrderDto | null>(
@@ -88,7 +89,9 @@ const StoreRequisitionPage = () => {
   const handleEditRow = (selected: DisplayRequestOrderDto) => {
     setSelectedRow(selected);
   };
-
+  const handleClear = () => {
+    tableRef.current?.clearSelection();
+  };
   const handleSubmitCreateRequest = async (data: CreateRequestItemDto[]) => {
     const requestFormData: CreateRequestFormDto = {
       requestById: user?.userId ?? 0,
@@ -111,6 +114,7 @@ const StoreRequisitionPage = () => {
       }
       toast.success("Request order created successfully!");
       mutate();
+      handleClear();
       return true;
     } catch (e) {
       console.log(e);
@@ -120,42 +124,47 @@ const StoreRequisitionPage = () => {
   };
 
   return (
-    <PageLayout className="p-4">
+    <PageLayout className="p-4 gap-4">
       <PageHeader
         title={"Requisition"}
         subtitle="Manage request order from your store."
       />
-      <div className="grid grid-cols-4 gap-4 mt-5">
+      <div className="grid grid-cols-4 gap-4">
         <Card
           title="Total Request"
           value={20}
-          icon={<ListChecks className="w-6 h-6 text-indigo-500" />}
+          icon={
+            <ListChecks className="w-3 h-3 xl:w-6 xl:h-6 text-indigo-500" />
+          }
           iconBg="bg-indigo-100"
         />
         <Card
           title="Completed Request"
           value={20}
-          icon={<CheckCircle className="w-6 h-6 text-green-500" />}
+          icon={
+            <CheckCircle className="w-3 h-3 xl:w-6 xl:h-6 text-green-500" />
+          }
           iconBg="bg-green-100"
         />
         <Card
           title="Pending Request"
           value={20}
-          icon={<Clock className="w-6 h-6 text-amber-500" />}
+          icon={<Clock className="w-3 h-3 xl:w-6 xl:h-6 text-amber-500" />}
           iconBg="bg-amber-100"
         />
         <Card
           title="Deleted Request"
           value={20}
-          icon={<Trash2 className="w-6 h-6 text-red-500" />}
+          icon={<Trash2 className="w-3 h-3 xl:w-6 xl:h-6 text-red-500" />}
           iconBg="bg-red-100"
         />
       </div>
-      <div className="flex-1 min-h-0  flex flex-col justify-between mt-5">
-        <Table
+      <div className="flex-1 min-h-0  flex flex-col justify-between">
+        <Table<DisplayRequestOrderDto>
           searchUrl="/requisitions"
           columns={requisitionColumns}
           data={itemResponse.data}
+          ref={tableRef}
           totalCount={10}
           loading={loading}
           textSize="xs"

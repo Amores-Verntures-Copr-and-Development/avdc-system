@@ -38,6 +38,7 @@ const Modal: React.FC<ModalProps> = ({
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (typeof document !== "undefined") {
@@ -50,10 +51,19 @@ const Modal: React.FC<ModalProps> = ({
       setPortalRoot(root);
     }
 
+    // Check if mobile/tablet
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 1024); // Tablet and mobile
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+
     return () => {
       if (portalRoot && portalRoot.childElementCount === 0) {
         portalRoot.remove();
       }
+      window.removeEventListener("resize", checkMobile);
     };
   }, []);
 
@@ -65,13 +75,35 @@ const Modal: React.FC<ModalProps> = ({
     if (isOpen) {
       document.addEventListener("keydown", handleEsc);
       document.body.classList.add("overflow-hidden");
+
+      // Prevent viewport resize on mobile
+      if (isMobile) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute(
+            "content",
+            "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+          );
+        }
+      }
     }
 
     return () => {
       document.removeEventListener("keydown", handleEsc);
       document.body.classList.remove("overflow-hidden");
+
+      // Restore viewport
+      if (isMobile) {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        if (viewport) {
+          viewport.setAttribute(
+            "content",
+            "width=device-width, initial-scale=1.0"
+          );
+        }
+      }
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isMobile]);
 
   const sizeClasses = {
     sm: "max-w-sm",
@@ -89,18 +121,48 @@ const Modal: React.FC<ModalProps> = ({
     bottom: "items-end justify-center",
   };
 
+  // Mobile-specific styles
+  const mobileOverlayClass = isMobile
+    ? "fixed inset-0 z-50 flex p-4 bg-black/20 items-center justify-center"
+    : `fixed inset-0 z-50 flex p-4 bg-black/20 ${positionClasses[position]}`;
+
+  const mobileModalClass = isMobile
+    ? `bg-background-white rounded-lg shadow-2xl overflow-hidden w-full max-h-[90dvh] flex flex-col ${sizeClasses[size]} ${className}`
+    : `bg-background-white rounded-lg shadow-2xl overflow-hidden w-full flex flex-col ${sizeClasses[size]} ${className}`;
+
   if (!isOpen || !portalRoot) return null;
 
   return ReactDOM.createPortal(
     <div
-      className={`fixed inset-0 z-50 flex p-4 bg-black/20 ${positionClasses[position]} ${overlayClassName}`}
+      className={`${mobileOverlayClass} ${overlayClassName}`}
+      style={
+        isMobile
+          ? {
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: "center",
+              justifyContent: "center",
+            }
+          : undefined
+      }
     >
       <div
         ref={modalRef}
-        className={`bg-background-white rounded-lg shadow-2xl overflow-visible w-full flex flex-col ${sizeClasses[size]} ${className}`}
+        className={mobileModalClass}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-title" : undefined}
+        style={
+          isMobile
+            ? {
+                maxHeight: "90dvh", // Use dynamic viewport height
+                overflow: "hidden",
+              }
+            : undefined
+        }
       >
         {/* Modal Header */}
         {(title || showCloseButton) && (
@@ -136,8 +198,18 @@ const Modal: React.FC<ModalProps> = ({
           </div>
         )}
 
-        {/* Content Area (scrollable) */}
-        <div className={`flex-1 overflow-y-auto ${hasPadding ? "p-4" : ""}`}>
+        {/* Content Area (scrollable) - Fixed height for mobile */}
+        <div
+          className={`flex-1 overflow-y-auto ${hasPadding ? "p-4" : ""}`}
+          style={
+            isMobile
+              ? {
+                  WebkitOverflowScrolling: "touch",
+                  overflowY: "auto",
+                }
+              : undefined
+          }
+        >
           {children}
         </div>
 
