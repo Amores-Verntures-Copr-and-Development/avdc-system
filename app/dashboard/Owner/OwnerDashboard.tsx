@@ -69,7 +69,7 @@ const OwnerDashboard = () => {
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
           <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
             <h1 className="font-semibold mb-2">Sales Chart</h1>
-            <div className="h-64">
+            <div className="h-64 ">
               <Chart />
             </div>
           </div>
@@ -86,7 +86,7 @@ const OwnerDashboard = () => {
       <div className="lg:col-span-1 flex flex-col gap-4">
         <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
           <h1 className="font-semibold text-sm mb-3">Daily Store Sales</h1>
-          <div className="h-64 overflow-y-auto">
+          <div className="h-64 space-y-5 overflow-y-auto">
             {storeSales.map((store) => (
               <StoreCardSales data={store} key={store.id} />
             ))}

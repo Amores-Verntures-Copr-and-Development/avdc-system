@@ -383,7 +383,7 @@ const Sidebar = () => {
             {sections.map((menu) => (
               <div key={menu.key}>
                 {!isCollapsed && (
-                  <label className="text-xs font-semibold text-gray-500 tracking-wider block mb-2 transition-all duration-300 delay-75">
+                  <label className="text-[10px] xl:text-xs font-semibold text-gray-500 tracking-wider block mb-2 transition-all duration-300 delay-75">
                     {menu.key}
                   </label>
                 )}
@@ -395,7 +395,7 @@ const Sidebar = () => {
                         key={name}
                         href={href}
                         aria-current={isActive ? "page" : undefined}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold transition-all duration-300 ${
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-[9px] xl:text-sm font-semibold transition-all duration-300 ${
                           isActive
                             ? "bg-gray-100 text-primary-600"
                             : "text-gray-700 hover:bg-gray-50 hover:text-primary-600"
@@ -440,7 +440,7 @@ const Sidebar = () => {
                   className="flex-shrink-0 text-gray-500 group-hover:text-primary-600"
                 />
                 <span
-                  className={`transition-all duration-300 whitespace-nowrap ${
+                  className={`transition-all duration-300 whitespace-nowrap text-[9px] xl:text-sm ${
                     isCollapsed
                       ? "w-0 opacity-0 -translate-x-2"
                       : "w-auto opacity-100 translate-x-0"

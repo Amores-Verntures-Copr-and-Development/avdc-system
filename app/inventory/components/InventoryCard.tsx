@@ -14,7 +14,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
   iconBg,
 }) => {
   return (
-    <div className="p-2 sm:p-4 bg-white shadow rounded">
+    <div className="p-2 xl:p-4 bg-white shadow rounded">
       <div className="flex items-center gap-2 sm:gap-3">
         {icon && (
           <div
@@ -24,8 +24,8 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
           </div>
         )}
         <div>
-          <p className="text-xs sm:text-sm text-gray-500">{title}</p>
-          <p className="text-sm sm:text-xl font-bold">{value}</p>
+          <p className="text-[8px] xl:text-sm text-gray-500">{title}</p>
+          <p className="text-[8px] sxl:text-xl font-bold">{value}</p>
         </div>
       </div>
     </div>

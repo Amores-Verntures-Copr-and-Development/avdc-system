@@ -11,6 +11,7 @@ import { UserAuth } from "@/hooks/useSession";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import toast from "react-hot-toast";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
 interface DisplayStores extends StoreInterface, StockStores {}
 
@@ -20,7 +21,11 @@ const columns: Column<DisplayStores>[] = [
   { key: "storeContactPhone", name: "Phone" },
   { key: "storeEmail", name: "Email" },
   { key: "storeLocation", name: "Location" },
-  { key: "stockStoresCreatedAt", name: "Assigned Date" },
+  {
+    key: "stockStoresCreatedAt",
+    name: "Assigned Date",
+    selector: (row) => formatDateToWords(row.stockStoresCreatedAt),
+  },
 ];
 interface StockStoresViewProps {
   data: StockRoom;
@@ -61,7 +66,7 @@ const StockStoresView = ({ data, user }: StockStoresViewProps) => {
     }
   };
   return (
-    <div className="flex-1">
+    <>
       <Table
         loading={isLoading}
         renderTopActions={
@@ -102,7 +107,7 @@ const StockStoresView = ({ data, user }: StockStoresViewProps) => {
           onSubmit={handleAddStore}
         />
       </Modal>
-    </div>
+    </>
   );
 };
 

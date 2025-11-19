@@ -101,7 +101,7 @@ const InventoryPage = () => {
                 title={"Inventory"}
                 subtitle="Track and manage stock room and store inventory"
               />
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 overflow-y-auto">
                 {inventoryResponse.data.map((inventory) => (
                   <InventoryDetailsCard
                     key={inventory.inventoryId}

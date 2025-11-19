@@ -5,7 +5,13 @@ import PageLayout from "@/components/shared/PageLayout";
 import React, { useState } from "react";
 import StockRoomCard from "./component/StockRoomCard";
 import Button from "@/components/shared/Button";
-import { FileChartColumn, Package, Package2, Plus } from "lucide-react";
+import {
+  ArrowLeft,
+  FileChartColumn,
+  Package,
+  Package2,
+  Plus,
+} from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import AddStockRoomModal from "./component/AddStockRoomModal";
 import toast from "react-hot-toast";
@@ -62,10 +68,25 @@ const StockRoomPage = () => {
     <PageLayout className="p-4 gap-2">
       {selectedStockRoom ? (
         <>
-          <PageHeader
-            title={selectedStockRoom.stockRoomName}
-            subtitle={selectedStockRoom.stockRoomLocation}
-          />
+          <div className="flex justify-between items-center">
+            <PageHeader
+              title={selectedStockRoom.stockRoomName}
+              subtitle={selectedStockRoom.stockRoomLocation}
+            />
+            <div>
+              <div>
+                <Button
+                  color="nocolor"
+                  size="sm"
+                  icon={<ArrowLeft className="w-4 h-4" />}
+                  label="Back"
+                  onClick={() => {
+                    setSelectedStockRoom(null);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
           <div className="flex">
             <div className="flex border-1 border-gray-300">
               <div>
@@ -109,7 +130,7 @@ const StockRoomPage = () => {
               </div>
             </div>
           </div>
-          <div className="flex flex-1 flex-col bg-white">
+          <div className="flex-1 min-h-0  flex flex-col bg-white">
             {viewSelection === "inventory" ? (
               <StockInventoryView data={selectedStockRoom} />
             ) : viewSelection === "purchaser" ? (
@@ -123,18 +144,20 @@ const StockRoomPage = () => {
         <>
           <div className="flex justify-between align-middle items-center">
             <PageHeader title={"Stock Room"} subtitle="View stock room" />
-            <div>
-              <Button
-                size="sm"
-                label="Create Stock Room"
-                icon={<Plus size={20} />}
-                onClick={() => {
-                  setShowAdd(true);
-                }}
-              />
+            <div className="">
+              <div>
+                <Button
+                  size="sm"
+                  label="Create Stock Room"
+                  icon={<Plus className="w-4 h-4 sm:h-8 sm:w-8" />}
+                  onClick={() => {
+                    setShowAdd(true);
+                  }}
+                />
+              </div>
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
             {response.data.map((stock) => (
               <StockRoomCard
                 key={stock.stockRoomId}

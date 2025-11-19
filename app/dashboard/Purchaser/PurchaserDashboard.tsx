@@ -30,9 +30,9 @@ const PurchaserDashboard = () => {
   // const stats = dashboardStats?.data[0] ?? defaultStats;
 
   return (
-    <div className="flex flex-col sm:flex-row h-full overflow-hidden">
-      <div className="flex-1 h-full flex flex-col gap-4 sm:pr-5">
-        <div className="grid grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full overflow-y-auto p-2">
+      <div className="lg:col-span-3  flex flex-1 flex-col gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <DashboardCard
             title="Total Purchase"
             value={0}
@@ -58,27 +58,39 @@ const PurchaserDashboard = () => {
             bgColor="bg-rose-600"
           />
         </div>
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
-          <h1>Purchase Spending Trend</h1>
-          <Chart />
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+            <h1>Purchase Spending Trend</h1>
+            <div className="h-64 ">
+              {" "}
+              <Chart />
+            </div>
+          </div>
         </div>
         <div className="border rounded-2xl shadow-sm border-gray-200 bg-white h-full p-4">
-          <h1>Top Performer</h1>
+          <div>
+            <h1>Top Performer</h1>
+            <div className="h-64 ">
+              <Chart />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex-[.30] flex flex-col h-full gap-4">
-        <div className="flex-1 flex flex-col min-h-0 p-4 border rounded-2xl shadow-sm border-gray-200 bg-white">
-          <h1 className="font-semibold text-sm">Current Schedule Request</h1>
-          <div className="flex-1 flex flex-col gap-2 overflow-auto">
+      <div className="lg:col-span-1 flex flex-col gap-4">
+        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <h1 className="font-semibold text-sm mb-3">
+            Current Schedule Request
+          </h1>
+          <div className="h-64 space-y-5 overflow-y-auto">
             {/* {storeSales.map((store) => (
               <StoreCardSales data={store} key={store.id} />
             ))} */}
           </div>
         </div>
-        <div className="flex-1 flex flex-col min-h-0 p-4 border rounded-2xl shadow-sm border-gray-200 bg-white">
-          <h1 className="font-semibold text-sm">Top Purchased Items</h1>
-          <div className="flex-1 flex flex-col gap-2 overflow-auto">
+        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <h1 className="font-semibold text-sm mb-3">Top Purchased Items</h1>
+          <div className="h-64 overflow-y-auto">
             {/* {storeData.map((store) => (
               <StoreCardSales data={store} key={store.id} />
             ))} */}

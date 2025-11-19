@@ -34,16 +34,16 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
 
     const showLabel = !placeholder;
     const labelClass = {
-      xs: "text-[10px] sm:text-xs",
-      sm: "text-xs sm:text-sm",
+      xs: "text-[10px] lg:text-xs",
+      sm: "text-xs lg:text-sm",
       md: "text-md md:text-base",
-      lg: "text-md sm:text-lg",
+      lg: "text-md md:text-lg",
     }[sizes];
     const sizeClass = {
       xs: "h-8 text-xs px-2",
-      sm: "h-8 text-xs sm:text-sm  px-2",
+      sm: "h-8 text-xs md:text-sm  px-2",
       md: "h-10 text-base px-3",
-      lg: "h-12 text-md sm:text-lg px-4",
+      lg: "h-12 text-md md:text-lg px-4",
     }[sizes];
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -79,7 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             required={required}
             readOnly={readOnly}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black  rounded-md py-1 sm:py-2 sm:pl-3 sm:pr-10 focus:outline-none focus:ring-2 ${
+            className={`w-full border border-gray-300 text-black  rounded-md py-1 md:py-2 md:pl-3 md:pr-10 focus:outline-none focus:ring-2 ${
               readOnly
                 ? "bg-gray-100 cursor-not-allowed"
                 : "focus:ring-blue-400"

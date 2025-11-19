@@ -210,7 +210,7 @@ const TableInner = <T extends Record<string, any>>(
 
         return (
           <select
-            className="border rounded px-2 py-1 w-full text-sm border-gray-300"
+            className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-sm border-gray-300"
             value={editableData[rowIndex]?.[column.key] ?? ""}
             onChange={(e) =>
               handleInputChange(rowIndex, column.key, e.target.value, column)
@@ -234,7 +234,7 @@ const TableInner = <T extends Record<string, any>>(
               onChange={(e) =>
                 handleInputChange(rowIndex, column.key, e.target.value, column)
               }
-              className={`border rounded px-2 py-1 text-sm text-gray-800 caret-black
+              className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-sm text-gray-800 caret-black
     ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
     w-auto
   `}
@@ -264,7 +264,7 @@ const TableInner = <T extends Record<string, any>>(
       >
         {/* Top Actions Bar */}
         {(searchUrl || renderTopActions || subtitle || title) && (
-          <div className="bg-white flex p-1 sm:p-3 gap-5 items-center justify-between border-b border-gray-200">
+          <div className="bg-white flex p-1 lg:p-3 gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
                 {title && <span className="text-black text-sm">{title}</span>}
@@ -273,10 +273,10 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div className="w-25 sm:w-30">
+            <div className="w-25 xl:w-30 items-center align-middle">
               {searchUrl && <SearchBar url={searchUrl} />}
             </div>
-            <div className="flex gap-1 sm:gap-2">{renderTopActions}</div>
+            <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
           </div>
         )}
 
@@ -285,11 +285,11 @@ const TableInner = <T extends Record<string, any>>(
           <table className="w-full border-collapse text-black overflow-auto">
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-300">
               <tr
-                className={`${rowSize} text-[10px] sm:text-${textSize} border-b-1 border-gray-300`}
+                className={`xl:${rowSize} text-[10px] xl:text-${textSize} border-b-1 border-gray-300`}
               >
                 {/* Select-all column */}
                 {showCheckBox && (
-                  <th className="px-1 py-1.5 w-8 sm:px-2 sm:py-3 sm:w-12 text-center bg-gray-50 border-r border-gray-300">
+                  <th className="px-1 py-1 w-5 xl:px-2 xl:py-3 xl:w-12 text-center bg-gray-50 border-r border-gray-300">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -304,7 +304,7 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-1 py-1.5 sm:px-2 sm:py-3 font-semibold text-left text-[10px] sm:text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-1 py-1 xl:px-2 xl:py-3 font-semibold text-left text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
                         ? "border-r border-gray-300"
                         : ""
@@ -316,7 +316,7 @@ const TableInner = <T extends Record<string, any>>(
 
                 {showActions && (
                   <th
-                    className={`px-2 py-3 text-center border-l border-r border-gray-300  font-semibold text-[10px] sm:text-${textSize} text-gray-700 bg-gray-50`}
+                    className={`px-1 py-1 xl:px-2 xl:py-1 text-center border-l border-r border-gray-300  font-semibold text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50`}
                   >
                     Actions
                   </th>
@@ -373,7 +373,7 @@ const TableInner = <T extends Record<string, any>>(
                 editableData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] sm:text-${textSize} border-b-2  border-gray-100`}
+                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] xl:text-${textSize} border-b-2  border-gray-100`}
                     onClick={() => {
                       if (onRowSelection) {
                         onRowSelection(row);
@@ -382,7 +382,7 @@ const TableInner = <T extends Record<string, any>>(
                   >
                     {/* Row checkbox */}
                     {showCheckBox && (
-                      <td className="px-2 py-1 text-center border-r border-gray-100">
+                      <td className="px-1 py-0.5 xl:px-2 xl:py-1 text-center border-r border-gray-100">
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
@@ -395,7 +395,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-2 py-1 border-r-2 border-gray-100 text-[10px] sm:text-${textSize} ${
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[9px] lg:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >
@@ -405,7 +405,7 @@ const TableInner = <T extends Record<string, any>>(
 
                     {showActions && renderActions && (
                       <td
-                        className={`py-1  text-center text-[10px] sm:text-${textSize}`}
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 text-center text-[10px] lg:text-${textSize}`}
                       >
                         {renderActions(row, rowIndex)}
                       </td>
@@ -419,7 +419,7 @@ const TableInner = <T extends Record<string, any>>(
 
         {/* Pagination */}
         {typeof totalCount === "number" && (
-          <div className="bg-white border-t border-gray-200 px-4 py-3">
+          <div className="bg-white border-t border-gray-200 px-2 py-1.5 lg:px-4 lg:py-3">
             <Pagination totalItems={totalCount} defaultLimit={20} />
           </div>
         )}

@@ -15,17 +15,19 @@ const StoreCardSales = ({ data }: StoreCardSalesProps) => {
     <>
       <div
         key={data.id}
-        className="flex flex-col p-4 border rounded-2xl shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-200"
+        className="flex flex-col p-2 sm:p-4 border rounded-2xl shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-2">
-          <h2 className="text-sm font-semibold text-gray-800">{data.name}</h2>
+          <h2 className="text-[10px] sm:text-sm font-semibold text-gray-800">
+            {data.name}
+          </h2>
           <span className="text-[11px] text-gray-500">Today</span>
         </div>
 
         {/* Sales Value */}
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-sm font-bold text-green-600">
+        <div className="flex items-baseline gap-1 sm:gap-2 mb-1">
+          <span className="text-xs sm:text-sm font-bold text-green-600">
             ₱{data.sales.toLocaleString()}
           </span>
           <span

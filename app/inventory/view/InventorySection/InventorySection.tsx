@@ -81,7 +81,7 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
       return (
         <span
-          className={`px-2 py-1 rounded-lg font-semibold ${bgClass} ${textClass}`}
+          className={`px-2 py-1 text-[8px] xl:text-xs rounded-lg font-semibold ${bgClass} ${textClass}`}
         >
           {status}
         </span>
@@ -163,7 +163,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
       return (
         <span
-          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${bgClass} ${textClass}`}
+          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[8px] xl:text-xs font-semibold ${bgClass} ${textClass}`}
         >
           {status}
         </span>
@@ -201,38 +201,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     fetcher
   );
 
-  // const handleCreateInventory = async (data: CreateInventoryDto) => {
-  //   console.log("CreateInventoryDto: ", data);
-  //   try {
-  //     const newData: CreateInventoryDto = {
-  //       ...data,
-  //       inventoryCreatedBy: user?.userId,
-  //       storeId: user?.storeId,
-  //     };
-  //     const result = await fetch("api/inventory", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(newData),
-  //     });
-  //     const res = await result.json();
-  //     if (!res.success) {
-  //       console.log("Res: ", res);
-  //       throw new Error(res.err);
-  //     }
-  //     toast.success("Inventory added successfully!");
-  //     mutate();
-  //     return true;
-  //   } catch (e) {
-  //     console.log(e);
-  //     toast.error("Failed to add Inventory.");
-  //     return false;
-  //   }
-  // };
-
   const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
-    console.log("Selected rows:", selected);
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     if (selected.length > 0) {
       setSelectedRows(selected);
@@ -475,7 +444,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             <div className="flex gap-4">
               <div>
                 <Button
-                  icon={<Clipboard className="w-3 h-3 sm:w-5 sm:h-5" />}
+                  icon={<Clipboard className="w-3 h-3 xl:w-5 xl:h-5" />}
                   label="Inventory Report"
                   onClick={() => {
                     setShowImportModal(true);
@@ -487,7 +456,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               </div>
               <div>
                 <Button
-                  icon={<Import className="w-3 h-3 sm:w-5 sm:h-5" />}
+                  icon={<Import className="w-3 h-3 sm:w-5 xl:h-5" />}
                   label="Import Item"
                   onClick={() => {
                     setShowImportModal(true);
@@ -503,7 +472,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   user?.empPosition === "staff") && (
                   <div>
                     <Button
-                      icon={<Store className="w-3 h-3 sm:w-5 sm:h-5" />}
+                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                       label="Request Stock"
                       onClick={() => {
                         setShowCreateRequestModal(true);
@@ -519,7 +488,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                 user?.empPosition === "purchaser" && (
                   <div className="">
                     <Button
-                      icon={<Package className="w-3 h-3 sm:w-5 sm:h-5" />}
+                      icon={<Package className="w-3 h-3 xl:w-5 xl:h-5" />}
                       label="Add Item to supplier"
                       onClick={() => {
                         setShowAddItemSupplierModal(true);
@@ -535,7 +504,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                 user?.empPosition === "purchaser" && (
                   <div className="">
                     <Button
-                      icon={<Store className="w-3 h-3 sm:w-5 sm:h-5" />}
+                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                       label="Add Item to store"
                       onClick={() => {
                         setShowAddItemModal(true);
@@ -552,7 +521,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   user?.empPosition === "supervisor") && (
                   <div className="">
                     <Button
-                      icon={<Store className="w-3 h-3 sm:w-5 sm:h-5" />}
+                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                       label="Add Item to product"
                       onClick={() => {
                         setShowAddProductModal(true);
@@ -566,7 +535,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               {user?.empPosition === "purchaser" ? (
                 <div>
                   <Button
-                    icon={<Plus className="w-3 h-3 sm:w-5 sm:h-5" />}
+                    icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item"
                     onClick={() => {
                       //add for stock room
@@ -579,7 +548,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               ) : (
                 <div>
                   <Button
-                    icon={<Plus size={17} />}
+                    icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
                     // add for store item
                     label="Add Item"
                     onClick={() => {
@@ -594,7 +563,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           </>
         }
         renderActions={(row) => (
-          <div className="flex gap-1 sm:gap-2 px-1 justify-center">
+          <div className="flex gap-1 xl:gap-2 px-1 justify-center">
             <IconButton
               onClick={function (): void {
                 setSelectedRow(row);
@@ -602,7 +571,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               }}
               label={"View"}
               bg={"nobg"}
-              icon={<Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
+              icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
             />
             <IconButton
               onClick={function (): void {
@@ -610,7 +579,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               }}
               label={"Convert"}
               bg={"green"}
-              icon={<ArrowLeftRight className="w-3 h-3 sm:w-4 sm:h-4" />}
+              icon={<ArrowLeftRight className="w-3 h-3 xl:w-4 xl:h-4" />}
             />
             <IconButton
               onClick={function (): void {
@@ -618,7 +587,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               }}
               label={"Delete"}
               bg={"red"}
-              icon={<Trash className="w-3 h-3 sm:w-4 sm:h-4" />}
+              icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
             />
           </div>
         )}

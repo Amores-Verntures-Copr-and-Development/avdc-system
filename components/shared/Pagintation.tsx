@@ -98,17 +98,17 @@ const Pagination: React.FC<PaginationProps> = ({
   }, [page, totalPages]);
 
   return (
-    <div className="flex flex-row items-center justify-between sm:justify-between gap-3 text-black sm:pl-5 sm:pr-5">
+    <div className="flex flex-row items-center justify-between lg:justify-between gap-3 text-black lg:pl-5 lg:pr-5">
       {/* Row selector */}
       <div className="flex items-center gap-2">
-        <label htmlFor="limit" className="text-xs font-semibold">
+        <label htmlFor="limit" className="text-[8px] lg:text-xs font-semibold">
           Rows per page:
         </label>
         <select
           id="limit"
           value={limit}
           onChange={handleLimitChange}
-          className="border rounded px-2 py-1 text-xs font-semibold"
+          className="border rounded px-2 py-1 text-[8px] lg:text-xs font-semibold"
           aria-label="Select rows per page"
         >
           {[10, 20, 50, 100].map((option) => (
@@ -122,12 +122,12 @@ const Pagination: React.FC<PaginationProps> = ({
       {/* Pagination controls */}
       <div className="flex items-center gap-1">
         <button
-          className="px-3 py-1 rounded text-primary-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-2 lg:px-3 py-1 rounded text-primary-1 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => setPageAndLimit(page - 1)}
           disabled={page <= 1}
           aria-label="Previous page"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft className="w-4 h-4  lg:w-5 lg:h-5" />
         </button>
 
         {/* Page numbers */}
@@ -136,7 +136,7 @@ const Pagination: React.FC<PaginationProps> = ({
             return (
               <span
                 key={`ellipsis-${index}`}
-                className="px-3 py-1 text-gray-400"
+                className="px-2 lg:px-3 py-1 text-gray-400"
               >
                 ...
               </span>
@@ -147,7 +147,7 @@ const Pagination: React.FC<PaginationProps> = ({
           return (
             <button
               key={pageNum}
-              className={`px-3 py-1 rounded transition-colors text-xs ${
+              className={`px-2 py-0.5 lg:px-3 lg:py-1 rounded transition-colors text-[10px] lg:text-xs ${
                 isCurrentPage
                   ? "bg-primary-1 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -167,12 +167,12 @@ const Pagination: React.FC<PaginationProps> = ({
           disabled={page >= totalPages}
           aria-label="Next page"
         >
-          <ArrowRight size={20} />
+          <ArrowRight className="w-4 h-4  lg:w-5 lg:h-5" />
         </button>
       </div>
 
       {/* Showing info */}
-      <div className="text-xs font-semibold text-gray-700">
+      <div className="text-[8px] lg:text-xs font-semibold text-gray-700">
         Showing {totalItems === 0 ? 0 : startItem}–{endItem} of {totalItems}{" "}
         items
       </div>

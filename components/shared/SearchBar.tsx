@@ -62,23 +62,23 @@ export default function SearchBar({
   };
 
   return (
-    <div className="flex w-full h-h-full items-center gap-2">
+    <div className="flex w-full h-full items-center gap-2">
       {label && (
-        <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
+        <span className="text-xs xl:text-sm font-medium text-gray-700 whitespace-nowrap">
           {label}
         </span>
       )}
       <div className="relative w-full min-w-0">
         {" "}
         {/* Changed to w-full min-w-0 */}
-        <Search className="absolute left-1 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <Search className="absolute left-1 xl:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 xl:w-4 xl:h-4" />
         <input
           type="text"
           placeholder={placeholder}
           value={search}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full pr-4 pl-5 py-1 sm:pl-10 sm:py-2 border border-gray-300 bg-white text-gray-800 text-sm rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          className="w-full pr-4 pl-5 py-0.5 xl:pl-10 xl:py-2 border border-gray-300 bg-white text-gray-800 text-xs xl:text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
         />
         {search && (
           <button

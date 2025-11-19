@@ -56,10 +56,10 @@ const LoginPage = () => {
       />
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-2 rounded-lg shadow-md w-70 sm:w-100 space-y-2 sm:space-y-4"
+        className="bg-white p-2 rounded-lg shadow-md w-70 md:w-100 space-y-2 md:space-y-4 border-t-5 border-primary-1"
       >
         <Image
-          className="mx-auto mb-4 sm:mb-6 w-20 h-16 sm:w-24 sm:h-20 md:w-28 md:h-22 lg:w-32 lg:h-30"
+          className="mx-auto mb-4 md:mb-6 w-20 h-15 md:w-24 md:h-20 lg:w-28 lg:h-22 xl:w-32 xl:h-30"
           src="/avdcSVG.svg"
           alt="Logo"
           width={150} // Largest size for reference
@@ -68,15 +68,15 @@ const LoginPage = () => {
         />
         <div className="text-center">
           {" "}
-          <h2 className=" text-sm sm:text-xl  font-semibold text-center">
+          <h2 className=" text-sm md:text-xl  font-semibold text-center">
             Welcome Back!
           </h2>
-          <span className="text-xs sm:text-sm font-semibold text-gray-600">
+          <span className="text-xs md:text-sm font-semibold text-gray-600">
             Log in to your account.
           </span>
         </div>
 
-        <div className="p-4 space-y-2 sm:space-y-4">
+        <div className="p-4 space-y-2 md:space-y-4">
           <Input
             label={"Username"}
             name="username"
@@ -96,7 +96,7 @@ const LoginPage = () => {
           />
           <button
             type="submit"
-            className={`w-full text-[10px] sm:text-sm font-semibold text-white py-2 sm:py-2 rounded ${
+            className={`w-full text-[10px] md:text-sm font-semibold text-white py-2 md:py-2 rounded ${
               loading ? "bg-gray-400" : "bg-primary-1 hover:bg-primary-1-hover"
             }`}
             disabled={loading}

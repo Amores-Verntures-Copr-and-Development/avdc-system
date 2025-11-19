@@ -33,7 +33,7 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
       return (
         <span
-          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${bgClass} ${textClass}`}
+          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[8px] text-center truncate sm:text-xs font-semibold ${bgClass} ${textClass}`}
         >
           {status}
         </span>
@@ -51,25 +51,27 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
     fetcher
   );
   return (
-    <div className="flex-1">
-      <Table
-        rowSize="h-10"
-        renderTopActions={
+    <Table
+      rowSize="h-10"
+      renderTopActions={
+        <div>
           <div>
-            <div>
-              {" "}
-              <Button icon={<Plus size={20} />} size="xs" label="Add Store" />
-            </div>
+            {" "}
+            <Button
+              icon={<Plus className="w-4 h-4 lg:h-6 lg:w-6" />}
+              size="xs"
+              label="Add Store"
+            />
           </div>
-        }
-        isRounded={false}
-        textSize="xs"
-        columns={inventoryItemColumns}
-        data={response.data}
-        totalCount={10}
-        maxHeight="h-full"
-      />
-    </div>
+        </div>
+      }
+      isRounded={false}
+      textSize="xs"
+      columns={inventoryItemColumns}
+      data={response.data}
+      totalCount={10}
+      maxHeight="h-full"
+    />
   );
 };
 
