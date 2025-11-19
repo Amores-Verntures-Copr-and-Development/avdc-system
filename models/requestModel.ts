@@ -480,7 +480,7 @@ WHERE ro.storeId IN (
     INNER JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
     INNER JOIN Stores s ON s.storeId = ss.storeId
     WHERE sp.userId = ?
-)`;
+) ORDER BY ro.requestCreatedAt DESC`;
   const [rows] = await pool.execute(sql, [userId]);
   return rows;
 };

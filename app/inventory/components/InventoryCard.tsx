@@ -25,7 +25,7 @@ const InventoryCard: React.FC<InventoryCardProps> = ({
         )}
         <div>
           <p className="text-[8px] xl:text-sm text-gray-500">{title}</p>
-          <p className="text-[8px] sxl:text-xl font-bold">{value}</p>
+          <p className="text-[8px] xl:text-xl font-bold">{value}</p>
         </div>
       </div>
     </div>

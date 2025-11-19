@@ -315,7 +315,7 @@ const Sidebar = () => {
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white border border-gray-200 rounded-md shadow-sm hover:bg-gray-50 transition-colors"
         >
-          <Menu size={20} className="text-gray-600" />
+          <Menu className="text-gray-600 w-3 h-3 xl:w6 xl:h-6" />
         </button>
       )}
 
