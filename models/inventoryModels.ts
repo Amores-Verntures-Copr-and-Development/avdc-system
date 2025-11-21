@@ -217,7 +217,7 @@ export const selectInventoryItems = async ({
       params.push(value);
     }
   }
-
+  sql += ` ORDER BY it.itemName ASC`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;

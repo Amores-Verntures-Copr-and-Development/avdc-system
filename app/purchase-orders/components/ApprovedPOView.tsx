@@ -140,8 +140,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   };
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
-      <div className="flex p-2  flex-col h-full w-full overflow-hidden">
-        <div className="text-center mt-4 mb-2">
+      <div className="flex p-2 flex-col h-full w-full overflow-hidden">
+        <div className="text-center mt-4 mb-2 flex-shrink-0">
           <p className="text-gray-700 font-medium">
             Review PO and send to suppliers
           </p>
@@ -149,103 +149,130 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             Review your purchase order and send it to the selected suppliers.
           </p>
         </div>
-        {/* Table */}
-        <div className="flex flex-1 flex-col p-4 overflow-hidden">
-          <h3 className="font-semibold text-gray-800 mb-3 text-lg">
+
+        {/* Table Section */}
+        <div className="flex flex-1 flex-col p-4 overflow-hidden min-h-0">
+          <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
             Order Items by Supplier
           </h3>
-          <div className="flex p-2  flex-col h-full w-full overflow-y-auto gap-2">
+
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center space-y-2">
+              <div className="flex flex-col items-center justify-center space-y-2 h-full">
                 <Loader2 className="w-6 h-6 animate-spin text-primary-1" />
                 <span className="text-gray-500 text-sm">Loading...</span>
               </div>
             ) : (
-              data.map((data, index) => {
-                return data.suppId ? (
-                  <div
-                    className="border border-gray-300 rounded-lg overflow-hidden"
-                    key={data.suppId}
-                  >
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Package className="text-primary-1" size={24} />
-                          <div className="flex flex-col items-start gap-1">
-                            <h1 className="font-semibold text-sm">
-                              {data.suppName}
-                            </h1>
-                            <div className="flex text-xs text-gray-600 gap-4">
-                              {data.suppAddress && (
-                                <span>Location: {data.suppAddress}</span>
-                              )}
-                              {data.suppEmail && (
-                                <span>Email: {data.suppEmail}</span>
-                              )}
-                              {data.suppPhone && (
-                                <span>Phone: {data.suppPhone}</span>
-                              )}
+              <div className="space-y-2 pr-2">
+                {" "}
+                {/* Added padding for scrollbar */}
+                {data.map((data, index) => {
+                  return data.suppId ? (
+                    <div
+                      className="border border-gray-300 rounded-lg overflow-hidden flex flex-col"
+                      key={data.suppId}
+                      onClick={() => {
+                        setExpandedSupplier({
+                          index:
+                            expandedSupplier.index === index ? null : index,
+                          suppId:
+                            expandedSupplier.suppId === data.suppId
+                              ? null
+                              : data.suppId,
+                        });
+                      }}
+                    >
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition flex-shrink-0">
+                        <div className="grid grid-cols-12 gap-4 items-center w-full">
+                          {/* Supplier Info - 4 columns */}
+                          <div className="col-span-4">
+                            <div className="flex items-center gap-2">
+                              <Package className="text-primary-1" size={24} />
+                              <div className="flex flex-col items-start gap-1 min-w-0 flex-1">
+                                <h1 className="font-semibold text-sm truncate w-full">
+                                  {data.suppName}
+                                </h1>
+                                <div className="flex text-xs text-gray-600 gap-4 flex-wrap">
+                                  {data.suppAddress && (
+                                    <span className="truncate max-w-32">
+                                      Location: {data.suppAddress}
+                                    </span>
+                                  )}
+                                  {data.suppEmail && (
+                                    <span className="truncate max-w-32">
+                                      Email: {data.suppEmail}
+                                    </span>
+                                  )}
+                                  {data.suppPhone && (
+                                    <span className="truncate">
+                                      Phone: {data.suppPhone}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="flex items-center">
-                          <div>
-                            {" "}
-                            <Button
-                              isRounded={false}
-                              size="xs"
-                              onClick={function (): void {
-                                setExpandedSupplier({
-                                  index: index,
-                                  suppId: data.suppId,
-                                });
-                                setIsView("all");
-                              }}
-                              color={
-                                isView === "all" &&
-                                expandedSupplier.suppId === data.suppId
-                                  ? "primary"
-                                  : "nocolor"
-                              }
-                              label="All"
-                              icon={<Edit size={15} />}
-                              className="font-semibold text-gray-700 text-xs"
-                            />
-                          </div>
-                          <div>
-                            {" "}
-                            <Button
-                              isFocus
-                              isRounded={false}
-                              size="xs"
-                              onClick={function (): void {
-                                setIsView("store");
-                                setExpandedSupplier({
-                                  suppId: data.suppId,
-                                  index,
-                                });
-                              }}
-                              color={
-                                isView === "store" &&
-                                expandedSupplier.suppId === data.suppId
-                                  ? "primary"
-                                  : "nocolor"
-                              }
-                              label="Store"
-                              icon={<Edit size={15} />}
-                              className="font-semibold text-gray-700 text-xs"
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <div className=" bg-white border-gray-200 border-0 flex">
+
+                          {/* View Buttons - 2 columns */}
+                          <div className="col-span-2 flex justify-center">
+                            <div className="flex items-center gap-1">
                               <div>
-                                {" "}
                                 <Button
                                   isRounded={false}
                                   size="xs"
-                                  onClick={function (): void {
+                                  onClick={() => {
+                                    setExpandedSupplier({
+                                      index: index,
+                                      suppId: data.suppId,
+                                    });
+                                    setIsView("all");
+                                  }}
+                                  color={
+                                    isView === "all" &&
+                                    expandedSupplier.suppId === data.suppId
+                                      ? "primary"
+                                      : "nocolor"
+                                  }
+                                  label="All"
+                                  icon={<Edit size={15} />}
+                                  className="font-semibold text-gray-700 text-xs"
+                                />
+                              </div>
+                              <div>
+                                <Button
+                                  isFocus
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={() => {
+                                    setIsView("store");
+                                    setExpandedSupplier({
+                                      suppId: data.suppId,
+                                      index,
+                                    });
+                                  }}
+                                  color={
+                                    isView === "store" &&
+                                    expandedSupplier.suppId === data.suppId
+                                      ? "primary"
+                                      : "nocolor"
+                                  }
+                                  label="Store"
+                                  icon={<Edit size={15} />}
+                                  className="font-semibold text-gray-700 text-xs"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons - 4 columns */}
+                          <div className="col-span-4 flex justify-center">
+                            <div className="flex items-center gap-2">
+                              <div className="bg-white border-gray-200 border-0 flex items-center gap-1">
+                                <Button
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={() => {
                                     throw new Error(
                                       "Function not implemented."
                                     );
@@ -255,13 +282,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   icon={<Edit size={15} />}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
-                              </div>
-
-                              <div>
                                 <Button
                                   isRounded={false}
                                   size="xs"
-                                  onClick={function (): void {
+                                  onClick={() => {
                                     setSelectedSupplier(data);
                                     setShowROPDF("supplier");
                                   }}
@@ -275,32 +299,24 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   }
                                   className="font-semibold text-gray-700 text-xs"
                                 />
-                              </div>
-                              {data.items.every(
-                                (i) => i.poItemStatus === "sent"
-                              ) ? (
-                                <>
-                                  <div>
-                                    {" "}
-                                    <Button
-                                      isRounded={false}
-                                      disabled={true}
-                                      size="xs"
-                                      onClick={function (): void {
-                                        throw new Error(
-                                          "Function not implemented."
-                                        );
-                                      }}
-                                      color="success"
-                                      label="Sent"
-                                      icon={<Check size={15} />}
-                                      className="font-semibold"
-                                    />
-                                  </div>
-                                </>
-                              ) : (
-                                <div>
-                                  {" "}
+                                {data.items.every(
+                                  (i) => i.poItemStatus === "sent"
+                                ) ? (
+                                  <Button
+                                    isRounded={false}
+                                    disabled={true}
+                                    size="xs"
+                                    onClick={() => {
+                                      throw new Error(
+                                        "Function not implemented."
+                                      );
+                                    }}
+                                    color="success"
+                                    label="Sent"
+                                    icon={<Check size={15} />}
+                                    className="font-semibold"
+                                  />
+                                ) : (
                                   <Button
                                     loading={sendingSupplier === index}
                                     isRounded={false}
@@ -317,197 +333,219 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     icon={
                                       <Send
                                         size={15}
-                                        className="text-primary-1 "
+                                        className="text-primary-1"
                                       />
                                     }
                                     className="font-semibold"
                                   />
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </div>
                           </div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs">
-                              {data.items?.length} item(s)
-                            </span>
-                            <p className="font-bold text-primary-1 text-sm">
-                              {formatPeso(
-                                data.items.reduce((total, item) => {
-                                  const price = Number(item.unitPrice) || 0;
-                                  const qty =
-                                    Number(item.poItemOrderedQty) || 0;
-                                  return total + price * qty;
-                                }, 0)
-                              )}
-                            </p>
-                          </div>
-                          <div
-                            onClick={() =>
-                              setExpandedSupplier({
-                                suppId:
-                                  expandedSupplier.suppId === data.suppId
-                                    ? 0
-                                    : data.suppId,
-                                index:
-                                  expandedSupplier.index === index
-                                    ? null
-                                    : index,
-                              })
-                            }
-                          >
-                            {expandedSupplier.suppId === data.suppId ? (
-                              <ChevronUp size={20} />
-                            ) : (
-                              <ChevronDown size={20} />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {expandedSupplier.suppId === data.suppId && (
-                      <div className="overflow-y-auto">
-                        {isView === "all" ? (
-                          <Table
-                            textSize="xs"
-                            columns={columns}
-                            data={data.items}
-                            isRounded={false}
-                          />
-                        ) : (
-                          <div className="flex p-2 gap-4">
-                            {itemResponse.data.map((data) => (
-                              <StoreCardInSupplier
-                                data={data}
-                                key={data.storeId}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div
-                    className="border border-gray-300 rounded-lg overflow-hidden"
-                    key={index}
-                  >
-                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Package className="text-primary-1" size={24} />
-                          <h1 className="font-semibold text-sm">
-                            No Supplier Items
-                          </h1>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <div>
-                            <div className=" bg-white border-gray-200 border-0 flex">
-                              <div>
-                                {" "}
-                                <Button
-                                  isRounded={false}
-                                  size="xs"
-                                  onClick={function (): void {
-                                    throw new Error(
-                                      "Function not implemented."
-                                    );
-                                  }}
-                                  color="nocolor"
-                                  label="Edit"
-                                  icon={<Edit size={15} />}
-                                  className="font-semibold text-gray-700 text-xs"
-                                />
-                              </div>
 
-                              <div>
-                                <Button
-                                  isRounded={false}
-                                  size="xs"
-                                  onClick={function (): void {
-                                    setSelectedSupplier(data);
-                                    setShowROPDF("supplier");
-                                  }}
-                                  color="nocolor"
-                                  label="PDF"
-                                  icon={
-                                    <FileText
-                                      size={15}
-                                      className="text-gray-700"
-                                    />
-                                  }
-                                  className="font-semibold text-gray-700 text-xs"
-                                />
-                              </div>
+                          {/* Stats & Toggle - 2 columns */}
+                          <div className="col-span-2 flex justify-end items-center gap-4">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs">
+                                {data.items?.length} item(s)
+                              </span>
+                              <p className="font-bold text-primary-1 text-sm">
+                                {formatPeso(
+                                  data.items.reduce((total, item) => {
+                                    const price = Number(item.unitPrice) || 0;
+                                    const qty =
+                                      Number(item.poItemOrderedQty) || 0;
+                                    return total + price * qty;
+                                  }, 0)
+                                )}
+                              </p>
                             </div>
-                          </div>
-                          <div className="flex flex-col items-center">
-                            <span className="text-xs">
-                              {data.items?.length} item(s)
-                            </span>
-                            <p className="font-bold text-primary-1 text-sm">
-                              {formatPeso(
-                                data.items.reduce((total, item) => {
-                                  const price = Number(item.unitPrice) || 0;
-                                  const qty =
-                                    Number(item.poItemOrderedQty) || 0;
-                                  return total + price * qty;
-                                }, 0)
+                            <div
+                              onClick={() =>
+                                setExpandedSupplier({
+                                  suppId:
+                                    expandedSupplier.suppId === data.suppId
+                                      ? 0
+                                      : data.suppId,
+                                  index:
+                                    expandedSupplier.index === index
+                                      ? null
+                                      : index,
+                                })
+                              }
+                              className="cursor-pointer"
+                            >
+                              {expandedSupplier.suppId === data.suppId ? (
+                                <ChevronUp size={20} />
+                              ) : (
+                                <ChevronDown size={20} />
                               )}
-                            </p>
-                          </div>
-                          <div
-                            onClick={() =>
-                              setExpandedSupplier({
-                                suppId:
-                                  expandedSupplier.suppId === data.suppId
-                                    ? 0
-                                    : data.suppId,
-                                index:
-                                  expandedSupplier.index === index
-                                    ? null
-                                    : index,
-                              })
-                            }
-                          >
-                            {expandedSupplier.index === index ? (
-                              <ChevronUp size={20} />
-                            ) : (
-                              <ChevronDown size={20} />
-                            )}
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                    {expandedSupplier.index === index && (
-                      <div className="overflow-y-auto">
-                        {isView === "all" ? (
-                          <Table
-                            textSize="xs"
-                            columns={columns}
-                            data={data.items}
-                            isRounded={false}
-                          />
-                        ) : (
-                          <div className="flex p-2 gap-4">
-                            {itemResponse.data.map((data) => (
-                              <StoreCardInSupplier
-                                data={data}
-                                key={data.storeId}
+
+                      {/* Expanded Content with Proper Scrolling */}
+                      {expandedSupplier.suppId === data.suppId && (
+                        <div className="flex-1 min-h-0 overflow-hidden">
+                          {isView === "all" ? (
+                            <div className="h-96 overflow-auto">
+                              {" "}
+                              {/* Fixed height for table */}
+                              <Table
+                                textSize="xs"
+                                columns={columns}
+                                data={data.items}
+                                isRounded={false}
                               />
-                            ))}
+                            </div>
+                          ) : (
+                            <div className="h-96 overflow-auto p-2">
+                              {" "}
+                              {/* Fixed height for cards */}
+                              <div className="flex gap-4">
+                                {itemResponse.data.map((data) => (
+                                  <StoreCardInSupplier
+                                    data={data}
+                                    key={data.storeId}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div
+                      className="border border-gray-300 rounded-lg overflow-hidden flex flex-col"
+                      key={index}
+                    >
+                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 hover:to-gray-150 transition flex-shrink-0">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Package className="text-primary-1" size={24} />
+                            <h1 className="font-semibold text-sm">
+                              No Supplier Items
+                            </h1>
                           </div>
-                        )}
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <div className="bg-white border-gray-200 border-0 flex">
+                                <div>
+                                  <Button
+                                    isRounded={false}
+                                    size="xs"
+                                    onClick={function (): void {
+                                      throw new Error(
+                                        "Function not implemented."
+                                      );
+                                    }}
+                                    color="nocolor"
+                                    label="Edit"
+                                    icon={<Edit size={15} />}
+                                    className="font-semibold text-gray-700 text-xs"
+                                  />
+                                </div>
+
+                                <div>
+                                  <Button
+                                    isRounded={false}
+                                    size="xs"
+                                    onClick={function (): void {
+                                      setSelectedSupplier(data);
+                                      setShowROPDF("supplier");
+                                    }}
+                                    color="nocolor"
+                                    label="PDF"
+                                    icon={
+                                      <FileText
+                                        size={15}
+                                        className="text-gray-700"
+                                      />
+                                    }
+                                    className="font-semibold text-gray-700 text-xs"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs">
+                                {data.items?.length} item(s)
+                              </span>
+                              <p className="font-bold text-primary-1 text-sm">
+                                {formatPeso(
+                                  data.items.reduce((total, item) => {
+                                    const price = Number(item.unitPrice) || 0;
+                                    const qty =
+                                      Number(item.poItemOrderedQty) || 0;
+                                    return total + price * qty;
+                                  }, 0)
+                                )}
+                              </p>
+                            </div>
+                            <div
+                              onClick={() =>
+                                setExpandedSupplier({
+                                  suppId:
+                                    expandedSupplier.suppId === data.suppId
+                                      ? 0
+                                      : data.suppId,
+                                  index:
+                                    expandedSupplier.index === index
+                                      ? null
+                                      : index,
+                                })
+                              }
+                            >
+                              {expandedSupplier.index === index ? (
+                                <ChevronUp size={20} />
+                              ) : (
+                                <ChevronDown size={20} />
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                );
-              })
+
+                      {/* Expanded Content with Proper Scrolling */}
+                      {expandedSupplier.index === index && (
+                        <div className="min-h-0 overflow-hidden">
+                          {isView === "all" ? (
+                            <div className="h-96 overflow-auto">
+                              <Table
+                                textSize="xs"
+                                columns={columns}
+                                data={data.items}
+                                isRounded={false}
+                              />
+                            </div>
+                          ) : (
+                            <div className="h-96 overflow-auto p-2">
+                              <div className="flex gap-4">
+                                {itemResponse.data.map((data) => (
+                                  <StoreCardInSupplier
+                                    data={data}
+                                    key={data.storeId}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
-        <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
+
+        {/* Footer - Fixed at bottom */}
+        <div className="border-t border-gray-300 flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center flex-shrink-0">
           <span className="flex items-center">
-            <Clock size={15} />{" "}
+            <Clock size={15} />
             <span className="text-xs ml-2"> Created: {}</span>
           </span>
           <div className="flex gap-3">
@@ -532,24 +570,14 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                   }}
                   label="Send to Suppliers"
                   icon={<Send size={15} />}
-                  className="font-semibold  text-xs px-2 py-2"
+                  className="font-semibold text-xs px-2 py-2"
                 />
               </div>
             )}
-            {/* <div>
-              <Button
-                size="sm"
-                onClick={function (): void {
-                  handleSendToSupliers(data);
-                }}
-                label="Update Status"
-                icon={<Send size={15} />}
-                className="font-semibold  text-xs px-2 py-2"
-              />
-            </div> */}
           </div>
         </div>
       </div>
+
       <Modal
         className="h-[95%]"
         isOpen={showROPDF !== null}
@@ -559,9 +587,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
         }}
         title="Purchase Order PDF"
       >
-        {" "}
         <PDFViewer width="100%" height="100%">
-          {/* <RequestOrderPDF data={pdfData ?? null} /> */}
           {showROPDF === "supplier" ? (
             <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
           ) : (

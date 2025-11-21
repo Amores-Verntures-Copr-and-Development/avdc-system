@@ -279,7 +279,7 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div className="w-25 xl:w-30 items-center align-middle">
+            <div className="w-25 xl:w-40 items-center align-middle">
               {searchUrl && <SearchBar url={searchUrl} />}
             </div>
             <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
