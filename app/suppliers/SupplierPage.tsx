@@ -94,6 +94,10 @@ const SupplierPage = () => {
           }
           columns={supplierColumns}
           data={itemResponse.data}
+          onRowSelection={(row) => {
+            setShowViewSupplier(true);
+            setSelectedSupplier(row);
+          }}
           totalCount={10}
           renderActions={(row) => (
             <div className="flex gap-2 justify-center">

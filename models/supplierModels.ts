@@ -1,6 +1,6 @@
 import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { getDBConnection } from "@/lib/db";
-import { Supplier } from "@/types/supplier";
+import { Supplier, SupplierItem } from "@/types/supplier";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export const insertSupplier = async ({
@@ -117,4 +117,12 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
   LEFT JOIN Categories c ON c.categoryId = i.categoryId ${whereSQL}`;
   const [rows] = await pool.execute(sql, values);
   return rows;
+};
+
+export const deleteSupplierItemsByFields = async ({}: {
+  keyfields: Partial<SupplierItem>[];
+  data: Partial<SupplierItem>[];
+}) => {
+  const pool = await getDBConnection();
+  const sql = `DELETE FROM SupplierItems WHERE`
 };
