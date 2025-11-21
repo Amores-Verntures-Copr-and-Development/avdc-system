@@ -27,7 +27,7 @@ interface ButtonProps {
 
 const sizeClasses: Record<ButtonSize, string> = {
   xs: "text-[10px] md:text-xs px-2 py-1",
-  sm: "text-[9px] sm:text-xs md:text-xs lg:text-xs xl:text-lg px-1.5 py-1 lg:px-3 lg:py-1.5 ",
+  sm: "text-[9px] sm:text-xs md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 lg:px-3 lg:py-1.5 ",
   md: "text-base px-4 py-2",
   lg: "text-lg px-5 py-2.5",
 };
