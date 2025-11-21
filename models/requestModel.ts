@@ -77,7 +77,15 @@ export const selectRequestOrders = async ({
 LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 LEFT JOIN Users u ON u.userId = ro.requestById
 LEFT JOIN Stores s ON s.storeId = ro.storeId ${whereSQL}
-GROUP BY ro.requestId;`;
+GROUP BY ro.requestId
+ORDER BY CASE ro.requestStatus
+WHEN 'pending' THEN 1
+WHEN 'in_progress' THEN 2
+WHEN 'received' THEN 3
+WHEN 'delivered' THEN 4
+ELSE 5
+END,
+ro.requestCreatedAt DESC`;
   const [rows] = await pool.execute(sql, values);
   return rows;
 };
@@ -469,7 +477,10 @@ WHERE poi.poItemId IN (${placeholders})`;
 
 export const selectRequestOrderFromStockRoom = async (userId: number) => {
   const pool = await getDBConnection();
-  const sql = `SELECT ro.*,s.* ,CONCAT_WS('',u.userFname,u.userLname) AS requestedByName
+  const sql = `SELECT 
+    ro.*,
+    s.*,
+    CONCAT_WS(' ', u.userFname, u.userLname) AS requestedByName
 FROM RequestOrders ro
 LEFT JOIN Stores s ON s.storeId = ro.storeId
 LEFT JOIN Users u ON u.userId = ro.requestById
@@ -480,7 +491,35 @@ WHERE ro.storeId IN (
     INNER JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
     INNER JOIN Stores s ON s.storeId = ss.storeId
     WHERE sp.userId = ?
-) ORDER BY ro.requestCreatedAt DESC`;
+) 
+ORDER BY 
+    CASE ro.requestStatus 
+        WHEN 'pending' THEN 1
+        WHEN 'in_progress' THEN 2
+        WHEN 'delivered' THEN 3
+        WHEN 'received' THEN 4
+        ELSE 5
+    END ASC,
+    ro.requestCreatedAt DESC;`;
   const [rows] = await pool.execute(sql, [userId]);
   return rows;
+};
+
+export const selectRequestItemsByPOId = async ({
+  connection,
+  poId,
+}: {
+  connection?: PoolConnection;
+  poId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT DISTINCT ri.* 
+FROM PurchaseOrderItems poi 
+LEFT JOIN PurchaseOrderRequest por ON por.poId = poi.poId
+LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
+LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
+WHERE poi.poId = ?;`;
+
+  const [rows] = await pool.execute(sql, [poId]);
+  return rows as RequestItems[];
 };

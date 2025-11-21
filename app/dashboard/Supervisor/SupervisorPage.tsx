@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import DashboardCard from "../components/DashboardCard";
 import Chart from "../components/Chart";
@@ -5,14 +7,16 @@ import { AlertTriangle, Calendar } from "lucide-react";
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import { formatPeso } from "@/utils/formatPeso";
+import { useRouter } from "next/navigation";
 
 const SupervisorPage = () => {
+  const router = useRouter();
   return (
     <div className="flex h-full overflow-hidden">
       <div className="flex-1 h-full flex flex-col gap-4  pr-5">
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard
-            title="Today's Sales"
+            title="Total Revenues"
             value={10}
             icon={Calendar}
             bgColor="bg-primary-1"
@@ -76,7 +80,13 @@ const SupervisorPage = () => {
               ))}
             </div>
             <div className="mt-auto">
-              <Button size={"sm"} label="View Sales" />
+              <Button
+                size={"sm"}
+                label="View Sales"
+                onClick={() => {
+                  router.push("/sales");
+                }}
+              />
             </div>
           </BigCard>
           <BigCard
@@ -94,7 +104,13 @@ const SupervisorPage = () => {
               </span>
             </div>
             <div className="mt-auto">
-              <Button size={"sm"} label="Manage Inventory" />
+              <Button
+                size={"sm"}
+                label="Manage Inventory"
+                onClick={() => {
+                  router.push("/inventory");
+                }}
+              />
             </div>
           </BigCard>
         </div>

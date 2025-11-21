@@ -26,8 +26,8 @@ interface ButtonProps {
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: "text-[10px] xl:text-xs px-2 py-1",
-  sm: "text-xs xl:text-sm px-1.5 py-1 lg:px-3 lg:py-1.5 ",
+  xs: "text-[10px] md:text-xs px-2 py-1",
+  sm: "text-[9px] sm:text-xs md:text-xs lg:text-xs xl:text-lg px-1.5 py-1 lg:px-3 lg:py-1.5 ",
   md: "text-base px-4 py-2",
   lg: "text-lg px-5 py-2.5",
 };
@@ -112,7 +112,12 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (onClick) {
+          onClick();
+        }
+      }}
       disabled={isDisabled}
       className={`
         relative w-full flex items-center justify-center gap-2 ${

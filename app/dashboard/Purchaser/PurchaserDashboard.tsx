@@ -40,7 +40,7 @@ const PurchaserDashboard = () => {
             bgColor="bg-primary-1"
           />
           <DashboardCard
-            title="Pending Request"
+            title="Total Store Request"
             value={0}
             icon={Calendar}
             bgColor="bg-purple-600"

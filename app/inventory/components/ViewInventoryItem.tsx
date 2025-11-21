@@ -10,9 +10,12 @@ import {
 } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { handleChange } from "@/utils/handle-change";
-import { getInventoryStatus } from "@/utils/inventoryStatus";
-import { Edit2, Package } from "lucide-react";
-import React, { useState } from "react";
+import {
+  getInventoryStatus,
+  getInventoryStatusInfo,
+} from "@/utils/inventoryStatus";
+import { Edit2, Package, X, Info, BarChart3 } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import ItemMovementCard from "./ItemMovementCard";
 import { InventoryItemInterface } from "@/types/inventory";
 import { stockAdjustmentOptions } from "@/constants/dropdown-options";
@@ -35,6 +38,12 @@ interface ViewInventoryItemPros {
     row: CreateInventoryMovementDto
   ) => Promise<boolean>;
   isSubmittingAdjustment?: boolean;
+  onClose?: () => void;
+  mutate?: () => void;
+  onSubmitEditItems?: (
+    row: Partial<InventoryItemInterface>
+  ) => Promise<boolean>;
+  isEditing?: boolean;
 }
 
 const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
@@ -42,129 +51,93 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
   user,
   onSubmitStockAdjustment,
   isSubmittingAdjustment,
+  onClose,
+  mutate,
+  onSubmitEditItems,
+  isEditing,
 }) => {
   const [inventoryItemData, setInventoryItemData] = useState(data);
   const [selectedButton, setSelectedButton] = useState<
     "details" | "stocks" | ""
   >("");
+  useEffect(() => {
+    setInventoryItemData(data);
+  }, [data]);
   const onChange = handleChange(inventoryItemData, setInventoryItemData);
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-start">
-        <div>
-          <Button
-            className="font-semibold"
-            isRounded={false}
-            icon={<Edit2 size={15} />}
-            size="xs"
-            onClick={function (): void {
-              setSelectedButton("details");
-            }}
-            label="Edit Details"
-            color={selectedButton === "details" ? "primary" : "nocolor"}
-          />
-        </div>
-        <div>
-          <Button
-            className="font-semibold"
-            icon={<Package size={15} />}
-            isRounded={false}
-            size="xs"
-            onClick={function (): void {
-              setSelectedButton("stocks");
-            }}
-            label="Stock Adjustment"
-            color={selectedButton === "stocks" ? "primary" : "nocolor"}
-          />
-        </div>
-      </div>
-      {selectedButton === "" && <ItemInfo data={inventoryItemData} />}
-      {selectedButton === "details" && (
-        <EditItemDetails
-          data={inventoryItemData}
-          selectedButton={selectedButton}
-          setSelectedButton={setSelectedButton}
-          onChange={onChange}
-          user={user}
-        />
-      )}
-      {selectedButton === "stocks" && (
-        <StockAdjustment
-          data={inventoryItemData}
-          selectedButton={selectedButton}
-          setSelectedButton={setSelectedButton}
-          onChange={onChange}
-          onSubmitStockAdjustment={onSubmitStockAdjustment}
-          isSubmittingAdjustment={isSubmittingAdjustment}
-        />
-      )}
-    </div>
-  );
-};
-
-export default ViewInventoryItem;
-
-const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
-  //localhost:3010/api/inventory/movement/1/1
-  const { data: inventoryMovement } = useSWR<
-    ApiResponse<DisplayInventoryMovementDto[]>
-  >(
-    `/api/inventory/movement/${data?.inventoryId}/${data?.inventoryItemId}`,
-    fetcher
-  );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col border-b border-gray-300">
-        <h1 className="text-sm font-semibold">Item Info</h1>
-        <div className="grid grid-cols-2 p-3 gap-2">
-          <label className="text-xs text-gray-500">ID:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemId}
-          </label>
-          <label className="text-xs text-gray-500">Name:</label>
-          <label className="text-xs font-semibold">{data?.itemName}</label>
-          <label className="text-xs text-gray-500">Type:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemReferenceType}
-          </label>
-          <label className="text-xs text-gray-500">Category:</label>
-          <label className="text-xs font-semibold">{data?.categoryName}</label>
-          <label className="text-xs text-gray-500">Stock Availble:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemQuantity}
-          </label>
-          <label className="text-xs text-gray-500">Minimum Stock:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemMin}
-          </label>
-          <label className="text-xs text-gray-500">Status:</label>
-          <label className="text-xs font-semibold">
-            {getInventoryStatus(
-              data?.inventoryItemQuantity ?? 0,
-              data?.inventoryItemMin ?? 0
-            )}
-          </label>
-          <label className="text-xs text-gray-500">Created:</label>
-          <label className="text-xs font-semibold">January 20, 2025</label>
-          <label className="text-xs text-gray-500">Updated:</label>
-          <label className="text-xs font-semibold">January 20, 2025</label>
-        </div>
+    <div className="">
+      {/* Navigation Tabs */}
+      <div className="flex border-b border-gray-200 bg-gray-50/50">
+        <button
+          onClick={() => setSelectedButton("")}
+          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+            selectedButton === ""
+              ? "border-blue-500 text-blue-600 bg-white"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2 text-[10px] xl:text-sm">
+            <Info className="w-2 h-2 xl:w-4 xl:h-4" />
+            Overview
+          </div>
+        </button>
+        <button
+          onClick={() => setSelectedButton("details")}
+          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+            selectedButton === "details"
+              ? "border-blue-500 text-blue-600 bg-white"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2 text-[10px] xl:text-sm">
+            <Edit2 className="w-2 h-2 xl:w-4 xl:h-4" />
+            Edit
+          </div>
+        </button>
+        <button
+          onClick={() => setSelectedButton("stocks")}
+          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+            selectedButton === "stocks"
+              ? "border-blue-500 text-blue-600 bg-white"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2 text-[10px] xl:text-sm">
+            <BarChart3 className="w-2 h-2 xl:w-4 xl:h-4" />
+            Adjust
+          </div>
+        </button>
       </div>
-      <div className="flex flex-col gap-4 overflow-auto">
-        <h1 className="text-lg font-semibold text-gray-900">Stock Movement</h1>
-        <div className="overflow-hidden flex flex-col gap-2">
-          {inventoryMovement?.data.length &&
-          inventoryMovement?.data.length > 0 ? (
-            inventoryMovement?.data.map((item, index) => (
-              <ItemMovementCard
-                key={item.invItemMovementId}
-                data={item}
-                index={index}
-              />
-            ))
-          ) : (
-            <div>No data</div>
+
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-3 xl:p-6">
+          {selectedButton === "" && <ItemInfo data={inventoryItemData} />}
+          {selectedButton === "details" && (
+            <EditItemDetails
+              data={inventoryItemData}
+              selectedButton={selectedButton}
+              setSelectedButton={setSelectedButton}
+              onChange={onChange}
+              user={user}
+              onClose={onClose}
+              mutate={mutate}
+              onSubmitEditItems={onSubmitEditItems}
+              isEditing={isEditing}
+            />
+          )}
+          {selectedButton === "stocks" && (
+            <StockAdjustment
+              data={inventoryItemData}
+              selectedButton={selectedButton}
+              setSelectedButton={setSelectedButton}
+              onChange={onChange}
+              onSubmitStockAdjustment={onSubmitStockAdjustment}
+              isSubmittingAdjustment={isSubmittingAdjustment}
+              onClose={onClose}
+              mutate={mutate}
+            />
           )}
         </div>
       </div>
@@ -172,10 +145,108 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
   );
 };
 
-const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
+export default ViewInventoryItem;
+
+const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
+  const { data: inventoryMovement } = useSWR<
+    ApiResponse<DisplayInventoryMovementDto[]>
+  >(
+    `/api/inventory/movement/${data?.inventoryId}/${data?.inventoryItemId}`,
+    fetcher
+  );
+
+  const { bgClass, status, textClass } = getInventoryStatusInfo(
+    data?.inventoryItemQuantity ?? 0,
+    data?.inventoryItemMin ?? 0
+  );
+
+  return (
+    <div className="space-y-4 xl:space-y-6">
+      {/* Basic Information Card */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Info className="w-2 h-2 xl:w-4 xl:h-4" />
+          Item Information
+        </h3>
+        <div className="grid grid-cols-1 gap-3">
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">Type</span>
+            <span className="text-[10px] xl:text-sm font-medium">
+              {data?.inventoryItemReferenceType}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">
+              Category
+            </span>
+            <span className="text-[10px] xl:text-sm font-medium">
+              {data?.categoryName}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">
+              Available Stock
+            </span>
+            <span className="text-[10px] xl:text-sm font-medium">
+              {data?.inventoryItemQuantity}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">
+              Minimum Stock
+            </span>
+            <span className="text-[10px] xl:text-smfont-medium">
+              {data?.inventoryItemMin}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2">
+            <span className="text-[10px] xl:text-sm text-gray-600">Status</span>
+            <span
+              className={`text-[10px] xl:text-sm font-medium px-2 py-1 rounded-full ${bgClass} ${textClass} `}
+            >
+              {status}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Stock Movement Card */}
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <BarChart3 className="w-2 h-2 xl:w-4 xl:h-4" />
+          Stock Movement
+        </h3>
+        <div className="space-y-3 max-h-80 overflow-y-auto">
+          {inventoryMovement?.data && inventoryMovement.data.length > 0 ? (
+            inventoryMovement.data.map((item, index) => (
+              <ItemMovementCard
+                key={item.invItemMovementId}
+                data={item}
+                index={index}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8 text-gray-500 text-[10px] xl:text-sm">
+              <Package className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+              No movement history
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EditItemDetails: React.FC<
+  ViewInventoryItemPros & { onClose?: () => void }
+> = ({
   data,
   setSelectedButton,
   user,
+  onClose,
+  onSubmitEditItems,
+  mutate,
+  isEditing,
 }) => {
   const [editedInventoryItem, setEditenInventryItem] = useState<
     Partial<InventoryItemInterface>
@@ -184,91 +255,135 @@ const EditItemDetails: React.FC<ViewInventoryItemPros> = ({
     inventoryItemId: data?.inventoryItemId,
   });
   const setChange = handleChange(editedInventoryItem, setEditenInventryItem);
+
   const handleEditMinimumStock = async () => {
-    console.log({ editedInventoryItem });
+    if (onSubmitEditItems && mutate) {
+      const success = await onSubmitEditItems(editedInventoryItem);
+      if (success) {
+        mutate();
+      }
+    }
+    // Add your save logic here
   };
+
+  const handleCancel = () => {
+    if (setSelectedButton) {
+      setSelectedButton("");
+    }
+  };
+
   return (
-    <div className="flex flex-col">
-      <h1 className="text-sm font-semibold">Edit Item</h1>
+    <div className="space-y-4 xl:space-y-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Edit2 className="w-2 h-2 xl:w-4 xl:h-4" />
+          Edit Item Details
+        </h3>
 
-      {user?.empPosition === "supervisor" ? (
-        <div className="grid grid-cols-2 p-3 gap-2">
-          <label className="text-xs text-gray-500">Name</label>
+        <div className="space-y-4">
+          {user?.empPosition === "supervisor" ? (
+            <>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Name
+                </span>
+                <span className="text-[10px] xl:text-sm font-medium">
+                  {data?.itemName}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Type
+                </span>
+                <span className="text-[10px] xl:text-sm font-medium">
+                  {data?.inventoryItemReferenceType}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Category
+                </span>
+                <span className="text-[10px] xl:text-sm font-medium">
+                  {data?.categoryName}
+                </span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Minimum Stock
+                </span>
+                <div className="w-20">
+                  <Input
+                    value={editedInventoryItem?.inventoryItemMin ?? 0}
+                    name="inventoryItemMin"
+                    sizes="sm"
+                    onChange={setChange}
+                    type="number"
+                    label={""}
+                  />
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="space-y-2">
+                <label className="text-sm text-gray-600">Name</label>
+                <Input
+                  value={data?.itemName ?? ""}
+                  name="itemName"
+                  sizes="sm"
+                  onChange={setChange}
+                  label={""}
+                />
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                <span className="text-sm text-gray-600">Type</span>
+                <span className="text-sm font-medium">
+                  {data?.inventoryItemReferenceType}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm text-gray-600">Category</label>
+                <DropDownSelectCategory
+                  categoryType={"item"}
+                  name={"categoryName"}
+                  value={data?.categoryName ?? ""}
+                  sizes="sm"
+                  referenceType={null}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      </div>
 
-          <label className="text-xs font-semibold">{data?.itemName}</label>
-          <label className="text-xs text-gray-500">Type:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemReferenceType}
-          </label>
-          <label className="text-xs text-gray-500">Category:</label>
-          <label className="text-xs font-semibold">{data?.categoryName}</label>
-          <label className="text-xs text-gray-500">Minimum Stock:</label>
-          <Input
-            label={""}
-            value={editedInventoryItem?.inventoryItemMin ?? 0}
-            name="inventoryItemMin"
-            sizes="xs"
-            onChange={setChange}
-          />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 p-3 gap-2">
-          <label className="text-xs text-gray-500">Name</label>
-
-          <Input
-            label={""}
-            value={data?.itemName ?? ""}
-            name="itemName"
-            sizes="xs"
-            onChange={setChange}
-          />
-          <label className="text-xs text-gray-500">Type:</label>
-          <label className="text-xs font-semibold">
-            {data?.inventoryItemReferenceType}
-          </label>
-          <label className="text-xs text-gray-500">Category:</label>
-          <DropDownSelectCategory
-            categoryType={"item"}
-            name={"categoryName"}
-            value={data?.categoryName ?? ""}
-            sizes="xs"
-            referenceType={null}
-          />
-        </div>
-      )}
-      <div className="flex justify-end gap-2">
-        <div>
-          <Button
-            size="xs"
-            color="nocolor"
-            label="Cancel"
-            onClick={function (): void {
-              if (setSelectedButton) {
-                setSelectedButton("");
-              }
-            }}
-            className="font-semibold"
-          />
-        </div>
-        <div>
-          <Button
-            size="xs"
-            label="Save"
-            onClick={handleEditMinimumStock}
-            className="font-semibold"
-          />
-        </div>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <Button
+          size="sm"
+          color="nocolor"
+          label="Cancel"
+          onClick={handleCancel}
+          className="font-medium"
+        />
+        <Button
+          size="sm"
+          label="Save Changes"
+          onClick={handleEditMinimumStock}
+          className="font-medium"
+          loading={isEditing}
+        />
       </div>
     </div>
   );
 };
 
-const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
+const StockAdjustment: React.FC<
+  ViewInventoryItemPros & { onClose?: () => void }
+> = ({
   data,
   setSelectedButton,
-  onChange,
   onSubmitStockAdjustment,
   isSubmittingAdjustment,
+  mutate,
 }) => {
   const [adjustmentForm, setAdjustmentForm] =
     useState<CreateInventoryMovementDto>({
@@ -280,6 +395,9 @@ const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
       itemMovementReferenceId: null,
       itemMovementReference: "adjustment",
     });
+
+  const setChange = handleChange(adjustmentForm, setAdjustmentForm);
+
   const handleSubmit = async () => {
     if (
       adjustmentForm.itemMovementType === "out" &&
@@ -293,6 +411,7 @@ const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
       toast.error("Cannot input 0 quantity!");
       return;
     }
+
     const adjustData: CreateInventoryMovementDto = {
       inventoryItemId: data?.inventoryItemId ?? 0,
       itemMovementRemarks: adjustmentForm?.itemMovementRemarks,
@@ -302,92 +421,112 @@ const StockAdjustment: React.FC<ViewInventoryItemPros> = ({
       itemMovementReferenceId: null,
       itemMovementReference: "adjustment",
     };
+
     if (onSubmitStockAdjustment) {
       const success = await onSubmitStockAdjustment(adjustData);
-      if (success) {
-        toast.success(`Successfully adjusted ${data?.itemName} stock!`);
+      if (success && mutate) {
+        if (setSelectedButton) {
+          mutate();
+          setSelectedButton("");
+        }
       }
     }
   };
-  const setChange = handleChange(adjustmentForm, setAdjustmentForm);
+
+  const handleCancel = () => {
+    if (setSelectedButton) {
+      setSelectedButton("");
+    }
+  };
+
   return (
-    <div className="flex flex-col">
-      <h1 className="text-sm font-semibold">Adjust Stock</h1>
-      <div className="grid grid-cols-2 p-3 gap-2">
-        <label className="text-xs text-gray-500">Name</label>
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
+        <h3 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <BarChart3 className="w-2 h-2 xl:w-4 xl:h-4" />
+          Stock Adjustment
+        </h3>
 
-        <label className="text-xs font-semibold"> {data?.itemName}</label>
-        <label className="text-xs text-gray-500">Type:</label>
-        <label className="text-xs font-semibold">
-          {data?.inventoryItemReferenceType}
-        </label>
-        <label className="text-xs text-gray-500">Category:</label>
-        <label className="text-xs font-semibold"> {data?.categoryName}</label>
-        <label className="text-xs text-gray-500">Available Stock:</label>
-        <label className="text-xs font-semibold">
-          {" "}
-          {data?.inventoryItemQuantity}
-        </label>
-        <label className="text-xs text-gray-500">Minumum Stocks</label>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="space-y-1">
+              <span className="text-gray-600 text-[10px] xl:text-sm">
+                Available Stock
+              </span>
+              <div className="font-semibold text-sm xl:text-lg">
+                {data?.inventoryItemQuantity}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-gray-600 text-[10px] xl:text-sm">
+                Minimum Stock
+              </span>
+              <div className="font-medium text-sm xl:text-lg">
+                {data?.inventoryItemMin}
+              </div>
+            </div>
+          </div>
 
-        <label className="text-xs font-semibold">
-          {" "}
-          {data?.inventoryItemMin}
-        </label>
-        <label className="text-xs text-gray-500">Adjustment Type</label>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <label className="text-xs xl:text-sm text-gray-600">
+                Adjustment Type
+              </label>
+              <DropdownSelect
+                name="itemMovementType"
+                value={adjustmentForm?.itemMovementType}
+                options={stockAdjustmentOptions}
+                sizes="sm"
+                onChange={setChange}
+              />
+            </div>
 
-        <DropdownSelect
-          name={"itemMovementType"}
-          value={adjustmentForm?.itemMovementType}
-          options={stockAdjustmentOptions}
-          sizes="xs"
-          onChange={setChange}
-        />
-        <label className="text-xs text-gray-500">Quanity</label>
-        <Input
-          label={""}
-          name={"itemMovementQuantity"}
-          value={adjustmentForm?.itemMovementQuantity ?? 0}
-          sizes="xs"
-          type="number"
-          onChange={setChange}
-        />
-        {/* <DropdownSelect name={""} value={undefined} options={[]} sizes="xs" /> */}
-        <label className="text-xs text-gray-500">Reason</label>
+            <div className="space-y-2">
+              <label className="text-xs xl:text-sm text-gray-600">
+                Quantity
+              </label>
+              <Input
+                name="itemMovementQuantity"
+                value={adjustmentForm?.itemMovementQuantity ?? 0}
+                sizes="sm"
+                type="number"
+                onChange={setChange}
+                min="1"
+                label={""}
+              />
+            </div>
 
-        <Textarea
-          name={"itemMovementRemarks"}
-          label={""}
-          value={adjustmentForm?.itemMovementRemarks}
-          sizes="xs"
-          onChange={setChange}
-        />
+            <div className="space-y-2">
+              <label className="text-xs xl:text-sm text-gray-600">Reason</label>
+              <Textarea
+                name="itemMovementRemarks"
+                value={adjustmentForm?.itemMovementRemarks}
+                sizes="sm"
+                onChange={setChange}
+                placeholder="Enter reason for stock adjustment..."
+                rows={3}
+                label={""}
+              />
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="flex justify-end gap-2">
-        <div>
-          <Button
-            size="xs"
-            color="nocolor"
-            label="Cancel"
-            onClick={function (): void {
-              if (setSelectedButton) {
-                setSelectedButton("");
-              }
-            }}
-            className="font-semibold"
-          />
-        </div>
-        <div>
-          <Button
-            size="xs"
-            loading={isSubmittingAdjustment}
-            label="Save"
-            onClick={function (): void {
-              handleSubmit();
-            }}
-            className="font-semibold"
-          />
-        </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <Button
+          size="sm"
+          color="nocolor"
+          label="Cancel"
+          onClick={handleCancel}
+          className="font-medium"
+        />
+        <Button
+          size="sm"
+          loading={isSubmittingAdjustment}
+          label="Apply Adjustment"
+          onClick={handleSubmit}
+          className="font-medium"
+        />
       </div>
     </div>
   );

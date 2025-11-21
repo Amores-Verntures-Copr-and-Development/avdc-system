@@ -91,6 +91,6 @@ export interface DeliverItemsToStore {
   poId: number;
   storeId: number;
   requestId: number;
-  items: Partial<RequestItems>[];
+  items: (Partial<RequestItems> & { suppId?: number })[];
   poItems: Partial<PurchaseOrderItems>[];
 }

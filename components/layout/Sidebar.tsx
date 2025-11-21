@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Menu,
   Warehouse,
+  Weight,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
@@ -117,9 +118,9 @@ const sideMenu = [
     key: "Sales & Customers",
     sections: [
       {
-        name: "Sales History",
-        href: "/sales-history",
-        icon: History,
+        name: "Sales",
+        href: "/sales",
+        icon: Weight,
         roles: [
           "superadmin",
           ,

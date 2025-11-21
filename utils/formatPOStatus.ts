@@ -45,9 +45,9 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
     case "completed":
       return {
         status,
-        bgClass: "bg-teal-100",
+        bgClass: "bg-green-200",
         textClass: "text-green-700",
-        borderClass: "border border-teal-200",
+        borderClass: "border border-green-300",
       };
     default:
       return {

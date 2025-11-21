@@ -3,6 +3,7 @@ import { getDBConnection } from "@/lib/db";
 import { Request, RequestItems } from "@/types/request";
 import { updateRequestItems } from "../request/request-items/update-request-items";
 import {
+  findRequestItemsByPOId,
   findRequestItemsByPOItemId,
   findRequestOrderItemById,
   getRequestOrderItems,
@@ -13,6 +14,8 @@ import { updateRequests } from "../request/update-request";
 import { getPurchaseOrderItemById } from "@/controllers/PurchaseOrderController";
 import { findPOItemsById } from "../purchaseOrderServices";
 import { updatePurchase } from "./update-purchase-order";
+import { findStoreItemsBySupplierAndPOIds } from "./purchase-items/get-purchase-tems";
+import { StoreSupplierDetails } from "@/app/purchase-orders/components/ApprovedPOView";
 
 export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   const pool = await getDBConnection();
@@ -20,6 +23,8 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   try {
     await connection.beginTransaction();
     console.log("DeliverItemsToStore: ", { data });
+    console.log("items: ", data.items);
+    console.log("poItems: ", data.poItems);
     const requestItemData: Partial<RequestItems>[] = data.items.map((item) => ({
       reqItemId: item.reqItemId,
       reqItemStatus: "delivered",
@@ -31,48 +36,58 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       keyFields: ["reqItemId"],
     });
 
-    const requestItemsInPOItem = await findRequestItemsByPOItemId({
+    // const requestItemsInPOItem = await findRequestItemsByPOItemId({
+    //   connection,
+    //   poItemId: data.poItems
+    //     ? data.poItems
+    //         .map((item) => item.poItemId)
+    //         .filter((id): id is number => id !== undefined)
+    //     : [],
+    // });
+    const requestItemsInPOItem = await findRequestItemsByPOId({
       connection,
-      poItemId: data.poItems
-        ? data.poItems
-            .map((item) => item.poItemId)
-            .filter((id): id is number => id !== undefined)
-        : [],
+      poId: data.poId,
     });
     console.log({ requestItemsInPOItem });
     // Get unique poItemIds that have delivered status
-    const poItemGroups = requestItemsInPOItem.reduce((acc, reqItem) => {
-      const poItemId = reqItem.poItemId;
-      if (!acc[poItemId]) {
-        acc[poItemId] = [];
-      }
-      acc[poItemId].push(reqItem);
-      return acc;
-    }, {} as Record<number, typeof requestItemsInPOItem>);
+    // const poItemGroups = requestItemsInPOItem.reduce((acc, reqItem) => {
+    //   const poItemId = reqItem.poItemId;
+    //   if (!acc[poItemId]) {
+    //     acc[poItemId] = [];
+    //   }
+    //   acc[poItemId].push(reqItem);
+    //   return acc;
+    // }, {} as Record<number, typeof requestItemsInPOItem>);
 
-    const fullyDeliveredPoItemIds = Object.entries(poItemGroups)
-      .filter(([poItemId, items]) =>
-        items.every(
-          (item) =>
-            item.reqItemStatus === "delivered" ||
-            item.reqItemStatus === "received"
-        )
-      )
-      .map(([poItemId]) => parseInt(poItemId));
+    // const fullyDeliveredPoItemIds = Object.entries(poItemGroups)
+    //   .filter(([poItemId, items]) =>
+    //     items.every(
+    //       (item) =>
+    //         item.reqItemStatus === "delivered" ||
+    //         item.reqItemStatus === "received"
+    //     )
+    //   )
+    //   .map(([poItemId]) => parseInt(poItemId));
 
-    console.log({ fullyDeliveredPoItemIds });
-    if (fullyDeliveredPoItemIds.length > 0) {
-      const poItemsData: Partial<PurchaseOrderItems>[] =
-        fullyDeliveredPoItemIds.map((item) => ({
-          poItemId: item,
-          poItemStatus: "delivered",
-        })) || [];
-      await updatePurchaseOrderItems({
-        connection,
-        keyFields: ["poItemId"],
-        updates: poItemsData,
-      });
-    }
+    // console.log({ fullyDeliveredPoItemIds });
+    // if (fullyDeliveredPoItemIds.length > 0) {
+    //   const poItemsData: Partial<PurchaseOrderItems>[] =
+    //     fullyDeliveredPoItemIds.map((item) => ({
+    //       poItemId: item,
+    //       poItemStatus: "delivered",
+    //     })) || [];
+    //   await updatePurchaseOrderItems({
+    //     connection,
+    //     keyFields: ["poItemId"],
+    //     updates: poItemsData,
+    //   });
+    // }
+    const allSameSupplier = data.items.every(
+      (i) => i.suppId === data.items[0].suppId
+    );
+    const suppId = allSameSupplier ? data.items[0].suppId : null;
+    console.log({ allSameSupplier, suppId });
+
     const requestItems = await getRequestOrderItems({
       requestId: data.requestId,
       connection,
@@ -84,6 +99,35 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       connection,
       poId: data.poId,
     });
+
+    if (allSameSupplier && suppId) {
+      const storeSuppPoId: StoreSupplierDetails[] =
+        await findStoreItemsBySupplierAndPOIds({
+          connection,
+          poId: data.poId,
+          suppId: suppId,
+        });
+
+      const allRequestItemsWithSameSupplierDelivered = storeSuppPoId.every(
+        (i) => i.items.every((items) => items.reqItemStatus === "delivered")
+      );
+      console.log({ storeSuppPoId });
+      console.log(
+        `allRequestItemsWithSameSupplierDelivered: `,
+        allRequestItemsWithSameSupplierDelivered
+      );
+      if (allRequestItemsWithSameSupplierDelivered) {
+        await updatePurchaseOrderItems({
+          connection,
+          updates: storeSuppPoId.flatMap((s) =>
+            s.items.flatMap((i) => ({
+              poItemId: i.poItemId,
+              poItemStatus: "delivered",
+            }))
+          ),
+        });
+      }
+    } //Plu the Purchase Order Items to delivered status
     const isAllPOitemsDelivered = purchaseItems.every(
       (item) => item.poItemStatus === "delivered"
     );
@@ -112,7 +156,6 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
         updates: request,
       });
     }
-    //Plu the Purchase Order Items to delivered status
     await connection.commit();
   } catch (e) {
     await connection.rollback();

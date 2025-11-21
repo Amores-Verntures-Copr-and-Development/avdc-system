@@ -85,7 +85,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   mutate,
 }) => {
   const [expandedSupplier, setExpandedSupplier] = useState<{
-    suppId: number;
+    suppId: number | null;
     index: null | number;
   }>({
     suppId: 0,
@@ -102,7 +102,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     data: StoreSupplierDetails[];
   }>(
     isView === "store" && expandedSupplier
-      ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier}`
+      ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier.suppId}`
       : null,
     fetcher,
     {
@@ -220,6 +220,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               size="xs"
                               onClick={function (): void {
                                 setIsView("store");
+                                setExpandedSupplier({
+                                  suppId: data.suppId,
+                                  index,
+                                });
                               }}
                               color={
                                 isView === "store" &&
@@ -532,7 +536,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 />
               </div>
             )}
-            <div>
+            {/* <div>
               <Button
                 size="sm"
                 onClick={function (): void {
@@ -542,7 +546,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 icon={<Send size={15} />}
                 className="font-semibold  text-xs px-2 py-2"
               />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

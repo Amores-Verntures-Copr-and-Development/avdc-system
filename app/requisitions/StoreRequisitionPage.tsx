@@ -92,6 +92,17 @@ const StoreRequisitionPage = () => {
   const handleClear = () => {
     tableRef.current?.clearSelection();
   };
+  const handleUpdateData = async () => {
+    const updatedData = await mutate();
+    // The updatedData should contain the fresh data
+    const findSelectedRo = updatedData?.data.find(
+      (ro) => ro.requestId === selectedRow?.requestId
+    );
+    if (findSelectedRo) {
+      console.log("Selected PO: ", findSelectedRo);
+      setSelectedRow(findSelectedRo);
+    }
+  };
   const handleSubmitCreateRequest = async (data: CreateRequestItemDto[]) => {
     const requestFormData: CreateRequestFormDto = {
       requestById: user?.userId ?? 0,
@@ -167,6 +178,10 @@ const StoreRequisitionPage = () => {
           ref={tableRef}
           totalCount={10}
           loading={loading}
+          onRowSelection={(row) => {
+            setIsShowViewRequest(true);
+            setSelectedRow(row);
+          }}
           textSize="xs"
           showActions
           maxHeight="h-full"
@@ -287,7 +302,7 @@ const StoreRequisitionPage = () => {
       >
         <ViewRequestModal
           selectedReq={selectedRow}
-          mutateRequest={mutate}
+          mutateRequest={handleUpdateData}
           user={user}
         />
       </Modal>

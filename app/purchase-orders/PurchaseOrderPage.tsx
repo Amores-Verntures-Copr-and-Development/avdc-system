@@ -28,6 +28,11 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
 
   { name: "Created By", key: "poCreatedByName" },
   {
+    name: "Create At",
+    key: "poCreatedAt",
+    selector: (row) => formatDateToWords(row.poCreatedAt),
+  },
+  {
     name: "Status",
     key: "poStatus",
     selector: (row) => {
@@ -43,19 +48,21 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
       );
     },
   },
-  {
-    name: "Create At",
-    key: "poCreatedAt",
-    selector: (row) => formatDateToWords(row.poCreatedAt),
-  },
 ];
 
 const PurchaseOrderPage = () => {
   const [showViewPO, setShowViewPO] = useState(false);
   const [selectedPo, setSelecetedPo] = useState<PurchaseOrders>();
   const { user } = useSession();
-  const { data: inventoryResponse = { data: [] }, mutate: mutateInventory } =
-    useSWR<{ data: PurchaseOrders[] }>("/api/purchase-order/", fetcher);
+  const baseApi =
+    user?.userRole === "employee" && user?.empPosition === "purchaser"
+      ? `/api/purchase-order/userId/${user?.userId}`
+      : `/api/purchase-order/`;
+  const {
+    data: inventoryResponse = { data: [] },
+    mutate: mutateInventory,
+    isLoading,
+  } = useSWR<{ data: PurchaseOrders[] }>(user ? baseApi : null, fetcher);
   const handleUpdateData = async () => {
     const updatedData = await mutateInventory();
     // The updatedData should contain the fresh data
@@ -76,6 +83,11 @@ const PurchaseOrderPage = () => {
           showCheckBox
           columns={purchaseOrderColumns}
           data={inventoryResponse.data}
+          onRowSelection={(row) => {
+            setShowViewPO(true);
+            setSelecetedPo(row);
+          }}
+          loading={isLoading}
           maxHeight="h-full"
           totalCount={10}
           rowSize="h-10"
@@ -143,14 +155,14 @@ const renderModalDetails = (selectedPo?: PurchaseOrders) => {
   return (
     <div className="flex justify-between items-center w-full">
       <div className="flex flex-col">
-        <span className="text-black text-sm">
+        <span className="text-black text-[10px] xl:text-sm">
           Date:{" "}
           {formatDateToWords(selectedPo?.poCreatedAt ?? "", {
             showMinute: false,
             showHour: false,
           })}
         </span>
-        <span className="text-black text-sm">
+        <span className="text-black text-[10px] xl:text-sm">
           Requisition:{" "}
           {selectedPo?.purchaseOrderRequest
             ?.map((req) => req.requestNo)
@@ -159,10 +171,12 @@ const renderModalDetails = (selectedPo?: PurchaseOrders) => {
       </div>
 
       <div className="text-right flex items-center gap-2">
-        <span className="text-sm"> Status: </span>
+        <span className="text-[10px] xl:text-sm"> Status: </span>
         <div className={`${bgClass}  rounded-2xl px-2 `}>
           {" "}
-          <span className={`${textClass} text-xs`}>{status}</span>
+          <span className={`${textClass} text-[10px] xl:text-xs font-semibold`}>
+            {status}
+          </span>
         </div>
       </div>
     </div>

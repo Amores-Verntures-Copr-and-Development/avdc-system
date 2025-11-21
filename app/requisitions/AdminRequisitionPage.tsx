@@ -116,6 +116,10 @@ const AdminRequisitionPage = () => {
             ref={tableRef}
             data={itemResponse.data}
             totalCount={10}
+            onRowSelection={(row) => {
+              setSelectedRow(row);
+              setIsShowRequest(true);
+            }}
             showActions
             showCheckBox
             maxHeight="h-full"

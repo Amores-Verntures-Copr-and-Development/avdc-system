@@ -1,3 +1,4 @@
+import { StoreSupplierDetails } from "@/app/purchase-orders/components/ApprovedPOView";
 import {
   CreatePurchaseOrderDto,
   CreatePurchaseOrderItemDto,
@@ -312,56 +313,63 @@ export const selectPurchaseOrderItemsSupplier = async (poId: number) => {
 };
 
 export const selectStoreItemsBySupplierAndPOId = async ({
+  connection,
   suppId,
   poId,
 }: {
+  connection?: PoolConnection;
   poId: number;
   suppId: number;
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
   const sql = `
-SELECT   
+SELECT 
     s.storeId,
     s.storeName,
     ro.requestId,
-    COUNT(DISTINCT ri.reqItemId) AS requestCount,
+    COUNT(DISTINCT ri.reqItemId) AS totalRequestCount,
     COALESCE(
         (
             SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
                     'itemName', i.itemName,
                     'itemUnit', i.itemUnit,
-                    'reqItemId', ris.reqItemId,
+                    'reqItemId', ri.reqItemId,
                     'categoryName', c.categoryName,
                     'categoryType', c.categoryType,
-                    'reqItemQuantity', ris.reqItemQuantity,
-                    'reqItemStatus', ris.reqItemStatus,
-                    'reqItemRemarks', ris.reqItemRemarks,
-                    'poItemId', poi.poItemId
+                    'reqItemQuantity', ri.reqItemQuantity,
+                    'reqItemStatus', ri.reqItemStatus,
+                    'reqItemRemarks', ri.reqItemRemarks,
+                    'poItemId', poi.poItemId,
+                    'suppId', poi.suppId
                 )
-            ) 
-            FROM RequestItems ris
-            LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ris.invItem
-            LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId 
-                AND ii.inventoryItemReferenceType = "item"
+            )
+            FROM PurchaseOrderItems poi
+            LEFT JOIN PurchaseOrderRequest por ON por.poId = poi.poId
+            LEFT JOIN RequestOrders ro_sub ON ro_sub.requestId = por.requestId
+            LEFT JOIN RequestItems ri ON ri.requestId = ro_sub.requestId
+            LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+            LEFT JOIN Items i ON i.itemId = poi.itemId 
+                AND poi.itemId = ii.inventoryItemReferenceId 
+                AND ii.inventoryItemReferenceType = 'item'
             LEFT JOIN Categories c ON c.categoryId = i.categoryId
-            LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId 
-                AND poi.poId = ?  -- Add this condition to avoid cross-join
-            WHERE ris.requestId = ro.requestId
-            GROUP BY ris.reqItemId  -- This prevents duplicates
+            WHERE poi.poId = ?
+                AND poi.suppId = ?
+                AND i.itemId IS NOT NULL
+                AND ro_sub.requestId = ro.requestId  -- Correlate with main query
         ),
         JSON_ARRAY()
-    ) AS items 
+    ) AS items
 FROM Stores s
 INNER JOIN RequestOrders ro ON ro.storeId = s.storeId
-LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 INNER JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
 INNER JOIN PurchaseOrders po ON po.poId = por.poId
+LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 WHERE po.poId = ?
-GROUP BY s.storeId, s.storeName, ro.requestId;
+GROUP BY s.storeId, s.storeName, ro.requestId;;
 `;
-  const [rows] = await pool.execute(sql, [poId, poId]);
-  return rows;
+  const [rows] = await pool.execute(sql, [poId, suppId, poId]);
+  return rows as StoreSupplierDetails[];
 };
 
 export const selectPurchaserOrderItems = async ({
@@ -388,6 +396,60 @@ export const selectPurchaserOrderItems = async ({
       params.push(value);
     }
   }
+  const [rows] = await pool.execute(sql, params);
+  return rows as PurchaseOrderItems[];
+};
+
+export const selectPurchaserOrderByFields = async ({
+  connection,
+  keyfields = {},
+}: {
+  connection?: PoolConnection;
+  keyfields: Partial<PurchaseOrders>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT po.*, CONCAT_WS(' ', u.userFname, u.userLname) AS poCreatedByName,
+COALESCE(
+    JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'poReqId', por.poReqId,
+        'poId', por.poId,
+        'requestId', por.requestId,
+        'requestNo', ro.requestNo
+      )
+    ),
+    JSON_ARRAY()
+  ) AS purchaseOrderRequest
+   FROM PurchaseOrders po
+LEFT JOIN PurchaseOrderRequest por ON por.poId = po.poId
+LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
+LEFT JOIN Users u ON u.userId = po.poCreatedBy
+WHERE 1=1 `;
+
+  const params: any[] = [];
+
+  // ✅ Build WHERE dynamically
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else if (value === 0) {
+      // Handle IS NOT NULL
+      sql += ` AND ${key} IS NOT NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  sql += ` GROUP BY po.poId
+ORDER BY 
+CASE po.poStatus
+	WHEN  "pending" THEN 1
+	WHEN  "approved" THEN 2
+	WHEN  "sent" THEN 3
+	WHEN  "received" THEN 4
+	ELSE 5
+	END ASC,
+po.poCreatedAt DESC`;
   const [rows] = await pool.execute(sql, params);
   return rows as PurchaseOrderItems[];
 };

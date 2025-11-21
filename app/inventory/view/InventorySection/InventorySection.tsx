@@ -42,6 +42,7 @@ import ImportItemModa from "../../components/ImportItemModal";
 import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemDto, ImportItemInfo } from "@/dtos/items.dto";
 import { capitalizeWords } from "@/utils/capitalizeWords";
+import { InventoryItemInterface } from "@/types/inventory";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -184,6 +185,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
+  const [isEditingItem, setIsEditingItem] = useState(false);
   const { user, loading: userLoading, hasStore } = useSession();
   const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
@@ -357,6 +359,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       return false;
     }
   };
+
+  const handleUpdateData = async () => {
+    const updatedData = await mutate();
+    // The updatedData should contain the fresh data
+    const findSelectedInvItem = updatedData?.data.find(
+      (inv) => inv.inventoryItemId === selectedRow?.inventoryItemId
+    );
+    if (findSelectedInvItem) {
+      console.log("Selected PO: ", findSelectedInvItem);
+      setSelectedRow(findSelectedInvItem);
+    }
+  };
   const handleSubmitStockAdjustment = async (
     data: CreateInventoryMovementDto
   ) => {
@@ -429,6 +443,38 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       return false;
     } finally {
       setIsSubmittingImport(false);
+    }
+  };
+
+  const handleEditInventoryItem = async (
+    item: Partial<InventoryItemInterface>
+  ) => {
+    console.log({ item });
+    setIsEditingItem(true);
+    try {
+      const result = await fetch(
+        `/api/inventory/item/${inventoryId}/${item.inventoryItemId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(item),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutate();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    } finally {
+      setIsEditingItem(false);
     }
   };
   return (
@@ -744,8 +790,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         />
       </Modal>
       <Popup
+        icon={Package}
         title={selectedRow?.itemName}
-        subtitle="Inventory Item"
+        subtitle={`ID: ${selectedRow?.inventoryItemId}`}
         background="transparent"
         isOpen={showInventoryItemModal}
         onClose={function (): void {
@@ -757,6 +804,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           user={user}
           onSubmitStockAdjustment={handleSubmitStockAdjustment}
           isSubmittingAdjustment={isSubmittingAdjustment}
+          mutate={handleUpdateData}
+          onSubmitEditItems={handleEditInventoryItem}
+          isEditing={isEditingItem}
         />
       </Popup>
     </>

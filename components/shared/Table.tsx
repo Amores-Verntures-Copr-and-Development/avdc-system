@@ -210,6 +210,9 @@ const TableInner = <T extends Record<string, any>>(
 
         return (
           <select
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
             value={editableData[rowIndex]?.[column.key] ?? ""}
             onChange={(e) =>
@@ -228,6 +231,9 @@ const TableInner = <T extends Record<string, any>>(
         return (
           <div className="flex flex-col">
             <input
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
               type={column.inputType ?? "text"}
               name={column.name}
               value={editableData[rowIndex]?.[column.key] ?? ""}
@@ -282,7 +288,12 @@ const TableInner = <T extends Record<string, any>>(
 
         {/* Table Container with Sticky Header */}
         <div className="flex-1 overflow-auto " style={{ maxHeight }}>
-          <table className="w-full border-collapse text-black overflow-auto">
+          <table
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="w-full border-collapse text-black overflow-auto"
+          >
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-300">
               <tr
                 className={`xl:${rowSize} text-[10px] xl:text-${textSize} border-b-1 border-gray-300`}
@@ -382,7 +393,10 @@ const TableInner = <T extends Record<string, any>>(
                   >
                     {/* Row checkbox */}
                     {showCheckBox && (
-                      <td className="px-1 py-0.5 xl:px-2 xl:py-1 text-center border-r border-gray-100">
+                      <td
+                        onClick={(e) => e.stopPropagation()}
+                        className="px-1 py-0.5 xl:px-2 xl:py-1 text-center border-r border-gray-100"
+                      >
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"

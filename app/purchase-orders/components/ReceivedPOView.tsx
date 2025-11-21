@@ -84,6 +84,7 @@ interface ReceivedPOViewProps {
   poId: number;
   poData: PurchaseOrders | null;
   onClose: () => void;
+  mutateInventory: () => void;
 }
 
 interface StoreInSupplierDetails {
@@ -97,6 +98,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   poId,
   poData,
   onClose,
+  mutateInventory,
 }) => {
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier[]>(data);
@@ -185,6 +187,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         },
         body: JSON.stringify(data),
       });
+      console.log(`asdasd`, { data });
       const res = await result.json();
       if (!res.success) {
         console.log("Res: ", res);
@@ -192,6 +195,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       }
       toast.success(res.message);
       mutate();
+      mutateInventory();
       setIsShowDeliverConfirmation(false);
       setSelectedStoreSupplier(null);
       return true;

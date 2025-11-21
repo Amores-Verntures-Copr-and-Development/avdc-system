@@ -10,6 +10,7 @@ import {
   insertInventoryItem,
   selectInventory,
   selectInventoryItems,
+  updateInventoryItems,
 } from "../models/inventoryModels";
 import { handleCreateItem } from "../services/itemServices";
 import { getDBConnection } from "../lib/db";
@@ -260,6 +261,17 @@ export const processStockAdjustmetController = async (
 ) => {
   try {
     const res = await processStockAdjustment(data);
+    return { success: true, message: "Successfully adjust stock", result: res };
+  } catch (e) {
+    return { success: false, message: "Failed to adjust stock", error: e };
+  }
+};
+
+export const updateInventoryItem = async (data: InventoryItemInterface) => {
+  try {
+    const res = await updateInventoryItems({
+      updates: [data],
+    });
     return { success: true, message: "Successfully adjust stock", result: res };
   } catch (e) {
     return { success: false, message: "Failed to adjust stock", error: e };

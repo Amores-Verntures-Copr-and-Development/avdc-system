@@ -9,6 +9,7 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 
 import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { formatPeso } from "@/utils/formatPeso";
 import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
 import {
   PrinterIcon,
@@ -64,6 +65,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     {
       name: "Price",
       key: "itemPrice",
+      selector: (row) => formatPeso(row.itemPrice),
     },
     {
       name: "Unit",
@@ -200,8 +202,10 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-2  flex-col h-full w-full overflow-y-auto">
         <div className="p-4 border-b-1 border-gray-200">
-          <h1 className="text-md font-semibold">Requisition Fulfillment</h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <h1 className="text-xs md:text-md font-semibold">
+            Requisition Fulfillment
+          </h1>
+          <p className="text-[9px] xl:text-xs text-gray-500 mt-1">
             Review and fulfill requisition requests
           </p>
         </div>
@@ -211,15 +215,22 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               getRequestStatusFormat(reqData.requestStatus);
             return (
               <div
-                className="flex flex-col shadow w-full border-1 border-gray-200"
+                className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer "
                 key={reqData.requestId}
+                onClick={() =>
+                  setIsRequestExpanded(
+                    isRequestExpanded === reqData.requestNo
+                      ? null
+                      : reqData.requestNo
+                  )
+                }
               >
                 <div className="flex items-center justify-between p-2">
                   <div className="flex flex-col border-gray-200">
-                    <h1 className="text-sm font-semibold">
+                    <h1 className="text-xs xl:text-sm font-semibold">
                       {reqData.requestNo}
                     </h1>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-[9px] xl:text-xs text-gray-500">
                       {reqData.storeName}
                     </span>
                   </div>
@@ -279,7 +290,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   </div>
                 )}
                 <div className="flex border-t-1 p-2 justify-between border-gray-200 items-center">
-                  <span className="text-xs">
+                  <span className="text-[9px] md:text-xs">
                     Created: {formatDateToWords(reqData.poCreatedAt)}
                   </span>
                   <div className="flex gap-3">
@@ -360,7 +371,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
         <span className="flex items-center">
           <Clock size={15} />{" "}
-          <span className="text-xs ml-2">
+          <span className="text-[9px] md:text-xs ml-2">
             {" "}
             Created: {formatDateToWords(poData?.poCreatedAt ?? "")}
           </span>

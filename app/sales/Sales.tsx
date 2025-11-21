@@ -2,12 +2,12 @@ import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import React from "react";
 
-const SalesHistoryPage = () => {
+const Sales = () => {
   return (
     <PageLayout className="p-4">
-      <PageHeader title={"Sales History"} />
+      <PageHeader title={"Sales"} />
     </PageLayout>
   );
 };
 
-export default SalesHistoryPage;
+export default Sales;

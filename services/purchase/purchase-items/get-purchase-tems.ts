@@ -6,14 +6,20 @@ import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { PoolConnection } from "mysql2/promise";
 
 export async function findStoreItemsBySupplierAndPOIds({
+  connection,
   suppId,
   poId,
 }: {
+  connection?: PoolConnection;
   poId: number;
   suppId: number;
 }) {
   try {
-    const data = await selectStoreItemsBySupplierAndPOId({ suppId, poId });
+    const data = await selectStoreItemsBySupplierAndPOId({
+      connection,
+      suppId,
+      poId,
+    });
     return data;
   } catch (e) {
     throw e;

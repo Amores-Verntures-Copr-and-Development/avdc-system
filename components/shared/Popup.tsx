@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import clsx from "clsx";
+
+import { LucideIcon, X } from "lucide-react";
 
 interface PopupProps {
   title?: string;
@@ -10,10 +11,12 @@ interface PopupProps {
   background?: string;
   children: React.ReactNode;
   subtitle?: string;
+  icon?: LucideIcon;
 }
 
 const Popup: React.FC<PopupProps> = ({
   title,
+  icon: Icon,
   isOpen,
   onClose,
   position = "right",
@@ -37,10 +40,10 @@ const Popup: React.FC<PopupProps> = ({
   if (!show) return null;
 
   const positionClasses = {
-    left: `left-0 top-0 h-full w-96 transform transition-transform duration-300 ease-in-out ${
+    left: `left-0 top-0 h-full w-60 xl:w-96 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "-translate-x-full"
     }`,
-    right: `right-0 top-0 h-full w-96 transform transition-transform duration-300 ease-in-out ${
+    right: `right-0 top-0 h-full w-60 xl:w-96 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "translate-x-full"
     }`,
     top: `top-0 left-0 w-full h-72 transform transition-transform duration-300 ease-in-out ${
@@ -66,21 +69,29 @@ const Popup: React.FC<PopupProps> = ({
         )}
       >
         {/* Header */}
-        <div className="flex flex-col  p-4 border-b border-gray-200">
-          <div className="flex  justify-between">
-            <h2 className="text-lg font-semibold">{title}</h2>
-            <button
-              onClick={onClose}
-              className=" p-1 rounded-full hover:bg-gray-700 transition-color"
-            >
-              <X className="w-5 h-5 hover:text-white" />
-            </button>
+        <div className="flex items-center justify-between p-2 xl:p-6 border-b border-gray-200 bg-white">
+          <div className="flex items-center gap-3">
+            {Icon && (
+              <div className="p-2 bg-blue-50 rounded-lg">
+                <Icon className="w-3 h-3 xl:w-5 xl:h-5 text-blue-600" />
+              </div>
+            )}
+            <div>
+              <h2 className="text-xs xl:text-lg font-semibold text-gray-900">
+                {title}
+              </h2>
+              <p className="text-xs xl:text-sm text-gray-500">{subtitle}</p>
+            </div>
           </div>
-          <span className="text-xs text-gray-500">{subtitle}</span>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <X className="w-3 h-3 xl:w-5 xl:h-5 text-gray-500" />
+          </button>
         </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 p-4 overflow-y-auto">{children}</div>
+        <div className="flex-1 xl:p-4 overflow-y-auto">{children}</div>
       </div>
     </div>
   );

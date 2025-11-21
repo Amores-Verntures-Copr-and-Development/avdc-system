@@ -79,8 +79,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
               }}
               color={selectionSection === "inventory" ? "primary" : "nocolor"}
               label="Inventory"
-              className="text-[9px] xs:text-xs font-semibold"
-              icon={<Package className="h-3 w-3 xl:w-6 xl:h-6" />}
+              icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
             />
           </div>
           <div>
@@ -92,8 +91,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
               }}
               color={selectionSection === "movement" ? "primary" : "nocolor"}
               label="Stock Movement"
-              className="text-[9px] xs:text-xsfont-semibold"
-              icon={<Package2 className="h-3 w-3 xl:w-6 xl:h-6" />}
+              icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
             />
           </div>
           <div>
@@ -105,8 +103,7 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
               }}
               color={selectionSection === "report" ? "primary" : "nocolor"}
               label="Report"
-              className="text-[9px] xs:text-xs font-semibold"
-              icon={<FileChartColumn className="h-3 w-3 xl:w-6 xl:h-6" />}
+              icon={<FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />}
             />
           </div>
         </div>

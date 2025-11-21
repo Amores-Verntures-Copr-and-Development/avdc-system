@@ -3,6 +3,7 @@ import {
   DeliverItemsToStore,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
+import { findPurchaseOrderByUserId } from "@/services/purchase/get-purchase-order";
 import { processApprovedPO } from "@/services/purchase/process-approved-purchase";
 import { processCompletePO } from "@/services/purchase/process-complete-purchase";
 import { processCreatePO } from "@/services/purchase/process-create-po";
@@ -39,6 +40,24 @@ export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
 export const getPurchaseOrder = async () => {
   try {
     const data = await findAllPurchaseOrder();
+    return {
+      success: true,
+      message: "Purchase Order fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch Purchase Order",
+      error: e,
+    };
+  }
+};
+
+export const getPurchaseOrderByUserId = async (userId: number) => {
+  try {
+    const data = await findPurchaseOrderByUserId(userId);
     return {
       success: true,
       message: "Purchase Order fetched successfully",

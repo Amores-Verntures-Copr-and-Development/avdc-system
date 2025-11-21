@@ -79,7 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             required={required}
             readOnly={readOnly}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black  rounded-md py-1 md:py-2 md:pl-3 md:pr-10 focus:outline-none focus:ring-2 ${
+            className={`w-full border border-gray-300 text-black  rounded-md py-1 md:py-2 md:pl-3 md:pr-1 focus:outline-none focus:ring-2 ${
               readOnly
                 ? "bg-gray-100 cursor-not-allowed"
                 : "focus:ring-blue-400"

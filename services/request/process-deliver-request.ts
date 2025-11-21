@@ -84,6 +84,8 @@ export async function processDeliveredPO(data: Request[], userId: number) {
       );
     console.log("[createInventoryMovementDeliver]");
     await createInventoryMovement({ connection, data: storeInventoryMovement });
+    //check if all requestItems is delivered to make the purchaserOrderItems delivered too.
+
     await connection.commit();
   } catch (e) {
     await connection.rollback();

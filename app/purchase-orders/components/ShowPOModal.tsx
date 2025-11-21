@@ -151,7 +151,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         controller: "received",
         data: updatePO,
       };
-      console.log("NewData: ", updatePO);
+      console.log("NewData: ", newData);
       const result = await fetch(`/api/purchase-order/`, {
         method: "PUT",
         headers: {
@@ -248,7 +248,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             <div key={step} className="flex items-center flex-1">
               <div className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-sm ${
+                  className={`w-4 h-4 xl:w-7 xl:h-7 rounded-full flex items-center justify-center font-semibold text-xs xl:text-sm ${
                     index <= currentStepIndex
                       ? "bg-primary-1 text-white"
                       : "bg-gray-300 text-gray-600"
@@ -256,7 +256,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
                 >
                   {index + 1}
                 </div>
-                <span className="text-xs mt-2 capitalize">{step}</span>
+                <span className="text-[9px] xl:text-xs mt-2 capitalize">
+                  {step}
+                </span>
               </div>
               {index < statusSteps.length - 1 && (
                 <div
@@ -293,6 +295,10 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "sent" ? (
         <ReceivedPOView
+          mutateInventory={() => {
+            mutate();
+            mutateInventory();
+          }}
           onClose={onClose}
           poData={data}
           data={itemResponse.data}
