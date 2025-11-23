@@ -1,12 +1,14 @@
 import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { getSupplierBySearch } from "@/services/supplier/get-supplier";
 import { createSupplierItems } from "@/services/supplier/suppplier-items/create-supplier-items";
+import { handleDeleteSupplierItems } from "@/services/supplier/suppplier-items/update-supplier-items";
 import {
   addItemSupplierByID,
   createSupplier,
   findAllSuppliers,
   findSupplierItemById,
 } from "@/services/supplierServices";
+import { SupplierItem } from "@/types/supplier";
 
 export const addSupplier = async (data: CreateSupplierDto) => {
   try {
@@ -95,6 +97,48 @@ export const getSupplierItemById = async (suppId: number) => {
       success: false,
       message: "Failed to fetched Supplier item",
       error: e,
+    };
+  }
+};
+
+export const updateSupplierItems = async ({
+  data,
+  controller,
+}: {
+  data: SupplierItem[];
+  controller: "update" | "delete";
+}) => {
+  let message = "";
+  try {
+    switch (controller) {
+      case "update": {
+        // await handleUpdateSupplierItems(data);
+        // message = "Supplier items updated successfully!";
+        break;
+      }
+
+      case "delete": {
+        await handleDeleteSupplierItems(data);
+        message = "Supplier items deleted successfully!";
+        break;
+      }
+
+      default:
+        const exhaustiveCheck: never = controller;
+        throw new Error(`Unsupported controller action: ${controller}`);
+    }
+
+    return {
+      success: true,
+      message: message,
+      data: data,
+    };
+  } catch (error) {
+    console.error(`Supplier items ${controller} error:`, error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+      data: data,
     };
   }
 };

@@ -2,7 +2,7 @@ out/
 .next/
 node_modules
 *.log
-.env
+#.env
 .env.local
 /dist
 Dockerfile*

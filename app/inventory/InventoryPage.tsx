@@ -1,7 +1,7 @@
 "use client";
 import Button from "@/components/shared/Button";
 import PageHeader from "@/components/shared/PageHeader";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileChartColumn, Package, Package2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import PageLayout from "@/components/shared/PageLayout";
@@ -19,6 +19,9 @@ export interface DisplayAllInventory
     StoreInterface,
     StockRoom {}
 const InventoryPage = () => {
+    const [selectionSection, setSelectionSection] = useState<
+      "inventory" | "movement" | "report"
+    >("inventory");
   const [inventoryId, setInventoryId] = useState(0);
   const [selectedInventory, setSelectedInventory] =
     useState<DisplayAllInventory | null>();
@@ -49,17 +52,61 @@ const InventoryPage = () => {
     }
   }, [inventoryResponse, user?.empPosition]);
   return (
-    <PageLayout className="gap-2 p-4">
+    <PageLayout className="gap-2 p-4 ">
       {user?.empPosition === "purchaser" ||
       user?.empPosition === "supervisor" ||
       user?.empPosition === "staff" ||
       user?.empPosition === "admin" ? (
         <>
-          <PageHeader
+        <div className="flex justify-between items-center">
+              <PageHeader
             title={"Inventory"}
             subtitle="Track and manage your stock levels"
           />
-          <InventoryView inventoryId={inventoryId} user={user} />
+          <div className="flex">
+        <div className="flex  border-gray-300">
+       
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("inventory");
+              }}
+              color={selectionSection === "inventory" ? "primary" : "nocolor"}
+              label="Inventory"
+              icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
+            />
+          </div>
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("movement");
+              }}
+              color={selectionSection === "movement" ? "primary" : "nocolor"}
+              label="Stock Movement"
+              icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
+            />
+          </div>
+          <div>
+            <Button
+              isRounded={false}
+              size="sm"
+              onClick={function (): void {
+                setSelectionSection("report");
+              }}
+              color={selectionSection === "report" ? "primary" : "nocolor"}
+              label="Report"
+              icon={<FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />}
+            />
+          </div>
+        </div>
+      </div>
+        </div>
+         
+          <InventoryView inventoryId={inventoryId} user={user} view={selectionSection} />
         </>
       ) : (
         <>
@@ -93,6 +140,7 @@ const InventoryPage = () => {
               <InventoryView
                 inventoryId={selectedInventory.inventoryId}
                 user={user}
+              view={selectionSection}
               />
             </>
           ) : (

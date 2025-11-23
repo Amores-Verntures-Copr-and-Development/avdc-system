@@ -121,10 +121,10 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex flex-col h-full w-full overflow-hidden pr-2 pl-2">
         <div className="text-center border-t border-gray-300 p-2">
-          <p className="text-gray-700 font-medium">
+          <p className="text-gray-700 text-xs 2xl:text-sm font-medium">
             Assign suppliers to your items
           </p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs 2xl:text-sm">
             Choose a supplier for each item to proceed with your purchase order.
           </p>
         </div>

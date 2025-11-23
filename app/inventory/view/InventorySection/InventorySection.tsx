@@ -92,11 +92,9 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
 ];
 export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
   {
-    name: "ID",
-    key: "inventoryItemId",
-    selector: (row) => (
-      <span className="text-gray-700 font-medium">{row.inventoryItemId}</span>
-    ),
+    name: "#",
+    key: "#",
+    selector: (_row,index) => index+1,
   },
   {
     name: "Item Name",
@@ -153,6 +151,48 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
       <span className="text-gray-700">{row.categoryName || "—"}</span>
     ),
   },
+    {
+    name: "itemSupplier",
+    key: "itemSuppliers",
+    selector: (row) => {
+      const suppliers = row.itemSuppliers || []
+      // Assuming your row has a suppliers array
+
+      
+      return (
+      <div className="group relative">
+  <select 
+    className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+    disabled
+  >
+    <option value="">
+      {suppliers.filter(s => s !== null).length > 0 
+        ? `Suppliers (${suppliers.filter(s => s !== null).length})` 
+        : "No Supplier"
+      }
+    </option>
+  </select>
+  
+  {/* Show suppliers on hover */}
+  {suppliers.filter(s => s !== null).length > 0 && (
+    <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+      {suppliers
+        .filter(supplier => supplier !== null)
+        .map((supplier, index) => (
+          <div 
+            key={index} 
+            className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+          >
+            {`${supplier.suppName} (${formatPeso(supplier.suppItemPrice)})`}
+          </div>
+        ))
+      }
+    </div>
+  )}
+</div>
+      );
+    },
+  }, 
   {
     name: "Status",
     key: "status",
@@ -164,7 +204,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
       return (
         <span
-          className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[8px] xl:text-xs font-semibold ${bgClass} ${textClass}`}
+          className={`inline-flex items-center text-center justify-center px-1.5 py-0.5 2xl:px-3 2xl:py-1 rounded-full text-[8px] xl:text-[10px] 2xl:text-sm font-semibold ${bgClass} ${textClass}`}
         >
           {status}
         </span>
@@ -643,7 +683,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             />
           </div>
         )}
-        totalCount={10}
+        totalCount={itemResponse.data.length}
       />
       <Modal
         title={"Add Item"}

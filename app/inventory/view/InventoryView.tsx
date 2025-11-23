@@ -21,11 +21,10 @@ import StockMovementSection from "./StockMovementSection/StockMovementSection";
 interface InventoryViewProps {
   inventoryId: number | null;
   user: UserAuth | null;
+  view: "inventory" | "movement" | "report"
 }
-const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
-  const [selectionSection, setSelectionSection] = useState<
-    "inventory" | "movement" | "report"
-  >("inventory");
+const InventoryView = ({ inventoryId, user,view }: InventoryViewProps) => {
+
 
   const { data: inventoryItemResponse = { data: [] } } = useSWR(
     `api/inventory/item/${inventoryId}/details`,
@@ -68,54 +67,14 @@ const InventoryView = ({ inventoryId, user }: InventoryViewProps) => {
           iconBg="bg-red-100"
         />
       </div>
-      <div className="flex">
-        <div className="flex border-1 border-gray-300">
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("inventory");
-              }}
-              color={selectionSection === "inventory" ? "primary" : "nocolor"}
-              label="Inventory"
-              icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
-            />
-          </div>
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("movement");
-              }}
-              color={selectionSection === "movement" ? "primary" : "nocolor"}
-              label="Stock Movement"
-              icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
-            />
-          </div>
-          <div>
-            <Button
-              isRounded={false}
-              size="sm"
-              onClick={function (): void {
-                setSelectionSection("report");
-              }}
-              color={selectionSection === "report" ? "primary" : "nocolor"}
-              label="Report"
-              icon={<FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />}
-            />
-          </div>
-        </div>
-      </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-        {selectionSection === "inventory" && (
+        {view === "inventory" && (
           <InventorySection inventoryId={inventoryId} user={user} />
         )}
-        {selectionSection === "movement" && (
+        {view === "movement" && (
           <StockMovementSection inventoryId={inventoryId} />
         )}
-        {selectionSection === "report" && <ReportSection />}
+        {view === "report" && <ReportSection />}
       </div>
     </PageLayout>
   );

@@ -78,7 +78,7 @@ export default function SearchBar({
           value={search}
           onChange={(e) => setKeyword(e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-full pr-4 pl-5 py-0.5 xl:pl-10 xl:py-2 border border-gray-300 bg-white text-gray-800 text-xs xl:text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          className="w-full pr-4 pl-5 py-0.5 xl:pl-10 xl:py-1 border border-gray-300 bg-white text-gray-800 text-xs xl:text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
         />
         {search && (
           <button

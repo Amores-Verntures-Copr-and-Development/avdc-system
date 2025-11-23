@@ -174,22 +174,38 @@ export const selectInventoryItems = async ({
 
   let sql = `
     SELECT 
-      ii.inventoryItemId,
-      ii.inventoryId,
-      ii.inventoryItemReferenceType,
-      ii.inventoryItemReferenceId,
-      ii.inventoryItemQuantity,
-      ii.inventoryItemMin,
-      it.itemName,
-      it.itemUnit,
-      c.categoryName,
-      it.itemPrice,
-      it.itemId
-    FROM InventoryItems ii
-    LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
-    LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
-    LEFT JOIN Categories c ON c.categoryId = it.categoryId
-    WHERE 1=1
+  ii.inventoryItemId,
+  ii.inventoryId,
+  ii.inventoryItemReferenceType,
+  ii.inventoryItemReferenceId,
+  ii.inventoryItemQuantity,
+  ii.inventoryItemMin,
+  it.itemName,
+  it.itemUnit,
+  c.categoryName,
+  it.itemPrice,
+  it.itemId,
+  COALESCE(
+    JSON_ARRAYAGG(
+      CASE 
+        WHEN s.suppId IS NOT NULL THEN  -- 👈 Filter NULL suppliers
+          JSON_OBJECT(
+            'suppId', s.suppId,
+            'suppName', s.suppName,
+            'suppItemPrice', si.suppItemPrice
+          )
+        ELSE NULL
+      END
+    ),
+    JSON_ARRAY()
+  ) AS itemSuppliers
+FROM InventoryItems ii
+LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
+LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
+LEFT JOIN Categories c ON c.categoryId = it.categoryId
+LEFT JOIN SupplierItems si ON si.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+LEFT JOIN Suppliers s ON s.suppId = si.suppId
+WHERE 1=1
   `;
 
   const params: any[] = [];
@@ -217,7 +233,20 @@ export const selectInventoryItems = async ({
       params.push(value);
     }
   }
-  sql += ` ORDER BY it.itemName ASC`;
+  sql += ` GROUP BY  
+  ii.inventoryItemId,
+  ii.inventoryId,
+  ii.inventoryItemReferenceType,
+  ii.inventoryItemReferenceId,
+  ii.inventoryItemQuantity,
+  ii.inventoryItemMin,
+  it.itemName,
+  it.itemUnit,
+  c.categoryName,
+  it.itemPrice,
+  it.itemId 
+  ORDER BY it.itemName ASC`;
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;

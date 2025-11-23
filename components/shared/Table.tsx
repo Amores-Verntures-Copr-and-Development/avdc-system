@@ -270,7 +270,7 @@ const TableInner = <T extends Record<string, any>>(
       >
         {/* Top Actions Bar */}
         {(searchUrl || renderTopActions || subtitle || title) && (
-          <div className="bg-white flex p-1 lg:p-3 gap-5 items-center align-middle justify-between border-b border-gray-200">
+          <div className="bg-white flex p-1 lg:p-2 gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
                 {title && <span className="text-black text-sm">{title}</span>}

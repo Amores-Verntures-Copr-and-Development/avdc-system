@@ -32,6 +32,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
 }) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [selectedRows, setSelectedRows] = useState<DisplaySupplierItemDto[]>();
   const {
     data: itemResponse = { data: [] },
@@ -77,9 +78,40 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
       return false;
     }
   };
-  const handleRemoveItemFromSupplier = async (data: SupplierItem[]) => {
-    console.log({ data });
+  const handleRemoveItemFromSupplier = async (item: SupplierItem[]) => {
+    setIsDeleting(true);
+    try {
+      const apiBody = {
+        controller: "delete",
+        data: item,
+      };
+
+      const result = await fetch(
+        `api/suppliers/supplier-items/${data?.suppId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(apiBody),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutate();
+      return true;
+    } catch (e: any) {
+      toast.error("Failed to remove!");
+      return false;
+    } finally {
+      setIsDeleting(false);
+    }
   };
+
   const handleSelectionChange = (selected: DisplaySupplierItemDto[]) => {
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     if (selected.length > 0) {
@@ -90,8 +122,9 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
     }
   };
   return (
-    <div className="flex flex-col min-h-50">
+    <div className="flex-1 min-h-0  flex flex-col justify-between">
       <Table
+        maxHeight="h-full"
         loading={isLoading}
         renderTopActions={
           <div>
@@ -184,11 +217,17 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               <Button
                 size="sm"
                 label="Remove"
-                onClick={() => {
+                loading={isDeleting}
+                onClick={async () => {
                   if (!selectedRows) {
                     return;
                   }
-                  handleRemoveItemFromSupplier(selectedRows);
+                  const success = await handleRemoveItemFromSupplier(
+                    selectedRows
+                  );
+                  if (success) {
+                    setShowDeleteModal(false);
+                  }
                 }}
               />
             </div>

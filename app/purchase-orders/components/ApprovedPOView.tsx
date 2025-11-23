@@ -142,10 +142,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-2 flex-col h-full w-full overflow-hidden">
         <div className="text-center mt-4 mb-2 flex-shrink-0">
-          <p className="text-gray-700 font-medium">
+          <p className="text-gray-700 text-xs 2xl:text-sm font-medium">
             Review PO and send to suppliers
           </p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 text-xs 2xl:text-sm">
             Review your purchase order and send it to the selected suppliers.
           </p>
         </div>

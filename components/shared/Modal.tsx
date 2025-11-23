@@ -166,7 +166,7 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* Modal Header */}
         {(title || showCloseButton) && (
-          <div className="flex flex-col justify-between p-2 xl:p-4 border-b bg-white border-gray-200 shrink-0">
+          <div className="flex flex-col justify-between p-2 2xl:p-4 border-b bg-white border-gray-200 shrink-0">
             <div className="flex justify-between">
               {title && (
                 <div className="flex flex-col">
@@ -174,7 +174,7 @@ const Modal: React.FC<ModalProps> = ({
                     {Icon && <Icon size={30} />}
                     <h2
                       id="modal-title"
-                      className="text-sm xl:text-xl font-bold text-black"
+                      className="text-sm 2xl:text-xl font-bold text-black"
                     >
                       {title}
                     </h2>
@@ -192,7 +192,7 @@ const Modal: React.FC<ModalProps> = ({
               )}
             </div>
             {subtitle && (
-              <span className="text-gray-400 text-[9px] xl:text-sm">
+              <span className="text-gray-400 text-[8px] 2xl:text-sm">
                 {subtitle}
               </span>
             )}

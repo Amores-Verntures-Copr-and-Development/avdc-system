@@ -110,6 +110,7 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
     whereClauses.push("si.suppId = ?");
     values.push(suppId);
   }
+  whereClauses.push("si.suppItemStatus != 'deleted'");
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const sql = `SELECT si.*,i.itemName,i.itemUnit,c.categoryName,c.categoryType FROM SupplierItems si
@@ -119,10 +120,100 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
   return rows;
 };
 
-export const deleteSupplierItemsByFields = async ({}: {
-  keyfields: Partial<SupplierItem>[];
+export async function handleDeleteSupplierItems(data: SupplierItem[]) {
+  const deletedData: Partial<SupplierItem>[] = data.map((item) => ({
+    suppItemId: item.suppItemId,
+    suppItemStatus: "deleted",
+  }));
+
+  try {
+    const result = await updateSupplierItemsByFields({
+      keyFields: ["suppItemId"],
+      data: deletedData,
+    });
+    return result;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export const updateSupplierItemsByFields = async ({
+  data,
+  keyFields,
+}: {
+  keyFields: (keyof SupplierItem)[];
   data: Partial<SupplierItem>[];
 }) => {
+  if (data.length === 0) {
+    throw new Error("No data provided for update");
+  }
+  if (keyFields.length === 0) {
+    throw new Error("No key fields provided for WHERE clause");
+  }
+
   const pool = await getDBConnection();
-  const sql = `DELETE FROM SupplierItems WHERE`
+
+  // Get the update fields (excluding key fields)
+  const updateFields = Object.keys(data[0]).filter(
+    (field) => !keyFields.includes(field as keyof SupplierItem)
+  );
+
+  if (updateFields.length === 0) {
+    throw new Error("No fields to update");
+  }
+
+  // Build SET clauses
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  for (const field of updateFields) {
+    // Build CASE statement for each field
+    const caseParts: string[] = [];
+
+    for (const row of data) {
+      const whenCondition = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenCondition} THEN ?`);
+
+      // Add key field values for WHEN condition
+      keyFields.forEach((k) => params.push(row[k]));
+      // Add the update value for THEN
+      params.push(row[field as keyof SupplierItem]);
+    }
+
+    // Complete CASE statement for this field
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " "
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = data.map((row) => keyFields.map((k) => row[k]));
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map(() => `(${keyFields.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  // Add WHERE params
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  // Build final SQL
+  const sql = `UPDATE SupplierItems SET ${setClauses.join(
+    ", "
+  )} WHERE ${whereSql}`;
+
+  console.log({ sql, params });
+
+  try {
+    const [result] = await pool.execute(sql, params);
+    return result;
+  } catch (error) {
+    console.error("Update failed:", error);
+    throw error;
+  }
 };

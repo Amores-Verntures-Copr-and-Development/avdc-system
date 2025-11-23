@@ -4,7 +4,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Supplier } from "@/types/supplier";
+import { Supplier, SupplierItem } from "@/types/supplier";
 import React, { useState } from "react";
 import CreateSupplierModal from "./component/CreateSupplierModal";
 import Button from "@/components/shared/Button";
@@ -69,6 +69,7 @@ const SupplierPage = () => {
       return false;
     }
   };
+
   return (
     <PageLayout className="p-2 gap-2">
       <PageHeader title={"Supplier"} subtitle="Manage suppliers" />
@@ -139,7 +140,7 @@ const SupplierPage = () => {
       </Modal>
       <Modal
         leadingIcon={Package}
-        className="bg-white"
+        className="bg-white h-[95%]"
         title={selectedSupplier?.suppName}
         isOpen={showViewSupplier}
         onClose={function (): void {

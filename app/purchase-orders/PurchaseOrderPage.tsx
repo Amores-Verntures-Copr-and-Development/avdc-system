@@ -155,14 +155,14 @@ const renderModalDetails = (selectedPo?: PurchaseOrders) => {
   return (
     <div className="flex justify-between items-center w-full">
       <div className="flex flex-col">
-        <span className="text-black text-[10px] xl:text-sm">
+        <span className="text-black text-[10px] 2xl:text-sm">
           Date:{" "}
           {formatDateToWords(selectedPo?.poCreatedAt ?? "", {
             showMinute: false,
             showHour: false,
           })}
         </span>
-        <span className="text-black text-[10px] xl:text-sm">
+        <span className="text-black text-[10px] 2xl:text-sm">
           Requisition:{" "}
           {selectedPo?.purchaseOrderRequest
             ?.map((req) => req.requestNo)

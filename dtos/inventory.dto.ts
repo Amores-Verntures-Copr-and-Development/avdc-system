@@ -6,6 +6,7 @@ import {
 import { CreateItemDto } from "./items.dto";
 import { ItemInterface } from "@/types/items";
 import { CategoryInterface } from "@/types/categories";
+import { Supplier, SupplierItem } from "@/types/supplier";
 
 export type CreateInventoryDto = Pick<
   InventoryInterface,
@@ -46,7 +47,11 @@ export interface DisplayInventoryItems {
   categoryName: string;
   storeId: number | null;
   inventoryItemReferenceType: string;
+  itemSuppliers:SupplierItemsData[]
 }
+
+export interface SupplierItemsData extends Supplier,SupplierItem{}
+
 
 export type CreateInventoryMovementDto = Pick<
   InventoryItemMovement,
