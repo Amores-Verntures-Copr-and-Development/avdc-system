@@ -53,7 +53,11 @@ export interface AddItemToStoreDto {
   items: DisplayInventoryItems[];
 }
 export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
-  { name: "ID", key: "inventoryItemId" },
+  {
+    name: "#",
+    key: "#",
+    selector: (_row, index) => index + 1,
+  },
   { name: "Item Name", key: "itemName" },
   {
     name: "Stock Available",
@@ -754,14 +758,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
               label={"View"}
               bg={"nobg"}
               icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
-            />
-            <IconButton
-              onClick={function (): void {
-                setSelectedRow(row);
-              }}
-              label={"Convert"}
-              bg={"green"}
-              icon={<ArrowLeftRight className="w-3 h-3 xl:w-4 xl:h-4" />}
             />
             <IconButton
               onClick={function (): void {
