@@ -17,7 +17,6 @@ export async function GET(
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
-    console.log({ search, status, category, unit });
     const res = await getInventoryItems({
       keyFields: { inventoryId: inventoryId },
       search,

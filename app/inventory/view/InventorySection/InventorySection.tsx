@@ -559,7 +559,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     filterKeys.forEach((key) => {
       currentParams.delete(key);
     });
-    console.log({ filterKeys });
 
     // Add new filters
     Object.entries(newFilters).forEach(([key, values]) => {
@@ -601,6 +600,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   return (
     <>
       <Table
+        uniqueIdKey="inventoryItemId"
         filterConfig={inventoryConfig}
         initialFilters={filters}
         loading={loading || userLoading}
@@ -619,6 +619,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           setSelectedRow(row);
           setShowInventoryItemModal(true);
         }}
+        onSelectedRow={selectedRows}
         onSelectionChange={handleSelectionChange}
         renderTopActions={
           <>

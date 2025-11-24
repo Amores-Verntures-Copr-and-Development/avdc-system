@@ -4,11 +4,6 @@ let pool: mysql.Pool | null = null;
 
 export const getDBConnection = async () => {
   if (!pool) {
-    console.log('DB Connection Details:', {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    database: process.env.DB_NAME
-  });
     try {
       pool = mysql.createPool({
         host: process.env.DB_HOST || "db",
@@ -20,7 +15,6 @@ export const getDBConnection = async () => {
         connectionLimit: 10,
         queueLimit: 0,
       });
-      
     } catch (err) {
       console.error("❌ Failed to create MySQL pool:", err);
       throw err;

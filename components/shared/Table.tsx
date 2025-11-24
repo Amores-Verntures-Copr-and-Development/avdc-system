@@ -14,32 +14,33 @@ export interface Column<T = any> {
   name: string;
   key: string;
   selector?: (row: T, index: number) => React.ReactNode;
-  editable?: boolean | ((row: T, rowIndex: number) => boolean); // Dynamic editable
+  editable?: boolean | ((row: T, rowIndex: number) => boolean);
   inputType?: "text" | "number" | "date" | "email" | "tel" | "url" | "select";
   options?:
     | { label: string; value: any }[]
     | ((row: T) => { label: string; value: any }[]);
-  inputProps?: React.InputHTMLAttributes<HTMLInputElement>; // Additional input props
-  validate?: (value: any, row: T) => boolean; // Validation function
+  inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
+  validate?: (value: any, row: T) => boolean;
   format?: (value: any) => string;
   compute?: (row: T) => any;
   dependsOn?: (keyof T | string)[];
-  // Format display value
 }
+
 interface FilterConfig {
   id: string;
   label: string;
   options: FilterOption[];
-  values?: string[]; // default selected internal values
+  values?: string[];
 }
 
 interface FilterOption {
   label: string;
   value: string;
 }
+
 interface TableProps<T> {
   filterConfig?: FilterConfig[];
-  initialFilters?: Record<string, string[]>; // stores internal values (not labels)
+  initialFilters?: Record<string, string[]>;
   onSave?: (filters: Record<string, string[]>) => void;
   showFilter?: boolean;
   title?: string;
@@ -59,21 +60,25 @@ interface TableProps<T> {
   onSelectionChange?: (selected: T[]) => void;
   updateData?: (data: T[]) => void;
   onRowSelection?: (data: T) => void;
+  onSelectedRow?: T[];
   onCellChange?: (
     rowIndex: number,
     columnKey: string,
     value: any,
     row: T
-  ) => void; // Individual cell change callback
+  ) => void;
   searchUrl?: string;
   maxHeight?: string;
-  debounceTime?: number; // Configurable debounce time
+  debounceTime?: number;
   editMode?: "inline" | "row";
-  isRounded?: boolean; // Edit mode: inline (cell by cell) or row (entire row)
+  isRounded?: boolean;
+  uniqueIdKey?: keyof T;
 }
+
 export interface TableHandle {
   clearSelection: () => void;
 }
+
 const TableInner = <T extends Record<string, any>>(
   {
     showFilter,
@@ -103,28 +108,85 @@ const TableInner = <T extends Record<string, any>>(
     filterConfig,
     initialFilters,
     onSave,
+    onSelectedRow,
+    uniqueIdKey,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  // ✅ FIX: Store selected unique IDs instead of indexes
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(
+    new Set()
+  );
   const [editableData, setEditableData] = useState<T[]>(data);
-
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     setEditableData(data);
   }, [data]);
 
+  // ✅ FIX: Sync selected rows when onSelectedRow changes
+  useEffect(() => {
+    if (onSelectedRow && onSelectedRow.length > 0) {
+      const ids = new Set(onSelectedRow.map((row) => getUniqueId(row)));
+      setSelectedIds(ids);
+    }
+  }, [onSelectedRow]);
+
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   const clearSelection = () => {
-    setSelectedRows(new Set());
-    console.log("Table Clear");
+    setSelectedIds(new Set());
     if (onClearSelection) onClearSelection();
     if (onSelectionChange) onSelectionChange([]);
   };
+
   useImperativeHandle(ref, () => ({
     clearSelection,
   }));
+
+  // ✅ FIX: Get unique ID function
+  const getUniqueId = (row: T): string | number => {
+    const key = uniqueIdKey || ("id" as keyof T);
+    return row[key];
+  };
+
+  // ✅ FIX: Toggle row using unique ID
+  const toggleRow = (row: T) => {
+    const uniqueId = getUniqueId(row);
+    const newSelection = new Set(selectedIds);
+
+    if (newSelection.has(uniqueId)) {
+      newSelection.delete(uniqueId);
+    } else {
+      newSelection.add(uniqueId);
+    }
+    setSelectedIds(newSelection);
+
+    if (onSelectionChange) {
+      const selectedItems = data.filter((item) =>
+        newSelection.has(getUniqueId(item))
+      );
+      onSelectionChange(selectedItems);
+    }
+  };
+
+  // ✅ FIX: Toggle all using unique IDs
+  const toggleAll = () => {
+    if (selectedIds.size === data.length) {
+      setSelectedIds(new Set());
+      if (onSelectionChange) onSelectionChange([]);
+    } else {
+      const allIds = new Set(data.map((item) => getUniqueId(item)));
+      setSelectedIds(allIds);
+      if (onSelectionChange) onSelectionChange(data);
+    }
+  };
+
+  // ✅ FIX: Check if row is selected
+  const isRowSelected = (row: T) => {
+    return selectedIds.has(getUniqueId(row));
+  };
+
   const handleInputChange = (
     rowIndex: number,
     columnKey: string,
@@ -134,10 +196,8 @@ const TableInner = <T extends Record<string, any>>(
     const newData = [...editableData];
     newData[rowIndex] = { ...newData[rowIndex], [columnKey]: value };
 
-    // 👇 NEW: After updating the field, check for computed columns
     columns.forEach((col) => {
       if (col.compute && col.key) {
-        // Only compute if this column depends on the changed field
         if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
           const computedValue = col.compute(newData[rowIndex]);
           newData[rowIndex] = {
@@ -150,7 +210,6 @@ const TableInner = <T extends Record<string, any>>(
 
     setEditableData(newData);
 
-    // Validate if validation function exists
     if (column.validate) {
       const isValid = column.validate(value, newData[rowIndex]);
       const errorKey = `${rowIndex}-${columnKey}`;
@@ -164,12 +223,10 @@ const TableInner = <T extends Record<string, any>>(
       }
     }
 
-    // Call individual cell change callback immediately
     if (onCellChange) {
       onCellChange(rowIndex, columnKey, value, newData[rowIndex]);
     }
 
-    // Debounce parent update to avoid erasing input
     if (updateData) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
@@ -189,31 +246,6 @@ const TableInner = <T extends Record<string, any>>(
     return column.editable === true;
   };
 
-  const toggleRow = (index: number) => {
-    const newSelection = new Set(selectedRows);
-    if (newSelection.has(index)) {
-      newSelection.delete(index);
-    } else {
-      newSelection.add(index);
-    }
-    setSelectedRows(newSelection);
-
-    if (onSelectionChange) {
-      onSelectionChange(Array.from(newSelection).map((i) => data[i]));
-    }
-  };
-
-  const toggleAll = () => {
-    if (selectedRows.size === data.length) {
-      setSelectedRows(new Set());
-      if (onSelectionChange) onSelectionChange([]);
-    } else {
-      const allIndexes = new Set(data.map((_, i) => i));
-      setSelectedRows(allIndexes);
-      if (onSelectionChange) onSelectionChange(data);
-    }
-  };
-
   const renderCell = (column: Column<T>, row: T, rowIndex: number) => {
     const editable = isFieldEditable(column, row, rowIndex);
     const errorKey = `${rowIndex}-${column.key}`;
@@ -221,7 +253,6 @@ const TableInner = <T extends Record<string, any>>(
 
     if (editable && editMode === "inline") {
       if (column.inputType === "select") {
-        // ✅ handle dynamic or static options
         const opts =
           typeof column.options === "function"
             ? column.options(row)
@@ -229,9 +260,7 @@ const TableInner = <T extends Record<string, any>>(
 
         return (
           <select
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={(e) => e.stopPropagation()}
             className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
             value={editableData[rowIndex]?.[column.key] ?? ""}
             onChange={(e) =>
@@ -250,9 +279,7 @@ const TableInner = <T extends Record<string, any>>(
         return (
           <div className="flex flex-col">
             <input
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
+              onClick={(e) => e.stopPropagation()}
               type={column.inputType ?? "text"}
               name={column.name}
               value={editableData[rowIndex]?.[column.key] ?? ""}
@@ -260,9 +287,13 @@ const TableInner = <T extends Record<string, any>>(
                 handleInputChange(rowIndex, column.key, e.target.value, column)
               }
               className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
-    ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
-    w-auto
-  `}
+                ${
+                  hasError
+                    ? "border-red-500 bg-red-50"
+                    : "border-gray-300 bg-white"
+                }
+                w-auto
+              `}
               {...(column.inputProps || {})}
             />
           </div>
@@ -298,40 +329,39 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div className="w-25 xl:w-40 items-center align-middle">
-              {searchUrl && <SearchBar url={searchUrl} />}
+            <div className="flex gap-5">
+              <div className="w-25 xl:w-40 items-center align-middle">
+                {searchUrl && <SearchBar url={searchUrl} />}
+              </div>
+              {showFilter && onSave && (
+                <FilterDropdown
+                  filterConfig={filterConfig ?? []}
+                  initialFilters={initialFilters}
+                  onSave={onSave}
+                />
+              )}
             </div>
-            {showFilter && onSave && (
-              <FilterDropdown
-                filterConfig={filterConfig ?? []}
-                initialFilters={initialFilters}
-                onSave={onSave}
-              />
-            )}
             <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
           </div>
         )}
 
         {/* Table Container with Sticky Header */}
-        <div className="flex-1 overflow-auto " style={{ maxHeight }}>
+        <div className="flex-1 overflow-auto" style={{ maxHeight }}>
           <table
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={(e) => e.stopPropagation()}
             className="w-full border-collapse text-black overflow-auto"
           >
             <thead className="sticky top-0 z-20 bg-gray-50 border-b border-gray-300">
               <tr
                 className={`xl:${rowSize} text-[10px] xl:text-${textSize} border-b-1 border-gray-300`}
               >
-                {/* Select-all column */}
                 {showCheckBox && (
                   <th className="px-1 py-1 w-5 xl:px-2 xl:py-3 xl:w-12 text-center bg-gray-50 border-r border-gray-300">
                     <input
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       checked={
-                        selectedRows.size === data.length && data.length > 0
+                        selectedIds.size === data.length && data.length > 0
                       }
                       onChange={toggleAll}
                     />
@@ -353,7 +383,7 @@ const TableInner = <T extends Record<string, any>>(
 
                 {showActions && (
                   <th
-                    className={`px-1 py-1 xl:px-2 xl:py-1 text-center border-l border-r border-gray-300  font-semibold text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50`}
+                    className={`px-1 py-1 xl:px-2 xl:py-1 text-center border-l border-r border-gray-300 font-semibold text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50`}
                   >
                     Actions
                   </th>
@@ -410,14 +440,13 @@ const TableInner = <T extends Record<string, any>>(
                 editableData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] xl:text-${textSize} border-b-2  border-gray-100`}
+                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] xl:text-${textSize} border-b-2 border-gray-100`}
                     onClick={() => {
                       if (onRowSelection) {
                         onRowSelection(row);
                       }
                     }}
                   >
-                    {/* Row checkbox */}
                     {showCheckBox && (
                       <td
                         onClick={(e) => e.stopPropagation()}
@@ -426,8 +455,8 @@ const TableInner = <T extends Record<string, any>>(
                         <input
                           type="checkbox"
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          checked={selectedRows.has(rowIndex)}
-                          onChange={() => toggleRow(rowIndex)}
+                          checked={isRowSelected(row)}
+                          onChange={() => toggleRow(row)}
                         />
                       </td>
                     )}

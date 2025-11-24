@@ -178,7 +178,6 @@ export const selectInventoryItems = async ({
   category?: string;
   unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
-  console.log(`params: `, { status, category, unit });
   const pool = await getDBConnection();
   let sql = `
     SELECT 
