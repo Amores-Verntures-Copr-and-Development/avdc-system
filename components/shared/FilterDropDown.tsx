@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
 import { useSearchParams } from "next/navigation"; // or useRouter for Pages Router
+import Button from "./Button";
 
 interface FilterOption {
   label: string;
@@ -129,26 +130,31 @@ const FilterDropdown = ({
             </div>
           ))}
 
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              onClick={() => setShowFilters(false)}
-              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md border text-gray-600 hover:bg-gray-100"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleClear}
-              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700"
-            >
-              Clear
-            </button>
-
-            <button
-              onClick={handleSave}
-              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
-            >
-              Save
-            </button>
+          <div className="flex justify-end gap-2">
+            <div>
+              <Button
+                label="Cancel"
+                size="sm"
+                color="nocolor"
+                onClick={() => setShowFilters(false)}
+              />
+            </div>
+            <div>
+              <Button
+                label="Clear"
+                size="sm"
+                color="danger"
+                onClick={handleClear}
+              />
+            </div>
+            <div>
+              <Button
+                label="Save"
+                size="sm"
+                color="primary"
+                onClick={handleSave}
+              />
+            </div>
           </div>
         </div>
       )}
