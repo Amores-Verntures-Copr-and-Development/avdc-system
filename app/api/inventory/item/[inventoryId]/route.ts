@@ -14,10 +14,16 @@ export async function GET(
     const inventoryId = Number(slug);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    console.log({ search });
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
+    console.log({ search, status, category, unit });
     const res = await getInventoryItems({
       keyFields: { inventoryId: inventoryId },
       search,
+      status,
+      category,
+      unit,
     });
 
     if (!res.success) {

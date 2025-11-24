@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Filter } from "lucide-react";
+import { useSearchParams } from "next/navigation"; // or useRouter for Pages Router
 
 interface FilterOption {
   label: string;
@@ -27,26 +28,54 @@ const FilterDropdown = ({
   isAdmin,
 }: FilterDropdownProps) => {
   const [showFilters, setShowFilters] = useState(false);
+  const searchParams = useSearchParams(); // Get current URL parameters
 
+  // Initialize filters from URL parameters
   const [filters, setFilters] = useState<Record<string, string[]>>(() => {
-    return (
-      initialFilters ??
-      Object.fromEntries(
-        filterConfig.map((f) => [f.id, f.values?.length ? [...f.values] : []])
-      )
-    );
+    // If initialFilters provided, use them
+    if (initialFilters) return initialFilters;
+
+    // Otherwise, get filters from URL parameters
+    const urlFilters: Record<string, string[]> = {};
+
+    filterConfig.forEach((filter) => {
+      const paramValue = searchParams.get(filter.id);
+      if (paramValue) {
+        urlFilters[filter.id] = [paramValue];
+      } else {
+        urlFilters[filter.id] = filter.values?.length ? [...filter.values] : [];
+      }
+    });
+
+    return urlFilters;
   });
+
+  // Sync filters when URL parameters change (on refresh)
+  useEffect(() => {
+    const urlFilters: Record<string, string[]> = {};
+
+    filterConfig.forEach((filter) => {
+      const paramValue = searchParams.get(filter.id);
+      if (paramValue) {
+        urlFilters[filter.id] = [paramValue];
+      } else {
+        urlFilters[filter.id] = [];
+      }
+    });
+
+    setFilters(urlFilters);
+  }, [searchParams, filterConfig]);
 
   const selectOption = (id: string, value: string) => {
     setFilters((prev) => ({ ...prev, [id]: [value] }));
   };
+
   const handleClear = () => {
     const cleared = {
       ...Object.fromEntries(filterConfig.map((f) => [f.id, []])),
       branch: [], // ✅ make sure branch is cleared too
     };
     setFilters(cleared);
-
     onSave(cleared);
     setShowFilters(false);
   };
@@ -55,23 +84,17 @@ const FilterDropdown = ({
     onSave(filters);
     setShowFilters(false);
   };
-  //   const searchBranchName = async (
-  //     query: string
-  //   ): Promise<SearchBranchDto[]> => {
-  //     const res = await fetch(
-  //       `/api/branches/search?search=${encodeURIComponent(query)}`
-  //     );
-  //     const json = await res.json();
-  //     return json.data || [];
-  //   };
+
   return (
     <div className="relative inline-block text-left">
       <button
         onClick={() => setShowFilters((prev) => !prev)}
-        className="flex items-center gap-1 px-3 py-2 rounded-md border-gray-300 bg-white shadow-sm border hover:bg-gray-50"
+        className="flex items-center gap-1 px-1.5 py-1 rounded-md border-gray-300 bg-white shadow-sm border hover:bg-gray-50"
       >
-        <Filter className="w-4 h-4 text-gray-600" />
-        <span className="text-sm text-gray-700 font-semibold">Filters</span>
+        <Filter className="w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600" />
+        <span className="text-xs 2xl:text-sm text-gray-700 font-semibold">
+          Filters
+        </span>
         <span className="text-xs bg-blue-600 text-white rounded-full px-2 py-0.5 ml-1">
           {Object.values(filters).flat().filter(Boolean).length}
         </span>
@@ -109,20 +132,20 @@ const FilterDropdown = ({
           <div className="flex justify-end gap-2 pt-2">
             <button
               onClick={() => setShowFilters(false)}
-              className="text-sm px-4 py-1.5 rounded-md border text-gray-600 hover:bg-gray-100"
+              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md border text-gray-600 hover:bg-gray-100"
             >
               Cancel
             </button>
             <button
               onClick={handleClear}
-              className="text-sm px-4 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700"
+              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700"
             >
               Clear
             </button>
 
             <button
               onClick={handleSave}
-              className="text-sm px-4 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+              className="text-xs 2xl:text-sm px-4 py-1.5 rounded-md bg-blue-600 text-white hover:bg-blue-700"
             >
               Save
             </button>

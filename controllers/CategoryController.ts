@@ -1,6 +1,9 @@
 import { CreateCategoryDto } from "@/dtos/category.dto";
 import { insertCategory, selectCategories } from "../models/categoryModels";
-import { getCategoriesById } from "@/services/categories/get-categories";
+import {
+  getCategoriesById,
+  getCategoriesByInventoryId,
+} from "@/services/categories/get-categories";
 
 export const createCategory = async (data: CreateCategoryDto) => {
   try {
@@ -22,7 +25,7 @@ export const getCategories = async ({
   controller,
   id,
 }: {
-  controller: "storeId" | "stockRoomId" | null;
+  controller: "storeId" | "stockRoomId" | "inventoryId" | null;
   id?: number;
 }) => {
   try {
@@ -32,6 +35,9 @@ export const getCategories = async ({
       data = await getCategoriesById({ storeId: id });
     } else if (controller === "stockRoomId") {
       data = await getCategoriesById({ stockRoomId: id });
+      console.log({ data });
+    } else if (controller === "inventoryId" && id) {
+      data = await getCategoriesByInventoryId({ inventoryId: id });
     }
     return {
       success: true,

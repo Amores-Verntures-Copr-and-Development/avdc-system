@@ -26,8 +26,21 @@ export interface Column<T = any> {
   dependsOn?: (keyof T | string)[];
   // Format display value
 }
+interface FilterConfig {
+  id: string;
+  label: string;
+  options: FilterOption[];
+  values?: string[]; // default selected internal values
+}
 
+interface FilterOption {
+  label: string;
+  value: string;
+}
 interface TableProps<T> {
+  filterConfig?: FilterConfig[];
+  initialFilters?: Record<string, string[]>; // stores internal values (not labels)
+  onSave?: (filters: Record<string, string[]>) => void;
   showFilter?: boolean;
   title?: string;
   subtitle?: string;
@@ -87,6 +100,9 @@ const TableInner = <T extends Record<string, any>>(
     onClearSelection,
     title,
     subtitle,
+    filterConfig,
+    initialFilters,
+    onSave,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
@@ -285,12 +301,11 @@ const TableInner = <T extends Record<string, any>>(
             <div className="w-25 xl:w-40 items-center align-middle">
               {searchUrl && <SearchBar url={searchUrl} />}
             </div>
-            {showFilter && (
+            {showFilter && onSave && (
               <FilterDropdown
-                filterConfig={[]}
-                onSave={function (filters: Record<string, string[]>): void {
-                  throw new Error("Function not implemented.");
-                }}
+                filterConfig={filterConfig ?? []}
+                initialFilters={initialFilters}
+                onSave={onSave}
               />
             )}
             <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>

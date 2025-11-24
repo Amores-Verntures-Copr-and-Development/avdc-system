@@ -1,6 +1,7 @@
 import {
   selectCategories,
   selectCategoriesById,
+  selectCategoriesByInventoryId,
 } from "@/models/categoryModels";
 import { PoolConnection } from "mysql2/promise";
 
@@ -32,6 +33,21 @@ export async function getCategoriesByName({
       keyFields: {
         categoryName: name,
       },
+    });
+    return category;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getCategoriesByInventoryId({
+  inventoryId,
+}: {
+  inventoryId: number;
+}) {
+  try {
+    const category = await selectCategoriesByInventoryId({
+      inventoryId,
     });
     return category;
   } catch (e) {

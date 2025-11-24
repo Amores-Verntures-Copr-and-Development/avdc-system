@@ -389,7 +389,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                       {expandedSupplier.suppId === data.suppId && (
                         <div className="flex-1 min-h-0 overflow-hidden">
                           {isView === "all" ? (
-                            <div className="h-96 overflow-auto">
+                            <div className="min-h-50 overflow-auto">
                               {" "}
                               {/* Fixed height for table */}
                               <Table
@@ -400,7 +400,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               />
                             </div>
                           ) : (
-                            <div className="h-96 overflow-auto p-2">
+                            <div className="min-h-50 overflow-auto p-2">
                               {" "}
                               {/* Fixed height for cards */}
                               <div className="flex gap-4">

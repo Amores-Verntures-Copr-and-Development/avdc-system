@@ -1,6 +1,7 @@
 import {
   selectInventoryItems,
   selectInventoryItemsStockStatus,
+  selectInventoryItemUnitById,
   selectStockRoomInventoryItems,
 } from "@/models/inventoryModels";
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
@@ -8,12 +9,24 @@ import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 export async function findInventoryItemsByField({
   keyFields = {},
   search,
+  status,
+  category,
+  unit,
 }: {
   keyFields?: Partial<InventoryItemInterface>;
-  search?: string; // dynamic filters like {inventoryId: 1, storeId: null}
+  search?: string;
+  status?: string;
+  category?: string;
+  unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
-    const data = await selectInventoryItems({ keyFields, search });
+    const data = await selectInventoryItems({
+      keyFields,
+      search,
+      status,
+      category,
+      unit,
+    });
     return data;
   } catch (e) {
     throw e;
@@ -32,6 +45,15 @@ export async function getInventoryItemsStatus(inventoryId: number) {
 export async function findStockRoomInventoryByPurchaserId(purchaserId: number) {
   try {
     const data = await selectStockRoomInventoryItems(purchaserId);
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findInventoryItemUnitByInventoryId(invetoryId: number) {
+  try {
+    const data = await selectInventoryItemUnitById(invetoryId);
     return data;
   } catch (e) {
     throw e;

@@ -34,6 +34,7 @@ import {
 } from "@/services/inventory/get-inventory";
 import {
   findInventoryItemsByField,
+  findInventoryItemUnitByInventoryId,
   getInventoryItemsStatus,
 } from "@/services/inventory/inventory-items/get-inventory-items";
 import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
@@ -113,14 +114,23 @@ export const createInventoryItem = async (data: CreateInventoryItemDto) => {
 export const getInventoryItems = async ({
   keyFields,
   search,
+  status,
+  category,
+  unit,
 }: {
   keyFields: Partial<InventoryInterface>;
   search?: string;
+  status?: string;
+  category?: string;
+  unit?: string;
 }) => {
   try {
     const data = await findInventoryItemsByField({
       keyFields: keyFields,
       search,
+      status,
+      category,
+      unit,
     });
 
     return {
@@ -278,5 +288,22 @@ export const updateInventoryItem = async (data: InventoryItemInterface) => {
     return { success: true, message: "Successfully adjust stock", result: res };
   } catch (e) {
     return { success: false, message: "Failed to adjust stock", error: e };
+  }
+};
+
+export const getInventoryItemUnit = async (inventoryId: number) => {
+  try {
+    const data = await findInventoryItemUnitByInventoryId(inventoryId);
+    return {
+      success: true,
+      message: "Item fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: e,
+      error: e,
+    };
   }
 };

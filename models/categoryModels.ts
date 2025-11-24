@@ -68,3 +68,21 @@ export const selectCategoriesById = async ({
   const [result] = await pool.execute(sql, values);
   return result;
 };
+
+export const selectCategoriesByInventoryId = async ({
+  inventoryId,
+}: {
+  inventoryId: number;
+}) => {
+  const pool = await getDBConnection();
+
+  const sql = `SELECT DISTINCT c.categoryName
+FROM InventoryItems ii
+LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
+LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
+LEFT JOIN Categories c ON c.categoryId = it.categoryId
+WHERE ii.inventoryId = ? 
+ORDER BY c.categoryName ASC;`;
+  const [result] = await pool.execute(sql, [inventoryId]);
+  return result;
+};

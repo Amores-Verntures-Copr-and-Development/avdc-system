@@ -348,7 +348,8 @@ const EditItemDetails: React.FC<
                   name={"categoryName"}
                   value={data?.categoryName ?? ""}
                   sizes="sm"
-                  referenceType={null}
+                  id={user?.userId}
+                  referenceType={"stock-room"}
                 />
               </div>
             </>

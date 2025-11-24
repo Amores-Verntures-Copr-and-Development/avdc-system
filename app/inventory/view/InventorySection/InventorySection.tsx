@@ -43,7 +43,9 @@ import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemDto, ImportItemInfo } from "@/dtos/items.dto";
 import { capitalizeWords } from "@/utils/capitalizeWords";
 import { InventoryItemInterface } from "@/types/inventory";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useCategories } from "@/hooks/useCategory";
+import { useInventoryItemUnit } from "@/hooks/useInventoryItemUnit";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -71,7 +73,6 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
   { name: "Unit", key: "itemUnit" },
   { name: "Category", key: "categoryName" },
-  { name: "Store ID", key: "storeId" },
   {
     name: "Status",
     key: "status",
@@ -105,7 +106,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
     ),
   },
   {
-    name: "Quantity",
+    name: "Stock Available",
     key: "inventoryItemQuantity",
     selector: (row) => (
       <span
@@ -218,7 +219,16 @@ interface InventorySectionProps {
 }
 const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const searchParams = useSearchParams();
-  const search = searchParams.get("search") || "";
+  const { categoryOptions } = useCategories({
+    inventoryId: inventoryId ?? 0,
+    reference: "inventoryId",
+  });
+  const { unitOptions } = useInventoryItemUnit({
+    inventoryId: inventoryId ?? 0,
+    reference: "inventoryId",
+  });
+
+  const router = useRouter();
   const tableRef = useRef<TableHandle>(null);
   const [showAddModal, setShowAdddModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
@@ -233,6 +243,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
   // get the stock inventory if purchaser
@@ -240,20 +251,26 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const getApiUrl = () => {
     if (!inventoryId) return null;
 
-    if (search) {
-      const params = new URLSearchParams();
-      params.append("search", search);
-      return `${url}?${params.toString()}`;
-    }
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
 
-    return url;
+    const params = new URLSearchParams();
+
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+    if (unit) params.append("unit", unit);
+
+    const queryString = params.toString();
+    return queryString ? `${url}?${queryString}` : url;
   };
   const {
     data: itemResponse = { data: [] },
     isLoading: loading,
     mutate,
   } = useSWR<{ data: DisplayInventoryItems[] }>(getApiUrl(), fetcher);
-
 
   const handleClear = () => {
     tableRef.current?.clearSelection();
@@ -529,9 +546,63 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       setIsEditingItem(false);
     }
   };
+
+  const handleFilterSave = (newFilters: Record<string, string[]>) => {
+    setFilters(newFilters);
+
+    const currentParams = new URLSearchParams(window.location.search);
+
+    // Get filter keys from config
+    const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];
+
+    // Remove only keys that match filterConfig
+    filterKeys.forEach((key) => {
+      currentParams.delete(key);
+    });
+    console.log({ filterKeys });
+
+    // Add new filters
+    Object.entries(newFilters).forEach(([key, values]) => {
+      values.forEach((value) => {
+        currentParams.append(key, value);
+      });
+    });
+
+    const queryString = currentParams.toString();
+    router.push(`?${queryString}`);
+  };
+  const inventoryItemStatus = [
+    { label: "Select Status", value: "" },
+    { label: "Available", value: "good" },
+    { label: "Low Stock", value: "low" },
+    { label: "No stock", value: "no" },
+  ];
+  const inventoryConfig = [
+    {
+      id: "status",
+      label: "Status",
+      type: "checkbox" as const,
+      options: inventoryItemStatus,
+    },
+    {
+      id: "category",
+      label: "Category",
+      type: "checkbox" as const,
+      options: categoryOptions ?? [],
+    },
+    {
+      id: "unit",
+      label: "Unit",
+      type: "checkbox" as const,
+      options: unitOptions ?? [],
+    },
+  ];
+
   return (
     <>
       <Table
+        filterConfig={inventoryConfig}
+        initialFilters={filters}
         loading={loading || userLoading}
         ref={tableRef}
         showFilter
@@ -542,7 +613,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         maxHeight="h-full"
         rowSize="h-10"
         textSize="xs"
+        onSave={handleFilterSave}
         showCheckBox
+        onRowSelection={(row) => {
+          setSelectedRow(row);
+          setShowInventoryItemModal(true);
+        }}
         onSelectionChange={handleSelectionChange}
         renderTopActions={
           <>

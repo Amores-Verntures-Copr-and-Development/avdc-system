@@ -168,10 +168,17 @@ export const insertInventoryItemsBulk = async ({
 export const selectInventoryItems = async ({
   keyFields = {},
   search,
+  status,
+  category,
+  unit,
 }: {
   keyFields?: Partial<InventoryInterface>;
-  search?: string; // dynamic filters like {inventoryId: 1, storeId: null}
+  search?: string;
+  status?: string;
+  category?: string;
+  unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
+  console.log(`params: `, { status, category, unit });
   const pool = await getDBConnection();
   let sql = `
     SELECT 
@@ -238,6 +245,25 @@ WHERE 1=1
     const wildcard = `%${search}%`;
     sql += ` AND it.itemName LIKE ? `;
     params.push(wildcard);
+  }
+  if (category) {
+    sql += ` AND c.categoryName = ? `;
+    params.push(category);
+  }
+  if (unit) {
+    sql += ` AND it.itemUnit = ? `;
+    params.push(unit);
+  }
+  if (status) {
+    if (status === "good") {
+      sql += ` AND ii.inventoryItemQuantity > 0 `;
+    }
+    if (status === "low") {
+      sql += ` AND ii.inventoryItemQuantity < ii.inventoryItemMin AND ii.inventoryItemQuantity != 0  `;
+    }
+    if (status === "no") {
+      sql += ` AND ii.inventoryItemQuantity = 0 `;
+    }
   }
   sql += ` GROUP BY  
   ii.inventoryItemId,
@@ -438,5 +464,18 @@ export const selectStockRoomInventoryItems = async (purchaserId: number) => {
   LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
   WHERE sp.userId = ?`;
   const [rows] = await pool.execute(sql, [purchaserId]);
+  return rows;
+};
+
+export const selectInventoryItemUnitById = async (inventoryId: number) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT DISTINCT it.itemUnit
+  FROM InventoryItems ii
+  LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
+  LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
+  LEFT JOIN Categories c ON c.categoryId = it.categoryId
+  WHERE ii.inventoryId = ? 
+  ORDER BY it.itemUnit ASC;`;
+  const [rows] = await pool.execute(sql, [inventoryId]);
   return rows;
 };
