@@ -7,7 +7,7 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -43,6 +43,7 @@ import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemDto, ImportItemInfo } from "@/dtos/items.dto";
 import { capitalizeWords } from "@/utils/capitalizeWords";
 import { InventoryItemInterface } from "@/types/inventory";
+import { useParams, useSearchParams } from "next/navigation";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -94,7 +95,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
   {
     name: "#",
     key: "#",
-    selector: (_row,index) => index+1,
+    selector: (_row, index) => index + 1,
   },
   {
     name: "Item Name",
@@ -151,48 +152,47 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
       <span className="text-gray-700">{row.categoryName || "—"}</span>
     ),
   },
-    {
+  {
     name: "itemSupplier",
     key: "itemSuppliers",
     selector: (row) => {
-      const suppliers = row.itemSuppliers || []
+      const suppliers = row.itemSuppliers || [];
       // Assuming your row has a suppliers array
 
-      
       return (
-      <div className="group relative">
-  <select 
-    className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-    disabled
-  >
-    <option value="">
-      {suppliers.filter(s => s !== null).length > 0 
-        ? `Suppliers (${suppliers.filter(s => s !== null).length})` 
-        : "No Supplier"
-      }
-    </option>
-  </select>
-  
-  {/* Show suppliers on hover */}
-  {suppliers.filter(s => s !== null).length > 0 && (
-    <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-      {suppliers
-        .filter(supplier => supplier !== null)
-        .map((supplier, index) => (
-          <div 
-            key={index} 
-            className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+        <div className="group relative">
+          <select
+            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+            disabled
           >
-            {`${supplier.suppName} (${formatPeso(supplier.suppItemPrice)})`}
-          </div>
-        ))
-      }
-    </div>
-  )}
-</div>
+            <option value="">
+              {suppliers.filter((s) => s !== null).length > 0
+                ? `Suppliers (${suppliers.filter((s) => s !== null).length})`
+                : "No Supplier"}
+            </option>
+          </select>
+
+          {/* Show suppliers on hover */}
+          {suppliers.filter((s) => s !== null).length > 0 && (
+            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+              {suppliers
+                .filter((supplier) => supplier !== null)
+                .map((supplier, index) => (
+                  <div
+                    key={index}
+                    className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                  >
+                    {`${supplier.suppName} (${formatPeso(
+                      supplier.suppItemPrice
+                    )})`}
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
       );
     },
-  }, 
+  },
   {
     name: "Status",
     key: "status",
@@ -217,6 +217,8 @@ interface InventorySectionProps {
   user: UserAuth | null;
 }
 const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
+  const searchParams = useSearchParams();
+  const search = searchParams.get("search") || "";
   const tableRef = useRef<TableHandle>(null);
   const [showAddModal, setShowAdddModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
@@ -234,15 +236,25 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
   // get the stock inventory if purchaser
+  const url = `/api/inventory/item/${inventoryId}`;
+  const getApiUrl = () => {
+    if (!inventoryId) return null;
 
+    if (search) {
+      const params = new URLSearchParams();
+      params.append("search", search);
+      return `${url}?${params.toString()}`;
+    }
+
+    return url;
+  };
   const {
     data: itemResponse = { data: [] },
     isLoading: loading,
     mutate,
-  } = useSWR<{ data: DisplayInventoryItems[] }>(
-    inventoryId ? `/api/inventory/item/${inventoryId}` : null,
-    fetcher
-  );
+  } = useSWR<{ data: DisplayInventoryItems[] }>(getApiUrl(), fetcher);
+
+
   const handleClear = () => {
     tableRef.current?.clearSelection();
   };
@@ -522,6 +534,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       <Table
         loading={loading || userLoading}
         ref={tableRef}
+        showFilter
         searchUrl="/inventory"
         columns={hasStore ? inventoryItemColumns : adminInventoryItemColumns}
         data={itemResponse.data}

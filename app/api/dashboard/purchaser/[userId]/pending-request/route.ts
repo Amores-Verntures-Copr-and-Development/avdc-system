@@ -1,9 +1,14 @@
-import { getDashboardStatsByRole } from "@/controllers/DashboardController";
+import { getPendingRequest } from "@/controllers/DashboardController";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ userId: string }> }
+) {
   try {
-    const res = await getDashboardStatsByRole("purchaser");
+    const slug = (await params).userId;
+    const userId = Number(slug);
+    const res = await getPendingRequest("purchaser", userId);
 
     if (!res.success) {
       // propagate the actual message if available

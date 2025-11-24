@@ -167,11 +167,12 @@ export const insertInventoryItemsBulk = async ({
 
 export const selectInventoryItems = async ({
   keyFields = {},
+  search,
 }: {
-  keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryInterface>;
+  search?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   const pool = await getDBConnection();
-
   let sql = `
     SELECT 
   ii.inventoryItemId,
@@ -233,6 +234,11 @@ WHERE 1=1
       params.push(value);
     }
   }
+  if (search) {
+    const wildcard = `%${search}%`;
+    sql += ` AND it.itemName LIKE ? `;
+    params.push(wildcard);
+  }
   sql += ` GROUP BY  
   ii.inventoryItemId,
   ii.inventoryId,
@@ -248,7 +254,6 @@ WHERE 1=1
   ORDER BY it.itemName ASC`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-
   return rows;
 };
 

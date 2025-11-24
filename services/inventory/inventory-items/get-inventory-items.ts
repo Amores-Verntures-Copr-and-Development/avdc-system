@@ -7,11 +7,13 @@ import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 
 export async function findInventoryItemsByField({
   keyFields = {},
+  search,
 }: {
-  keyFields?: Partial<InventoryItemInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemInterface>;
+  search?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
-    const data = await selectInventoryItems({ keyFields });
+    const data = await selectInventoryItems({ keyFields, search });
     return data;
   } catch (e) {
     throw e;

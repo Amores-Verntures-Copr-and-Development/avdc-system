@@ -112,12 +112,15 @@ export const createInventoryItem = async (data: CreateInventoryItemDto) => {
 };
 export const getInventoryItems = async ({
   keyFields,
+  search,
 }: {
   keyFields: Partial<InventoryInterface>;
+  search?: string;
 }) => {
   try {
     const data = await findInventoryItemsByField({
       keyFields: keyFields,
+      search,
     });
 
     return {

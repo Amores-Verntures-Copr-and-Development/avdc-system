@@ -6,14 +6,18 @@ import {
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ inventoryId: string }> }
 ) {
   try {
     const slug = (await params).inventoryId;
     const inventoryId = Number(slug);
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    console.log({ search });
     const res = await getInventoryItems({
       keyFields: { inventoryId: inventoryId },
+      search,
     });
 
     if (!res.success) {

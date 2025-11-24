@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
+import FilterDropdown from "./FilterDropDown";
 
 export interface Column<T = any> {
   name: string;
@@ -27,6 +28,7 @@ export interface Column<T = any> {
 }
 
 interface TableProps<T> {
+  showFilter?: boolean;
   title?: string;
   subtitle?: string;
   columns: Column<T>[];
@@ -61,6 +63,7 @@ export interface TableHandle {
 }
 const TableInner = <T extends Record<string, any>>(
   {
+    showFilter,
     columns,
     data,
     loading = false,
@@ -282,6 +285,14 @@ const TableInner = <T extends Record<string, any>>(
             <div className="w-25 xl:w-40 items-center align-middle">
               {searchUrl && <SearchBar url={searchUrl} />}
             </div>
+            {showFilter && (
+              <FilterDropdown
+                filterConfig={[]}
+                onSave={function (filters: Record<string, string[]>): void {
+                  throw new Error("Function not implemented.");
+                }}
+              />
+            )}
             <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
           </div>
         )}
