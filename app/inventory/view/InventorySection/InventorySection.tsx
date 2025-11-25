@@ -648,72 +648,80 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   color="secondary"
                 />
               </div>
-              {selectedRows?.length &&
-                selectedRows?.length > 0 &&
-                (user?.empPosition === "supervisor" ||
-                  user?.empPosition === "staff") && (
-                  <div>
-                    <Button
-                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
-                      label="Request Stock"
-                      onClick={() => {
-                        setShowCreateRequestModal(true);
-                      }}
-                      size="xs"
-                      className="font-semibold"
-                      color="tertiary"
-                    />
-                  </div>
-                )}
-              {selectedRows?.length &&
-                selectedRows?.length > 0 &&
-                user?.empPosition === "purchaser" && (
-                  <div className="">
-                    <Button
-                      icon={<Package className="w-3 h-3 xl:w-5 xl:h-5" />}
-                      label="Add Item to supplier"
-                      onClick={() => {
-                        setShowAddItemSupplierModal(true);
-                      }}
-                      size="xs"
-                      className="font-semibold"
-                      color="tertiary"
-                    />
-                  </div>
-                )}
-              {selectedRows?.length &&
-                selectedRows?.length > 0 &&
-                user?.empPosition === "purchaser" && (
-                  <div className="">
-                    <Button
-                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
-                      label="Add Item to store"
-                      onClick={() => {
-                        setShowAddItemModal(true);
-                      }}
-                      size="xs"
-                      className="font-semibold"
-                      color="success"
-                    />
-                  </div>
-                )}
-              {selectedRows?.length &&
-                selectedRows?.length > 0 &&
-                (user?.empPosition === "staff" ||
-                  user?.empPosition === "supervisor") && (
-                  <div className="">
-                    <Button
-                      icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
-                      label="Add Item to product"
-                      onClick={() => {
-                        setShowAddProductModal(true);
-                      }}
-                      size="xs"
-                      className="font-semibold"
-                      color="success"
-                    />
-                  </div>
-                )}
+              {Boolean(
+                selectedRows?.length &&
+                  selectedRows?.length > 0 &&
+                  (user?.empPosition === "supervisor" ||
+                    user?.empPosition === "staff")
+              ) && (
+                <div>
+                  <Button
+                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    label="Request Stock"
+                    onClick={() => {
+                      setShowCreateRequestModal(true);
+                    }}
+                    size="xs"
+                    className="font-semibold"
+                    color="tertiary"
+                  />
+                </div>
+              )}
+              {Boolean(
+                selectedRows?.length &&
+                  selectedRows?.length > 0 &&
+                  user?.empPosition === "purchaser"
+              ) && (
+                <div className="">
+                  <Button
+                    icon={<Package className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    label="Add Item to supplier"
+                    onClick={() => {
+                      setShowAddItemSupplierModal(true);
+                    }}
+                    size="xs"
+                    className="font-semibold"
+                    color="tertiary"
+                  />
+                </div>
+              )}
+              {Boolean(
+                selectedRows?.length &&
+                  selectedRows?.length > 0 &&
+                  user?.empPosition === "purchaser"
+              ) && (
+                <div className="">
+                  <Button
+                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    label="Add Item to store"
+                    onClick={() => {
+                      setShowAddItemModal(true);
+                    }}
+                    size="xs"
+                    className="font-semibold"
+                    color="success"
+                  />
+                </div>
+              )}
+              {Boolean(
+                selectedRows?.length &&
+                  selectedRows?.length > 0 &&
+                  (user?.empPosition === "staff" ||
+                    user?.empPosition === "supervisor")
+              ) && (
+                <div className="">
+                  <Button
+                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    label="Add Item to product"
+                    onClick={() => {
+                      setShowAddProductModal(true);
+                    }}
+                    size="xs"
+                    className="font-semibold"
+                    color="success"
+                  />
+                </div>
+              )}
               {user?.empPosition === "purchaser" ? (
                 <div>
                   <Button
