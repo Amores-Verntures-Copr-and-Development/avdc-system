@@ -158,7 +158,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
     ),
   },
   {
-    name: "itemSupplier",
+    name: "Supplier",
     key: "itemSuppliers",
     selector: (row) => {
       const suppliers = row.itemSuppliers || [];
@@ -209,7 +209,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 
       return (
         <span
-          className={`inline-flex items-center text-center justify-center px-1.5 py-0.5 2xl:px-3 2xl:py-1 rounded-full text-[8px] xl:text-[10px] 2xl:text-sm font-semibold ${bgClass} ${textClass}`}
+          className={`inline-flex items-center text-center justify-center px-1.5 py-0.5 2xl:px-3 2xl:py-1 rounded-full text-[9px] xl:text-[10px] 2xl:text-xs font-semibold ${bgClass} ${textClass}`}
         >
           {status}
         </span>
@@ -252,6 +252,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     useState(false);
   // get the stock inventory if purchaser
   const url = `/api/inventory/item/${inventoryId}`;
+  useEffect(() => {}, [selectedRows]);
   const getApiUrl = () => {
     if (!inventoryId) return null;
 
@@ -281,13 +282,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   };
   const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
-    if (selected.length > 0) {
-      setSelectedRows(selected);
-    }
-    if (selected.length === 0) {
-      setSelectedRows(undefined);
-    }
+    setSelectedRows(selected);
   };
+
   const handleCreateRequest = async (data: CreateRequestFormDto) => {
     try {
       const result = await fetch(`api/requests/`, {
@@ -623,11 +620,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           setSelectedRow(row);
           setShowInventoryItemModal(true);
         }}
-        onSelectedRow={selectedRows}
         onSelectionChange={handleSelectionChange}
         renderTopActions={
           <>
-            <div className="flex gap-4">
+            <div className="flex gap-2">
               <div>
                 <Button
                   icon={<Clipboard className="w-3 h-3 xl:w-5 xl:h-5" />}

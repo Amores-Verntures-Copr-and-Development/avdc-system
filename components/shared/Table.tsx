@@ -60,7 +60,6 @@ interface TableProps<T> {
   onSelectionChange?: (selected: T[]) => void;
   updateData?: (data: T[]) => void;
   onRowSelection?: (data: T) => void;
-  onSelectedRow?: T[];
   onCellChange?: (
     rowIndex: number,
     columnKey: string,
@@ -108,15 +107,13 @@ const TableInner = <T extends Record<string, any>>(
     filterConfig,
     initialFilters,
     onSave,
-    onSelectedRow,
     uniqueIdKey,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
   // ✅ FIX: Store selected unique IDs instead of indexes
-  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(
-    new Set()
-  );
+
+  const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
 
@@ -125,17 +122,11 @@ const TableInner = <T extends Record<string, any>>(
   }, [data]);
 
   // ✅ FIX: Sync selected rows when onSelectedRow changes
-  useEffect(() => {
-    if (onSelectedRow && onSelectedRow.length > 0) {
-      const ids = new Set(onSelectedRow.map((row) => getUniqueId(row)));
-      setSelectedIds(ids);
-    }
-  }, [onSelectedRow]);
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const clearSelection = () => {
-    setSelectedIds(new Set());
+    setSelectedRows([]);
     if (onClearSelection) onClearSelection();
     if (onSelectionChange) onSelectionChange([]);
   };
@@ -152,39 +143,42 @@ const TableInner = <T extends Record<string, any>>(
 
   // ✅ FIX: Toggle row using unique ID
   const toggleRow = (row: T) => {
-    const uniqueId = getUniqueId(row);
-    const newSelection = new Set(selectedIds);
-
-    if (newSelection.has(uniqueId)) {
-      newSelection.delete(uniqueId);
-    } else {
-      newSelection.add(uniqueId);
-    }
-    setSelectedIds(newSelection);
-
-    if (onSelectionChange) {
-      const selectedItems = data.filter((item) =>
-        newSelection.has(getUniqueId(item))
+    setSelectedRows((prev) => {
+      const uniqueId = getUniqueId(row);
+      const isAlreadySelected = prev.some(
+        (item) => getUniqueId(item) === uniqueId
       );
-      onSelectionChange(selectedItems);
-    }
+
+      let newSelection: T[];
+      if (isAlreadySelected) {
+        newSelection = prev.filter((item) => getUniqueId(item) !== uniqueId);
+      } else {
+        newSelection = [...prev, row];
+      }
+
+      return newSelection;
+    });
   };
 
   // ✅ FIX: Toggle all using unique IDs
   const toggleAll = () => {
-    if (selectedIds.size === data.length) {
-      setSelectedIds(new Set());
-      if (onSelectionChange) onSelectionChange([]);
-    } else {
-      const allIds = new Set(data.map((item) => getUniqueId(item)));
-      setSelectedIds(allIds);
-      if (onSelectionChange) onSelectionChange(data);
-    }
+    setSelectedRows((prev) => {
+      if (prev.length === data.length) {
+        return [];
+      } else {
+        return data;
+      }
+    });
   };
+  useEffect(() => {
+    if (onSelectionChange && selectedRows.length >= 0) {
+      onSelectionChange(selectedRows);
+    }
+  }, [selectedRows, onSelectionChange]);
 
   // ✅ FIX: Check if row is selected
   const isRowSelected = (row: T) => {
-    return selectedIds.has(getUniqueId(row));
+    return selectedRows.some((item) => getUniqueId(item) === getUniqueId(row));
   };
 
   const handleInputChange = (
@@ -361,7 +355,7 @@ const TableInner = <T extends Record<string, any>>(
                       type="checkbox"
                       className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       checked={
-                        selectedIds.size === data.length && data.length > 0
+                        selectedRows.length === data.length && data.length > 0
                       }
                       onChange={toggleAll}
                     />
