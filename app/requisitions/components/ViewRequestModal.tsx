@@ -45,7 +45,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const handleDataUpdate = (updatedData: DisplayRequestItems[]) => {
     updatedItemsRef.current = updatedData;
   };
-  console.log({ selectedReq });
+
   const isRequestor =
     user?.empPosition === "staff" || user?.empPosition === "supervisor";
   const columnPending: Column<DisplayRequestItems>[] = [

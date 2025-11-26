@@ -25,7 +25,7 @@ export const selectCategories = async ({
   connection?: PoolConnection;
 }): Promise<CategoryInterface[]> => {
   const pool = connection ? connection : await getDBConnection();
-  console.log({ keyFields });
+
   const params: any[] = [];
   let sql = `SELECT * FROM Categories WHERE 1=1`;
   for (const [key, value] of Object.entries(keyFields)) {

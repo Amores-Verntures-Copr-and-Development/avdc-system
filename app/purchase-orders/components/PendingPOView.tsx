@@ -106,7 +106,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     }
   }, [data]);
   const handleApprovedPo = async () => {
-    console.log({ poItems });
+
     const newData: UpdatePurchaseOrdersDto = {
       ...poData,
       poItems: poItems,

@@ -255,7 +255,7 @@ const Sidebar = () => {
   const [isShowLogout, setShowLogout] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useSession();
-  console.log({ user });
+
 
   useEffect(() => {
     const checkScreenSize = () => {

@@ -33,6 +33,7 @@ import {
   findInventoryByStoreFields,
 } from "@/services/inventory/get-inventory";
 import {
+  findInventoryForReport,
   findInventoryItemsByField,
   findInventoryItemUnitByInventoryId,
   getInventoryItemsStatus,
@@ -294,6 +295,29 @@ export const updateInventoryItem = async (data: InventoryItemInterface) => {
 export const getInventoryItemUnit = async (inventoryId: number) => {
   try {
     const data = await findInventoryItemUnitByInventoryId(inventoryId);
+    return {
+      success: true,
+      message: "Item fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: e,
+      error: e,
+    };
+  }
+};
+
+export const getInventoryItemsByDate = async ({
+  range,
+  inventoryId,
+}: {
+  inventoryId: number;
+  range: { from: string; to: string };
+}) => {
+  try {
+    const data = await findInventoryForReport({ range, inventoryId });
     return {
       success: true,
       message: "Item fetched successfully!",

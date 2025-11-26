@@ -77,8 +77,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
     const isAllDeliverd = poItems.every(
       (item) => item.poItemStatus === "received"
     );
-    console.log({ poItems });
-    console.log({ isAllDeliverd });
+
     if (isAllDeliverd) {
       const poData: Partial<PurchaseOrders>[] = [
         {

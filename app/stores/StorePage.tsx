@@ -61,7 +61,7 @@ const StorePage = () => {
     }
   };
   return (
-    <PageLayout className="p-4 gap-2">
+    <PageLayout className="p-2 gap-2">
       <PageHeader title={"Stores"} subtitle="Manage your company stores." />
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table

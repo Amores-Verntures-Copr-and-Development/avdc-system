@@ -135,7 +135,7 @@ const StoreRequisitionPage = () => {
   };
 
   return (
-    <PageLayout className="p-4 gap-4">
+    <PageLayout className="p-2 gap-4">
       <PageHeader
         title={"Requisition"}
         subtitle="Manage request order from your store."

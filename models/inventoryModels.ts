@@ -478,3 +478,55 @@ export const selectInventoryItemUnitById = async (inventoryId: number) => {
   const [rows] = await pool.execute(sql, [inventoryId]);
   return rows;
 };
+
+export const selectInventoryItemReport = async ({
+  range,
+  inventoryId,
+}: {
+  inventoryId: number;
+  range: { from: string; to: string };
+}) => {
+  const pool = await getDBConnection();
+  const sql = ` SELECT 
+    ii.inventoryItemId,
+    ii.inventoryId,
+    ii.inventoryItemReferenceId,
+    ii.inventoryItemReferenceType,
+    ii.inventoryItemQuantity AS currentInventoryQuantity,
+    i.itemName,
+    i.itemUnit,
+    c.categoryName,
+    (SELECT COALESCE(SUM(iim.itemMovementQuantity), 0) 
+     FROM InventoryItemMovements iim 
+     WHERE iim.inventoryItemId = ii.inventoryItemId 
+     AND iim.itemMovementType = 'in' 
+     AND DATE(iim.itemMovementCreatedAt) BETWEEN ? AND ?) AS itemIn, 
+    (SELECT COALESCE(SUM(iim.itemMovementQuantity), 0) 
+     FROM InventoryItemMovements iim 
+     WHERE iim.inventoryItemId = ii.inventoryItemId 
+     AND iim.itemMovementType = 'out' 
+     AND DATE(iim.itemMovementCreatedAt) BETWEEN ? AND ?) AS itemOut,
+    -- Calculate starting inventory (before the date range)
+    (ii.inventoryItemQuantity - 
+     (SELECT COALESCE(SUM(CASE WHEN iim.itemMovementType = 'in' THEN iim.itemMovementQuantity ELSE -iim.itemMovementQuantity END), 0)
+      FROM InventoryItemMovements iim 
+      WHERE iim.inventoryItemId = ii.inventoryItemId 
+      AND DATE(iim.itemMovementCreatedAt) > ?)) AS startingInventory
+FROM InventoryItems ii
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+LEFT JOIN Categories c ON c.categoryId = i.categoryId
+WHERE ii.inventoryId = ?
+ORDER BY 
+    itemOut DESC,
+    itemIn DESC,
+    i.itemName ASC`;
+  const [rows] = await pool.execute(sql, [
+    range.from,
+    range.to,
+    range.from,
+    range.to,
+    range.from,
+    inventoryId,
+  ]);
+  return rows;
+};

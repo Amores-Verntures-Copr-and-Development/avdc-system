@@ -239,6 +239,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [showCreateReportModal, setShowCreateReportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showCreateInventoryReport, setShowCreateInventoryReport] =
+    useState(false);
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
@@ -444,7 +446,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const handleSubmitStockAdjustment = async (
     data: CreateInventoryMovementDto
   ) => {
-    console.log({ data });
     setIsSubmittingAdjustment(true);
     try {
       const result = await fetch(
@@ -475,7 +476,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const handleImportItem = async (data: any[]) => {
     setIsSubmittingImport(true);
     if (!inventoryId) {
-      console.log({ inventoryId });
       return false;
     }
     const newData: ImportItemInfo = {
@@ -490,7 +490,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         itemDescription: item.Description ?? "",
       })),
     };
-    console.log({ newData });
+
     try {
       const result = await fetch(`/api/items/import-item/`, {
         method: "POST",
@@ -519,7 +519,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const handleEditInventoryItem = async (
     item: Partial<InventoryItemInterface>
   ) => {
-    console.log({ item });
     setIsEditingItem(true);
     try {
       const result = await fetch(
@@ -629,7 +628,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   icon={<Clipboard className="w-3 h-3 xl:w-5 xl:h-5" />}
                   label="Inventory Report"
                   onClick={() => {
-                    setShowImportModal(true);
+                    setShowCreateInventoryReport(true);
                   }}
                   size="xs"
                   className="font-semibold"
@@ -870,25 +869,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         />
       </Modal>
       <Modal
-        title="Create Inventory Report"
-        subtitle="Create daily inventory report"
-        isOpen={showCreateReportModal}
-        onClose={() => {
-          setShowCreateReportModal(false);
-        }}
-        size="xl"
-        className="bg-white h-[80%]"
-      >
-        <CreateInventoryReport
-        // data={selectedRows ?? []}
-        // onCancel={() => {
-        //   setShowAddItemModal(false);
-        // }}
-        // onSubmit={handleCreateRequest}
-        // user={user}
-        />
-      </Modal>
-      <Modal
         isOpen={showAddProductModal}
         onClose={function (): void {
           setShowAddProductModal(false);
@@ -939,6 +919,17 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           isEditing={isEditingItem}
         />
       </Popup>
+      <Modal
+        isOpen={showCreateInventoryReport}
+        onClose={function (): void {
+          setShowCreateInventoryReport(false);
+        }}
+        title="Create Inventory Report"
+        size="xl"
+        className="h-[95%]"
+      >
+        <CreateInventoryReport inventoryId={inventoryId ?? 0} user={user} />
+      </Modal>
     </>
   );
 };

@@ -61,3 +61,28 @@ export interface InventoryItemMovement {
   itemMovementRemarks?: string;
   itemMovementCreatedAt?: string;
 }
+
+
+export interface InventoryReport {
+  invReportId: number;
+  invReportFrom: string;
+  invReportTo: string;
+  reportId: number;
+}
+
+export interface InventoryReportItem {
+  invRepItemId: number;
+  invRepItemTotalIn: number;
+  invRepItemTotalOut: number;
+  invRepCurrentStock: number;
+  invReportId: number;
+  itemId: number;
+}
+
+export interface DailyReport {
+  dailyReportId: number;
+  dailyRepOpen: number;
+  dailyRepClose: number;
+  reportId: number;
+  itemId: number;
+}

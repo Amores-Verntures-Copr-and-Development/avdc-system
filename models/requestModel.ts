@@ -185,7 +185,7 @@ export const selectRequestItemsByIds = async ({
     .join(", ");
 
   // Step 3: Build main SQL query dynamically
-  console.log({ placeholders });
+
   const sql = `
 SELECT 
   i.itemId,

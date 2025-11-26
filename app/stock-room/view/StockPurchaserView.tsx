@@ -49,7 +49,7 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
     `/api/stock-room/${data.stockRoomId}/purchaser`,
     fetcher
   );
-  console.log({ user });
+
   const handleAddPurchaser = async (purchaserData: CreateStockPurchaser[]) => {
     console.log("CreateStockPurchaser: ", purchaserData);
     try {

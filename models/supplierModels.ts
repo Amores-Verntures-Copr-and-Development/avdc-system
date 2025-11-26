@@ -207,7 +207,7 @@ export const updateSupplierItemsByFields = async ({
     ", "
   )} WHERE ${whereSql}`;
 
-  console.log({ sql, params });
+
 
   try {
     const [result] = await pool.execute(sql, params);

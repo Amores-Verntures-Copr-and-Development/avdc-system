@@ -4,7 +4,7 @@ import React from "react";
 
 const Sales = () => {
   return (
-    <PageLayout className="p-4">
+    <PageLayout className="p-2">
       <PageHeader title={"Sales"} />
     </PageLayout>
   );

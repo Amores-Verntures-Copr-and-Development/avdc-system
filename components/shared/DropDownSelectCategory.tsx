@@ -52,7 +52,7 @@ const DropDownSelectCategory: React.FC<DropDownSelectCategoryProps> = ({
         value: String(cat.categoryId),
       })) || []),
   ];
-  console.log({ categoryBaseUrl });
+
   return (
     <DropdownSelect
       name={name}

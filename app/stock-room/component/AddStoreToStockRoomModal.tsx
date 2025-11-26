@@ -58,7 +58,7 @@ const AddStoreToStockRoomModal = ({
     console.log("stockStoreData: ", stockStoreData);
     const success = await onSubmit(stockStoreData);
     if (success) {
-      console.log({ stockStoreData });
+
       onCancel();
     }
   };

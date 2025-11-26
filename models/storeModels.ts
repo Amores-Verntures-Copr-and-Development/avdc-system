@@ -3,6 +3,8 @@ import { getDBConnection } from "../lib/db";
 import { skip } from "node:test";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { EmployeeInterface } from "@/types/employees";
+import { InventoryInterface } from "@/types/inventory";
+import { StoreInterface } from "@/types/stores";
 
 export const insertStore = async ({
   data,
@@ -83,4 +85,26 @@ export const selectStoresByPoId = async (poId: number) => {
   WHERE po.poId = ?`;
   const [rows] = await pool.execute(sql, [poId]);
   return rows;
+};
+
+export const selectStoresByInventoryKeyFields = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<InventoryInterface>;
+}) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT s.* FROM Stores s 
+LEFT JOIN Inventories i ON i.inventoryReferenceId = s.storeId AND i.inventoryReference = 'store'
+WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND i.${key} IS NULL`;
+    } else {
+      sql += ` AND i.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as StoreInterface[];
 };

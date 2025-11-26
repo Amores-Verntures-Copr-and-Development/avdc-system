@@ -57,7 +57,7 @@ const ProductPage = () => {
     data: DisplayProductsDtos[];
   }>(inventoryId ? `/api/products/${inventoryId}` : null, fetcher);
   return (
-    <PageLayout className="gap-4 p-4">
+    <PageLayout className="gap-4 p-2">
       <PageHeader title={"Products"} subtitle="Add, edit, and track products" />
       <div className="grid grid-cols-4 gap-4">
         <ProductCardDetails

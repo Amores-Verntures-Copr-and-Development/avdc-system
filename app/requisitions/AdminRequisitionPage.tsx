@@ -102,7 +102,7 @@ const AdminRequisitionPage = () => {
     }
   };
   return (
-    <PageLayout className="p-4 gap-2">
+    <PageLayout className="p-2 gap-2">
       <PageHeader
         title={"Requisition"}
         subtitle="Manage request orders from stores."

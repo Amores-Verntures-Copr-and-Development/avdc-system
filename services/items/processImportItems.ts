@@ -43,7 +43,7 @@ export async function processImportItems(data: ImportItemInfo) {
       })
     );
     await createInventoryItems({ data: inventoryItems, connection });
-    console.log({ inventoryItems });
+
     await connection.commit();
   } catch (e) {
     await connection.rollback();

@@ -642,7 +642,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               label="Yes, Deliver"
               color="primary"
               onClick={() => {
-                console.log({ selectedStoreSupplier });
+
                 if (!selectedStoreSupplier) {
                   return;
                 }

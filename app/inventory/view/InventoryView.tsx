@@ -21,18 +21,16 @@ import StockMovementSection from "./StockMovementSection/StockMovementSection";
 interface InventoryViewProps {
   inventoryId: number | null;
   user: UserAuth | null;
-  view: "inventory" | "movement" | "report"
+  view: "inventory" | "movement" | "report";
 }
-const InventoryView = ({ inventoryId, user,view }: InventoryViewProps) => {
-
-
+const InventoryView = ({ inventoryId, user, view }: InventoryViewProps) => {
   const { data: inventoryItemResponse = { data: [] } } = useSWR(
     `api/inventory/item/${inventoryId}/details`,
     fetcher
   );
-  console.log({ inventoryId });
+
   const stats = inventoryItemResponse?.data?.[0] || {};
-  console.log({ stats });
+
   return (
     <PageLayout className="gap-2">
       {/* Cards */}
@@ -74,7 +72,9 @@ const InventoryView = ({ inventoryId, user,view }: InventoryViewProps) => {
         {view === "movement" && (
           <StockMovementSection inventoryId={inventoryId} />
         )}
-        {view === "report" && <ReportSection />}
+        {view === "report" && (
+          <ReportSection inventoryId={inventoryId} user={user} />
+        )}
       </div>
     </PageLayout>
   );

@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
+import { useCategories } from "@/hooks/useCategory";
 
 interface ViewInventoryItemPros {
   user?: UserAuth | null;
@@ -248,12 +249,17 @@ const EditItemDetails: React.FC<
   mutate,
   isEditing,
 }) => {
+  const { categoryOptions } = useCategories({
+    inventoryId: data?.inventoryId ?? 0,
+    reference: "inventoryId",
+  });
   const [editedInventoryItem, setEditenInventryItem] = useState<
     Partial<InventoryItemInterface>
   >({
     inventoryItemMin: data?.inventoryItemMin,
     inventoryItemId: data?.inventoryItemId,
   });
+
   const setChange = handleChange(editedInventoryItem, setEditenInventryItem);
 
   const handleEditMinimumStock = async () => {
@@ -343,14 +349,37 @@ const EditItemDetails: React.FC<
               </div>
               <div className="space-y-2">
                 <label className="text-sm text-gray-600">Category</label>
-                <DropDownSelectCategory
+                {/* <DropDownSelectCategory
                   categoryType={"item"}
                   name={"categoryName"}
                   value={data?.categoryName ?? ""}
                   sizes="sm"
                   id={user?.userId}
                   referenceType={"stock-room"}
-                />
+                /> */}
+                {
+                  <DropdownSelect
+                    name={"categoryName"}
+                    value={data?.categoryName}
+                    options={categoryOptions ?? []}
+                    onChange={setChange}
+                  />
+                }
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Minimum Stock
+                </span>
+                <div className="w-20">
+                  <Input
+                    value={editedInventoryItem?.inventoryItemMin ?? 0}
+                    name="inventoryItemMin"
+                    sizes="sm"
+                    onChange={setChange}
+                    type="number"
+                    label={""}
+                  />
+                </div>
               </div>
             </>
           )}

@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
       .split(",")
       .map((id) => Number(id.trim()))
       .filter(Boolean);
-    console.log({ ids });
     const res = await getItemRequestByIds({ requestId: ids });
     if (!res.success) {
       console.log(res.error);

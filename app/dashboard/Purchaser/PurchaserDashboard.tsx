@@ -35,7 +35,7 @@ const PurchaserDashboard = () => {
     user ? `/api/dashboard/purchaser/${user?.userId}/pending-request` : null,
     fetcher
   );
-  console.log({ pendingRequest });
+
 
   // Provide proper default values
   const defaultStats: DashboardStats = {
@@ -44,7 +44,7 @@ const PurchaserDashboard = () => {
     lowStock: 0,
     outOfStock: 0,
   };
-  console.log({ dashboardStats });
+
   const stats = dashboardStats?.data[0] ?? defaultStats;
 
   return (

@@ -31,11 +31,11 @@ export const getCategories = async ({
   try {
     let data;
     if (controller === "storeId") {
-      console.log({ id });
+   
       data = await getCategoriesById({ storeId: id });
     } else if (controller === "stockRoomId") {
       data = await getCategoriesById({ stockRoomId: id });
-      console.log({ data });
+  
     } else if (controller === "inventoryId" && id) {
       data = await getCategoriesByInventoryId({ inventoryId: id });
     }

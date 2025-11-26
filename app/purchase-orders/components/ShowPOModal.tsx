@@ -52,7 +52,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       controller: "approved",
       data: data,
     };
-    console.log({ data });
+
     try {
       const result = await fetch(`api/purchase-order`, {
         method: "PUT",

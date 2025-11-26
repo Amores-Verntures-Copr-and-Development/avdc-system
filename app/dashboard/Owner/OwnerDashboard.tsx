@@ -37,7 +37,6 @@ const OwnerDashboard = () => {
       `/api/dashboard/store-daily-sales/`,
       fetcher
     );
-  console.log({ dailyStoreSales });
   const storeSales: Store[] =
     dailyStoreSales?.data?.map((s) => {
       const today = Number(s.todaySales);

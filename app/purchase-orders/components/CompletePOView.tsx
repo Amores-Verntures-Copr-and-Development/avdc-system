@@ -188,7 +188,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   };
 
   const handleCompletePO = async () => {
-    console.log({ poData });
+
     if (!poData) {
       return;
     }

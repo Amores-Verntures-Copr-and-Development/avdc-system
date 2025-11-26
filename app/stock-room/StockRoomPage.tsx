@@ -65,7 +65,7 @@ const StockRoomPage = () => {
     }
   };
   return (
-    <PageLayout className="p-4 gap-2">
+    <PageLayout className="p-2 gap-2">
       {selectedStockRoom ? (
         <>
           <div className="flex justify-between items-center">

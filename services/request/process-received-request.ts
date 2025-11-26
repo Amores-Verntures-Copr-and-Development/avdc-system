@@ -5,7 +5,6 @@ import { updateRequests } from "./update-request";
 import { updateRequestItems } from "./request-items/update-request-items";
 import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
-import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { findInventoryByFields } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 
@@ -51,7 +50,6 @@ export async function processReceivedRequest(data: Request[]) {
           inventoryItemQuantity: item.reqItemReceived,
         }))
       ) || [];
-    console.log({ request, requestItems, addInventoryQty });
     await updateInventoryItem({
       connection,
       fieldModes: { inventoryItemQuantity: "increment" },

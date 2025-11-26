@@ -116,12 +116,12 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     index: number
   ) => {
     setSendingSupplier(index);
-    console.log({ index });
+
     const supplierName = data.find((req) => req.suppId === suppId)?.suppName;
     const success = await onSendPOItem(poItems);
     if (success) {
       toast.success(`Items for ${supplierName}  sent!`);
-      console.log({ data });
+    
       if (
         data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
       ) {

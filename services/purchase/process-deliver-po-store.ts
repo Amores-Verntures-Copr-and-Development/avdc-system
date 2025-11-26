@@ -48,7 +48,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       connection,
       poId: data.poId,
     });
-    console.log({ requestItemsInPOItem });
+
     // Get unique poItemIds that have delivered status
     // const poItemGroups = requestItemsInPOItem.reduce((acc, reqItem) => {
     //   const poItemId = reqItem.poItemId;
@@ -86,7 +86,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       (i) => i.suppId === data.items[0].suppId
     );
     const suppId = allSameSupplier ? data.items[0].suppId : null;
-    console.log({ allSameSupplier, suppId });
+ 
 
     const requestItems = await getRequestOrderItems({
       requestId: data.requestId,
@@ -111,11 +111,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       const allRequestItemsWithSameSupplierDelivered = storeSuppPoId.every(
         (i) => i.items.every((items) => items.reqItemStatus === "delivered")
       );
-      console.log({ storeSuppPoId });
-      console.log(
-        `allRequestItemsWithSameSupplierDelivered: `,
-        allRequestItemsWithSameSupplierDelivered
-      );
+
       if (allRequestItemsWithSameSupplierDelivered) {
         await updatePurchaseOrderItems({
           connection,

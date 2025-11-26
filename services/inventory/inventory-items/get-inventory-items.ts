@@ -1,4 +1,5 @@
 import {
+  selectInventoryItemReport,
   selectInventoryItems,
   selectInventoryItemsStockStatus,
   selectInventoryItemUnitById,
@@ -54,6 +55,21 @@ export async function findStockRoomInventoryByPurchaserId(purchaserId: number) {
 export async function findInventoryItemUnitByInventoryId(invetoryId: number) {
   try {
     const data = await selectInventoryItemUnitById(invetoryId);
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findInventoryForReport({
+  range,
+  inventoryId,
+}: {
+  inventoryId: number;
+  range: { from: string; to: string };
+}) {
+  try {
+    const data = await selectInventoryItemReport({ range, inventoryId });
     return data;
   } catch (e) {
     throw e;
