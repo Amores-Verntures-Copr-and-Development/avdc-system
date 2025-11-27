@@ -928,7 +928,11 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         size="xl"
         className="h-[95%]"
       >
-        <CreateInventoryReport inventoryId={inventoryId ?? 0} user={user} />
+        <CreateInventoryReport
+          inventoryId={inventoryId ?? 0}
+          user={user}
+          mutateReport={mutate}
+        />
       </Modal>
     </>
   );

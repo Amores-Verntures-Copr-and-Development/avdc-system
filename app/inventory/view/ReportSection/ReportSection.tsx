@@ -42,7 +42,11 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
   const [selectedRow, setSelectedRow] = useState<Reports | undefined>(
     undefined
   );
-  const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
+  const {
+    data: itemResponse = { data: [] },
+    isLoading: loading,
+    mutate,
+  } = useSWR<{
     data: Reports[];
   }>(inventoryId ? `/api/report/${inventoryId}` : null, fetcher);
   return (
@@ -99,12 +103,18 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
         size="xl"
         className="h-[95%]"
       >
-        <CreateInventoryReport inventoryId={inventoryId ?? 0} user={user} />
+        <CreateInventoryReport
+          inventoryId={inventoryId ?? 0}
+          user={user}
+          mutateReport={mutate}
+          onCancel={() => {
+            setShowCreateInventoryReport(false);
+          }}
+        />
       </Modal>
       {openModal === "inventory" ? (
         <Modal
-          title={`${selectedRow?.reportTitle}`}
-          subtitle="Inventory Report"
+          title={`Inventory Report`}
           size="xl"
           className="h-[95%]"
           isOpen={openModal === "inventory"}
@@ -112,12 +122,11 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
             setOpenModal(null);
           }}
         >
-          <VewInventoryReport />
+          <VewInventoryReport report={selectedRow} />
         </Modal>
       ) : (
         <Modal
-          title={`${selectedRow?.reportTitle}`}
-          subtitle="Daily Report"
+          title={`Inventory Report`}
           size="xl"
           className="h-[95%]"
           isOpen={openModal === "daily"}

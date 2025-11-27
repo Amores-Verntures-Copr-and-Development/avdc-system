@@ -30,10 +30,9 @@ export async function handleCreateReport(data: CreateReportDto) {
       const reportTitle = `${inventoryReferenceStore[0].storeName
         .toUpperCase()
         .replace(/[^A-Z0-9]+/g, "-")
-        .replace(/^-|-$/g, "")}-INV-REPORT-${String(reports.length).padStart(
-        3,
-        "0"
-      )}`;
+        .replace(/^-|-$/g, "")}-INV-REPORT-${String(
+        reports.length + 1
+      ).padStart(3, "0")}`;
       const reportData: CreateReportDto = {
         ...data,
         reportTitle: reportTitle,

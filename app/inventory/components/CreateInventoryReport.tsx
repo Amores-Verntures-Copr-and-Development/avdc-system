@@ -61,6 +61,7 @@ interface CreateInventoryReportProps {
   user: UserAuth | null;
   onCancel?: () => void;
   onCreate?: (data: DisplayForReportItems[]) => void;
+  mutateReport?: () => void;
 }
 
 interface DisplayForReportItems {
@@ -81,6 +82,7 @@ const CreateInventoryReport = ({
   inventoryId,
   onCancel,
   onCreate,
+  mutateReport,
   user,
 }: CreateInventoryReportProps) => {
   const [range, setRange] = useState<{ from: string; to: string } | undefined>(
@@ -165,7 +167,12 @@ const CreateInventoryReport = ({
         throw new Error(res.err);
       }
       toast.success("Inventory report created successfully!");
-      // mutate();
+      if (mutateReport) {
+        mutateReport();
+      }
+      if (onCancel) {
+        onCancel();
+      }
       return true;
     } catch (e) {
       console.log(e);

@@ -41,7 +41,7 @@ export async function POST(
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ inventoryId: string }> }
 ) {
   try {

@@ -5,6 +5,7 @@ import {
   CreateReportDto,
 } from "@/dtos/report.dto";
 import { getDBConnection } from "@/lib/db";
+import { InventoryReport } from "@/types/inventory";
 import { Reports } from "@/types/report";
 import { Rows } from "lucide-react";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
@@ -89,4 +90,61 @@ export const insertInventoryReportItems = async ({
 
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results;
+};
+
+export const selectInventoryReports = async ({
+  keyInvRepFields = {},
+  keyReportFields = {},
+}: {
+  keyInvRepFields?: Partial<InventoryReport>;
+  keyReportFields?: Partial<Reports>;
+}) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT 
+    ir.*,
+    r.*,
+    (
+        SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'invRepItemId', iri.invRepItemId,
+                'invRepItemTotalIn', iri.invRepItemTotalIn,
+                'invRepItemTotalOut', iri.invRepItemTotalOut,
+                'invRepCurrentStock', iri.invRepCurrentStock,
+                'invReportId', iri.invReportId,
+                'itemId', iri.itemId,
+                'itemName',i.itemName,
+                'categoryName', c.categoryName
+            )
+        )
+        FROM InventoryReportItems iri
+        LEFT JOIN Items i ON i.itemId = iri.itemId
+        LEFT JOIN Categories c ON c.categoryId = i.categoryId
+        WHERE iri.invReportId = ir.reportId
+    ) as items
+FROM InventoryReports ir
+LEFT JOIN Reports r ON r.reportId = ir.reportId
+WHERE 1=1`;
+  const params: any[] = [];
+  if (keyInvRepFields) {
+    for (const [key, value] of Object.entries(keyInvRepFields)) {
+      if (value === null) {
+        sql += ` AND ir.${key} IS NULL`;
+      } else {
+        sql += ` AND ir.${key} = ?`;
+        params.push(value);
+      }
+    }
+  }
+  if (keyReportFields) {
+    for (const [key, value] of Object.entries(keyReportFields)) {
+      if (value === null) {
+        sql += ` AND r.${key} IS NULL`;
+      } else {
+        sql += ` AND r.${key} = ?`;
+        params.push(value);
+      }
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as Reports[];
 };
