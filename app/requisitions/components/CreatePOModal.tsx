@@ -82,7 +82,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         console.log("Stock Item: ", row.stockItem);
         console.log("Total Quantity: ", row.totalQuantity);
         const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
-      
+
         if (Number(row.stockItem) >= Number(row.totalQuantity)) {
           return (
             <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">

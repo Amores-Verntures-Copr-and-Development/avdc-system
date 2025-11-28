@@ -8,6 +8,7 @@ import {
 import { getDBConnection } from "@/lib/db";
 import {
   PurchaseOrderItems,
+  PurchaseOrderRequest,
   PurchaseOrders,
   PurchaseOrderStatus,
 } from "@/types/purchaseOrders";
@@ -450,6 +451,33 @@ CASE po.poStatus
 	ELSE 5
 	END ASC,
 po.poCreatedAt DESC`;
+  const [rows] = await pool.execute(sql, params);
+  return rows as PurchaseOrderItems[];
+};
+
+export const selectPObyPoOrderRequestFields = async ({
+  connection,
+  keyfields = {},
+}: {
+  connection?: PoolConnection;
+  keyfields: Partial<PurchaseOrderRequest>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = ` SELECT po.* FROM PurchaseOrders po 
+  LEFT JOIN PurchaseOrderRequest por ON por.poId = po.poId
+  WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND por.${key} IS NULL`;
+    } else if (value === 0) {
+      // Handle IS NOT NULL
+      sql += ` AND por.${key} IS NOT NULL`;
+    } else {
+      sql += ` AND por.${key} = ?`;
+      params.push(value);
+    }
+  }
   const [rows] = await pool.execute(sql, params);
   return rows as PurchaseOrderItems[];
 };

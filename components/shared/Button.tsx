@@ -155,7 +155,6 @@ const Button: React.FC<ButtonProps> = ({
       ) : (
         <>
           {icon && <span>{icon}</span>}
-          <span></span>
           <span className="inline">{label}</span>
         </>
       )}

@@ -1,8 +1,10 @@
 import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
+import Popup from "@/components/shared/PopupModal";
 import Table, { Column } from "@/components/shared/Table";
 import {
+  CreateRequestItemDto,
   DisplayRequestItems,
   DisplayRequestOrderDto,
   RequestOrderPdf,
@@ -14,10 +16,13 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 import { PDFViewer } from "@react-pdf/renderer";
-import { CheckLine, Clock, FileText, Pencil } from "lucide-react";
+import { CheckLine, Clock, FileText, Pencil, Plus, X } from "lucide-react";
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
+import AddItemROModal from "./AddItemROModal";
+import AddItemPOModal from "./AddItemPOModal";
+import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -29,8 +34,16 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   mutateRequest,
   user,
 }) => {
+  const [isSelectingAddItemPO, setIsSelectingAddItemPO] = useState(false);
+  const [showAddPOItem, setShowAddPOItem] = useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isAddingItemPo, setIsAddingItemPo] = useState(false);
   const [showROPDF, setShowROPDF] = useState(false);
   const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
+  const [showAddItem, setShowAddItem] = useState(false);
+  const [selectedRows, setSelectedRows] = useState<
+    DisplayRequestItems[] | null
+  >(null);
   const {
     data: itemResponse = { data: [] },
     isLoading: loading,
@@ -73,6 +86,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       key: "reqItemReceived",
     },
   ];
+
   const column: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
@@ -161,6 +175,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       return false;
     }
   };
+  const getOverAllInventoryId = itemResponse.data.every(
+    (item) => item.inventoryId
+  )
+    ? itemResponse.data[0]?.inventoryId
+    : null;
+  const getAllInventoryItemIdInRequest = itemResponse.data.map(
+    (item) => item.invItem
+  );
 
   const handleDownloadPDF = () => {
     const pdfData: RequestOrderPdf = {
@@ -178,6 +200,80 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     };
     setPdfData(pdfData);
   };
+
+  const handleAddItemRequest = async (data: CreateRequestItemDto) => {
+    setIsAddingItem(true);
+    const arrayData = [data];
+    try {
+      const result = await fetch(
+        `api/requests/request-items/${selectedReq?.requestId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(arrayData),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutate();
+      mutateRequest();
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add item.");
+      return false;
+    } finally {
+      setIsAddingItem(false);
+    }
+  };
+
+  const handleAddItemPurchaser = async (
+    data: CreatePurchaseOrderItemDto[],
+    poId: number
+  ) => {
+    setIsAddingItemPo(true);
+
+    try {
+      const result = await fetch(`api/purchase-order/po-items//${poId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutate();
+      mutateRequest();
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add item.");
+      return false;
+    } finally {
+      setIsAddingItemPo(false);
+    }
+  };
+  const handleRowSelection = (row: DisplayRequestItems[]) => {
+    console.log({ row });
+    if (row.length > 0) {
+      setSelectedRows(row);
+    }
+    if (row.length === 0) {
+      setSelectedRows(null);
+    }
+  };
+
   return (
     <div className="bg-white h-full flex flex-col overflow-hidden">
       {selectedReq?.requestStatus === "pending" ||
@@ -213,6 +309,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       <div className="flex-1 overflow-y-auto pr-4 pl-4">
         <Table
           maxHeight="h-full"
+          uniqueIdKey="reqItemId"
+          showCheckBox={isSelectingAddItemPO}
           isRounded={false}
           updateData={handleDataUpdate}
           columns={
@@ -227,6 +325,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           }
           data={itemResponse.data}
           loading={loading}
+          onSelectionChange={handleRowSelection}
         />
       </div>
       <div className="border-t border-gray-300 flex justify-between p-4 gap-4 items-center mt-auto">
@@ -264,15 +363,69 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   color="nocolor"
                 />
               </div> */}
-              {isRequestor && (
+              {isSelectingAddItemPO ? (
+                <>
+                  <div>
+                    <Button
+                      icon={<X size={15} />}
+                      onClick={() => {
+                        setIsSelectingAddItemPO(false);
+                      }}
+                      size="sm"
+                      label="Cancel"
+                      className="text-xs font-semibold"
+                      color="nocolor"
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      icon={<Pencil size={15} />}
+                      onClick={() => {
+                        setShowAddPOItem(true);
+                      }}
+                      size="sm"
+                      label="Confirm Item"
+                      className="text-xs font-semibold"
+                      color="primary"
+                    />
+                  </div>
+                </>
+              ) : isRequestor ? (
+                <>
+                  <div>
+                    <Button
+                      icon={<Pencil size={15} />}
+                      onClick={handleReceivedRO}
+                      size="sm"
+                      label="Edit"
+                      className="text-xs font-semibold"
+                      color="nocolor"
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      icon={<Plus size={15} />}
+                      onClick={() => {
+                        setShowAddItem(true);
+                      }}
+                      size="sm"
+                      label="Add Item"
+                      className="text-xs font-semibold"
+                      color="primary"
+                    />
+                  </div>
+                </>
+              ) : (
                 <div>
                   <Button
                     icon={<Pencil size={15} />}
-                    onClick={handleReceivedRO}
+                    onClick={() => {
+                      setIsSelectingAddItemPO(true);
+                    }}
                     size="sm"
-                    label="Edit"
+                    label="Add Item to PO"
                     className="text-xs font-semibold"
-                    color="nocolor"
+                    color="primary"
                   />
                 </div>
               )}
@@ -320,6 +473,37 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           <RequestOrderPDF data={pdfData ?? null} />
         </PDFViewer>
       </Modal>
+      <Popup
+        background="transparent"
+        isOpen={showAddItem}
+        onClose={function (): void {
+          setShowAddItem(false);
+        }}
+        title="Add Item for Request"
+      >
+        <AddItemROModal
+          loading={isAddingItem}
+          inventoryId={getOverAllInventoryId ?? 0}
+          requestId={selectedReq?.requestId ?? 0}
+          requestInventoryItem={getAllInventoryItemIdInRequest ?? []}
+          onSubmit={handleAddItemRequest}
+          mutate={mutate}
+        />
+      </Popup>
+      <Popup
+        background="transparent"
+        isOpen={showAddPOItem}
+        onClose={function (): void {
+          setShowAddPOItem(false);
+        }}
+        title="Add Item for PO"
+      >
+        <AddItemPOModal
+          data={selectedRows}
+          requestId={selectedReq?.requestId ?? 0}
+          onSubmit={handleAddItemPurchaser}
+        />
+      </Popup>
     </div>
   );
 };

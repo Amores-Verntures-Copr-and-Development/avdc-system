@@ -277,7 +277,6 @@ WHERE 1=1
   it.itemPrice,
   it.itemId 
   ORDER BY it.itemName ASC`;
-
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

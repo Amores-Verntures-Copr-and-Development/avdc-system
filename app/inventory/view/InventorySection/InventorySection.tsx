@@ -256,7 +256,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [isAddingItem, setIsAddingItem] = useState(false);
   // get the stock inventory if purchaser
   const url = `/api/inventory/item/${inventoryId}`;
-  useEffect(() => {}, [selectedRows]);
   const getApiUrl = () => {
     if (!inventoryId) return null;
 

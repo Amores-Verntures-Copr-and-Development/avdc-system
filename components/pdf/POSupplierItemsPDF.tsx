@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
   twoColRow: {
     flexDirection: "row",
-    borderBottom: "0.5px solid #ddd",
+    border: "0.5px solid #ddd",
     padding: 5,
     alignItems: "center",
     minHeight: 20,
@@ -221,7 +221,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
               textAlign: styles.twoColIndex.textAlign,
             }}
           >
-            {startIndex + i + 1}
+            {"#" + `${startIndex + i + 1}`}
           </Text>
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit || "-"}</Text>
@@ -260,7 +260,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
                   textAlign: styles.twoColIndex.textAlign,
                 }}
               >
-                {startIndex + i + 1}
+                {"#" + `${startIndex + i + 1}`}
               </Text>
               <Text style={styles.twoColDesc}>{item.itemName}</Text>
               <Text style={styles.twoColUnit}>{item.itemUnit || "-"}</Text>
@@ -291,7 +291,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
                   textAlign: styles.twoColIndex.textAlign,
                 }}
               >
-                {startIndex + half + i + 1}
+                {"#" + `${startIndex + half + i + 1}`}
               </Text>
               <Text style={styles.twoColDesc}>{item.itemName}</Text>
               <Text style={styles.twoColUnit}>{item.itemUnit || "-"}</Text>

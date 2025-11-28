@@ -1,9 +1,13 @@
 import {
   CreatePurchaseOrderFormDto,
+  CreatePurchaseOrderItemDto,
   DeliverItemsToStore,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
-import { findPurchaseOrderByUserId } from "@/services/purchase/get-purchase-order";
+import {
+  findPurchaseOrderByUserId,
+  findPurchaserOrderByPORequestFields,
+} from "@/services/purchase/get-purchase-order";
 import { processApprovedPO } from "@/services/purchase/process-approved-purchase";
 import { processCompletePO } from "@/services/purchase/process-complete-purchase";
 import { processCreatePO } from "@/services/purchase/process-create-po";
@@ -11,6 +15,7 @@ import { processDeliverItemToStore } from "@/services/purchase/process-deliver-p
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
 import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
+import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
 import {
   findAllPurchaseOrder,
@@ -19,7 +24,11 @@ import {
   // updatePurchaseOrderReceive,
   // updatePurchaseOrderSent,
 } from "@/services/purchaseOrderServices";
-import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
+import {
+  PurchaseOrderItems,
+  PurchaseOrderRequest,
+  PurchaseOrders,
+} from "@/types/purchaseOrders";
 
 export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
   try {
@@ -226,6 +235,48 @@ export const deliverItemToStore = async (data: DeliverItemsToStore) => {
     return {
       success: false,
       message: "Failed to process deliver",
+      error: e,
+    };
+  }
+};
+
+export const getPOByPORFields = async ({
+  keyfields,
+}: {
+  keyfields: Partial<PurchaseOrderRequest>;
+}) => {
+  try {
+    const data = await findPurchaserOrderByPORequestFields({ keyfields });
+    return {
+      success: true,
+      message: "Purchase Order fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch Purchase Order",
+      error: e,
+    };
+  }
+};
+
+export const updatePurchaseOrderItemByPoId = async (
+  data: CreatePurchaseOrderItemDto[]
+) => {
+  try {
+    const result = await handleUpdatePurchaseItems(data);
+    return {
+      success: true,
+      message: "Item added to Purchase Order",
+      result: result,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      message: "Failed to add item",
       error: e,
     };
   }

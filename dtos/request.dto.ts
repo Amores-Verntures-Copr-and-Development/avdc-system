@@ -31,6 +31,7 @@ export type DisplayRequestItems = RequestItems & {
   itemName: string;
   itemUnit: string;
   itemPrice: number;
+  inventoryId: number;
 };
 
 export interface DisplayGroupedRequestItem {

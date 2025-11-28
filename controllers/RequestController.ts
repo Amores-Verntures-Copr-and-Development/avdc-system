@@ -1,4 +1,4 @@
-import { CreateRequestFormDto } from "@/dtos/request.dto";
+import { CreateRequestFormDto, CreateRequestItemDto } from "@/dtos/request.dto";
 import {
   getRequestOrderFromStockRoomByPurchaserFields,
   getRequestOrders,
@@ -7,6 +7,7 @@ import { processCompleteRequest } from "@/services/request/process-complete-requ
 import { processCreateRequest } from "@/services/request/process-create-request";
 import { processDeliveredPO } from "@/services/request/process-deliver-request";
 import { processReceivedRequest } from "@/services/request/process-received-request";
+import { createRequestItem } from "@/services/request/request-items/create-request-items";
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
 import {
   getRequestItems,
@@ -150,6 +151,24 @@ export const updateRequest = async (
     return {
       success: false,
       message: "Failed to update request",
+      error: e,
+    };
+  }
+};
+
+export const addRequestItem = async (data: CreateRequestItemDto[]) => {
+  try {
+    console.log("[addRequestItem]", { data });
+    const res = await createRequestItem({ data });
+    return {
+      success: true,
+      message: "Request item added successfully",
+      result: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to add item in request",
       error: e,
     };
   }

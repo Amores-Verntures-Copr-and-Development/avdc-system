@@ -387,3 +387,21 @@ export const updateItemOrInventory = async ({
     connection.release();
   }
 };
+
+export const searchInventoryItems = async ({
+  keyFields = {},
+  search,
+  status,
+  category,
+  unit,
+}: {
+  keyFields?: Partial<InventoryItemInterface>;
+  search?: string;
+  status?: string;
+  category?: string;
+  unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  try {
+    const data = await findInventoryItemsByField({});
+  } catch (e) {}
+};

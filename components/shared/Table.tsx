@@ -19,6 +19,7 @@ export interface Column<T = any> {
   options?:
     | { label: string; value: any }[]
     | ((row: T) => { label: string; value: any }[]);
+  value?: (row: T) => any;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   validate?: (value: any, row: T) => boolean;
   format?: (value: any) => string;
@@ -252,11 +253,16 @@ const TableInner = <T extends Record<string, any>>(
             ? column.options(row)
             : column.options || [];
 
+        // 👇 Get the value from column.value function or fallback to editableData
+        const selectedValue = column.value
+          ? column.value(row)
+          : editableData[rowIndex]?.[column.key] ?? "";
+
         return (
           <select
             onClick={(e) => e.stopPropagation()}
             className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
-            value={editableData[rowIndex]?.[column.key] ?? ""}
+            value={selectedValue} // 👈 Use the computed value
             onChange={(e) =>
               handleInputChange(rowIndex, column.key, e.target.value, column)
             }
@@ -281,13 +287,13 @@ const TableInner = <T extends Record<string, any>>(
                 handleInputChange(rowIndex, column.key, e.target.value, column)
               }
               className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
-                ${
-                  hasError
-                    ? "border-red-500 bg-red-50"
-                    : "border-gray-300 bg-white"
-                }
-                w-auto
-              `}
+              ${
+                hasError
+                  ? "border-red-500 bg-red-50"
+                  : "border-gray-300 bg-white"
+              }
+              w-auto
+            `}
               {...(column.inputProps || {})}
             />
           </div>

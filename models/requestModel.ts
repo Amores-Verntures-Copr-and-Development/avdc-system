@@ -41,7 +41,7 @@ export const insertRequestItemsBulk = async ({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: InsertItemsRequestDto[];
 }) => {
   if (!data || data.length === 0) {
@@ -106,8 +106,8 @@ export const selectRequestItems = async ({
   }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-  const sql = `SELECT ri.requestId,ri.reqItemId, i.itemName,i.itemUnit,i.itemPrice,ri.reqItemId,ri.reqItemQuantity,
-  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer, ri.invItem, ri.reqItemStatus, ii.inventoryItemReferenceId FROM RequestItems ri
+  const sql = `SELECT ri.requestId,ri.reqItemId, i.itemName,i.itemUnit,i.itemPrice,ri.reqItemId,ri.reqItemQuantity,i.itemId,
+  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer, ri.invItem, ri.reqItemStatus, ii.inventoryItemReferenceId,ii.inventoryId FROM RequestItems ri
   LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
   LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);

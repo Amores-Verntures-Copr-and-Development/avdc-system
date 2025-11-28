@@ -6,7 +6,7 @@ export async function createRequestItem({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreateRequestItemDto[];
 }) {
   try {

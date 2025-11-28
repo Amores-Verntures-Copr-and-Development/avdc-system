@@ -12,6 +12,7 @@ export async function GET(
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+    console.log({ storeId });
     const res = await getInventory({
       controller: "store",
       keyStoreFields: { storeId: storeId },

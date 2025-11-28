@@ -45,6 +45,9 @@ const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
 
     // 👇 Automatically choose the supplier with the lowest price if none is selected yet
     selector: (row) => {
+      if (row.suppId)
+        return row.suppliers?.find((supp) => supp.suppId === row.suppId)
+          ?.suppName;
       if (!row.suppliers?.length) return "No suppliers";
 
       // Auto-select the cheapest supplier if not selected yet
@@ -64,7 +67,9 @@ const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
       console.log("Selected: ", selected);
       return selected ? selected.suppName : "Select Supplier";
     },
-
+    value: (row) => {
+      return (row.suppId || row.selectedSupplierId)?.toString();
+    },
     // Dropdown options
     options: (row: DisplayPurchaseOrderItemsDto) =>
       row.suppliers?.map((s: any) => ({
@@ -106,7 +111,6 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     }
   }, [data]);
   const handleApprovedPo = async () => {
-
     const newData: UpdatePurchaseOrdersDto = {
       ...poData,
       poItems: poItems,

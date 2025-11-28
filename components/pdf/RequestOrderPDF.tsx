@@ -246,7 +246,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                       #{data?.requestOrder.requestNo}
                     </Text>
                   </View>
-                  
+
                   <Image style={styles.logo} source={"/avdclogo.png"} />
                 </View>
 
