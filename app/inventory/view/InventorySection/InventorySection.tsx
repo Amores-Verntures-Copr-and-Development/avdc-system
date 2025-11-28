@@ -46,6 +46,7 @@ import { InventoryItemInterface } from "@/types/inventory";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCategories } from "@/hooks/useCategory";
 import { useInventoryItemUnit } from "@/hooks/useInventoryItemUnit";
+import { ItemInterface } from "@/types/items";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -520,31 +521,31 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     }
   };
 
-  const handleEditInventoryItem = async (
-    item: Partial<InventoryItemInterface>
-  ) => {
+  const handleEditInventoryItem = async (data: {
+    itemData?: Partial<ItemInterface>;
+    inventoryItemData?: Partial<InventoryItemInterface>;
+  }) => {
     setIsEditingItem(true);
     try {
       const result = await fetch(
-        `/api/inventory/item/${inventoryId}/${item.inventoryItemId}`,
+        `/api/inventory/item/${inventoryId}/${data.inventoryItemData?.inventoryItemId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(item),
+          body: JSON.stringify(data),
         }
       );
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       mutate();
-      toast.success(res.message);
+      toast.success("Item details change successfully!");
       return true;
     } catch (e) {
-      console.log(e);
+      toast.error("Failed to change item details!");
       return false;
     } finally {
       setIsEditingItem(false);

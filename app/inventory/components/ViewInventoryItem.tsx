@@ -17,13 +17,17 @@ import {
 import { Edit2, Package, X, Info, BarChart3 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import ItemMovementCard from "./ItemMovementCard";
-import { InventoryItemInterface } from "@/types/inventory";
+import {
+  InventoryItemInterface,
+  InventoryReferenceType,
+} from "@/types/inventory";
 import { stockAdjustmentOptions } from "@/constants/dropdown-options";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { useCategories } from "@/hooks/useCategory";
+import { ItemInterface } from "@/types/items";
 
 interface ViewInventoryItemPros {
   user?: UserAuth | null;
@@ -41,9 +45,10 @@ interface ViewInventoryItemPros {
   isSubmittingAdjustment?: boolean;
   onClose?: () => void;
   mutate?: () => void;
-  onSubmitEditItems?: (
-    row: Partial<InventoryItemInterface>
-  ) => Promise<boolean>;
+  onSubmitEditItems?: (data: {
+    itemData?: Partial<ItemInterface>;
+    inventoryItemData?: Partial<InventoryItemInterface>;
+  }) => Promise<boolean>;
   isEditing?: boolean;
 }
 
@@ -171,6 +176,12 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
         </h3>
         <div className="grid grid-cols-1 gap-3">
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">Unit</span>
+            <span className="text-[10px] xl:text-sm font-medium">
+              {data?.itemUnit}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-[10px] xl:text-sm text-gray-600">Type</span>
             <span className="text-[10px] xl:text-sm font-medium">
               {data?.inventoryItemReferenceType}
@@ -196,7 +207,7 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
             <span className="text-[10px] xl:text-sm text-gray-600">
               Minimum Stock
             </span>
-            <span className="text-[10px] xl:text-smfont-medium">
+            <span className="text-[10px] xl:text-sm font-medium">
               {data?.inventoryItemMin}
             </span>
           </div>
@@ -281,9 +292,11 @@ const EditItemDetails: React.FC<
     if (!onSubmitEditItems || !mutate) return;
 
     try {
-      const success = await onSubmitEditItems(editedInventoryItem);
+      const success = await onSubmitEditItems({
+        inventoryItemData: editedInventoryItem,
+      });
       if (success) {
-        await mutate();
+        mutate();
         onClose?.();
         setSelectedButton?.("");
       }
@@ -299,28 +312,40 @@ const EditItemDetails: React.FC<
     if (!onSubmitEditItems || !mutate) return;
 
     try {
-      console.log({ updatedData });
-      // Prepare the data for submission
-      // const submitData: Partial<InventoryItemInterface> = {
-      //   inventoryItemId: updatedData.inventoryItemId,
-      //   inventoryItemMin: updatedData.inventoryItemMin,
-      //   // Add other fields that can be updated
-      //   ...(user?.empPosition !== "supervisor" && {
-      //     // Include name and category if admin
-      //     itemName: updatedData.itemName,
-      //     // Make sure you have categoryId
-      //   }),
-      // };
-      // const success = await onSubmitEditItems(submitData);
-      // if (success) {
-      //   await mutate();
-      //   onClose?.();
-      //   setSelectedButton?.("");
-      // }
+      // Separate data for ItemInterface (item-specific fields)
+      const itemData: Partial<ItemInterface> = {
+        itemId: updatedData.itemId,
+        itemName: updatedData.itemName,
+        itemUnit: updatedData.itemUnit,
+        // categoryId should be mapped from categoryName if available
+        // You might need additional logic to get categoryId from categoryName
+      };
+
+      // Separate data for InventoryItemInterface (inventory-specific fields)
+      const inventoryItemData: Partial<InventoryItemInterface> = {
+        inventoryItemId: updatedData.inventoryItemId,
+        inventoryItemMin: updatedData.inventoryItemMin,
+      };
+
+      // Now you can submit both objects separately or combine them as needed
+      const submitData = {
+        itemData,
+        inventoryItemData,
+      };
+
+      // Call your API with the separated data
+      const success = await onSubmitEditItems(submitData);
+      if (success) {
+        mutate();
+        onClose?.();
+        setSelectedButton?.("");
+      }
     } catch (error) {
       console.error("Error updating item:", error);
     }
   };
+
+  // Helper function to get categoryId from categoryName
 
   const handleCancel = () => {
     onClose?.();
@@ -419,6 +444,15 @@ const EditItemDetails: React.FC<
                   {editedAdminInventoryItem?.inventoryItemReferenceType}
                 </span>
               </div>
+              <label className="text-sm text-gray-600">Unit</label>
+              <Input
+                value={editedAdminInventoryItem?.itemUnit ?? ""}
+                name="itemUnit"
+                sizes="sm"
+                onChange={setAdminChange}
+                placeholder="Enter item unit"
+                label=""
+              />
 
               <div className="space-y-2">
                 <label className="text-sm text-gray-600">Category</label>

@@ -76,21 +76,25 @@ export const updateItems = async ({
   connection,
   updates,
   keyFields = ["itemId"],
-}: // 👈 optional per-field mode
-{
+}: {
   connection?: PoolConnection;
   updates: Partial<ItemInterface>[];
   keyFields?: (keyof ItemInterface)[];
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof ItemInterface)
   );
+
   if (updateFields.length === 0)
     throw new Error("No fields to update (all are key fields).");
+
   const setClauses: string[] = [];
   const params: any[] = [];
+
+  // Build SET clauses for each field to update
   for (const field of updateFields) {
     const caseParts: string[] = [];
 
@@ -102,10 +106,19 @@ export const updateItems = async ({
       keyFields.forEach((k) => params.push((row as any)[k]));
       params.push((row as any)[field]);
     }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " "
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
   }
+
+  // Build WHERE clause
   const uniqueKeyCombinations = updates.map((row) =>
     keyFields.map((k) => (row as any)[k])
   );
+
   const whereSql =
     keyFields.length > 1
       ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
@@ -114,7 +127,9 @@ export const updateItems = async ({
       : `${keyFields[0]} IN (${uniqueKeyCombinations
           .map(() => "?")
           .join(",")})`;
+
   uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
   const sql = `
     UPDATE Items
     SET ${setClauses.join(", ")}

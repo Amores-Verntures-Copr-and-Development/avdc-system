@@ -62,7 +62,6 @@ export interface InventoryItemMovement {
   itemMovementCreatedAt?: string;
 }
 
-
 export interface InventoryReport {
   invReportId: number;
   invReportFrom: string;

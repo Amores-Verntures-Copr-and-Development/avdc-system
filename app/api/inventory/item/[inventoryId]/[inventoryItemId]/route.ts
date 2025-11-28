@@ -1,4 +1,7 @@
-import { updateInventoryItem } from "@/controllers/InventoryController";
+import {
+  updateInventoryItem,
+  updateItemOrInventory,
+} from "@/controllers/InventoryController";
 import { InventoryItemInterface } from "@/types/inventory";
 import { NextResponse } from "next/server";
 
@@ -9,13 +12,23 @@ export async function PUT(
   }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> }
 ) {
   try {
-    const data = (await request.json()) as InventoryItemInterface;
+    const { inventoryItemData, itemData } = await request.json();
 
     const slug1 = (await params).inventoryId;
     const inventoryId = Number(slug1);
     const slug2 = (await params).inventoryItemId;
-    const purchasinventoryItemIderId = Number(slug2);
-    const res = await updateInventoryItem(data);
+    const inventoryItemIderId = Number(slug2);
+    if (!inventoryId) {
+      throw new Error("No inventory Id Found!");
+    }
+    if (!inventoryItemIderId) {
+      throw new Error("No inventoyr item Id Found!");
+    }
+    console.log({ inventoryItemData, itemData });
+    const res = await updateItemOrInventory({
+      inventoryData: [inventoryItemData],
+      itemData: [itemData],
+    });
     if (!res.success) {
       // propagate the actual message if available
       console.log(res.error);
@@ -25,7 +38,7 @@ export async function PUT(
     return NextResponse.json(
       {
         success: true,
-        message: res.message,
+        message: "res.message",
         // data: res, // could sanitize before returning
       },
       { status: 201 }

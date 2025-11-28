@@ -44,6 +44,7 @@ import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
 import { ItemInterface } from "@/types/items";
+import { updateItems } from "@/models/itemModel";
 
 // export const createInventory = async (data: CreateInventoryDto) => {
 //   try {
@@ -282,10 +283,19 @@ export const processStockAdjustmetController = async (
   }
 };
 
-export const updateInventoryItem = async (data: InventoryItemInterface) => {
+export const updateInventoryItem = async ({
+  itemData,
+  inventoryItemData,
+}: {
+  itemData?: Partial<ItemInterface>;
+  inventoryItemData?: Partial<InventoryItemInterface>;
+}) => {
   try {
+    if (!inventoryItemData) {
+      throw new Error("No data found!");
+    }
     const res = await updateInventoryItems({
-      updates: [data],
+      updates: [inventoryItemData],
     });
     return { success: true, message: "Successfully adjust stock", result: res };
   } catch (e) {
@@ -340,12 +350,40 @@ export const updateItemOrInventory = async ({
   itemData: Partial<ItemInterface>[];
   inventoryData: Partial<InventoryItemInterface>[];
 }) => {
+  const pool = await getDBConnection();
+  const connection = await pool.getConnection();
   try {
-    if (itemData) {
+    await connection.beginTransaction();
+    console.log("In Controller", { itemData, inventoryData });
+    if (itemData && itemData.length > 0 && itemData[0] !== undefined) {
       //update item
+      await updateItems({
+        connection,
+        updates: itemData,
+        keyFields: ["itemId"],
+      });
     }
-    if (inventoryData) {
+    if (
+      inventoryData ||
+      (inventoryData > 0 && inventoryData[0] !== undefined)
+    ) {
       //update inventory
+      await updateInventoryItems({
+        connection,
+        updates: inventoryData,
+        keyFields: ["inventoryItemId"],
+      });
     }
-  } catch (e) {}
+    await connection.commit();
+    return { success: true, message: "Item successfully edit!" };
+  } catch (e) {
+    await connection.rollback();
+    return {
+      success: false,
+      message: "Failed to update item",
+      error: e,
+    };
+  } finally {
+    connection.release();
+  }
 };

@@ -2,6 +2,7 @@ import {
   InventoryInterface,
   InventoryItemInterface,
   InventoryItemMovement,
+  InventoryReferenceType,
 } from "@/types/inventory";
 import { CreateItemDto } from "./items.dto";
 import { ItemInterface } from "@/types/items";
@@ -40,18 +41,17 @@ export interface DisplayInventoryItems {
   inventoryItemId: number;
   inventoryItemReferenceId: number;
   inventoryItemQuantity: number; // if you want numbers, parse it before use
-  itemPrice: string;
+  itemPrice: number;
   inventoryItemMin: number;
   itemName: string;
   itemUnit: string;
   categoryName: string;
   storeId: number | null;
-  inventoryItemReferenceType: string;
-  itemSuppliers:SupplierItemsData[]
+  inventoryItemReferenceType: InventoryReferenceType;
+  itemSuppliers: SupplierItemsData[];
 }
 
-export interface SupplierItemsData extends Supplier,SupplierItem{}
-
+export interface SupplierItemsData extends Supplier, SupplierItem {}
 
 export type CreateInventoryMovementDto = Pick<
   InventoryItemMovement,
