@@ -43,6 +43,7 @@ import { processStockAdjustment } from "@/services/inventory/inventory-movement/
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
+import { ItemInterface } from "@/types/items";
 
 // export const createInventory = async (data: CreateInventoryDto) => {
 //   try {
@@ -330,4 +331,21 @@ export const getInventoryItemsByDate = async ({
       error: e,
     };
   }
+};
+
+export const updateItemOrInventory = async ({
+  itemData,
+  inventoryData,
+}: {
+  itemData: Partial<ItemInterface>[];
+  inventoryData: Partial<InventoryItemInterface>[];
+}) => {
+  try {
+    if (itemData) {
+      //update item
+    }
+    if (inventoryData) {
+      //update inventory
+    }
+  } catch (e) {}
 };

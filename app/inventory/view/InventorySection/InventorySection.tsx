@@ -252,6 +252,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
+  const [isAddingItem, setIsAddingItem] = useState(false);
   // get the stock inventory if purchaser
   const url = `/api/inventory/item/${inventoryId}`;
   useEffect(() => {}, [selectedRows]);
@@ -402,6 +403,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     }
   };
   const handleAddInventoryItem = async (data: CreateFirstItem) => {
+    setIsAddingItem(true);
     try {
       const newData: CreateFirstItem = {
         ...data,
@@ -429,6 +431,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       console.log(e);
       toast.error("Failed to add item in inventory.");
       return false;
+    } finally {
+      setIsAddingItem(false);
     }
   };
 
@@ -790,26 +794,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             setShowAdddModal(false);
           }}
           onSubmit={handleAddInventoryItem}
+          loading={isAddingItem}
         />
       </Modal>
-      {/* <Modal
-        title="Create Inventory"
-        subtitle="Register Inventory for your store"
-        isOpen={showCreateModal}
-        onClose={() => {
-          setShowCreateModal(false);
-        }}
-        size="md"
-        className="bg-white"
-      >
-        {" "}
-        <CreateInventoryModal
-          onCancel={() => {
-            setShowCreateModal(false);
-          }}
-          onSubmit={handleCreateInventory}
-        />
-      </Modal> */}
+
       <Modal
         title="Add Item to store"
         subtitle="Select store to add this item to their inventory"

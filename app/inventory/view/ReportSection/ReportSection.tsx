@@ -11,6 +11,7 @@ import CreateInventoryReport from "../../components/CreateInventoryReport";
 import { UserAuth } from "@/hooks/useSession";
 import VewInventoryReport from "./_components/VewInventoryReport";
 import ViewDailyReport from "./_components/ViewDailyReport";
+import CreateDailyReport from "./_components/CreateDailyReport";
 interface ReportSectionProps {
   inventoryId: number | null;
   user: UserAuth | null;
@@ -36,6 +37,7 @@ const columns: Column<Reports>[] = [
 const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
     useState(false);
+  const [showCreateDailyReport, setShowCreateDailyReport] = useState(false);
   const [openModal, setOpenModal] = useState<"inventory" | "daily" | null>(
     null
   );
@@ -81,7 +83,9 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
                 <Button
                   icon={<CalendarDays size={17} />}
                   label="Daily Report"
-                  onClick={() => {}}
+                  onClick={() => {
+                    setShowCreateDailyReport(true);
+                  }}
                   size="xs"
                   className="font-semibold"
                 />
@@ -109,6 +113,25 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
           mutateReport={mutate}
           onCancel={() => {
             setShowCreateInventoryReport(false);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={showCreateDailyReport}
+        onClose={function (): void {
+          setShowCreateDailyReport(false);
+        }}
+        title="Create Daily Inventory Report"
+        size="xl"
+        className="h-[95%]"
+      >
+        <CreateDailyReport
+          inventoryId={inventoryId ?? 0}
+          user={user}
+          mutate={mutate}
+          onCancel={() => {
+            setShowCreateDailyReport(false);
           }}
         />
       </Modal>

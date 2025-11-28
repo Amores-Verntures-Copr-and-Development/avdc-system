@@ -253,30 +253,97 @@ const EditItemDetails: React.FC<
     inventoryId: data?.inventoryId ?? 0,
     reference: "inventoryId",
   });
-  const [editedInventoryItem, setEditenInventryItem] = useState<
+
+  const [editedInventoryItem, setEditedInventoryItem] = useState<
     Partial<InventoryItemInterface>
   >({
     inventoryItemMin: data?.inventoryItemMin,
     inventoryItemId: data?.inventoryItemId,
   });
 
-  const setChange = handleChange(editedInventoryItem, setEditenInventryItem);
+  const [editedAdminInventoryItem, setEditedAdminInventoryItem] =
+    useState<DisplayInventoryItems>({
+      ...(data as DisplayInventoryItems),
+      inventoryItemMin: data?.inventoryItemMin ?? 0,
+      inventoryItemId: data?.inventoryItemId ?? 0,
+      itemName: data?.itemName ?? "",
+      categoryName: data?.categoryName ?? "",
+    });
 
+  const setChange = handleChange(editedInventoryItem, setEditedInventoryItem);
+  const setAdminChange = handleChange(
+    editedAdminInventoryItem,
+    setEditedAdminInventoryItem
+  );
+
+  // Handle supervisor editing (only minimum stock)
   const handleEditMinimumStock = async () => {
-    if (onSubmitEditItems && mutate) {
+    if (!onSubmitEditItems || !mutate) return;
+
+    try {
       const success = await onSubmitEditItems(editedInventoryItem);
       if (success) {
-        mutate();
+        await mutate();
+        onClose?.();
+        setSelectedButton?.("");
       }
+    } catch (error) {
+      console.error("Error updating minimum stock:", error);
     }
-    // Add your save logic here
+  };
+
+  // Handle admin editing (all fields)
+  const handleEditInventoryItem = async (
+    updatedData: DisplayInventoryItems
+  ) => {
+    if (!onSubmitEditItems || !mutate) return;
+
+    try {
+      console.log({ updatedData });
+      // Prepare the data for submission
+      // const submitData: Partial<InventoryItemInterface> = {
+      //   inventoryItemId: updatedData.inventoryItemId,
+      //   inventoryItemMin: updatedData.inventoryItemMin,
+      //   // Add other fields that can be updated
+      //   ...(user?.empPosition !== "supervisor" && {
+      //     // Include name and category if admin
+      //     itemName: updatedData.itemName,
+      //     // Make sure you have categoryId
+      //   }),
+      // };
+      // const success = await onSubmitEditItems(submitData);
+      // if (success) {
+      //   await mutate();
+      //   onClose?.();
+      //   setSelectedButton?.("");
+      // }
+    } catch (error) {
+      console.error("Error updating item:", error);
+    }
   };
 
   const handleCancel = () => {
-    if (setSelectedButton) {
-      setSelectedButton("");
-    }
+    onClose?.();
+    setSelectedButton?.("");
   };
+
+  // Reset form when data changes
+  useEffect(() => {
+    if (data) {
+      setEditedInventoryItem({
+        inventoryItemMin: data.inventoryItemMin,
+        inventoryItemId: data.inventoryItemId,
+      });
+
+      setEditedAdminInventoryItem({
+        ...(data as DisplayInventoryItems),
+        inventoryItemMin: data.inventoryItemMin ?? 0,
+        inventoryItemId: data.inventoryItemId ?? 0,
+        itemName: data.itemName ?? "",
+        categoryName: data.categoryName ?? "",
+      });
+    }
+  }, [data]);
 
   return (
     <div className="space-y-4 xl:space-y-6">
@@ -288,6 +355,7 @@ const EditItemDetails: React.FC<
 
         <div className="space-y-4">
           {user?.empPosition === "supervisor" ? (
+            // Supervisor View - Read-only except minimum stock
             <>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-[10px] xl:text-sm text-gray-600">
@@ -324,60 +392,58 @@ const EditItemDetails: React.FC<
                     sizes="sm"
                     onChange={setChange}
                     type="number"
-                    label={""}
+                    min="0"
+                    label=""
                   />
                 </div>
               </div>
             </>
           ) : (
+            // Admin/Manager View - Full editing
             <>
               <div className="space-y-2">
                 <label className="text-sm text-gray-600">Name</label>
                 <Input
-                  value={data?.itemName ?? ""}
+                  value={editedAdminInventoryItem?.itemName ?? ""}
                   name="itemName"
                   sizes="sm"
-                  onChange={setChange}
-                  label={""}
+                  onChange={setAdminChange}
+                  placeholder="Enter item name"
+                  label=""
                 />
               </div>
+
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
                 <span className="text-sm text-gray-600">Type</span>
                 <span className="text-sm font-medium">
-                  {data?.inventoryItemReferenceType}
+                  {editedAdminInventoryItem?.inventoryItemReferenceType}
                 </span>
               </div>
+
               <div className="space-y-2">
                 <label className="text-sm text-gray-600">Category</label>
-                {/* <DropDownSelectCategory
-                  categoryType={"item"}
-                  name={"categoryName"}
-                  value={data?.categoryName ?? ""}
-                  sizes="sm"
-                  id={user?.userId}
-                  referenceType={"stock-room"}
-                /> */}
-                {
-                  <DropdownSelect
-                    name={"categoryName"}
-                    value={data?.categoryName}
-                    options={categoryOptions ?? []}
-                    onChange={setChange}
-                  />
-                }
+                <DropdownSelect
+                  name="categoryName"
+                  value={editedAdminInventoryItem?.categoryName}
+                  options={categoryOptions ?? []}
+                  onChange={setAdminChange}
+                  placeholder="Select category"
+                />
               </div>
+
               <div className="flex justify-between items-center py-2">
                 <span className="text-[10px] xl:text-sm text-gray-600">
                   Minimum Stock
                 </span>
                 <div className="w-20">
                   <Input
-                    value={editedInventoryItem?.inventoryItemMin ?? 0}
+                    value={editedAdminInventoryItem?.inventoryItemMin ?? 0}
                     name="inventoryItemMin"
                     sizes="sm"
-                    onChange={setChange}
+                    onChange={setAdminChange}
                     type="number"
-                    label={""}
+                    min="0"
+                    label=""
                   />
                 </div>
               </div>
@@ -393,13 +459,21 @@ const EditItemDetails: React.FC<
           label="Cancel"
           onClick={handleCancel}
           className="font-medium"
+          disabled={isEditing}
         />
         <Button
           size="sm"
           label="Save Changes"
-          onClick={handleEditMinimumStock}
+          onClick={() => {
+            if (user?.empPosition === "supervisor") {
+              handleEditMinimumStock();
+            } else {
+              handleEditInventoryItem(editedAdminInventoryItem);
+            }
+          }}
           className="font-medium"
           loading={isEditing}
+          disabled={isEditing}
         />
       </div>
     </div>

@@ -15,12 +15,14 @@ interface AddItemModalProps {
   onCancel: () => void;
   onSubmit: (data: CreateFirstItem) => Promise<boolean>;
   user?: UserAuth | null;
+  loading?: boolean;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({
   onCancel,
   onSubmit,
   user,
+  loading,
 }) => {
   const { stockRoom } = useStockRoom(user?.userId ?? null);
   const { stores } = useStores(user?.storeId ? user?.storeId : null);
@@ -218,6 +220,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             size="sm"
             onClick={onCancel}
             className="font-semibold"
+            disabled={loading}
           />
         </div>
         <div>
@@ -227,6 +230,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             size="sm"
             onClick={handleSubmit}
             className="font-semibold"
+            loading={loading}
           />
         </div>
       </div>
