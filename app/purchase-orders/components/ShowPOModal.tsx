@@ -4,7 +4,7 @@ import {
 } from "@/dtos/purchase.dto";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
-import React from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 import PendingPOView from "./PendingPOView";
 import ApprovedPOView from "./ApprovedPOView";
@@ -14,6 +14,7 @@ import CompletePOView from "./CompletePOView";
 import { Request } from "@/types/request";
 
 import { UserAuth } from "@/hooks/useSession";
+import ShowAllIItems from "./ShowAllIItems";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -31,6 +32,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
 }) => {
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
+  const [isShowAllItems, setShowAllItems] = useState<boolean>(false);
   const api =
     data?.poStatus === "pending"
       ? `/api/purchase-order/po-items/${data?.poId}`
@@ -273,7 +275,16 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       </div>
       {/* <PendingPOView data={itemResponse.data} /> */}
       {/* Step instruction */}
-      {data?.poStatus === "pending" ? (
+      {isShowAllItems ? (
+        <ShowAllIItems
+          setShowAllItems={setShowAllItems}
+          data={data}
+          onSubmit={handleApprovedPO}
+          onClose={onClose}
+          mutate={mutate}
+          user={user}
+        />
+      ) : data?.poStatus === "pending" ? (
         <PendingPOView
           onClose={onClose}
           data={itemResponse.data}
@@ -285,6 +296,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         />
       ) : data?.poStatus === "approved" ? (
         <ApprovedPOView
+          setShowAllItems={setShowAllItems}
           mutate={handleUpdateData}
           onClose={onClose}
           poData={data}

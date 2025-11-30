@@ -33,6 +33,7 @@ interface ApprovedPOViewProps {
   loading: boolean;
   onClose: () => void;
   mutate: () => void;
+  setShowAllItems: React.Dispatch<React.SetStateAction<boolean>>;
 }
 interface RequestItemWithPOItem extends RequestItems {
   poItemId: number;
@@ -83,6 +84,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   poData,
   onClose,
   mutate,
+  setShowAllItems,
 }) => {
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number | null;
@@ -121,7 +123,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     const success = await onSendPOItem(poItems);
     if (success) {
       toast.success(`Items for ${supplierName}  sent!`);
-    
+
       if (
         data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
       ) {
@@ -152,9 +154,21 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
 
         {/* Table Section */}
         <div className="flex flex-1 flex-col p-4 overflow-hidden min-h-0">
-          <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
-            Order Items by Supplier
-          </h3>
+          <div className="flex justify-between items-center ">
+            {" "}
+            <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
+              Order Items by Supplier
+            </h3>
+            <div>
+              <Button
+                size="xs"
+                label="View all items"
+                onClick={() => {
+                  setShowAllItems(true);
+                }}
+              />
+            </div>
+          </div>
 
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto min-h-0">

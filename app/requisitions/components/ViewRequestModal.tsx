@@ -402,32 +402,42 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       color="nocolor"
                     />
                   </div>
+                  {Boolean(
+                    selectedReq?.requestStatus === "approved" ||
+                      selectedReq?.requestStatus === "in_progress"
+                  ) && (
+                    <div>
+                      <Button
+                        icon={<Plus size={15} />}
+                        onClick={() => {
+                          setShowAddItem(true);
+                        }}
+                        size="sm"
+                        label="Add Item"
+                        className="text-xs font-semibold"
+                        color="primary"
+                      />
+                    </div>
+                  )}
+                </>
+              ) : (
+                Boolean(
+                  selectedReq?.requestStatus === "approved" ||
+                    selectedReq?.requestStatus === "in_progress"
+                ) && (
                   <div>
                     <Button
-                      icon={<Plus size={15} />}
+                      icon={<Pencil size={15} />}
                       onClick={() => {
-                        setShowAddItem(true);
+                        setIsSelectingAddItemPO(true);
                       }}
                       size="sm"
-                      label="Add Item"
+                      label="Add Item to PO"
                       className="text-xs font-semibold"
                       color="primary"
                     />
                   </div>
-                </>
-              ) : (
-                <div>
-                  <Button
-                    icon={<Pencil size={15} />}
-                    onClick={() => {
-                      setIsSelectingAddItemPO(true);
-                    }}
-                    size="sm"
-                    label="Add Item to PO"
-                    className="text-xs font-semibold"
-                    color="primary"
-                  />
-                </div>
+                )
               )}
 
               {/* Conditional buttons based on status */}

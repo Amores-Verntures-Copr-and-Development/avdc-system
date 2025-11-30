@@ -237,7 +237,6 @@ export const updatePOItems = async ({
   updates: Partial<PurchaseOrderItems>[];
   keyFields?: (keyof PurchaseOrderItems)[]; // which fields define the WHERE condition
 }) => {
-  console.log("Updates: ", updates);
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
