@@ -38,6 +38,9 @@ interface CompletePOViewProps {
   onCompleteRequest: (po: PurchaseOrders) => Promise<boolean>;
   onClose: () => void;
   mutate: () => void;
+  setShowAllItems: React.Dispatch<
+    React.SetStateAction<"status" | "all" | "request">
+  >;
 }
 
 const CompletePOView: React.FC<CompletePOViewProps> = ({
@@ -47,6 +50,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   onCompleteRequest,
   onClose,
   mutate,
+  setShowAllItems,
 }) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null
@@ -188,7 +192,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   };
 
   const handleCompletePO = async () => {
-
     if (!poData) {
       return;
     }
@@ -202,17 +205,49 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-2  flex-col h-full w-full overflow-y-auto">
         <div className="p-4 border-b-1 border-gray-200">
-          <h1 className="text-xs md:text-md font-semibold">
-            Requisition Fulfillment
-          </h1>
-          <p className="text-[9px] xl:text-xs text-gray-500 mt-1">
-            Review and fulfill requisition requests
-          </p>
+          <div className="flex justify-between  items-center">
+            <div className="flex flex-col">
+              <h1 className="text-xs md:text-md font-semibold">
+                Requisition Fulfillment
+              </h1>
+              <p className="text-[9px] xl:text-xs text-gray-500 mt-1">
+                Review and fulfill requisition requests
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <div className="self-center">
+                <Button
+                  size="sm"
+                  label="View All PO"
+                  onClick={() => {
+                    setShowAllItems("all");
+                  }}
+                />
+              </div>
+              <div className="self-center">
+                <Button
+                  size="sm"
+                  label="View PO Request"
+                  onClick={() => {
+                    setShowAllItems("request");
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
         <div className="flex flex-col p-4 gap-4 overflow-y-auto">
           {requestItems.map((reqData) => {
             const { textClass, bgClass, status, borderClass } =
               getRequestStatusFormat(reqData.requestStatus);
+            const totalRequestItemPrice = reqData.requestItemsData.reduce(
+              (total, item) => {
+                const quantity = Number(item.reqItemQuantity || 1);
+                const price = Number(item.itemPrice || 0);
+                return total + quantity * price;
+              },
+              0
+            );
             return (
               <div
                 className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer "
@@ -245,11 +280,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                     className="cursor-pointer"
                   >
                     <div className="flex gap-2 items-center">
-                      <div>
+                      <div className="flex flex-col gap-1">
                         <span
                           className={`text-xs font-medium ${bgClass} py-1 px-1 rounded-2xl ${textClass} ${borderClass}`}
                         >
                           {status}
+                        </span>
+                        <span className="text-xs">
+                          Total:
+                          <span className="font-semibold">
+                            {formatPeso(totalRequestItemPrice)}
+                          </span>
                         </span>
                       </div>
                       {isRequestExpanded === reqData.requestNo ? (

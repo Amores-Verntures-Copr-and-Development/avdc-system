@@ -34,7 +34,9 @@ interface ApprovedPOViewProps {
   loading: boolean;
   onClose: () => void;
   mutate: () => void;
-  setShowAllItems: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowAllItems: React.Dispatch<
+    React.SetStateAction<"status" | "all" | "request">
+  >;
 }
 interface RequestItemWithPOItem extends RequestItems {
   poItemId: number;
@@ -165,7 +167,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 size="xs"
                 label="View all items"
                 onClick={() => {
-                  setShowAllItems(true);
+                  setShowAllItems("all");
                 }}
               />
             </div>

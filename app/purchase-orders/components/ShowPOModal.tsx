@@ -15,6 +15,7 @@ import { Request } from "@/types/request";
 
 import { UserAuth } from "@/hooks/useSession";
 import ShowAllIItems from "./ShowAllIItems";
+import ShowPOByRequest from "./ShowPOByRequest";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -32,7 +33,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
 }) => {
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
-  const [isShowAllItems, setShowAllItems] = useState<boolean>(false);
+  const [showPage, setShowPage] = useState<"status" | "all" | "request">(
+    "status"
+  );
   const api =
     data?.poStatus === "pending"
       ? `/api/purchase-order/po-items/${data?.poId}`
@@ -275,72 +278,80 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       </div>
       {/* <PendingPOView data={itemResponse.data} /> */}
       {/* Step instruction */}
-      {isShowAllItems ? (
+      {showPage === "status" ? (
+        data?.poStatus === "pending" ? (
+          <PendingPOView
+            setShowAllItems={setShowPage}
+            onClose={onClose}
+            data={itemResponse.data}
+            poData={data}
+            onSubmit={handleApprovedPO}
+            isLoading={isLoading}
+            mutate={mutate}
+            user={user}
+          />
+        ) : data?.poStatus === "approved" ? (
+          <ApprovedPOView
+            setShowAllItems={setShowPage}
+            mutate={handleUpdateData}
+            onClose={onClose}
+            poData={data}
+            data={itemResponse.data}
+            onSendPO={handleSendPO}
+            onSendPOItem={handleSendPOItem}
+            loading={isLoading}
+          />
+        ) : data?.poStatus === "sent" ? (
+          <ReceivedPOView
+            mutateInventory={() => {
+              mutate();
+              mutateInventory();
+            }}
+            setShowAllItems={setShowPage}
+            onClose={onClose}
+            poData={data}
+            data={itemResponse.data}
+            onReceivePO={handleReceivePO}
+            isLoading={isLoading}
+            poId={data.poId}
+          />
+        ) : data?.poStatus === "received" ? (
+          <CompletePOView
+            setShowAllItems={setShowPage}
+            mutate={mutateInventory}
+            poData={data}
+            data={itemResponse.data}
+            onMarkDelivered={handleDeliveredRO}
+            onCompleteRequest={handleCompleteRO}
+            isLoading={isLoading}
+            onClose={onClose}
+            // onReceivePO={handleReceivePO}
+          />
+        ) : (
+          <CompletePOView
+            setShowAllItems={setShowPage}
+            mutate={mutateInventory}
+            poData={data}
+            onClose={onClose}
+            onCompleteRequest={handleCompleteRO}
+            data={itemResponse.data}
+            onMarkDelivered={handleDeliveredRO}
+            isLoading={isLoading}
+            // poData={data}
+            // onSubmit={handleApprovedPO}
+          />
+        )
+      ) : showPage === "all" ? (
         <ShowAllIItems
-          setShowAllItems={setShowAllItems}
+          setShowAllItems={setShowPage}
           data={data}
           onSubmit={handleApprovedPO}
           onClose={onClose}
           mutate={mutate}
           user={user}
         />
-      ) : data?.poStatus === "pending" ? (
-        <PendingPOView
-          onClose={onClose}
-          data={itemResponse.data}
-          poData={data}
-          onSubmit={handleApprovedPO}
-          isLoading={isLoading}
-          mutate={mutate}
-          user={user}
-        />
-      ) : data?.poStatus === "approved" ? (
-        <ApprovedPOView
-          setShowAllItems={setShowAllItems}
-          mutate={handleUpdateData}
-          onClose={onClose}
-          poData={data}
-          data={itemResponse.data}
-          onSendPO={handleSendPO}
-          onSendPOItem={handleSendPOItem}
-          loading={isLoading}
-        />
-      ) : data?.poStatus === "sent" ? (
-        <ReceivedPOView
-          mutateInventory={() => {
-            mutate();
-            mutateInventory();
-          }}
-          onClose={onClose}
-          poData={data}
-          data={itemResponse.data}
-          onReceivePO={handleReceivePO}
-          isLoading={isLoading}
-          poId={data.poId}
-        />
-      ) : data?.poStatus === "received" ? (
-        <CompletePOView
-          mutate={mutateInventory}
-          poData={data}
-          data={itemResponse.data}
-          onMarkDelivered={handleDeliveredRO}
-          onCompleteRequest={handleCompleteRO}
-          isLoading={isLoading}
-          onClose={onClose}
-          // onReceivePO={handleReceivePO}
-        />
       ) : (
-        <CompletePOView
-          mutate={mutateInventory}
-          poData={data}
-          onClose={onClose}
-          onCompleteRequest={handleCompleteRO}
-          data={itemResponse.data}
-          onMarkDelivered={handleDeliveredRO}
-          isLoading={isLoading}
-          // poData={data}
-          // onSubmit={handleApprovedPO}
-        />
+        <ShowPOByRequest setShowAllItems={setShowPage} data={data} />
       )}
     </div>
   );

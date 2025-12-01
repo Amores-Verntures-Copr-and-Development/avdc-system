@@ -13,7 +13,9 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
 interface ShowAllIItemsProps {
-  setShowAllItems: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowAllItems: React.Dispatch<
+    React.SetStateAction<"status" | "all" | "request">
+  >;
   data: PurchaseOrders | null;
   onSubmit: (data: UpdatePurchaseOrdersDto) => Promise<boolean>;
   isLoading?: boolean;
@@ -143,7 +145,7 @@ const ShowAllIItems = ({
             size="xs"
             label="Back"
             onClick={() => {
-              setShowAllItems(false);
+              setShowAllItems("status");
             }}
           />
         </div>

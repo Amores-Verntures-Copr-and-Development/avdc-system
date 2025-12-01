@@ -18,6 +18,9 @@ interface PendingPOViewProps {
   mutate: () => void;
   onClose: () => void;
   user: UserAuth | null;
+  setShowAllItems: React.Dispatch<
+    React.SetStateAction<"status" | "all" | "request">
+  >;
 }
 const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
   {
@@ -103,6 +106,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   mutate,
   onClose,
   user,
+  setShowAllItems,
 }) => {
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>(data);
   useEffect(() => {
@@ -131,6 +135,31 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
           <p className="text-gray-500 text-xs 2xl:text-sm">
             Choose a supplier for each item to proceed with your purchase order.
           </p>
+        </div>
+        <div className="flex justify-between items-center">
+          <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
+            Order Items by Supplier
+          </h3>
+          <div className="flex gap-2">
+            <div className="self-center">
+              <Button
+                size="sm"
+                label="View All PO"
+                onClick={() => {
+                  setShowAllItems("all");
+                }}
+              />
+            </div>
+            <div className="self-center">
+              <Button
+                size="sm"
+                label="View PO Request"
+                onClick={() => {
+                  setShowAllItems("request");
+                }}
+              />
+            </div>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto">
           <Table

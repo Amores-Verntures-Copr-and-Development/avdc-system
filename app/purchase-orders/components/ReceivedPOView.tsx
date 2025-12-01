@@ -86,6 +86,9 @@ interface ReceivedPOViewProps {
   poData: PurchaseOrders | null;
   onClose: () => void;
   mutateInventory: () => void;
+  setShowAllItems: React.Dispatch<
+    React.SetStateAction<"status" | "all" | "request">
+  >;
 }
 
 interface StoreInSupplierDetails {
@@ -100,6 +103,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   poData,
   onClose,
   mutateInventory,
+  setShowAllItems,
 }) => {
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier[]>(data);
@@ -223,9 +227,31 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         </div>
 
         <div className="flex flex-1 flex-col p-4 overflow-hidden min-h-0">
-          <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
-            Order Items by Supplier
-          </h3>
+          <div className="flex justify-between items-center">
+            <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
+              Order Items by Supplier
+            </h3>
+            <div className="flex gap-2">
+              <div className="self-center">
+                <Button
+                  size="sm"
+                  label="View All PO"
+                  onClick={() => {
+                    setShowAllItems("all");
+                  }}
+                />
+              </div>
+              <div className="self-center">
+                <Button
+                  size="sm"
+                  label="View PO Request"
+                  onClick={() => {
+                    setShowAllItems("request");
+                  }}
+                />
+              </div>
+            </div>
+          </div>
 
           <div className="flex-1 overflow-y-auto min-h-0">
             {isLoading ? (
@@ -642,7 +668,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               label="Yes, Deliver"
               color="primary"
               onClick={() => {
-
                 if (!selectedStoreSupplier) {
                   return;
                 }
