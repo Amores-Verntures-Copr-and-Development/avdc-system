@@ -9,7 +9,7 @@ export async function POST() {
 
   // Clear access token
   response.cookies.set({
-    name: "accessToken",
+    name: "avdc_accessToken",
     value: "",
     httpOnly: true,
     secure: false,
@@ -20,7 +20,7 @@ export async function POST() {
 
   // Clear refresh token
   response.cookies.set({
-    name: "refreshToken",
+    name: "avdc_refreshToken",
     value: "",
     httpOnly: true,
     secure: false,

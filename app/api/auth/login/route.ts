@@ -28,17 +28,17 @@ export async function POST(req: NextRequest) {
       user,
     });
     response.cookies.set({
-      name: "accessToken",
+      name: "avdc_accessToken",
       value: accessToken,
       httpOnly: true,
       secure: false,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 8, // 1 hour
+      maxAge: 60 * 60 * 24 * 30, // 1 hour
     });
 
     response.cookies.set({
-      name: "refreshToken",
+      name: "avdc_refreshToken",
       value: refreshToken,
       httpOnly: true,
       secure: false,

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 export async function GET() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("accessToken")?.value;
+  const token = cookieStore.get("avdc_accessToken")?.value;
 
   if (!token) {
     // No token → treat as unauthorized

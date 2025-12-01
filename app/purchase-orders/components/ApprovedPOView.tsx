@@ -24,6 +24,7 @@ import { RequestItems } from "@/types/request";
 import Modal from "@/components/shared/Modal";
 import { PDFViewer } from "@react-pdf/renderer";
 import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
+import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -605,7 +606,9 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           {showROPDF === "supplier" ? (
             <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
           ) : (
-            <div></div>
+            <PDFViewer width="100%" height="100%">
+              <PurchaseOrderPDF data={poData} />
+            </PDFViewer>
           )}
         </PDFViewer>
       </Modal>

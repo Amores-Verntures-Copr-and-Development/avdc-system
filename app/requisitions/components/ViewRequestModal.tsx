@@ -17,7 +17,7 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 import { PDFViewer } from "@react-pdf/renderer";
 import { CheckLine, Clock, FileText, Pencil, Plus, X } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import AddItemROModal from "./AddItemROModal";
@@ -38,6 +38,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [showAddPOItem, setShowAddPOItem] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingItemPo, setIsAddingItemPo] = useState(false);
+  const [requestItemData, setRequestItemData] = useState<DisplayRequestItems[]>(
+    []
+  );
   const [showROPDF, setShowROPDF] = useState(false);
   const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -54,6 +57,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       : null,
     fetcher
   );
+  useEffect(() => {
+    if (itemResponse.data && itemResponse.data.length > 0) {
+      setRequestItemData(itemResponse.data);
+    }
+  }, [itemResponse.data]);
   const updatedItemsRef = useRef<DisplayRequestItems[]>([]);
   const handleDataUpdate = (updatedData: DisplayRequestItems[]) => {
     updatedItemsRef.current = updatedData;
@@ -109,7 +117,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     const requestData: Partial<Request>[] = [
       {
         ...selectedReq,
-        requestItems: updatedItems,
+        requestItems: requestItemData,
       },
     ];
     const sendData = {
@@ -273,7 +281,16 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setSelectedRows(null);
     }
   };
-
+  const handleFillUpAll = () => {
+    if (requestItemData) {
+      setRequestItemData((prev) =>
+        prev.map((item) => ({
+          ...item,
+          reqItemReceived: item.reqItemQuantity, // or any value you want
+        }))
+      );
+    }
+  };
   return (
     <div className="bg-white h-full flex flex-col overflow-hidden">
       {selectedReq?.requestStatus === "pending" ||
@@ -312,7 +329,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           uniqueIdKey="reqItemId"
           showCheckBox={isSelectingAddItemPO}
           isRounded={false}
-          updateData={handleDataUpdate}
+          updateData={setRequestItemData}
           columns={
             isRequestor
               ? selectedReq?.requestStatus === "pending" ||
@@ -323,7 +340,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 : column
               : adminColumn
           }
-          data={itemResponse.data}
+          data={requestItemData}
           loading={loading}
           onSelectionChange={handleRowSelection}
         />
@@ -452,7 +469,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   />
                 </div>
               )}
-
+              {selectedReq?.requestStatus === "delivered" && (
+                <div>
+                  <Button
+                    icon={<CheckLine size={15} />}
+                    onClick={handleFillUpAll}
+                    size="sm"
+                    label="Fill up received"
+                    className="text-xs font-semibold"
+                    color="success"
+                  />
+                </div>
+              )}
               {selectedReq?.requestStatus === "delivered" && (
                 <div>
                   <Button
