@@ -79,6 +79,8 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log({ sql });
+  console.log({ params });
   return rows;
 };
 

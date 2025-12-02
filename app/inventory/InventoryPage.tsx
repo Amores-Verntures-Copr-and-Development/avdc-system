@@ -25,12 +25,15 @@ const InventoryPage = () => {
   const [inventoryId, setInventoryId] = useState(0);
   const [selectedInventory, setSelectedInventory] =
     useState<DisplayAllInventory | null>();
-  const { user, hasStore } = useSession();
+  const { user, hasStore, loading: isUseLoading } = useSession();
 
-  const { data: stockRoomResponse = { data: [] } } = useSWR<{
+  const {
+    data: stockRoomResponse = { data: [] },
+    isLoading: isStockRoomLoading,
+  } = useSWR<{
     data: StockRoom[];
-  }>(`/api/stock-room/userId/${user?.userId}`, fetcher);
-
+  }>(user ? `/api/stock-room/userId/${user?.userId}` : null, fetcher);
+  console.log({ stockRoomResponse });
   const stockRoomId = stockRoomResponse.data[0]?.stockRoomId
     ? stockRoomResponse.data[0]?.stockRoomId
     : null;
@@ -43,8 +46,14 @@ const InventoryPage = () => {
 
   const { data: inventoryResponse = { data: [] } } = useSWR<{
     data: DisplayAllInventory[];
-  }>(inventoryBaseUrl, fetcher);
+  }>(user ? inventoryBaseUrl : null, fetcher);
   useEffect(() => {
+    console.log("useEffect triggered with:", {
+      userPosition: user?.empPosition,
+      inventoryResponse,
+      inventoryId,
+    });
+
     if (
       user?.empPosition === "supervisor" ||
       user?.empPosition === "purchaser" ||
@@ -54,12 +63,22 @@ const InventoryPage = () => {
       if (
         inventoryResponse &&
         Array.isArray(inventoryResponse.data) &&
-        inventoryResponse.data.length > 0
+        inventoryResponse.data.length > 0 &&
+        !isStockRoomLoading &&
+        !isUseLoading
       ) {
         setInventoryId(inventoryResponse.data[0].inventoryId);
       }
     }
   }, [inventoryResponse, user?.empPosition]);
+
+  // Also add this to see when inventoryId changes
+  useEffect(() => {
+    console.log("inventoryId changed to:", inventoryId);
+    if (inventoryId) {
+      // This might be triggering more API calls
+    }
+  }, [inventoryId]);
   return (
     <PageLayout className="gap-2 p-2 ">
       {user?.empPosition === "purchaser" ||
@@ -124,6 +143,9 @@ const InventoryPage = () => {
             inventoryId={inventoryId}
             user={user}
             view={selectionSection}
+            inventoryType={
+              hasStore ? "stores" : stockRoomId ? "stock-room" : "inventoryId"
+            }
           />
         </>
       ) : (
@@ -159,6 +181,13 @@ const InventoryPage = () => {
                 inventoryId={selectedInventory.inventoryId}
                 user={user}
                 view={selectionSection}
+                inventoryType={
+                  hasStore
+                    ? "stores"
+                    : stockRoomId
+                    ? "stock-room"
+                    : "inventoryId"
+                }
               />
             </>
           ) : (

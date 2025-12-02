@@ -22,10 +22,16 @@ interface InventoryViewProps {
   inventoryId: number | null;
   user: UserAuth | null;
   view: "inventory" | "movement" | "report";
+  inventoryType: "stores" | "stock-room" | "inventoryId";
 }
-const InventoryView = ({ inventoryId, user, view }: InventoryViewProps) => {
+const InventoryView = ({
+  inventoryId,
+  user,
+  view,
+  inventoryType,
+}: InventoryViewProps) => {
   const { data: inventoryItemResponse = { data: [] } } = useSWR(
-    `api/inventory/item/${inventoryId}/details`,
+    inventoryId ? `api/inventory/item/${inventoryId}/details` : null,
     fetcher
   );
 
@@ -67,7 +73,11 @@ const InventoryView = ({ inventoryId, user, view }: InventoryViewProps) => {
       </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
         {view === "inventory" && (
-          <InventorySection inventoryId={inventoryId} user={user} />
+          <InventorySection
+            inventoryId={inventoryId}
+            user={user}
+            inventoryType={inventoryType}
+          />
         )}
         {view === "movement" && (
           <StockMovementSection inventoryId={inventoryId} />

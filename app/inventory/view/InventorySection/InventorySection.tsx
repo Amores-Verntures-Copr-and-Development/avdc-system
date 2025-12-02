@@ -221,8 +221,12 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
 interface InventorySectionProps {
   inventoryId: number | null;
   user: UserAuth | null;
+  inventoryType: "stores" | "stock-room" | "inventoryId";
 }
-const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
+const InventorySection: React.FC<InventorySectionProps> = ({
+  inventoryId,
+  inventoryType,
+}) => {
   const searchParams = useSearchParams();
   const { categoryOptions } = useCategories({
     inventoryId: inventoryId ?? 0,
