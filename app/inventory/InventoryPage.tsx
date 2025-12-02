@@ -26,7 +26,7 @@ const InventoryPage = () => {
   const [selectedInventory, setSelectedInventory] =
     useState<DisplayAllInventory | null>();
   const { user, hasStore } = useSession();
-
+  console.log({ hasStore });
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/store/${user?.storeId}`
     : user?.userRole === "employee"
@@ -40,7 +40,8 @@ const InventoryPage = () => {
     if (
       user?.empPosition === "supervisor" ||
       user?.empPosition === "purchaser" ||
-      user?.empPosition === "staff"
+      user?.empPosition === "staff" ||
+      user?.empPosition === "admin"
     ) {
       if (
         inventoryResponse &&
