@@ -1,4 +1,4 @@
-import { Supplier, SupplierItem } from "@/types/supplier";
+import { Supplier, SupplierItem, SupplierItemPrices } from "@/types/supplier";
 
 export type CreateSupplierDto = Pick<
   Supplier,
@@ -23,3 +23,8 @@ export interface DisplaySupplierItemDto extends SupplierItem {
   categoryType: string;
   supplierName: string;
 }
+
+export type CreateSupplierItemPriceDto = Pick<
+  SupplierItemPrices,
+  "sipAmount" | "sipCreatedBy" | "suppItemId"
+>;

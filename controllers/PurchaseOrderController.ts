@@ -175,7 +175,6 @@ export const updatePurchaseOrder = async (
       message = `Purchase Order ${data.poNumber} sent successfully!`;
     }
     if (controller === "received") {
-      console.log("[received]: ", data);
       await processReceivedPO(data);
       message = `Purchase Order ${data.poNumber} items received successfully!`;
     }

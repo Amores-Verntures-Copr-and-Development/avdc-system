@@ -58,9 +58,15 @@ export async function addItemsSupplierByID(data: CreateSupplierItemDto[]) {
   }
 }
 
-export async function findSupplierItemById(suppId: number) {
+export async function findSupplierItemById({
+  suppId,
+  search,
+}: {
+  suppId: number;
+  search?: string;
+}) {
   try {
-    const data = await selectSupplierItems({ suppId });
+    const data = await selectSupplierItems({ suppId, search });
     return data;
   } catch (e) {
     throw e;

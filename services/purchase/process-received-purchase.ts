@@ -10,12 +10,20 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { findPurchaserOrder } from "./purchase-items/get-purchase-tems";
+import {
+  handleUpdateSupplierItemPrice,
+  updateSupplierItems,
+} from "../supplier/suppplier-items/update-supplier-items";
+import { SupplierItem } from "@/types/supplier";
+import { handleUpdateItemPrice } from "../items/update-items";
+import { ItemInterface } from "@/types/items";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+
     if (data.poItems?.length === 0) {
       throw new Error("No items found");
     }
@@ -91,6 +99,32 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         keyFields: ["poId"],
         updates: poData,
       });
+    }
+    const updateSupplierItemPrice: Partial<SupplierItem>[] =
+      data.poItems
+        ?.filter((item) => {
+          const price = Number(item.supplierPrice);
+          return price !== 0 && price !== 0.0;
+        })
+        .map((item) => ({
+          suppId: item.suppId,
+          suppItemPrice: item.supplierPrice,
+          itemId: item.itemId,
+          suppItemCreatedBy: data.updatedBy,
+        })) ?? [];
+    if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
+      await handleUpdateSupplierItemPrice({
+        connection,
+        updates: updateSupplierItemPrice,
+        keyFields: ["suppId", "itemId"],
+      });
+      const itemPrice: Partial<ItemInterface>[] =
+        updateSupplierItemPrice?.map((item) => ({
+          itemId: item.itemId,
+          itemPrice: item.suppItemPrice,
+          itemAddedBy: data.updatedBy,
+        })) ?? [];
+      await handleUpdateItemPrice({ connection, updates: itemPrice });
     }
     await connection.commit();
   } catch (e) {

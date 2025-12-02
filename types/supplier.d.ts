@@ -25,3 +25,13 @@ export interface SupplierItem {
   suppItemUpdatedAt: string;
   suppItemCreatedBy: number;
 }
+
+export interface SupplierItemPrices {
+  sipId: number;
+  sipAmount: number;
+  sipCreatedAt: string;
+  sipUpdatedAt: string;
+  sipDeletedAt: string;
+  suppItemId: number;
+  sipCreatedBy: number;
+}

@@ -10,3 +10,11 @@ export interface ItemInterface {
   itemAddedBy: number; // userId
   categoryId: number;
 }
+
+export interface ItemPrice {
+  itemPriceId: number;
+  itemPriceAmount: number;
+  itemPriceCreatedAt: string;
+  itemPriceCreatedBy: number;
+  itemId: number;
+}

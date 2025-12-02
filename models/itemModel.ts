@@ -1,4 +1,8 @@
-import { CreateItemDto, ImportItemInfo } from "@/dtos/items.dto";
+import {
+  CreateItemDto,
+  CreateItemPriceDto,
+  ImportItemInfo,
+} from "@/dtos/items.dto";
 import { ResultSetHeader } from "mysql2/promise";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection } from "mysql2/promise";
@@ -24,6 +28,25 @@ export const insertItem = async ({
     data.categoryId,
   ]);
   return results.insertId;
+};
+
+export const insertItemPrice = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateItemPriceDto[];
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO ItemPrices(itemPriceAmount,itemPriceCreatedBy,itemId) 
+  VALUES ${data.map(() => "(?,?,?)")}  `;
+  const values = data.flatMap((item) => [
+    item.itemPriceAmount,
+    item.itemPriceCreatedBy,
+    item.itemId,
+  ]);
+  const [results] = await pool.execute(sql, values);
+  return results;
 };
 
 // export const insertItems = async ({
@@ -135,7 +158,8 @@ export const updateItems = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-
+  console.log(`SQL`, { sql });
+  console.log(`params`, { params });
   const [result] = await pool.execute(sql, params);
   return result;
 };

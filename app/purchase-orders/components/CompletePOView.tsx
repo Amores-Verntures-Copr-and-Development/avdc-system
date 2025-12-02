@@ -60,7 +60,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
 
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  console.log("RequestItems: ", data);
+ 
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "Item Name",
@@ -97,6 +97,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     {
       name: "Total",
       key: "total",
+      selector: (row) => formatPeso(row.reqItemQuantity * row.itemPrice),
     },
     {
       name: "Remarks",

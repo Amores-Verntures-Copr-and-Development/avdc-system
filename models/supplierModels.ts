@@ -1,6 +1,10 @@
-import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
+import {
+  CreateSupplierDto,
+  CreateSupplierItemDto,
+  CreateSupplierItemPriceDto,
+} from "@/dtos/supplier.dto";
 import { getDBConnection } from "@/lib/db";
-import { Supplier, SupplierItem } from "@/types/supplier";
+import { Supplier, SupplierItem, SupplierItemPrices } from "@/types/supplier";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export const insertSupplier = async ({
@@ -102,7 +106,13 @@ export const insertSupplierItems = async ({
   return results;
 };
 
-export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
+export const selectSupplierItems = async ({
+  suppId,
+  search,
+}: {
+  suppId?: number;
+  search?: string;
+}) => {
   const pool = await getDBConnection();
   let whereClauses: string[] = [];
   let values: any[] = [];
@@ -110,6 +120,12 @@ export const selectSupplierItems = async ({ suppId }: { suppId?: number }) => {
     whereClauses.push("si.suppId = ?");
     values.push(suppId);
   }
+  if (search) {
+    const wildcard = `%${search}%`;
+    whereClauses.push("i.itemName LIKE ?");
+    values.push(wildcard);
+  }
+
   whereClauses.push("si.suppItemStatus != 'deleted'");
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
@@ -140,9 +156,11 @@ export async function handleDeleteSupplierItems(data: SupplierItem[]) {
 export const updateSupplierItemsByFields = async ({
   data,
   keyFields,
+  connection,
 }: {
   keyFields: (keyof SupplierItem)[];
   data: Partial<SupplierItem>[];
+  connection?: PoolConnection;
 }) => {
   if (data.length === 0) {
     throw new Error("No data provided for update");
@@ -151,7 +169,7 @@ export const updateSupplierItemsByFields = async ({
     throw new Error("No key fields provided for WHERE clause");
   }
 
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
 
   // Get the update fields (excluding key fields)
   const updateFields = Object.keys(data[0]).filter(
@@ -207,13 +225,80 @@ export const updateSupplierItemsByFields = async ({
     ", "
   )} WHERE ${whereSql}`;
 
-
-
   try {
+    console.log("SQL: ", sql);
+    console.log("params: ", params);
     const [result] = await pool.execute(sql, params);
     return result;
   } catch (error) {
     console.error("Update failed:", error);
     throw error;
   }
+};
+
+export const insertSupplierItemPrices = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateSupplierItemPriceDto[];
+}) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO SupplierItemPrices(sipAmount,suppItemId,sipCreatedBy) 
+  VALUES ${data.map(() => "(?,?,?)")}`;
+  const values = data.flatMap((item) => [
+    item.sipAmount,
+    item.suppItemId,
+    item.sipCreatedBy,
+  ]);
+  const [results] = await pool.execute(sql, values);
+  return results;
+};
+
+export const selectSupplierItem = async ({
+  connection,
+  keyfields = {},
+}: {
+  connection?: PoolConnection;
+  keyfields: Partial<SupplierItem>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT * FROM SupplierItems WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as SupplierItem[];
+};
+
+export const selectSupplierItemPrice = async ({
+  connection,
+  keyfields = {},
+}: {
+  connection?: PoolConnection;
+  keyfields: Partial<SupplierItemPrices>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT * FROM SupplierItemPrices WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  sql += ` ORDER BY sipCreatedAt DESC`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as SupplierItemPrices[];
 };

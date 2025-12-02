@@ -17,6 +17,7 @@ import useSWR from "swr";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import IconButton from "@/components/shared/IconButton";
 import ViewSupplierModal from "./component/ViewSupplierModal";
+import SelectedSupplierPage from "./SelectedSupplierPage";
 
 const supplierColumns: Column<Supplier>[] = [
   { name: "Supplier Code", key: "suppCode" },
@@ -35,7 +36,9 @@ const supplierColumns: Column<Supplier>[] = [
 const SupplierPage = () => {
   const [showCreateSupplier, setShowCreateSupplier] = useState(false);
   const [showViewSupplier, setShowViewSupplier] = useState(false);
-  const [selectedSupplier, setSelectedSupplier] = useState<Supplier>();
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
+    null
+  );
   const { user } = useSession();
   const {
     data: itemResponse = { data: [] },
@@ -48,7 +51,7 @@ const SupplierPage = () => {
         ...data,
         suppCreatedBy: user?.userId ?? 0,
       };
-      console.log("CreateFirstItem: ", newData);
+
       const result = await fetch(`api/suppliers/`, {
         method: "POST",
         headers: {
@@ -58,7 +61,6 @@ const SupplierPage = () => {
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       toast.success(res.message);
@@ -72,56 +74,69 @@ const SupplierPage = () => {
 
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader title={"Supplier"} subtitle="Manage suppliers" />
-      <div className="flex-1 min-h-0  flex flex-col justify-between">
-        <Table
-          maxHeight="h-full"
-          showActions
-          renderTopActions={
-            <div>
-              <div>
-                <Button
-                  icon={<Package size={17} />}
-                  label="Create Supplier"
-                  onClick={() => {
-                    setShowCreateSupplier(true);
-                  }}
-                  size="sm"
-                  className="font-semibold"
-                  color="primary"
-                />
-              </div>
-            </div>
-          }
-          columns={supplierColumns}
-          data={itemResponse.data}
-          onRowSelection={(row) => {
-            setShowViewSupplier(true);
-            setSelectedSupplier(row);
+      {showViewSupplier ? (
+        <SelectedSupplierPage
+          user={user}
+          data={selectedSupplier ?? null}
+          onBack={() => {
+            setSelectedSupplier(null);
+            setShowViewSupplier(false);
           }}
-          totalCount={10}
-          renderActions={(row) => (
-            <div className="flex gap-2 justify-center">
-              {/* View Button */}
-              <IconButton
-                onClick={() => {
-                  setShowViewSupplier(true);
-                  setSelectedSupplier(row);
-                }}
-                label={"View"}
-                bg={"gray"}
-                icon={<Eye size={18} />}
-              />
-              <IconButton
-                onClick={() => {}}
-                label={"Delete"}
-                bg={"red"}
-                icon={<Trash2 size={18} />}
-              />
-            </div>
-          )}
         />
-      </div>
+      ) : (
+        <>
+          <PageHeader title={"Supplier"} subtitle="Manage suppliers" />
+          <div className="flex-1 min-h-0  flex flex-col justify-between">
+            <Table
+              maxHeight="h-full"
+              showActions
+              renderTopActions={
+                <div>
+                  <div>
+                    <Button
+                      icon={<Package size={17} />}
+                      label="Create Supplier"
+                      onClick={() => {
+                        setShowCreateSupplier(true);
+                      }}
+                      size="sm"
+                      className="font-semibold"
+                      color="primary"
+                    />
+                  </div>
+                </div>
+              }
+              columns={supplierColumns}
+              data={itemResponse.data}
+              onRowSelection={(row) => {
+                setShowViewSupplier(true);
+                setSelectedSupplier(row);
+              }}
+              totalCount={10}
+              renderActions={(row) => (
+                <div className="flex gap-2 justify-center">
+                  {/* View Button */}
+                  <IconButton
+                    onClick={() => {
+                      setShowViewSupplier(true);
+                      setSelectedSupplier(row);
+                    }}
+                    label={"View"}
+                    bg={"gray"}
+                    icon={<Eye size={18} />}
+                  />
+                  <IconButton
+                    onClick={() => {}}
+                    label={"Delete"}
+                    bg={"red"}
+                    icon={<Trash2 size={18} />}
+                  />
+                </div>
+              )}
+            />
+          </div>
+        </>
+      )}
       <Modal
         leadingIcon={Package}
         className="bg-white"
@@ -138,7 +153,7 @@ const SupplierPage = () => {
           }}
         />
       </Modal>
-      <Modal
+      {/* <Modal
         leadingIcon={Package}
         className="bg-white h-[95%]"
         title={selectedSupplier?.suppName}
@@ -176,7 +191,7 @@ const SupplierPage = () => {
           data={selectedSupplier || null}
           user={user}
         />
-      </Modal>
+      </Modal> */}
     </PageLayout>
   );
 };

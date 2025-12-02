@@ -1,14 +1,19 @@
 import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { getSupplierBySearch } from "@/services/supplier/get-supplier";
 import { createSupplierItems } from "@/services/supplier/suppplier-items/create-supplier-items";
-import { handleDeleteSupplierItems } from "@/services/supplier/suppplier-items/update-supplier-items";
+import { getSupplierItemPrice } from "@/services/supplier/suppplier-items/supplier-item-price/get-supplier-item-price";
+import {
+  handleDeleteSupplierItems,
+  handleUpdateSupplierItemPrice,
+} from "@/services/supplier/suppplier-items/update-supplier-items";
 import {
   addItemSupplierByID,
   createSupplier,
   findAllSuppliers,
   findSupplierItemById,
 } from "@/services/supplierServices";
-import { SupplierItem } from "@/types/supplier";
+import { SupplierItem, SupplierItemPrices } from "@/types/supplier";
+import { error } from "console";
 
 export const addSupplier = async (data: CreateSupplierDto) => {
   try {
@@ -83,9 +88,15 @@ export const addItemsSupplier = async (data: CreateSupplierItemDto[]) => {
   }
 };
 
-export const getSupplierItemById = async (suppId: number) => {
+export const getSupplierItemById = async ({
+  suppId,
+  search,
+}: {
+  suppId: number;
+  search?: string;
+}) => {
   try {
-    const data = await findSupplierItemById(suppId);
+    const data = await findSupplierItemById({ suppId, search });
     return {
       success: true,
       message: "Supplier item fetched successfully",
@@ -105,14 +116,15 @@ export const updateSupplierItems = async ({
   data,
   controller,
 }: {
-  data: SupplierItem[];
-  controller: "update" | "delete";
+  data: Partial<SupplierItem>[];
+  controller: "update" | "delete" | "price";
 }) => {
   let message = "";
   try {
     switch (controller) {
       case "update": {
-        // await handleUpdateSupplierItems(data);
+        console.log({ data });
+        // await handleUpdateSupplierItemPrice({ updates: data });
         // message = "Supplier items updated successfully!";
         break;
       }
@@ -120,6 +132,19 @@ export const updateSupplierItems = async ({
       case "delete": {
         await handleDeleteSupplierItems(data);
         message = "Supplier items deleted successfully!";
+        break;
+      }
+
+      case "price": {
+        console.log({ data });
+        const updateItemPrice: Partial<SupplierItem>[] = data.map((item) => ({
+          suppItemId: item.suppItemId,
+          suppItemPrice: item.suppItemPrice,
+          suppItemCreatedBy: item.suppItemCreatedBy,
+        }));
+        console.log({ updateItemPrice });
+        await handleUpdateSupplierItemPrice({ updates: updateItemPrice });
+        message = "Price updated successfully!";
         break;
       }
 
@@ -139,6 +164,27 @@ export const updateSupplierItems = async ({
       success: false,
       error: error instanceof Error ? error.message : String(error),
       data: data,
+    };
+  }
+};
+
+export const getSupplierItemPrices = async ({
+  keyfields = {},
+}: {
+  keyfields: Partial<SupplierItemPrices>;
+}) => {
+  try {
+    const data = await getSupplierItemPrice({ keyfields });
+    return {
+      success: true,
+      message: "Supplier item fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Supplier item fetched successfully",
+      error: e,
     };
   }
 };

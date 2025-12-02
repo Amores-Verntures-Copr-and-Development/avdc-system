@@ -8,14 +8,20 @@ import { SupplierItem } from "@/types/supplier";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ suppId: string }> }
 ) {
   try {
     const slug = (await params).suppId;
     const suppId = Number(slug);
-    const res = await getSupplierItemById(suppId);
 
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search") || "";
+    // const status = searchParams.get("status") || "";
+    // const category = searchParams.get("category") || "";
+    // const unit = searchParams.get("unit") || "";
+    const res = await getSupplierItemById({ suppId, search });
+    console.log({ search });
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
