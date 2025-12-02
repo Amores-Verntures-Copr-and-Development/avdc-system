@@ -66,7 +66,7 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows;
+  return rows as StockRoom[];
 };
 
 export const selectStockRoom = async ({

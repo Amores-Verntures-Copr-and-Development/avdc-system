@@ -26,10 +26,18 @@ const InventoryPage = () => {
   const [selectedInventory, setSelectedInventory] =
     useState<DisplayAllInventory | null>();
   const { user, hasStore } = useSession();
-  console.log({ hasStore });
+
+  const { data: stockRoomResponse = { data: [] } } = useSWR<{
+    data: StockRoom[];
+  }>(`/api/stock-room/userId/${user?.userId}`, fetcher);
+
+  const stockRoomId = stockRoomResponse.data[0]?.stockRoomId
+    ? stockRoomResponse.data[0]?.stockRoomId
+    : null;
+
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/store/${user?.storeId}`
-    : user?.userRole === "employee"
+    : stockRoomId
     ? `/api/inventory/stock-room/${user?.userId}`
     : `/api/inventory`;
 
