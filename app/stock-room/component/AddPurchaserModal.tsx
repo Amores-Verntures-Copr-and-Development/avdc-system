@@ -83,6 +83,7 @@ const AddPurchaserModal = ({
           isRounded={false}
           columns={userColumn}
           data={response.data}
+          uniqueIdKey="userId"
         />
       </div>
       <div className="flex justify-end gap-4">
