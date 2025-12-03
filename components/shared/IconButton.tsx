@@ -7,6 +7,7 @@ interface IconButtonProps {
   label: string;
   bg: string;
   isRounded?: boolean;
+  showLabel?: boolean;
 }
 
 const colorMap: Record<string, string> = {
@@ -25,6 +26,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   label,
   bg,
   isRounded = true,
+  showLabel = true,
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -60,6 +62,7 @@ const IconButton: React.FC<IconButtonProps> = ({
       </div>
 
       {showTooltip &&
+        showLabel &&
         createPortal(
           <span
             className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200 hidden xl:inline"

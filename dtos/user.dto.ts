@@ -1,5 +1,7 @@
 import { EmployeeInterface } from "@/types/employees";
 import { UserInterface } from "@/types/users";
+import { CreateStoreEmployeeDto } from "./store.dto";
+import { StoreInterface } from "@/types/stores";
 
 export type CreateUserDto = Pick<
   UserInterface,
@@ -12,7 +14,9 @@ export type CreateUserDto = Pick<
   | "userRole"
   | "userAddedBy"
 > &
-  Pick<EmployeeInterface, "empPosition" | "storeId">;
+  Pick<EmployeeInterface, "empPosition" | "storeId"> & {
+    storeEmployee?: CreateStoreEmployeeDto[];
+  };
 
 export type CreateEmployeeDto = Pick<
   EmployeeInterface,
@@ -31,4 +35,30 @@ export type DisplayUserDto = Pick<
 > &
   Pick<EmployeeInterface, "empId" | "empPosition" | "storeId"> & {
     addedBy: String;
+  };
+
+export type DisplayUserInfoDto = Pick<
+  UserInterface,
+  | "userId"
+  | "userFname"
+  | "userMname"
+  | "userLname"
+  | "userEmail"
+  | "userRole"
+  | "userAddedBy"
+  | "userCreatedAt"
+  | "userStatus"
+  | "userUpdatedAt"
+> &
+  Pick<
+    EmployeeInterface,
+    | "empId"
+    | "empPosition"
+    | "storeId"
+    | "empCreatedAt"
+    | "empDeletedAt"
+    | "empUpdatedAt"
+    | "userId"
+  > & {
+    storeEmployees: StoreInterface[];
   };

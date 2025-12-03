@@ -10,6 +10,8 @@ export type RefreshTokenPayload = {
 export type AccessTokenPayload = {
   userId: number;
   userFullName: string;
+  userFname: string;
+  userLname: string;
   userRole: string;
   empPosition: number;
   storeId: number | null;
@@ -59,14 +61,22 @@ export const verifyToken = <T extends object>(
 export const generateTokens = (
   userId: number,
   userFname: string,
-  userLname: string | null,
+  userLname: string,
   userRole: string,
   empPosition: number,
   storeId: number | null
 ) => {
   const userFullName = userLname ? `${userFname} ${userLname}` : userFname;
   const accessToken = signToken(
-    { userId, userFullName, userRole, empPosition, storeId },
+    {
+      userId,
+      userFullName,
+      userFname,
+      userLname,
+      userRole,
+      empPosition,
+      storeId,
+    },
     accessTokenOptions
   );
   const refreshToken = signToken({ userId, empPosition }, refreshTokenOptions);

@@ -1,27 +1,85 @@
 "use client";
 
 import Sidebar from "@/components/layout/Sidebar";
-import React, { Suspense, useEffect } from "react";
-
+import React, { Suspense, useEffect, useState } from "react";
 import Header from "@/components/layout/Header";
 import { usePathname, useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
+import { useSession } from "@/hooks/useSession";
+// Create this component
+
 const ClientLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading: isLoading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  const [showStoreModal, setShowStoreModal] = useState(false);
+  const [stores, setStores] = useState<any[]>([]);
+
   const isAuthPage =
     pathname === "/login" ||
     pathname === "/register" ||
     pathname === "/forgot-password";
+
   useEffect(() => {
     if (isAuthPage) {
-      // 🚨 clears everything
       router.replace("/login");
     }
   }, [isAuthPage, router]);
+
+  useEffect(() => {
+    // Check if user needs store selection
+    if (user && !isLoading) {
+      const needsStoreSelection =
+        (user.empPosition === "supervisor" || user.empPosition === "staff") &&
+        !user.storeId;
+
+      if (needsStoreSelection && pathname !== "/store-selection") {
+        // Redirect to store selection page
+        router.push("/store-selection");
+      }
+    }
+  }, [user, isLoading, pathname, router]);
+
+  // Show loading while checking session
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // For auth pages
   if (isAuthPage) {
     return <div className="w-full h-dvh">{children}</div>;
   }
+
+  // For store selection page
+  if (pathname === "/store-selection") {
+    return (
+      <div className="w-full h-dvh">
+        {children}
+        <Toaster position="top-right" />
+      </div>
+    );
+  }
+
+  // Check if user needs to select a store
+  if (
+    (user?.empPosition === "supervisor" || user?.empPosition === "staff") &&
+    !user?.storeId
+  ) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to store selection...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Regular layout for authenticated users with store
   return (
     <div className="h-screen w-screen flex overflow-hidden">
       <Toaster
@@ -34,13 +92,26 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 min-h-0 min-w-0 flex flex-row">
         <Sidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          {" "}
           <Header />
-          <Suspense fallback={<div>Loading...</div>}>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            }
+          >
             <div className="flex-1 min-h-0 flex flex-col">{children}</div>
           </Suspense>
         </div>
       </div>
+
+      {/* Store Selection Modal (alternative to separate page) */}
+      {/* <StoreSelectionModal
+        isOpen={showStoreModal}
+        stores={stores}
+        onSelect={handleStoreSelect}
+        onClose={() => setShowStoreModal(false)}
+      /> */}
     </div>
   );
 };

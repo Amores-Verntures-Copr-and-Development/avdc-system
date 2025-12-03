@@ -2,17 +2,29 @@ import Button from "@/components/shared/Button";
 import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
+import Table, { Column } from "@/components/shared/Table";
 import { positionOptions, roleOptions } from "@/constants/dropdown-options";
 import { CreateUserDto } from "@/dtos/user.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { StoreInterface } from "@/types/stores";
+import { fetcher } from "@/utils/fetcher";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
+import useSWR from "swr";
+
 interface AddUserModalProps {
   onSubmit: (data: CreateUserDto) => Promise<boolean>;
   onCancel: () => void;
   user?: UserAuth | null;
 }
+
+type ModalStep = 1 | 2 | 3; // 1: User Info, 2: Employee Info, 3: Review & Submit
+const storeColumn: Column<StoreInterface>[] = [
+  { name: "ID", key: "storeId" },
+  { name: "Name", key: "storeName" },
+  { name: "Location", key: "storeLocation" },
+  { name: "Description", key: "storeDescription" },
+];
 const AddUserModal: React.FC<AddUserModalProps> = ({
   onCancel,
   onSubmit,
@@ -29,24 +41,57 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     userMname: "",
     empPosition: null,
     storeId: null,
+    storeEmployee: [],
   };
+
   const [addUserFormData, setAddUserFormData] =
     useState<CreateUserDto>(userDefaultForm);
+  const [currentStep, setCurrentStep] = useState<ModalStep>(1);
+
   const handleFormChange = handleChange(addUserFormData, setAddUserFormData);
+
   const handleSubmit = async () => {
-    const success = await onSubmit(addUserFormData);
+    // Combine assigned stores with form data
+    const submitData: CreateUserDto = {
+      ...addUserFormData,
+      storeEmployee:
+        selectedStores.map((store) => ({
+          storeId: store.storeId ?? 0,
+          empId: 0,
+        })) ?? [],
+    };
+    console.log({ submitData });
+    const success = await onSubmit(submitData);
     if (success) {
       onCancel();
     }
   };
-  const searchStore = async (query: string): Promise<StoreInterface[]> => {
-    const res = await fetch(
-      `/api/stores/search?search=${encodeURIComponent(query)}`
-    );
-    const json = await res.json();
-    return json.data || [];
+
+  const {
+    data: response = { data: [] },
+    isLoading,
+    mutate,
+  } = useSWR<{ data: StoreInterface[] }>("/api/stores/", fetcher);
+  const [selectedStores, setSelectedStores] = useState<StoreInterface[]>([]);
+  const handleSelectionChange = (selected: StoreInterface[]) => {
+    // 👉 Here you can trigger bulk delete, bulk approve, etc.
+    setSelectedStores(selected);
   };
-  return (
+
+  const goToNextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep((currentStep + 1) as ModalStep);
+    }
+  };
+
+  const goToPrevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep((currentStep - 1) as ModalStep);
+    }
+  };
+
+  // Step 1: User Information
+  const renderUserInfoStep = () => (
     <div className="space-y-5">
       <div className="space-y-3">
         <h1 className="text-md font-semibold mb-3">User Information</h1>
@@ -57,12 +102,13 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             name="userFname"
             label={"First Name"}
             onChange={handleFormChange}
+            required
           />
           <Input
             sizes={"xs"}
             value={addUserFormData.userMname ?? ""}
             name="userMname"
-            label={"Midlle Name (optional)"}
+            label={"Middle Name (optional)"}
             onChange={handleFormChange}
           />
         </div>
@@ -73,6 +119,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             name="userLname"
             label={"Last Name"}
             onChange={handleFormChange}
+            required
           />
           <Input
             sizes={"xs"}
@@ -81,6 +128,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             label={"Email"}
             type="email"
             onChange={handleFormChange}
+            required
           />
         </div>
         <div className="flex flex-wrap gap-4">
@@ -90,6 +138,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             value={addUserFormData.userName}
             name="userName"
             onChange={handleFormChange}
+            required
           />
           <Input
             sizes={"xs"}
@@ -98,6 +147,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             name="userPassword"
             type="password"
             onChange={handleFormChange}
+            required
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
@@ -108,56 +158,237 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             value={addUserFormData.userRole ?? ""}
             onChange={handleFormChange}
             options={roleOptions}
+            required
           />
         </div>
       </div>
-      {addUserFormData.userRole === "employee" && (
+    </div>
+  );
+
+  // Step 2: Employee Information (only shown if userRole is "employee")
+  const renderEmployeeInfoStep = () => (
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <h1 className="text-md font-semibold mb-3">Employee Information</h1>
+        <div className="grid grid-cols-2 gap-4">
+          <DropdownSelect
+            name={"empPosition"}
+            sizes={"xs"}
+            label={"Position"}
+            value={addUserFormData.empPosition ?? ""}
+            onChange={handleFormChange}
+            options={positionOptions}
+            required
+          />
+        </div>
+      </div>
+
+      {Boolean(
+        addUserFormData.empPosition === "supervisor" ||
+          addUserFormData.empPosition === "staff"
+      ) && (
         <div className="space-y-3">
-          <h1 className="text-md font-semibold mb-3">Employee Information</h1>
-          <div className="flex flex-wrap gap-4">
-            <DropdownSelect
-              name={"empPosition"}
-              sizes={"xs"}
-              label={"Position"}
-              value={addUserFormData.empPosition ?? ""}
-              onChange={handleFormChange}
-              options={positionOptions}
-            />
-            <DropDownSearchStore
-              label="Store"
-              sizes="xs"
-              searchFn={searchStore}
-              onSelect={(store) => {
-                setAddUserFormData({
-                  ...addUserFormData,
-                  storeId: store.storeId,
-                });
-              }}
-              renderItem={(store) => (
-                <span>
-                  <span>{store.storeName}</span>
-                </span>
-              )}
-              displayValue={(s) => `${s.storeName}`}
-            />
-          </div>
+          <h1 className="text-md font-semibold mb-3">Assign Stores</h1>
+          <Table
+            showCheckBox
+            isRounded={false}
+            columns={storeColumn}
+            data={response.data}
+            onSelectionChange={handleSelectionChange}
+            uniqueIdKey="storeId"
+          />
         </div>
       )}
-      <div className="flex pl-100 space-x-2">
-        <Button
-          size="md"
-          className="text-sm font-semibold"
-          color="nocolor"
-          label="Cancel"
-          onClick={onCancel}
-        />
-        <Button
-          size="md"
-          label="Add User"
-          className="text-sm font-semibold"
-          onClick={handleSubmit}
-        />
+    </div>
+  );
+
+  // Step 3: Review and Submit
+  const renderReviewStep = () => (
+    <div className="space-y-5">
+      <div className="space-y-3">
+        <h1 className="text-md font-semibold mb-3">Review Information</h1>
+
+        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+          <div>
+            <h3 className="text-sm font-medium mb-2">User Details:</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
+                <span className="text-gray-600">Name:</span>{" "}
+                <span className="font-medium">
+                  {addUserFormData.userFname} {addUserFormData.userLname}
+                </span>
+              </div>
+              <div>
+                <span className="text-gray-600">Email:</span>{" "}
+                <span className="font-medium">{addUserFormData.userEmail}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Username:</span>{" "}
+                <span className="font-medium">{addUserFormData.userName}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Role:</span>{" "}
+                <span className="font-medium">{addUserFormData.userRole}</span>
+              </div>
+            </div>
+          </div>
+
+          {addUserFormData.userRole === "employee" && (
+            <div>
+              <h3 className="text-sm font-medium mb-2">Employee Details:</h3>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div>
+                  <span className="text-gray-600">Position:</span>{" "}
+                  <span className="font-medium">
+                    {addUserFormData.empPosition}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Assigned Stores:</span>{" "}
+                  <span className="font-medium">{selectedStores.length}</span>
+                </div>
+              </div>
+
+              {selectedStores.length > 0 && (
+                <div className="mt-2">
+                  <h4 className="text-xs font-medium mb-1">Store List:</h4>
+                  <ul className="text-sm list-disc list-inside">
+                    {selectedStores.map((store) => (
+                      <li key={store.storeId}>{store.storeName}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
+    </div>
+  );
+
+  // Render current step
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return renderUserInfoStep();
+      case 2:
+        return renderEmployeeInfoStep();
+      case 3:
+        return renderReviewStep();
+      default:
+        return renderUserInfoStep();
+    }
+  };
+
+  // Step indicators
+  const renderStepIndicators = () => (
+    <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center space-x-2">
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            currentStep >= 1 ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          1
+        </div>
+        <span className={`text-sm ${currentStep === 1 ? "font-medium" : ""}`}>
+          User Info
+        </span>
+      </div>
+
+      <div className="flex-1 h-0.5 bg-gray-200 mx-4"></div>
+
+      <div className="flex items-center space-x-2">
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            currentStep >= 2 ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          2
+        </div>
+        <span className={`text-sm ${currentStep === 2 ? "font-medium" : ""}`}>
+          {addUserFormData.userRole === "employee"
+            ? "Employee Info"
+            : "Additional Info"}
+        </span>
+      </div>
+
+      <div className="flex-1 h-0.5 bg-gray-200 mx-4"></div>
+
+      <div className="flex items-center space-x-2">
+        <div
+          className={`flex items-center justify-center w-8 h-8 rounded-full ${
+            currentStep >= 3 ? "bg-blue-500 text-white" : "bg-gray-200"
+          }`}
+        >
+          3
+        </div>
+        <span className={`text-sm ${currentStep === 3 ? "font-medium" : ""}`}>
+          Review & Submit
+        </span>
+      </div>
+    </div>
+  );
+
+  // Navigation buttons
+  const renderNavigationButtons = () => {
+    const isEmployeeStep =
+      currentStep === 2 && addUserFormData.userRole === "employee";
+    const isEmployeeWithStores =
+      isEmployeeStep &&
+      (addUserFormData.empPosition === "supervisor" ||
+        addUserFormData.empPosition === "staff");
+
+    return (
+      <div className="flex justify-between pt-4 border-t">
+        <div>
+          {currentStep > 1 ? (
+            <Button
+              size="md"
+              className="text-sm font-semibold"
+              color="nocolor"
+              label="Back"
+              onClick={goToPrevStep}
+            />
+          ) : (
+            <Button
+              size="md"
+              className="text-sm font-semibold"
+              color="nocolor"
+              label="Cancel"
+              onClick={onCancel}
+            />
+          )}
+        </div>
+
+        <div className="flex space-x-2">
+          {currentStep < 3 ? (
+            <Button
+              size="md"
+              label="Next"
+              className="text-sm font-semibold"
+              onClick={goToNextStep}
+              // Optional: Add validation before allowing next step
+              // disabled={!isStepValid(currentStep)}
+            />
+          ) : (
+            <Button
+              size="md"
+              label="Submit"
+              className="text-sm font-semibold"
+              onClick={handleSubmit}
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-5">
+      {renderStepIndicators()}
+      {renderCurrentStep()}
+      {renderNavigationButtons()}
     </div>
   );
 };

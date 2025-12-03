@@ -8,8 +8,10 @@ import { useRouter } from "next/navigation";
 import { handleChange } from "@/utils/handle-change";
 import toast, { Toaster } from "react-hot-toast";
 import { UserAuthInterface } from "@/types/auth";
+import { useSession } from "@/hooks/useSession";
 
 const LoginPage = () => {
+  const { user, refreshSession } = useSession();
   const [userAuthForm, setUserAuthForm] = useState<UserAuthInterface>({
     username: "",
     password: "",
@@ -22,7 +24,7 @@ const LoginPage = () => {
   };
   const handleUserAuthChange = handleChange(userAuthForm, setUserAuthForm);
   const handleLogin = async () => {
-    setLoading(true); // ✅ start loading
+    setLoading(true);
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -30,19 +32,33 @@ const LoginPage = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(userAuthForm),
+        credentials: "include", // ⚠️ IMPORTANT: Include cookies
       });
 
       const data = await res.json();
+
       if (res.ok && data.success) {
-        // await refreshSession();
-        router.replace("/dashboard");
+        // ⚠️ CRITICAL: Save user data to localStorage IMMEDIATELY
+        localStorage.setItem("userData", JSON.stringify(data.user));
+        // Check if needs store selection
+        const needsStoreSelection =
+          (data.user.empPosition === "supervisor" ||
+            data.user.empPosition === "staff") &&
+          !data.user.storeId;
+        await refreshSession();
+        if (needsStoreSelection) {
+          router.push("/store-selection");
+        } else {
+          console.log("➡️ Redirecting to dashboard");
+          router.replace("/dashboard");
+        }
       } else {
         toast.error(data.message || "Login failed");
       }
     } catch (err) {
       toast.error(`An error occurred during login, ${err}`);
     } finally {
-      setLoading(false); // ✅ stop loading
+      setLoading(false);
     }
   };
   return (

@@ -18,6 +18,7 @@ export async function processImportItems(data: ImportItemInfo) {
           connection,
           name: items.categoryName,
         });
+        console.log({ category });
         return {
           itemName: items.itemName,
           categoryId: category[0].categoryId,

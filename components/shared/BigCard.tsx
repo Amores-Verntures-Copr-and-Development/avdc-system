@@ -5,6 +5,8 @@ interface BigCardProps {
   subtitle?: string;
   children: ReactNode;
   isRounded?: boolean;
+  onClick?: () => void;
+  leftTitle?: ReactNode;
 }
 
 const BigCard = ({
@@ -12,19 +14,27 @@ const BigCard = ({
   subtitle,
   children,
   isRounded = true,
+  leftTitle,
+  onClick,
 }: BigCardProps) => {
   return (
     <div
       className={`border flex flex-col flex-1 overflow-hidden ${
         isRounded ? "rounded-2xl" : ""
       } shadow-sm border-gray-200 bg-white h-full p-4`}
+      onClick={onClick}
     >
       <div className="mb-4">
         {" "}
         {/* Added margin to separate header */}
         <div className="flex flex-col">
-          <h1 className="font-semibold">{title}</h1>
-          <span className="text-xs text-gray-400">{subtitle}</span>
+          <div className="flex justify-between">
+            <div className="flex flex-col justify-between">
+              <h1 className="font-semibold">{title}</h1>
+              <span className="text-xs text-gray-400">{subtitle}</span>
+            </div>
+            {leftTitle}
+          </div>
         </div>
       </div>
       <div className="flex flex-col flex-1 min-h-0">{children}</div>

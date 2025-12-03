@@ -1,10 +1,16 @@
-import { CreateStoreDto } from "@/dtos/store.dto";
+import { CreateStoreDto, CreateStoreEmployeeDto } from "@/dtos/store.dto";
 import { getDBConnection } from "../lib/db";
 import { skip } from "node:test";
-import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import {
+  PoolClusterOptions,
+  PoolConnection,
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2/promise";
 import { EmployeeInterface } from "@/types/employees";
 import { InventoryInterface } from "@/types/inventory";
 import { StoreInterface } from "@/types/stores";
+import { join } from "path";
 
 export const insertStore = async ({
   data,
@@ -102,6 +108,59 @@ WHERE 1=1`;
       sql += ` AND i.${key} IS NULL`;
     } else {
       sql += ` AND i.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as StoreInterface[];
+};
+
+export const insertStoreEmployees = async ({
+  data,
+  connection,
+}: {
+  data?: CreateStoreEmployeeDto[];
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  try {
+    console.log("Agi diri: ", data);
+    const sql = `INSERT INTO StoreEmployees(storeId,empId,storeEmpCreatedBy) VALUES ${
+      data?.map(() => "(?, ?,?)").join(", ") || ""
+    }`;
+    const values = data?.flatMap((item) => [
+      item.storeId,
+      item.empId,
+      item.storeEmpCreatedBy,
+    ]);
+    console.log({ sql });
+    console.log({ values });
+    const [results] = await pool.execute(sql, values);
+    return results;
+  } catch (e) {
+    throw e;
+  }
+};
+
+export const selectStoreEmployee = async ({
+  connection,
+  keyFields,
+}: {
+  connection?: PoolConnection;
+  keyFields: Partial<EmployeeInterface>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT s.* FROM StoreEmployees se 
+  LEFT JOIN Stores s ON s.storeId = se.storeId
+  LEFT JOIN Employees e ON e.empId = se.empId
+  LEFT JOIN Users u ON u.userId = e.userId
+  WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND e.${key} IS NULL`;
+    } else {
+      sql += ` AND e.${key} = ?`;
       params.push(value);
     }
   }

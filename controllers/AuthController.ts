@@ -21,13 +21,15 @@ export const logIn = async (data: UserAuthInterface) => {
       user.userLname,
       user.userRole,
       user.empPosition,
-      user.storeId
+      null
     );
     // Return structured response
     return {
       user: {
         userId: user.userId,
-        userFullName: `${user.userFname} ${user.userLname}`, // fixed typo
+        userFullName: `${user.userFname} ${user.userLname}`,
+        userFname: user.userFname,
+        userLname: user.userLname, // fixed typo
         userRole: user.userRole,
         empPosition: user.empPosition,
         storeId: user.storeId,

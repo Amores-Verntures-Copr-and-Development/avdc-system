@@ -1,3 +1,5 @@
+import { StoreEmployee, StoreInterface } from "./stores";
+
 export type EmployeePosition =
   | "purchaser"
   | "supervisor"
@@ -15,4 +17,5 @@ export interface EmployeeInterface {
   empDeletedAt?: string | null;
   userId: number;
   storeId?: number | null;
+  storeEmployees?: StoreInterface[];
 }

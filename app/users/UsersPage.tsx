@@ -16,6 +16,8 @@ import toast from "react-hot-toast";
 import IconButton from "@/components/shared/IconButton";
 import { useSession } from "@/hooks/useSession";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import Popup from "@/components/shared/Popup";
+import ViewUserModal from "./components/ViewUserModal";
 
 const userColumn = [
   { name: "ID", key: "userId" },
@@ -39,6 +41,7 @@ const userColumn = [
 
 const UserPage = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<DisplayUserDto | null>(null);
   const { user } = useSession();
 
   const {
@@ -63,6 +66,7 @@ const UserPage = () => {
         body: JSON.stringify(newData),
       });
       const res = await result.json();
+      console.log({ res });
       if (!res.success) {
         console.log("Res: ", res);
         throw new Error(res.err);
@@ -101,6 +105,10 @@ const UserPage = () => {
           columns={userColumn}
           data={response.data}
           totalCount={10}
+          uniqueIdKey="userId"
+          onRowSelection={(row) => {
+            setSelectedUser(row);
+          }}
           showCheckBox
           renderActions={(row: DisplayUserDto) => (
             <div className="flex justify-center gap-2">
@@ -141,6 +149,16 @@ const UserPage = () => {
           }}
         />
       </Modal>
+      <Popup
+        title="User Info"
+        background="bg-white/40"
+        isOpen={selectedUser !== null}
+        onClose={function (): void {
+          setSelectedUser(null);
+        }}
+      >
+        <ViewUserModal data={selectedUser} user={user} />
+      </Popup>
     </PageLayout>
   );
 };

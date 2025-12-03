@@ -226,8 +226,6 @@ export const updateSupplierItemsByFields = async ({
   )} WHERE ${whereSql}`;
 
   try {
-    console.log("SQL: ", sql);
-    console.log("params: ", params);
     const [result] = await pool.execute(sql, params);
     return result;
   } catch (error) {

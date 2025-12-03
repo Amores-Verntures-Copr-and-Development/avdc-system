@@ -498,7 +498,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         itemDescription: item.Description ?? "",
       })),
     };
-
+    console.log({ newData });
     try {
       const result = await fetch(`/api/items/import-item/`, {
         method: "POST",

@@ -73,6 +73,7 @@ interface TableProps<T> {
   editMode?: "inline" | "row";
   isRounded?: boolean;
   uniqueIdKey?: keyof T;
+  onSelectedData?: T[];
 }
 
 export interface TableHandle {
@@ -109,6 +110,7 @@ const TableInner = <T extends Record<string, any>>(
     initialFilters,
     onSave,
     uniqueIdKey,
+    onSelectedData,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
@@ -119,7 +121,9 @@ const TableInner = <T extends Record<string, any>>(
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
-    setEditableData(data);
+    if (data && data.length > 0) {
+      setEditableData(data);
+    }
   }, [data]);
 
   // ✅ FIX: Sync selected rows when onSelectedRow changes
@@ -171,6 +175,23 @@ const TableInner = <T extends Record<string, any>>(
       }
     });
   };
+  useEffect(() => {
+    if (onSelectedData && editableData.length > 0) {
+      // Since onSelectedData is an array of objects with storeId property
+      const selectedRows = editableData.filter((row: T) => {
+        // Check if any object in onSelectedData has matching storeId
+        return (onSelectedData as any[]).some(
+          (selectedItem) => selectedItem.storeId === row[uniqueIdKey as keyof T]
+        );
+      });
+
+      setSelectedRows(selectedRows);
+
+      const selectedIds = selectedRows.map(
+        (row) => row[uniqueIdKey as keyof T]
+      );
+    }
+  }, [onSelectedData, editableData, uniqueIdKey]);
   useEffect(() => {
     if (onSelectionChange && selectedRows.length >= 0) {
       onSelectionChange(selectedRows);

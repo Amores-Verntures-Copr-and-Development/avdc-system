@@ -71,3 +71,41 @@ WHERE sp.stockRoomId IS NULL`;
   const [rows] = await pool.execute(sql);
   return rows;
 };
+
+export const selectUserInfo = async (userId: number) => {
+  const pool = await getDBConnection();
+  const sql = ` SELECT 
+  u.userId,
+  u.userName,
+  u.userFname, 
+  u.userLname, 
+  u.userMname, 
+  u.userRole, 
+  u.userEmail, 
+  u.userStatus, 
+  u.userUpdatedAt, 
+  u.userCreatedAt, 
+  u.userDeletedAt,
+  e.*,
+  (
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'storeEmpId', se.storeEmpId,
+        'storeId', se.storeId,
+        'empId', se.empId,
+        'storeName', s.storeName,
+        'storeLocation', s.storeLocation,
+        'storeContactPhone', s.storePhone,
+        'storeEmail', s.storeEmail
+      )
+    )
+    FROM StoreEmployees se 
+    LEFT JOIN Stores s ON s.storeId = se.storeId 
+    WHERE se.empId = e.empId
+  ) as storeEmployees 
+FROM Users u
+LEFT JOIN Employees e ON e.userId = u.userId 
+WHERE u.userId = ?`;
+  const [rows] = await pool.execute(sql, [userId]);
+  return rows;
+};

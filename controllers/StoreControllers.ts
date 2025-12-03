@@ -1,4 +1,4 @@
-import { CreateStoreDto } from "@/dtos/store.dto";
+import { CreateStoreDto, CreateStoreEmployeeDto } from "@/dtos/store.dto";
 import { selectStores } from "../models/storeModels";
 import {
   findStoreByEmpFields,
@@ -6,6 +6,8 @@ import {
 } from "@/services/store/get-store";
 import { processCreateStore } from "@/services/store/process-create-store";
 import { EmployeeInterface } from "@/types/employees";
+import { getStoreEmployee } from "@/services/store/store-employee/get-store-employee";
+import { createStoreEmployees } from "@/services/store/store-employee/create-store-employee";
 
 export const createStore = async (data: CreateStoreDto) => {
   try {
@@ -66,6 +68,40 @@ export const getStoreByPOId = async (poId: number) => {
     return {
       success: false,
       message: "Failed to create store!",
+      error: e,
+    };
+  }
+};
+
+export const getStoresByEmployeeByUserId = async (userId: number) => {
+  try {
+    const data = await getStoreEmployee({ keyFields: { userId: userId } });
+    return {
+      success: true,
+      message: "Store fetch successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to create store!",
+      error: e,
+    };
+  }
+};
+
+export const addStoreEmployee = async (data: CreateStoreEmployeeDto[]) => {
+  try {
+    const result = await createStoreEmployees({ data });
+    return {
+      success: true,
+      message: "Succesfully assigned store!",
+      result: result,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to assigned store!",
       error: e,
     };
   }

@@ -69,7 +69,7 @@ const Popup: React.FC<PopupProps> = ({
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-2 xl:p-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between p-3 3xl:p-6 border-b border-gray-200 bg-white">
           <div className="flex items-center gap-3">
             {Icon && (
               <div className="p-2 bg-blue-50 rounded-lg">

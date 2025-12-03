@@ -1,58 +1,23 @@
 import { CreateEmployeeDto, CreateUserDto } from "@/dtos/user.dto";
 import { selectUsers, insertUser } from "../models/userModels";
-import { hashValue } from "@/utils/bcrypt";
-import { insertEmployee } from "../models/employeeModels";
-import { getDBConnection } from "../lib/db";
-import { PoolConnection } from "mysql2/promise";
-
-async function handleCreateUser(
-  connection: PoolConnection,
-  data: CreateUserDto
-) {
-  const hashedPassword = await hashValue(data.userPassword);
-  const newData: CreateUserDto = {
-    ...data,
-    userPassword: hashedPassword,
-  };
-  const userId = await insertUser({ connection, data: newData });
-  return userId;
-}
-async function handleCreateEmployee(
-  connection: PoolConnection,
-  data: CreateEmployeeDto
-) {
-  const empId = await insertEmployee({ connection, data });
-  return empId;
-}
+import { handleCreateUser } from "@/services/user/handle-create-user";
+import { getUserInfoByUserId } from "@/services/user/get-user";
 
 export const createUser = async (data: CreateUserDto) => {
-  const pool = await getDBConnection();
-  const connection = await pool.getConnection();
   try {
-    await connection.beginTransaction();
-    const userId = await handleCreateUser(connection, data);
-    if (data.userRole === "employee") {
-      const newEmployeeData: CreateEmployeeDto = {
-        userId: userId,
-        empPosition: data.empPosition,
-        storeId: data.storeId,
-      };
-      await handleCreateEmployee(connection, newEmployeeData);
-    }
-    await connection.commit();
+    const result = await handleCreateUser(data);
+    console.log("result", { result });
     return {
       success: true,
       message: "User created succesfully!",
+      result: result,
     };
   } catch (e) {
-    await connection.rollback();
     return {
       success: false,
       message: "Failed to create user!",
       error: e,
     };
-  } finally {
-    connection.release();
   }
 };
 
@@ -72,3 +37,18 @@ export const getUsers = async () => {
   }
 };
 
+export const getUserInfo = async (userId: number) => {
+  try {
+    const data = await getUserInfoByUserId({ userId });
+    return {
+      success: true,
+      message: "Users fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: e,
+    };
+  }
+};
