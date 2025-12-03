@@ -58,6 +58,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         selectedStores.map((store) => ({
           storeId: store.storeId ?? 0,
           empId: 0,
+          storeEmpCreatedBy: user?.userId ?? 0,
         })) ?? [],
     };
     console.log({ submitData });
