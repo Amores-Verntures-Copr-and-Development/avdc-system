@@ -40,6 +40,7 @@ const LoginPage = () => {
       if (res.ok && data.success) {
         // ⚠️ CRITICAL: Save user data to localStorage IMMEDIATELY
         localStorage.setItem("userData", JSON.stringify(data.user));
+        console.log("data.user: ", data.user);
         // Check if needs store selection
         const needsStoreSelection =
           (data.user.empPosition === "supervisor" ||
@@ -47,6 +48,7 @@ const LoginPage = () => {
           !data.user.storeId;
         await refreshSession();
         if (needsStoreSelection) {
+          console.log("➡️ Redirecting to store-selection");
           router.push("/store-selection");
         } else {
           console.log("➡️ Redirecting to dashboard");

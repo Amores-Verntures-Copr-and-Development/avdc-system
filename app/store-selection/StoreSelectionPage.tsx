@@ -44,6 +44,7 @@ const StoreSelectionPage = () => {
         localStorage.setItem("storeData", JSON.stringify(store));
         await refreshSession();
         toast.success("Store selected successfully!");
+        console.log("Agi diri sa dashboard");
         router.push("/dashboard");
       } else {
         toast.error(data.message || "Failed to update token");

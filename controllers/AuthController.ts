@@ -32,7 +32,7 @@ export const logIn = async (data: UserAuthInterface) => {
         userLname: user.userLname, // fixed typo
         userRole: user.userRole,
         empPosition: user.empPosition,
-        storeId: user.storeId,
+        storeId: null,
       },
       accessToken,
       refreshToken,
