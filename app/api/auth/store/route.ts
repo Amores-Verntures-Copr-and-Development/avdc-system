@@ -69,7 +69,7 @@ export async function PUT(req: NextRequest) {
       name: "avdc_accessToken",
       value: newAccessToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60, // 1 hour
@@ -79,7 +79,7 @@ export async function PUT(req: NextRequest) {
       name: "avdc_refreshToken",
       value: newRefreshToken,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 30, // 30 days
