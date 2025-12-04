@@ -123,6 +123,7 @@ const AdminRequisitionPage = () => {
             showActions
             showCheckBox
             maxHeight="h-full"
+            uniqueIdKey="requestId"
             onSelectionChange={handleSelectionChange}
             renderTopActions={
               selectedtedRows &&

@@ -630,9 +630,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         onSelectionChange={handleSelectionChange}
         renderTopActions={
           <>
-            <div className="flex gap-2">
+            <div className="flex">
               <div>
                 <Button
+                  isRounded={false}
                   icon={<Clipboard className="w-3 h-3 xl:w-5 xl:h-5" />}
                   label="Inventory Report"
                   onClick={() => {
@@ -645,6 +646,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               </div>
               <div>
                 <Button
+                  isRounded={false}
                   icon={<Import className="w-3 h-3 sm:w-5 xl:h-5" />}
                   label="Import Item"
                   onClick={() => {
@@ -663,6 +665,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div>
                   <Button
+                    isRounded={false}
                     icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Request Stock"
                     onClick={() => {
@@ -677,10 +680,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               {Boolean(
                 selectedRows?.length &&
                   selectedRows?.length > 0 &&
-                  user?.empPosition === "purchaser"
+                  user?.empPosition !== "staff" &&
+                  user?.empPosition !== "supervisor"
               ) && (
                 <div className="">
                   <Button
+                    isRounded={false}
                     icon={<Package className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item to supplier"
                     onClick={() => {
@@ -695,10 +700,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               {Boolean(
                 selectedRows?.length &&
                   selectedRows?.length > 0 &&
-                  user?.empPosition === "purchaser"
+                  user?.empPosition !== "staff" &&
+                  user?.empPosition !== "supervisor"
               ) && (
                 <div className="">
                   <Button
+                    isRounded={false}
                     icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item to store"
                     onClick={() => {
@@ -718,6 +725,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div className="">
                   <Button
+                    isRounded={false}
                     icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item to product"
                     onClick={() => {
@@ -732,6 +740,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               {user?.empPosition === "purchaser" ? (
                 <div>
                   <Button
+                    isRounded={false}
                     icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item"
                     onClick={() => {
@@ -745,6 +754,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) : (
                 <div>
                   <Button
+                    isRounded={false}
                     icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
                     // add for store item
                     label="Add Item"

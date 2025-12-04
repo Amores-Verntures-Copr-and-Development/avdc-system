@@ -80,7 +80,7 @@ const colorClasses: Record<
   },
   // primary: "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 shadow-sm",
   tertiary: {
-    base: "bg-blue-800 shadow-sm border border-blue",
+    base: "bg-blue-600 shadow-sm border border-blue-900",
     hover: "hover:bg-blue-700",
     focus: "focus:ring-2 focus:ring-blue-700 focus:ring-offset-2",
     text: "text-white",

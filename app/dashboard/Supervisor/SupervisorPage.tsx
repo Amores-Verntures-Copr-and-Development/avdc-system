@@ -108,7 +108,7 @@ const SupervisorPage = () => {
                 size={"sm"}
                 label="Manage Inventory"
                 onClick={() => {
-                  router.push("/inventory");
+                  router.push("/inventory?status=low");
                 }}
               />
             </div>

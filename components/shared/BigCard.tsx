@@ -7,6 +7,7 @@ interface BigCardProps {
   isRounded?: boolean;
   onClick?: () => void;
   leftTitle?: ReactNode;
+  isHover?: boolean;
 }
 
 const BigCard = ({
@@ -16,12 +17,18 @@ const BigCard = ({
   isRounded = true,
   leftTitle,
   onClick,
+  isHover = false,
 }: BigCardProps) => {
   return (
     <div
       className={`border flex flex-col flex-1 overflow-hidden ${
         isRounded ? "rounded-2xl" : ""
-      } shadow-sm border-gray-200 bg-white h-full p-4`}
+      } shadow-sm border-gray-200 bg-white h-full p-4 
+  ${
+    isHover
+      ? `hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer`
+      : ``
+  }`}
       onClick={onClick}
     >
       <div className="mb-4">
