@@ -1,5 +1,5 @@
 import BigCard from "@/components/shared/BigCard";
-import Button from "@/components/shared/Button";
+
 import IconButton from "@/components/shared/IconButton";
 import Input from "@/components/shared/Input";
 import LoaderComponent from "@/components/shared/LoaderComponent";
@@ -285,6 +285,7 @@ const ViewUserModal = ({ data, user }: ViewUserModalProps) => {
           onClose={() => {
             setShowEditEmployee(false);
           }}
+          isLoadingAssign={isAssignStores}
         />
       </Modal>
     </div>

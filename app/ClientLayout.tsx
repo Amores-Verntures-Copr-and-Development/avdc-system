@@ -1,7 +1,7 @@
 "use client";
 
 import Sidebar from "@/components/layout/Sidebar";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect } from "react";
 import Header from "@/components/layout/Header";
 import { usePathname, useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
@@ -12,8 +12,6 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: isLoading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const [showStoreModal, setShowStoreModal] = useState(false);
-  const [stores, setStores] = useState<any[]>([]);
 
   const isAuthPage =
     pathname === "/login" ||

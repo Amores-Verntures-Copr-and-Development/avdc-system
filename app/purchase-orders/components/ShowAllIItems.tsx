@@ -108,14 +108,9 @@ const ShowAllIItems = ({
   onSubmit,
   isLoading,
 }: ShowAllIItemsProps) => {
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loadingData,
-    mutate,
-  } = useSWR<{ data: any }>(
-    `/api/purchase-order/po-items/${data?.poId}`,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] }, isLoading: loadingData } = useSWR<{
+    data: any;
+  }>(`/api/purchase-order/po-items/${data?.poId}`, fetcher);
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>([]);
   useEffect(() => {
     if (itemResponse.data && itemResponse.data.length > 0) {
@@ -153,12 +148,12 @@ const ShowAllIItems = ({
       <div className="flex-1 overflow-y-auto">
         <Table
           isRounded={false}
-          loading={isLoading}
+          loading={loadingData}
           columns={columns}
           data={itemResponse.data}
           maxHeight="h-full"
           updateData={setPoItems}
-          onCellChange={(rowIndex, key, value, row) => {
+          onCellChange={(_rowIndex, key, value, row) => {
             // If supplier changed, update suppId and unitPrice too
             if (key === "selectedSupplierId") {
               const selected = row.suppliers?.find(
@@ -187,6 +182,7 @@ const ShowAllIItems = ({
             size="sm"
             label="Approved"
             className="text-xs font-semibold"
+            loading={isLoading}
           />
         </div>
       </div>

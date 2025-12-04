@@ -1,6 +1,5 @@
 import Button from "@/components/shared/Button";
-import { DropdownSearch } from "@/components/shared/DropDownSearch";
-import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
+
 import Table, { Column } from "@/components/shared/Table";
 import { CreateStockStore } from "@/dtos/stockRoom.dto";
 import { UserAuth } from "@/hooks/useSession";
@@ -17,7 +16,7 @@ interface AddStoreToStockRoomModalProps {
 }
 
 const columns: Column<StoreInterface>[] = [
-  { key: "#", name: "#", selector: (row, index) => index + 1 },
+  { key: "#", name: "#", selector: (_row, index) => index + 1 },
   { key: "storeName", name: "Name" },
   { key: "storeEmail", name: "Email" },
   { key: "storePhone", name: "Phone" },
@@ -30,11 +29,7 @@ const AddStoreToStockRoomModal = ({
   user,
 }: AddStoreToStockRoomModalProps) => {
   const [selectedRows, setSelectedRows] = useState<StoreInterface[]>();
-  const {
-    data: response = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: StoreInterface[] }>(
+  const { data: response = { data: [] } } = useSWR<{ data: StoreInterface[] }>(
     `/api/stock-room/${data.stockRoomId}/search`,
     fetcher
   );
@@ -58,7 +53,6 @@ const AddStoreToStockRoomModal = ({
     console.log("stockStoreData: ", stockStoreData);
     const success = await onSubmit(stockStoreData);
     if (success) {
-
       onCancel();
     }
   };

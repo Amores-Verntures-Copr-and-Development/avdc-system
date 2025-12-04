@@ -39,14 +39,9 @@ const AddPurchaserModal = ({
   onSubmit,
 }: AddStoreToStockRoomModalProps) => {
   const [selectedRows, setSelectedRows] = useState<DisplayPurchasers[]>();
-  const {
-    data: response = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: DisplayPurchasers[] }>(
-    `/api/stock-room/${data.stockRoomId}/purchaser/not-in`,
-    fetcher
-  );
+  const { data: response = { data: [] } } = useSWR<{
+    data: DisplayPurchasers[];
+  }>(`/api/stock-room/${data.stockRoomId}/purchaser/not-in`, fetcher);
   const handleSelectionChange = (selected: DisplayPurchasers[]) => {
     console.log("Selected rows:", selected);
     if (selected.length > 0) {

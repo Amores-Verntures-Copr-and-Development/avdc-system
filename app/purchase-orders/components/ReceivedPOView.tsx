@@ -18,7 +18,6 @@ import {
   ChevronDown,
   Clock,
   PackageCheck,
-  PackageCheckIcon,
   X,
   Truck,
   Store,
@@ -101,7 +100,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   isLoading,
   poId,
   poData,
-  onClose,
+
   mutateInventory,
   setShowAllItems,
 }) => {

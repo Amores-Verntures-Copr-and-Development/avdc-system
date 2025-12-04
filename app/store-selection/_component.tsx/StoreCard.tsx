@@ -1,6 +1,6 @@
 import BigCard from "@/components/shared/BigCard";
 import { StoreInterface } from "@/types/stores";
-import { LocationEdit, MailIcon, MapIcon, PhoneIcon, Pin } from "lucide-react";
+import { MailIcon, MapIcon, PhoneIcon } from "lucide-react";
 import React from "react";
 
 interface StoreCardProps {

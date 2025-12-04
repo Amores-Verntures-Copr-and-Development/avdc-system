@@ -1,5 +1,4 @@
-import { ItemInterface } from "@/types/items";
-import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
+import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import {

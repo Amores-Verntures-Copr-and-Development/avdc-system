@@ -63,9 +63,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     }
   }, [itemResponse.data]);
   const updatedItemsRef = useRef<DisplayRequestItems[]>([]);
-  const handleDataUpdate = (updatedData: DisplayRequestItems[]) => {
-    updatedItemsRef.current = updatedData;
-  };
 
   const isRequestor =
     user?.empPosition === "staff" || user?.empPosition === "supervisor";
@@ -113,7 +110,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     },
   ];
   const handleReceivedRO = async () => {
-    const updatedItems = updatedItemsRef.current;
     const requestData: Partial<Request>[] = [
       {
         ...selectedReq,
@@ -540,6 +536,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           data={selectedRows}
           requestId={selectedReq?.requestId ?? 0}
           onSubmit={handleAddItemPurchaser}
+          loading={isAddingItemPo}
         />
       </Popup>
     </div>

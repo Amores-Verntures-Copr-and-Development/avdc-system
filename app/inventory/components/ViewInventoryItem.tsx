@@ -1,6 +1,6 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
-import DropDownSelectCategory from "@/components/shared/DropDownSelectCategory";
+
 import Input from "@/components/shared/Input";
 import Textarea from "@/components/shared/TextArea";
 import {
@@ -10,17 +10,11 @@ import {
 } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { handleChange } from "@/utils/handle-change";
-import {
-  getInventoryStatus,
-  getInventoryStatusInfo,
-} from "@/utils/inventoryStatus";
-import { Edit2, Package, X, Info, BarChart3 } from "lucide-react";
+import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
+import { Edit2, Package, Info, BarChart3, Replace } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import ItemMovementCard from "./ItemMovementCard";
-import {
-  InventoryItemInterface,
-  InventoryReferenceType,
-} from "@/types/inventory";
+import { InventoryItemInterface } from "@/types/inventory";
 import { stockAdjustmentOptions } from "@/constants/dropdown-options";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
@@ -64,7 +58,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
 }) => {
   const [inventoryItemData, setInventoryItemData] = useState(data);
   const [selectedButton, setSelectedButton] = useState<
-    "details" | "stocks" | ""
+    "details" | "stocks" | "" | "convert"
   >("");
   useEffect(() => {
     setInventoryItemData(data);
@@ -77,7 +71,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
       <div className="flex border-b border-gray-200 bg-gray-50/50">
         <button
           onClick={() => setSelectedButton("")}
-          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+          className={`flex-1 py-1.5 px-2 text-sm font-medium border-b-2 transition-colors ${
             selectedButton === ""
               ? "border-blue-500 text-blue-600 bg-white"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -90,7 +84,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
         </button>
         <button
           onClick={() => setSelectedButton("details")}
-          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+          className={`flex-1 py-1.5 px-2  text-sm font-medium border-b-2 transition-colors ${
             selectedButton === "details"
               ? "border-blue-500 text-blue-600 bg-white"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -103,7 +97,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
         </button>
         <button
           onClick={() => setSelectedButton("stocks")}
-          className={`flex-1 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+          className={`flex-1 py-1.5 px-2  text-sm font-medium border-b-2 transition-colors ${
             selectedButton === "stocks"
               ? "border-blue-500 text-blue-600 bg-white"
               : "border-transparent text-gray-500 hover:text-gray-700"
@@ -112,6 +106,19 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
           <div className="flex items-center justify-center gap-2 text-[10px] xl:text-sm">
             <BarChart3 className="w-2 h-2 xl:w-4 xl:h-4" />
             Adjust
+          </div>
+        </button>
+        <button
+          onClick={() => setSelectedButton("convert")}
+          className={`flex-1 py-1.5 px-2  text-sm font-medium border-b-2 transition-colors ${
+            selectedButton === "convert"
+              ? "border-blue-500 text-blue-600 bg-white"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <div className="flex items-center justify-center gap-2 text-[10px] xl:text-sm">
+            <Replace className="w-2 h-2 xl:w-4 xl:h-4" />
+            Convert
           </div>
         </button>
       </div>

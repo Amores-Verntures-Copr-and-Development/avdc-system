@@ -26,7 +26,7 @@ import AddItemToSupplierModal from "./component/AddItemToSupplierModal";
 import toast from "react-hot-toast";
 import { UserAuth } from "@/hooks/useSession";
 import Card from "@/components/shared/Card";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import ViewSupplierItemModa from "./component/ViewSupplierItemModal";
 interface SelectedSupplierPageProps {
   data: Supplier | null;
@@ -115,6 +115,7 @@ const SelectedSupplierPage = ({
       mutate();
       return true;
     } catch (e: any) {
+      console.log({ e });
       toast.error("Failed to remove!");
       return false;
     } finally {

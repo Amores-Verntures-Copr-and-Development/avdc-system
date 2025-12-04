@@ -81,7 +81,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       selector: (row) => {
         console.log("Stock Item: ", row.stockItem);
         console.log("Total Quantity: ", row.totalQuantity);
-        const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
+        // const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
 
         if (Number(row.stockItem) >= Number(row.totalQuantity)) {
           return (

@@ -42,14 +42,9 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
   },
 ];
 const StockInventoryView = ({ data }: StockInventoryViewProps) => {
-  const {
-    data: response = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: DisplayInventoryItems[] }>(
-    `/api/stock-room/${data.stockRoomId}/inventory`,
-    fetcher
-  );
+  const { data: response = { data: [] } } = useSWR<{
+    data: DisplayInventoryItems[];
+  }>(`/api/stock-room/${data.stockRoomId}/inventory`, fetcher);
   return (
     <Table
       rowSize="h-10"

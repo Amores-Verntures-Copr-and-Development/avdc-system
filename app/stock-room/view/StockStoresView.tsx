@@ -1,7 +1,7 @@
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import Table, { Column } from "@/components/shared/Table";
-import { StockPurchasers, StockRoom, StockStores } from "@/types/stockRoom";
+import { StockRoom, StockStores } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import { Plus } from "lucide-react";
 import React, { useState } from "react";
@@ -16,7 +16,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 interface DisplayStores extends StoreInterface, StockStores {}
 
 const columns: Column<DisplayStores>[] = [
-  { key: "#", name: "#", selector: (row, index) => index + 1 },
+  { key: "#", name: "#", selector: (_row, index) => index + 1 },
   { key: "storeName", name: "Name" },
   { key: "storeContactPhone", name: "Phone" },
   { key: "storeEmail", name: "Email" },

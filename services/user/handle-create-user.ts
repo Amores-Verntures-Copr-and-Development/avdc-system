@@ -26,7 +26,7 @@ export const handleCreateUser = async (data: CreateUserDto) => {
             empId: empId,
             storeEmpCreatedBy: data.userAddedBy ?? 0,
           })) ?? [];
-        console.log("Agi here");
+
         await createStoreEmployees({ connection, data: storeEmployeeData });
       }
     }

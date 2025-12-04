@@ -4,11 +4,11 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Supplier, SupplierItem } from "@/types/supplier";
+import { Supplier } from "@/types/supplier";
 import React, { useState } from "react";
 import CreateSupplierModal from "./component/CreateSupplierModal";
 import Button from "@/components/shared/Button";
-import { Eye, MailIcon, Package, Phone, Pin, Trash2 } from "lucide-react";
+import { Eye, Package, Trash2 } from "lucide-react";
 import { CreateSupplierDto } from "@/dtos/supplier.dto";
 import { useSession } from "@/hooks/useSession";
 import toast from "react-hot-toast";
@@ -16,7 +16,7 @@ import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import IconButton from "@/components/shared/IconButton";
-import ViewSupplierModal from "./component/ViewSupplierModal";
+
 import SelectedSupplierPage from "./SelectedSupplierPage";
 
 const supplierColumns: Column<Supplier>[] = [

@@ -1,10 +1,8 @@
 import {
   addStoreEmployee,
-  getStore,
   getStoresByEmployeeByUserId,
 } from "@/controllers/StoreControllers";
 import { CreateStoreEmployeeDto } from "@/dtos/store.dto";
-import { getStoreEmployee } from "@/services/store/store-employee/get-store-employee";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(

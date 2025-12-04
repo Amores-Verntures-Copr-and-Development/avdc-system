@@ -6,7 +6,7 @@ import {
   DisplaySupplierItemDto,
 } from "@/dtos/supplier.dto";
 import { Supplier, SupplierItem } from "@/types/supplier";
-import { Delete, Eye, PackagePlusIcon, Trash2 } from "lucide-react";
+import { Eye, PackagePlusIcon, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import AddItemToSupplierModal from "./AddItemToSupplierModal";
 import { UserAuth } from "@/hooks/useSession";
@@ -105,6 +105,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
       mutate();
       return true;
     } catch (e: any) {
+      console.log(e);
       toast.error("Failed to remove!");
       return false;
     } finally {
@@ -164,6 +165,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
             {/* View Button */}
             <IconButton
               onClick={() => {
+                console.log({ row });
                 // setShowViewSupplier(true);
                 // setSelectedSupplier(row);
               }}

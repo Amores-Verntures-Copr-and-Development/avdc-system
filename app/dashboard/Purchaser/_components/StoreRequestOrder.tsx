@@ -1,7 +1,7 @@
 import { Request } from "@/types/request";
 import { StoreInterface } from "@/types/stores";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { Calendar, Package2, ShoppingBag } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import React from "react";
 interface PendingRequest extends Request, StoreInterface {
   requestItemsCount: number;

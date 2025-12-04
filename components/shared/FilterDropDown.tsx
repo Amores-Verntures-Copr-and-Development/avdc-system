@@ -26,7 +26,6 @@ const FilterDropdown = ({
   filterConfig,
   initialFilters,
   onSave,
-  isAdmin,
 }: FilterDropdownProps) => {
   const [showFilters, setShowFilters] = useState(false);
   const searchParams = useSearchParams(); // Get current URL parameters

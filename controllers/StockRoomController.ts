@@ -80,7 +80,7 @@ export const getStockRooms = async ({
     let data;
     if (keySPFields) {
       data = await findStockRoomBySPFields({ keyFields: keySPFields });
-      console.log("Agi here");
+      
     } else {
       data = await getStockRoom({});
     }

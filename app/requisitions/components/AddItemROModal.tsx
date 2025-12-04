@@ -1,10 +1,10 @@
 import Button from "@/components/shared/Button";
-import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
+
 import Input from "@/components/shared/Input";
 import SearchInventoryItem from "@/components/shared/SearchInventoryItem";
-import { CreateInventoryItemDto } from "@/dtos/inventory.dto";
+
 import { CreateRequestItemDto } from "@/dtos/request.dto";
-import { ItemInterface } from "@/types/items";
+
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 

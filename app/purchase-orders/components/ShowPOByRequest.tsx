@@ -32,14 +32,9 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null
   );
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loadingData,
-    mutate,
-  } = useSWR<{ data: DisplayRequisitionWithItems[] }>(
-    `/api/purchase-order/po-request-order/${data?.poNumber}`,
-    fetcher
-  );
+  const { data: itemResponse = { data: [] } } = useSWR<{
+    data: DisplayRequisitionWithItems[];
+  }>(`/api/purchase-order/po-request-order/${data?.poNumber}`, fetcher);
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "Item Name",

@@ -45,7 +45,7 @@ export const getRequest = async ({
   try {
     if (controller === "stock-room" && userId) {
       data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
-      console.log("Agi here");
+      
     } else if (controller === "store") {
       data = await getRequestOrders({ storeId });
     } else {

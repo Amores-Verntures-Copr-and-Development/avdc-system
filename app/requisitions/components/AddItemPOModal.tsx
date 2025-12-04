@@ -1,13 +1,10 @@
 import Button from "@/components/shared/Button";
 import Table, { Column } from "@/components/shared/Table";
 import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
-import {
-  DisplayRequestItems,
-  DisplayRequestOrderDto,
-} from "@/dtos/request.dto";
+import { DisplayRequestItems } from "@/dtos/request.dto";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import useSWR from "swr";
 
 interface AddItemPOModalProps {
@@ -17,12 +14,18 @@ interface AddItemPOModalProps {
     data: CreatePurchaseOrderItemDto[],
     poId: number
   ) => Promise<boolean>;
+  loading?: boolean;
 }
 
-const AddItemPOModal = ({ data, requestId, onSubmit }: AddItemPOModalProps) => {
-  const [orderData, setOrderData] = useState<DisplayRequestOrderDto[] | null>(
-    null
-  );
+const AddItemPOModal = ({
+  data,
+  requestId,
+  onSubmit,
+  loading: isLoading,
+}: AddItemPOModalProps) => {
+  // const [orderData, setOrderData] = useState<DisplayRequestOrderDto[] | null>(
+  //   null
+  // );
   const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
     data: PurchaseOrders[];
   }>(
@@ -89,6 +92,7 @@ const AddItemPOModal = ({ data, requestId, onSubmit }: AddItemPOModalProps) => {
                     handleAddItemPo(data);
                   }
                 }}
+                loading={isLoading}
               />
             </div>
           </div>

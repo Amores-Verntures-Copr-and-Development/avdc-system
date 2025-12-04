@@ -1,6 +1,6 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
-import Input from "@/components/shared/Input";
+
 import Table, { Column } from "@/components/shared/Table";
 import { positionOptions } from "@/constants/dropdown-options";
 import { CreateStoreEmployeeDto } from "@/dtos/store.dto";
@@ -9,7 +9,7 @@ import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { handleChange } from "@/utils/handle-change";
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+
 import useSWR from "swr";
 interface EditEmployeeModalProps {
   data: EmployeeInterface | null;

@@ -2,7 +2,7 @@
 
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import { useSession } from "@/hooks/useSession";
-import { StockRoom } from "@/types/stockRoom";
+
 import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import React from "react";
@@ -16,7 +16,7 @@ const StoreSelectionPage = () => {
   const { user, loading: userLoading, refreshSession } = useSession();
   const {
     data: response = { data: [] },
-    mutate,
+
     isLoading: fetchLoading,
   } = useSWR<{
     data: StoreInterface[];
@@ -115,8 +115,8 @@ const StoreSelectionPage = () => {
                 No Stores Available
               </h2>
               <p className="text-gray-500 max-w-sm mx-auto">
-                You don't have access to any stores yet. Please contact your
-                administrator.
+                You don&apos;t have access to any stores yet. Please contact
+                your administrator.
               </p>
             </div>
           )}

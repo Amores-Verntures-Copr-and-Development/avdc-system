@@ -1,5 +1,4 @@
 import Button from "@/components/shared/Button";
-import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
 import Table, { Column } from "@/components/shared/Table";
@@ -68,11 +67,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     }
   };
 
-  const {
-    data: response = { data: [] },
-    isLoading,
-    mutate,
-  } = useSWR<{ data: StoreInterface[] }>("/api/stores/", fetcher);
+  const { data: response = { data: [] } } = useSWR<{ data: StoreInterface[] }>(
+    "/api/stores/",
+    fetcher
+  );
   const [selectedStores, setSelectedStores] = useState<StoreInterface[]>([]);
   const handleSelectionChange = (selected: StoreInterface[]) => {
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
@@ -333,12 +331,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
   // Navigation buttons
   const renderNavigationButtons = () => {
-    const isEmployeeStep =
-      currentStep === 2 && addUserFormData.userRole === "employee";
-    const isEmployeeWithStores =
-      isEmployeeStep &&
-      (addUserFormData.empPosition === "supervisor" ||
-        addUserFormData.empPosition === "staff");
+    // const isEmployeeStep =
+    //   currentStep === 2 && addUserFormData.userRole === "employee";
+    // const isEmployeeWithStores =
+    //   isEmployeeStep &&
+    //   (addUserFormData.empPosition === "supervisor" ||
+    //     addUserFormData.empPosition === "staff");
 
     return (
       <div className="flex justify-between pt-4 border-t">

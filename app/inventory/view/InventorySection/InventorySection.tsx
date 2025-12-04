@@ -7,7 +7,7 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -22,7 +22,6 @@ import {
   Eye,
   Trash,
   Clipboard,
-  ArrowLeftRight,
   Import,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
@@ -38,12 +37,12 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
 import AddItemToProductModal from "../../components/AddItemToProductModal";
 import { CreateProductDtos } from "@/dtos/products.dto";
-import ImportItemModa from "../../components/ImportItemModal";
+
 import ImportItemModal from "../../components/ImportItemModal";
-import { ImportItemDto, ImportItemInfo } from "@/dtos/items.dto";
+import { ImportItemInfo } from "@/dtos/items.dto";
 import { capitalizeWords } from "@/utils/capitalizeWords";
 import { InventoryItemInterface } from "@/types/inventory";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCategories } from "@/hooks/useCategory";
 import { useInventoryItemUnit } from "@/hooks/useInventoryItemUnit";
 import { ItemInterface } from "@/types/items";
@@ -223,10 +222,7 @@ interface InventorySectionProps {
   user: UserAuth | null;
   inventoryType: "stores" | "stock-room" | "inventoryId";
 }
-const InventorySection: React.FC<InventorySectionProps> = ({
-  inventoryId,
-  inventoryType,
-}) => {
+const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const searchParams = useSearchParams();
   const { categoryOptions } = useCategories({
     inventoryId: inventoryId ?? 0,
@@ -242,7 +238,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [showAddModal, setShowAdddModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
-  const [showCreateReportModal, setShowCreateReportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
     useState(false);
@@ -548,6 +543,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       toast.success("Item details change successfully!");
       return true;
     } catch (e) {
+      console.log({ e });
       toast.error("Failed to change item details!");
       return false;
     } finally {

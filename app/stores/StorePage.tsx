@@ -6,7 +6,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Edit, Eye, Plus, Trash2 } from "lucide-react";
+import { Eye, Plus, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import AddStoreModal from "./components/AddStoreModal";
 import { CreateStoreDto } from "@/dtos/store.dto";

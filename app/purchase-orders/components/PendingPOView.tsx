@@ -8,7 +8,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 interface PendingPOViewProps {
   data: DisplayPurchaseOrderItemsDto[];
@@ -103,7 +103,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
   poData,
   onSubmit,
   isLoading,
-  mutate,
+
   onClose,
   user,
   setShowAllItems,

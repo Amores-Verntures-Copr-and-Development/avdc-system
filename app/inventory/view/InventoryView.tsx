@@ -1,18 +1,8 @@
-import Button from "@/components/shared/Button";
-
 import PageLayout from "@/components/shared/PageLayout";
 import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import {
-  Box,
-  ShoppingCart,
-  AlertTriangle,
-  XCircle,
-  Package,
-  Package2,
-  FileChartColumn,
-} from "lucide-react";
-import React, { useState } from "react";
+import { Box, ShoppingCart, AlertTriangle, XCircle } from "lucide-react";
+import React from "react";
 import useSWR from "swr";
 import InventoryCard from "../components/InventoryCard";
 import InventorySection from "./InventorySection/InventorySection";

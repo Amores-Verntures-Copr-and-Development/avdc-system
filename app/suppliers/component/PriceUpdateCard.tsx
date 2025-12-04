@@ -1,7 +1,7 @@
 import { SupplierItemPrices } from "@/types/supplier";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import { Calendar, DollarSign, User } from "lucide-react";
+
 import React from "react";
 
 interface PriceUpdateCardProps {

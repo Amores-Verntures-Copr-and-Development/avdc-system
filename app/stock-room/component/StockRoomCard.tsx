@@ -1,4 +1,3 @@
-import BigCard from "@/components/shared/BigCard";
 import { StockRoom } from "@/types/stockRoom";
 import { Package, MapPin, ChevronRight } from "lucide-react";
 import React from "react";

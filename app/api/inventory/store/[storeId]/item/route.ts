@@ -10,7 +10,7 @@ export async function GET(
     const storeId = Number(slug);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    console.log("Agi here");
+    
     const res = await getInventoryItems({
       keyFields: { inventoryReferenceId: storeId, inventoryReference: "store" },
       search,

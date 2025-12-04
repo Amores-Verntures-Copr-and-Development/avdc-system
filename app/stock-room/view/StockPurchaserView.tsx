@@ -72,6 +72,7 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
       mutate();
       return true;
     } catch (e) {
+      console.log(e);
       toast.error("Failed to add store.");
       return false;
     }

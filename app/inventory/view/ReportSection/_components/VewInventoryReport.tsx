@@ -1,6 +1,6 @@
 import Button from "@/components/shared/Button";
 import Table, { Column } from "@/components/shared/Table";
-import { ApiResponse } from "@/types/api";
+
 import { CategoryInterface } from "@/types/categories";
 import { InventoryReport, InventoryReportItem } from "@/types/inventory";
 import { ItemInterface } from "@/types/items";

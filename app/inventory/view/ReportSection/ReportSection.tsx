@@ -54,6 +54,7 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
   return (
     <>
       <Table
+        loading={loading}
         onRowSelection={(row) => {
           setOpenModal(
             row.reportType === "inventory"

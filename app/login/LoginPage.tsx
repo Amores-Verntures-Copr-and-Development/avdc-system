@@ -11,7 +11,7 @@ import { UserAuthInterface } from "@/types/auth";
 import { useSession } from "@/hooks/useSession";
 
 const LoginPage = () => {
-  const { user, refreshSession } = useSession();
+  const { refreshSession } = useSession();
   const [userAuthForm, setUserAuthForm] = useState<UserAuthInterface>({
     username: "",
     password: "",

@@ -1,7 +1,7 @@
 import Button from "@/components/shared/Button";
 import DateRange from "@/components/shared/DateRange";
 import Table, { Column } from "@/components/shared/Table";
-import { CreateInventoryItemDto } from "@/dtos/inventory.dto";
+
 import {
   CreateInventoryItemReportDto,
   CreateInventoryReportDto,
@@ -81,7 +81,7 @@ interface DisplayForReportItems {
 const CreateInventoryReport = ({
   inventoryId,
   onCancel,
-  onCreate,
+
   mutateReport,
   user,
 }: CreateInventoryReportProps) => {

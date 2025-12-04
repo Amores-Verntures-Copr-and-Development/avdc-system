@@ -1,8 +1,4 @@
-import {
-  updateInventoryItem,
-  updateItemOrInventory,
-} from "@/controllers/InventoryController";
-import { InventoryItemInterface } from "@/types/inventory";
+import { updateItemOrInventory } from "@/controllers/InventoryController";
 import { NextResponse } from "next/server";
 
 export async function PUT(

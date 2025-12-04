@@ -4,7 +4,6 @@ import {
   updateSupplierItems,
 } from "@/controllers/SupplierController";
 import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
-import { SupplierItem } from "@/types/supplier";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(

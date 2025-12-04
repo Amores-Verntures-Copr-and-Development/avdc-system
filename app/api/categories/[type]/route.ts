@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const type = (await params).type;
+    console.log({ type });
     const res = await getCategories({ controller: null });
 
     if (!res.success) {
