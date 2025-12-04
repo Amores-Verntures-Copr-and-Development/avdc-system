@@ -20,12 +20,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { user, accessToken, refreshToken } = result;
+    const { user, accessToken, refreshToken, store } = result;
 
     const response = NextResponse.json({
       success: true,
       message: "Login successful",
       user,
+      store,
     });
     response.cookies.set({
       name: "avdc_accessToken",

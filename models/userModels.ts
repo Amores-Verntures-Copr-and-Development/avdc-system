@@ -54,8 +54,23 @@ export const selectUser = async ({ userName }: { userName?: string }) => {
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const pool = await getDBConnection();
   const sql = `
-        SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,e.empPosition,u.userPassword,s.storeId FROM Users u LEFT JOIN Employees e ON e.userId = u.userId 
-        LEFT JOIN Stores s ON s.storeId = e.storeId  ${whereSQL}`;
+          SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,e.empPosition,u.userPassword,(
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'storeEmpId', se.storeEmpId,
+        'storeId', se.storeId,
+        'empId', se.empId,
+        'storeName', s.storeName,
+        'storeLocation', s.storeLocation,
+        'storeContactPhone', s.storePhone,
+        'storeEmail', s.storeEmail
+      )
+    )
+    FROM StoreEmployees se 
+    LEFT JOIN Stores s ON s.storeId = se.storeId 
+    WHERE se.empId = e.empId
+  ) as storeEmployees 
+  FROM Users u LEFT JOIN Employees e ON e.userId = u.userId ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
   return rows;
 };

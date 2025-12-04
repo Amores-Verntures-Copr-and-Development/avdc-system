@@ -13,7 +13,9 @@ export const logIn = async (data: UserAuthInterface) => {
     // Validate password
     const isMatch = await compareValue(data.password, user.userPassword);
     if (!isMatch) return null;
-
+    console.log("user?.storeEmployees: ", user?.storeEmployees);
+    const hasOneStore = user?.storeEmployees.length === 1;
+    console.log({ hasOneStore });
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(
       user.userId,
@@ -21,7 +23,7 @@ export const logIn = async (data: UserAuthInterface) => {
       user.userLname,
       user.userRole,
       user.empPosition,
-      null
+      hasOneStore ? user?.storeEmployees[0].storeId : null
     );
     // Return structured response
     return {
@@ -32,10 +34,11 @@ export const logIn = async (data: UserAuthInterface) => {
         userLname: user.userLname, // fixed typo
         userRole: user.userRole,
         empPosition: user.empPosition,
-        storeId: null,
+        storeId: hasOneStore ? user?.storeEmployees[0].storeId : null,
       },
       accessToken,
       refreshToken,
+      store: hasOneStore ? user?.storeEmployees[0] : null,
     };
   } catch (error) {
     console.error("Login error:", error);
