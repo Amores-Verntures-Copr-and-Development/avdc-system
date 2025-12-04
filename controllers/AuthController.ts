@@ -13,7 +13,6 @@ export const logIn = async (data: UserAuthInterface) => {
     // Validate password
     const isMatch = await compareValue(data.password, user.userPassword);
     if (!isMatch) return null;
-    console.log("user?.storeEmployees: ", user?.storeEmployees);
     const hasOneStore = user?.storeEmployees?.length === 1;
     console.log({ hasOneStore });
     // Generate tokens

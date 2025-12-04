@@ -182,6 +182,7 @@ const StoreRequisitionPage = () => {
             setIsShowViewRequest(true);
             setSelectedRow(row);
           }}
+          uniqueIdKey="requestId"
           textSize="xs"
           showActions
           maxHeight="h-full"

@@ -81,6 +81,7 @@ const PurchaseOrderPage = () => {
         <Table
           searchUrl="/purchase-orders"
           showCheckBox
+          uniqueIdKey="poId"
           columns={purchaseOrderColumns}
           data={inventoryResponse.data}
           onRowSelection={(row) => {

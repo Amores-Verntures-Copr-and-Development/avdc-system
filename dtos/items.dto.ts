@@ -1,6 +1,6 @@
 import { CategoryInterface } from "@/types/categories";
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
-import { ItemInterface, ItemPrice } from "@/types/items";
+import { ItemConversions, ItemInterface, ItemPrice } from "@/types/items";
 
 export type CreateItemDto = Pick<
   ItemInterface,
@@ -26,4 +26,15 @@ export type ImportItemInfo = Pick<InventoryInterface, "inventoryId"> & {
 export type CreateItemPriceDto = Pick<
   ItemPrice,
   "itemId" | "itemPriceAmount" | "itemPriceCreatedBy"
+>;
+
+export type CreateItemConversionDto = Pick<
+  ItemConversions,
+  | "fromItemId"
+  | "fromUnit"
+  | "fromQuantity"
+  | "toItemId"
+  | "toUnit"
+  | "toQuantity"
+  | "itemConCreatedBy"
 >;

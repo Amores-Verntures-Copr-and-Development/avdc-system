@@ -22,6 +22,7 @@ import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { useCategories } from "@/hooks/useCategory";
 import { ItemInterface } from "@/types/items";
+import ConvertSection from "./ConvertSection";
 
 interface ViewInventoryItemPros {
   user?: UserAuth | null;
@@ -125,7 +126,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-3 xl:p-6">
+        <div className="p-3 3xl:p-6">
           {selectedButton === "" && <ItemInfo data={inventoryItemData} />}
           {selectedButton === "details" && (
             <EditItemDetails
@@ -152,6 +153,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
               mutate={mutate}
             />
           )}
+          {selectedButton === "convert" && <ConvertSection data={data} />}
         </div>
       </div>
     </div>

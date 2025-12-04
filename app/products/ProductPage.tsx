@@ -92,16 +92,32 @@ const ProductPage = () => {
           totalCount={20}
           maxHeight="h-full"
           renderTopActions={
-            <div>
-              <Button
-                className="text-sm"
-                label="Add Product"
-                size="xs"
-                icon={<Plus size={20} />}
-                onClick={() => {
-                  setShowAddProductModal(true);
-                }}
-              />
+            <div className="flex gap-2">
+              <div>
+                <Button
+                  isRounded={false}
+                  className="text-sm"
+                  label="Add Category"
+                  size="xs"
+                  icon={<Plus size={20} />}
+                  onClick={() => {
+                    setShowAddProductModal(true);
+                  }}
+                  color="secondary"
+                />
+              </div>
+              <div>
+                <Button
+                  isRounded={false}
+                  className="text-sm"
+                  label="Add Product"
+                  size="xs"
+                  icon={<Plus size={20} />}
+                  onClick={() => {
+                    setShowAddProductModal(true);
+                  }}
+                />
+              </div>
             </div>
           }
         />

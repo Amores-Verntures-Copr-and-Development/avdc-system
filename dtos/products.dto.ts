@@ -10,7 +10,6 @@ export type CreateProductDtos = Pick<
   | "productCreatedBy"
   | "productDescription"
   | "productPrice"
-  | "inventoryId"
 >;
 
 export interface DisplayProductsDtos

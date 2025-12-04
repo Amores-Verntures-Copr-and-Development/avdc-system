@@ -78,3 +78,13 @@ export type DisplayInventoryMovementDto = Pick<
 > &
   Pick<ItemInterface, "itemId" | "itemName" | "itemUnit" | "itemPrice"> &
   Pick<CategoryInterface, "categoryName" | "categoryType">;
+
+export type ConvertInventoryItems = Pick<
+  InventoryItemInterface,
+  "inventoryItemId" | "inventoryItemQuantity"
+>;
+
+export type ConvertInventoryItemsDto = {
+  from: ConvertInventoryItems;
+  to: ConvertInventoryItems;
+};

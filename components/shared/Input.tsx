@@ -20,6 +20,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       error,
       sizes = "md",
       allow,
+      defaultValue,
       ...rest
     },
     ref
@@ -78,6 +79,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             onKeyDown={!allow ? undefined : handleKeyDown}
             required={required}
             readOnly={readOnly}
+            defaultValue={defaultValue}
             placeholder={placeholder || (showLabel ? "" : label)}
             className={`w-full border border-gray-300 text-black  rounded-md py-1 md:py-2 md:pl-3 md:pr-1 focus:outline-none focus:ring-2 ${
               readOnly

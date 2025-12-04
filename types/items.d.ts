@@ -18,3 +18,14 @@ export interface ItemPrice {
   itemPriceCreatedBy: number;
   itemId: number;
 }
+
+export interface ItemConversions {
+  itemConId: number;
+  fromItemId: number;
+  fromUnit: string;
+  fromQuantity: number;
+  toItemId: number;
+  toUnit: string;
+  toQuantity: number;
+  itemConCreatedBy: number;
+}
