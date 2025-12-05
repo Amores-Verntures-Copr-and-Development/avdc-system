@@ -1,0 +1,17 @@
+export const validRoutes = [
+  "/categories",
+  "/customers",
+  "/dashboard",
+  "/employees",
+  "/inventory",
+  "/procurement-history",
+  "/products",
+  "/purchase-orders",
+  "/requisitions",
+  "/sales",
+  "/stock-room",
+  "/stores",
+  "/suppliers",
+  "/users",
+  "/store-selection",
+];

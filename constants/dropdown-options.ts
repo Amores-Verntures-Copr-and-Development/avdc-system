@@ -31,6 +31,7 @@ export const unitOptions = [
   { label: "pc", value: "pc" },
   { label: "can", value: "can" },
   { label: "case", value: "case" },
+  { label: "box", value: "box" },
 ];
 
 export const paymentMethodOptions = [

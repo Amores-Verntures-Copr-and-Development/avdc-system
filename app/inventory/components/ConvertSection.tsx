@@ -13,9 +13,15 @@ import { ItemConversions } from "@/types/items";
 import React, { useState } from "react";
 import AddConversionModal from "./AddConversionModal";
 import { handleChange } from "@/utils/handle-change";
+import { UserAuth } from "@/hooks/useSession";
+import { UserAuthInterface } from "@/types/auth";
+import useSWR, { mutate } from "swr";
+import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
+import { fetcher } from "@/utils/fetcher";
 
 interface ConvertSectionProps {
   data: DisplayInventoryItems | null;
+  user?: UserAuth | null;
 }
 
 const dataCon: ItemConversions[] = [
@@ -31,7 +37,7 @@ const dataCon: ItemConversions[] = [
   },
 ];
 
-const ConvertSection = ({ data }: ConvertSectionProps) => {
+const ConvertSection = ({ data, user }: ConvertSectionProps) => {
   const [showAddConversionModal, setShowAddConversionModal] = useState(false);
   const [fromForm, setFromForm] = useState<ConvertInventoryItems>({
     inventoryItemId: data?.inventoryItemId ?? 0,
@@ -41,19 +47,12 @@ const ConvertSection = ({ data }: ConvertSectionProps) => {
     inventoryItemId: 0,
     inventoryItemQuantity: 0,
   });
-  //   const [convertFormData, setConvertFormData] =
-  //     useState<ConvertInventoryItemsDto>({
-  //       to: {
-  //         inventoryItemId: data?.inventoryItemId ?? 0,
-  //         inventoryItemQuantity: 0,
-  //       },
-  //       from: {
-  //         inventoryItemId: 0,
-  //         inventoryItemQuantity: 0,
-  //       },
-  //     });
+
   const handleFromConvertChange = handleChange(fromForm, setFromForm);
   const handleToConvertChange = handleChange(toForm, setToForm);
+  const { data: response = { data: [] }, isLoading } = useSWR<{
+    data: DisplayItemConversionFromTo[];
+  }>(data ? `api/items/${data?.itemId}/conversion` : null, fetcher);
   const handleConvertItem = async () => {
     const convertFormData: ConvertInventoryItemsDto = {
       to: toForm,
@@ -61,6 +60,7 @@ const ConvertSection = ({ data }: ConvertSectionProps) => {
     };
     console.log(convertFormData);
   };
+
   const handAddConversionItem = async () => {};
   return (
     <div className="flex flex-col h-full gap-4">
@@ -159,7 +159,7 @@ const ConvertSection = ({ data }: ConvertSectionProps) => {
                 </div>
 
                 {/* Conversion Items */}
-                {dataCon.map((itemCon, index) => (
+                {response.data.map((itemCon, index) => (
                   <ConversionCard
                     data={itemCon}
                     index={index}
@@ -176,13 +176,20 @@ const ConvertSection = ({ data }: ConvertSectionProps) => {
         </BigCard>
       </div>
       <Modal
+        className="h-[80%]"
         title="Add Conversion"
         isOpen={showAddConversionModal}
         onClose={function (): void {
           setShowAddConversionModal(false);
         }}
       >
-        <AddConversionModal data={data} />
+        <AddConversionModal
+          data={data}
+          user={user}
+          onClose={function (): void {
+            setShowAddConversionModal(false);
+          }}
+        />
       </Modal>
     </div>
   );
@@ -191,7 +198,7 @@ const ConvertSection = ({ data }: ConvertSectionProps) => {
 export default ConvertSection;
 
 interface ConversionCardProps {
-  data: ItemConversions;
+  data: DisplayItemConversionFromTo;
   index: number;
 }
 
@@ -202,7 +209,6 @@ const ConversionCard = ({ data, index }: ConversionCardProps) => {
       <div className="col-span-1 flex items-center">
         <span className="text-xs text-gray-500">{index + 1}</span>
       </div>
-
       {/* From Unit */}
       <div className="col-span-4 flex items-center gap-2">
         <div className="flex flex-col">

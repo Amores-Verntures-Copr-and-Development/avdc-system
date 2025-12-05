@@ -32,6 +32,7 @@ export function middleware(request: NextRequest) {
     "/stores",
     "/suppliers",
     "/users",
+    "/store-selection",
   ];
 
   const isProtectedPage = protectedPages.some((route) =>

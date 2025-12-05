@@ -38,3 +38,8 @@ export type CreateItemConversionDto = Pick<
   | "toQuantity"
   | "itemConCreatedBy"
 >;
+
+export interface DisplayItemConversionFromTo extends ItemConversions {
+  fromItemName: number;
+  toItemName: number;
+}

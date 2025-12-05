@@ -1,13 +1,14 @@
 import {
+  CreateItemConversionDto,
   CreateItemDto,
   CreateItemPriceDto,
   ImportItemInfo,
 } from "@/dtos/items.dto";
-import { ResultSetHeader } from "mysql2/promise";
+import { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection } from "mysql2/promise";
 import { processImportItems } from "@/services/items/processImportItems";
-import { ItemInterface } from "@/types/items";
+import { ItemConversions, ItemInterface } from "@/types/items";
 
 export const insertItem = async ({
   connection,
@@ -162,4 +163,81 @@ export const updateItems = async ({
   console.log(`params`, { params });
   const [result] = await pool.execute(sql, params);
   return result;
+};
+
+export const selectItemsByFields = async ({
+  connection,
+  keyFields = {},
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<ItemInterface>;
+}) => {
+  const params: any[] = [];
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = `SELECT * FROM Items i
+  LEFT JOIN Categories c ON c.categoryId = i.categoryId
+   WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const insertItemConversion = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateItemConversionDto;
+}) => {
+  console.log({ data });
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO ItemConversions(fromItemId,fromUnit,fromQuantity,toItemId,toUnit,toQuantity,itemConCreatedBy) VALUES(?,?,?,?,?,?,?)`;
+  const [result] = await pool.execute(sql, [
+    data.fromItemId,
+    data.fromUnit,
+    data.fromQuantity,
+    data.toItemId,
+    data.toUnit,
+    data.toQuantity,
+    data.itemConCreatedBy,
+  ]);
+  return result;
+};
+
+export const selectItemConversionFromFields = async ({
+  connection,
+  keyFields,
+}: {
+  connection?: PoolConnection;
+  keyFields: Partial<ItemConversions>;
+}) => {
+  const params: any[] = [];
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = `SELECT 
+  ic.*,
+  fromItem.itemName as fromItemName,
+  fromItem.itemUnit as fromItemUnit
+  FROM ItemConversions ic
+  LEFT JOIN Items fromItem ON fromItem.itemId = ic.fromItemId 
+  LEFT JOIN Items toItem ON toItem.itemId = ic.toItemId
+   WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ic.${key} IS NULL`;
+    } else {
+      sql += ` AND ic.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };
