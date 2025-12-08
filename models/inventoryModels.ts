@@ -226,6 +226,7 @@ WHERE 1=1
       "inventoryItemId",
       "inventoryItemReferenceId",
       "inventoryItemReference",
+      "inventoryItemReferenceType",
     ].includes(key)
       ? "ii"
       : key === "storeId"
@@ -279,6 +280,7 @@ WHERE 1=1
   it.itemId 
   ORDER BY it.itemName ASC`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log({ params });
   return rows;
 };
 
@@ -396,9 +398,8 @@ export const insertInventoryMovement = async ({
     item.itemMovementReferenceId,
     item.itemMovementReference,
     item.itemMovementQuantity,
-    item.itemMovementRemarks,
+    item.itemMovementRemarks || null,
   ]);
-
   const [results] = await pool.execute(sql, values);
   return results;
 };

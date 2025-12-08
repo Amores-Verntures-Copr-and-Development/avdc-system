@@ -1,6 +1,5 @@
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
-import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
 import Modal from "@/components/shared/Modal";
@@ -10,18 +9,20 @@ import {
   DisplayInventoryItems,
 } from "@/dtos/inventory.dto";
 import { ItemConversions } from "@/types/items";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AddConversionModal from "./AddConversionModal";
 import { handleChange } from "@/utils/handle-change";
 import { UserAuth } from "@/hooks/useSession";
-import { UserAuthInterface } from "@/types/auth";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
 import { fetcher } from "@/utils/fetcher";
+
+import toast from "react-hot-toast";
 
 interface ConvertSectionProps {
   data: DisplayInventoryItems | null;
   user?: UserAuth | null;
+  mutateInventory: () => void;
 }
 
 const dataCon: ItemConversions[] = [
@@ -37,31 +38,120 @@ const dataCon: ItemConversions[] = [
   },
 ];
 
-const ConvertSection = ({ data, user }: ConvertSectionProps) => {
+const ConvertSection = ({
+  data,
+  user,
+  mutateInventory,
+}: ConvertSectionProps) => {
   const [showAddConversionModal, setShowAddConversionModal] = useState(false);
-  const [fromForm, setFromForm] = useState<ConvertInventoryItems>({
-    inventoryItemId: data?.inventoryItemId ?? 0,
-    inventoryItemQuantity: 0,
-  });
+
   const [toForm, setToForm] = useState<ConvertInventoryItems>({
     inventoryItemId: 0,
     inventoryItemQuantity: 0,
+    itemId: 0,
   });
+  const {
+    data: response = { data: [] },
+    isLoading,
+    mutate,
+  } = useSWR<{
+    data: DisplayItemConversionFromTo[];
+  }>(data ? `api/items/${data?.itemId}/conversion` : null, fetcher);
+
+  const [fromForm, setFromForm] = useState({
+    inventoryItemId: data?.inventoryItemId || 0,
+    itemId: data?.itemId || 0,
+    inventoryItemQuantity: 0,
+  });
+
+  // Single useEffect to handle all related state updates
+  useEffect(() => {
+    if (!toForm.itemId || !response.data) return;
+
+    const findConvert = response.data.find(
+      (item) => item.toItemId === Number(toForm.itemId)
+    );
+
+    // Update toForm quantity if fromForm quantity and conversion exist
+    if (findConvert) {
+      setToForm((prev) => ({
+        ...prev,
+        inventoryItemQuantity:
+          fromForm.inventoryItemQuantity * findConvert.toQuantity,
+      }));
+    }
+    console.log({ toForm });
+  }, [toForm.itemId, response.data, fromForm.inventoryItemQuantity]);
+
+  // Handle initial data setup separately
+  useEffect(() => {
+    if (data) {
+      setFromForm((prev) => ({
+        ...prev,
+        inventoryItemId: data.inventoryItemId,
+        itemId: data.itemId,
+      }));
+    }
+  }, [data]);
+
+  // Memoize the conversion lookup to prevent unnecessary recalculations
 
   const handleFromConvertChange = handleChange(fromForm, setFromForm);
   const handleToConvertChange = handleChange(toForm, setToForm);
-  const { data: response = { data: [] }, isLoading } = useSWR<{
-    data: DisplayItemConversionFromTo[];
-  }>(data ? `api/items/${data?.itemId}/conversion` : null, fetcher);
+
+  const conversionOption = [
+    { label: "Select Unit", value: "" }, // Empty option
+    ...response.data.map((item) => ({
+      label: `${item.toUnit}(${item.toQuantity})`,
+      value: item.toItemId?.toString() || "", // Ensure string value
+      itemData: item, // Store the full item data
+    })),
+  ];
+
   const handleConvertItem = async () => {
     const convertFormData: ConvertInventoryItemsDto = {
       to: toForm,
       from: fromForm,
+      convertedBy: user?.userId ?? 0,
+      inventoryId: data?.inventoryId ?? 0,
     };
+    if (!data) {
+      return;
+    }
+    if (data?.inventoryItemQuantity < fromForm.inventoryItemQuantity) {
+      toast.error("Quantity to convert is greater than available stock!");
+      return;
+    }
+    if (fromForm.inventoryItemQuantity === 0) {
+      toast.error("Cannot convert 0 quantity!");
+      return;
+    }
     console.log(convertFormData);
+    try {
+      const result = await fetch(
+        `api/items/${convertFormData.from.itemId}/conversion`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(convertFormData),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      mutate();
+      mutateInventory();
+      toast.success(res.message);
+      // onClose();
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to create conversion.");
+    }
   };
 
-  const handAddConversionItem = async () => {};
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex-1 min-h-80">
@@ -94,31 +184,34 @@ const ConvertSection = ({ data, user }: ConvertSectionProps) => {
                 <div className="flex flex-col  p-2">
                   <Input
                     label={"From"}
-                    sizes="sm"
+                    sizes="xs"
                     readOnly
                     defaultValue={data?.itemUnit}
                   />
                   <Input
                     label={"Quantity"}
-                    sizes="sm"
+                    sizes="xs"
                     value={fromForm.inventoryItemQuantity ?? 0}
                     type="number"
                     name="inventoryItemQuantity"
                     onChange={handleFromConvertChange}
                   />
                 </div>
-                <div className="border border-gray-200"></div>
+                <div className="border-l border-gray-200"></div>
                 <div className="flex flex-col  p-2">
                   <DropdownSelect
+                    placeholder="Select Unit"
                     label={"To"}
-                    sizes="sm"
-                    name={""}
-                    value={undefined}
-                    options={[]}
+                    sizes="xs"
+                    name={"itemId"}
+                    value={String(toForm.itemId)}
+                    loading={isLoading}
+                    options={conversionOption}
+                    onChange={handleToConvertChange}
                   />
                   <Input
                     label={"To Qty"}
-                    sizes="sm"
+                    sizes="xs"
                     value={toForm.inventoryItemQuantity ?? 0}
                     name="inventoryItemQuantity"
                     type="number"

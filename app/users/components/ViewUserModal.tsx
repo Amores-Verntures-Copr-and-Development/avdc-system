@@ -45,7 +45,7 @@ const ViewUserModal = ({ data, user }: ViewUserModalProps) => {
     };
     setEmployeeData(employee);
   };
-  const [showEditUser, setShowEditUser] = useState(false);
+
   const {
     data: response = { data: [] },
     isLoading,

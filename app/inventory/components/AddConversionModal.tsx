@@ -1,12 +1,10 @@
 import Button from "@/components/shared/Button";
-import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
-import DropdownSelect from "@/components/shared/DropdownSelect";
 import DropDownSelectItemConversion from "@/components/shared/DropDownSelectItemConversion";
 import Input from "@/components/shared/Input";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { CreateItemConversionDto } from "@/dtos/items.dto";
 import { UserAuth } from "@/hooks/useSession";
-import { ItemInterface } from "@/types/items";
+
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";

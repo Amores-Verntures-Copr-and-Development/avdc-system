@@ -23,7 +23,6 @@ import { fetcher } from "@/utils/fetcher";
 import { useCategories } from "@/hooks/useCategory";
 import { ItemInterface } from "@/types/items";
 import ConvertSection from "./ConvertSection";
-import { UserAuthInterface } from "@/types/auth";
 
 interface ViewInventoryItemPros {
   user?: UserAuth | null;
@@ -155,7 +154,15 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
             />
           )}
           {selectedButton === "convert" && (
-            <ConvertSection data={data} user={user} />
+            <ConvertSection
+              data={data}
+              user={user}
+              mutateInventory={() => {
+                if (mutate) {
+                  mutate();
+                }
+              }}
+            />
           )}
         </div>
       </div>

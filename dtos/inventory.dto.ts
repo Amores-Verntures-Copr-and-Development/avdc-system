@@ -82,9 +82,13 @@ export type DisplayInventoryMovementDto = Pick<
 export type ConvertInventoryItems = Pick<
   InventoryItemInterface,
   "inventoryItemId" | "inventoryItemQuantity"
->;
+> & {
+  itemId: number;
+};
 
 export type ConvertInventoryItemsDto = {
   from: ConvertInventoryItems;
   to: ConvertInventoryItems;
+  convertedBy: number;
+  inventoryId: number;
 };

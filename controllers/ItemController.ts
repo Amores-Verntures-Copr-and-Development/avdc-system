@@ -1,4 +1,6 @@
+import { ConvertInventoryItemsDto } from "@/dtos/inventory.dto";
 import { CreateItemConversionDto, ImportItemInfo } from "@/dtos/items.dto";
+import { handleConvertItem } from "@/services/inventory/inventory-items/update-inventory-items";
 import { findItemsByFields } from "@/services/items/get-item";
 import { createItemConversion } from "@/services/items/item-conversion/create-item-conversion";
 import { getItemConversionByFields } from "@/services/items/item-conversion/get-item-conversion";
@@ -99,6 +101,27 @@ export const getItemConversions = async ({
     return {
       error: e,
       message: "Failed to fetched item!",
+      success: false,
+    };
+  }
+};
+
+export const convertInventoryItems = async ({
+  data,
+}: {
+  data: ConvertInventoryItemsDto;
+}) => {
+  try {
+    const result = await handleConvertItem({ data });
+    return {
+      result: result,
+      message: "Successfully converted item conversion!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to convert!",
       success: false,
     };
   }

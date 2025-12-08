@@ -56,7 +56,7 @@ export interface InventoryItemMovement {
   inventoryItemId: number;
   itemMovementType: "in" | "out";
   itemMovementReferenceId: number | null;
-  itemMovementReference: "sales" | "po" | "adjustment" | "ro";
+  itemMovementReference: "sales" | "po" | "adjustment" | "ro" | "convert";
   itemMovementQuantity: number;
   itemMovementRemarks?: string;
   itemMovementCreatedAt?: string;
@@ -85,5 +85,3 @@ export interface DailyReport {
   reportId: number;
   itemId: number;
 }
-
-

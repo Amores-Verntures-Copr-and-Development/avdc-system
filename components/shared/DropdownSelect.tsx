@@ -68,7 +68,7 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           value={value}
           onChange={onChange}
           required={required}
-          className={`w-full border ${selectStyles}  text-black border-gray-300 rounded-md py-1 pl-3 pr-10 
+          className={`w-full border ${selectStyles}  text-black border-gray-300 rounded-md py-1 pl-3  
   ${error ? "border-red-500" : "border-gray-300"} 
   ${sizeStyles}
   disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400`}

@@ -12,7 +12,7 @@ export const insertProducts = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   if (!data.length) return 0;
-  const sql = `INSERT INTO Products(productCode,productPrice,productDescription,productCreatedBy,inventoryItemId,inventoryId)
+  const sql = `INSERT INTO Products(productCode,productPrice,productDescription,productCreatedBy,inventoryItemId)
                 VALUES ${data.map(() => "(?,?,?,?,?,?)").join(",")}`;
   const values = data.flatMap((item) => [
     item.productCode,
@@ -20,7 +20,6 @@ export const insertProducts = async ({
     item.productDescription,
     item.productCreatedBy,
     item.inventoryItemId,
-    item.inventoryId,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;

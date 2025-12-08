@@ -37,7 +37,9 @@ const BigCard = ({
         <div className="flex flex-col">
           <div className="flex justify-between">
             <div className="flex flex-col justify-between">
-              <h1 className="font-semibold">{title}</h1>
+              <h1 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                {title}
+              </h1>
               <span className="text-xs text-gray-400">{subtitle}</span>
             </div>
             {leftTitle}

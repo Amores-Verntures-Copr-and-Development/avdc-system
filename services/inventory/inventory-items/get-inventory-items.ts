@@ -6,6 +6,7 @@ import {
   selectStockRoomInventoryItems,
 } from "@/models/inventoryModels";
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
+import { PoolConnection } from "mysql2/promise";
 
 export async function findInventoryItemsByField({
   keyFields = {},
@@ -13,12 +14,14 @@ export async function findInventoryItemsByField({
   status,
   category,
   unit,
+  connection,
 }: {
   keyFields?: Partial<InventoryItemInterface>;
   search?: string;
   status?: string;
   category?: string;
-  unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
+  unit?: string;
+  connection?: PoolConnection; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
     const data = await selectInventoryItems({
