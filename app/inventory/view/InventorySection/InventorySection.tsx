@@ -909,6 +909,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       >
         <ViewInventoryItem
           data={selectedRow ?? null}
+          isLoadingInventory={loading}
           user={user}
           onSubmitStockAdjustment={handleSubmitStockAdjustment}
           isSubmittingAdjustment={isSubmittingAdjustment}

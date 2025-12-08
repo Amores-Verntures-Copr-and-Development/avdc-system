@@ -23,6 +23,7 @@ interface ConvertSectionProps {
   data: DisplayInventoryItems | null;
   user?: UserAuth | null;
   mutateInventory: () => void;
+  isLoadingInventory?: boolean;
 }
 
 const dataCon: ItemConversions[] = [
@@ -42,13 +43,29 @@ const ConvertSection = ({
   data,
   user,
   mutateInventory,
+  isLoadingInventory,
 }: ConvertSectionProps) => {
   const [showAddConversionModal, setShowAddConversionModal] = useState(false);
-
+  const [isConverting, setIsConverting] = useState(false);
+  const defaultToForm = {
+    inventoryItemId: 0,
+    inventoryItemQuantity: 0,
+    itemId: 0,
+  };
+  const defaultFromForm = {
+    inventoryItemId: data?.inventoryItemId || 0,
+    itemId: data?.itemId || 0,
+    inventoryItemQuantity: 0,
+  };
   const [toForm, setToForm] = useState<ConvertInventoryItems>({
     inventoryItemId: 0,
     inventoryItemQuantity: 0,
     itemId: 0,
+  });
+  const [fromForm, setFromForm] = useState({
+    inventoryItemId: data?.inventoryItemId || 0,
+    itemId: data?.itemId || 0,
+    inventoryItemQuantity: 0,
   });
   const {
     data: response = { data: [] },
@@ -57,12 +74,6 @@ const ConvertSection = ({
   } = useSWR<{
     data: DisplayItemConversionFromTo[];
   }>(data ? `api/items/${data?.itemId}/conversion` : null, fetcher);
-
-  const [fromForm, setFromForm] = useState({
-    inventoryItemId: data?.inventoryItemId || 0,
-    itemId: data?.itemId || 0,
-    inventoryItemQuantity: 0,
-  });
 
   // Single useEffect to handle all related state updates
   useEffect(() => {
@@ -109,6 +120,7 @@ const ConvertSection = ({
   ];
 
   const handleConvertItem = async () => {
+    setIsConverting(true);
     const convertFormData: ConvertInventoryItemsDto = {
       to: toForm,
       from: fromForm,
@@ -144,11 +156,15 @@ const ConvertSection = ({
       }
       mutate();
       mutateInventory();
+      setToForm(defaultToForm);
+      setFromForm(defaultFromForm);
       toast.success(res.message);
       // onClose();
     } catch (e) {
       console.log(e);
       toast.error("Failed to create conversion.");
+    } finally {
+      setIsConverting(false);
     }
   };
 
@@ -160,7 +176,26 @@ const ConvertSection = ({
           title="Conversion Item"
           leftTitle={
             <div>
-              <Button label="Convert" size="xs" onClick={handleConvertItem} />
+              {Boolean(
+                (data?.inventoryItemQuantity &&
+                  data?.inventoryItemQuantity > 0) ||
+                  isLoadingInventory
+              ) ? (
+                <Button
+                  label="Convert"
+                  size="xs"
+                  onClick={handleConvertItem}
+                  loading={isConverting}
+                />
+              ) : (
+                <Button
+                  label="Convert"
+                  size="xs"
+                  color="nocolor"
+                  disabled
+                  onClick={handleConvertItem}
+                />
+              )}
             </div>
           }
         >

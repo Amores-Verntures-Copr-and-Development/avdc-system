@@ -53,7 +53,6 @@ export async function handleConvertItem({
         inventoryItemReferenceType: "item",
       },
     });
-    // console.log("inventoryItem", { inventoryItem });
 
     const fromInventoryItem: Partial<InventoryItemInterface>[] = [
       {
@@ -82,7 +81,7 @@ export async function handleConvertItem({
       updates: toInventoryItem,
       fieldModes: { inventoryItemQuantity: "increment" },
     });
-    console.log("inventoryItem[0]: ", inventoryItem[0]);
+
     const itemMovement: CreateInventoryMovementDto[] = [
       {
         inventoryId: data.inventoryId,

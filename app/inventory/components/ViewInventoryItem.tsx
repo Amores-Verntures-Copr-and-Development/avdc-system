@@ -45,6 +45,7 @@ interface ViewInventoryItemPros {
     inventoryItemData?: Partial<InventoryItemInterface>;
   }) => Promise<boolean>;
   isEditing?: boolean;
+  isLoadingInventory?: boolean;
 }
 
 const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
@@ -56,6 +57,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
   mutate,
   onSubmitEditItems,
   isEditing,
+  isLoadingInventory,
 }) => {
   const [inventoryItemData, setInventoryItemData] = useState(data);
   const [selectedButton, setSelectedButton] = useState<
@@ -157,6 +159,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
             <ConvertSection
               data={data}
               user={user}
+              isLoadingInventory={isLoadingInventory}
               mutateInventory={() => {
                 if (mutate) {
                   mutate();
