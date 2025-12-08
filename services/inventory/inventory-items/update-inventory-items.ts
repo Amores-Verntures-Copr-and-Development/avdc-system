@@ -12,6 +12,12 @@ import { InventoryItemInterface } from "@/types/inventory";
 import { PoolConnection } from "mysql2/promise";
 import { findInventoryItemsByField } from "./get-inventory-items";
 import { createInventoryMovement } from "../inventory-movement/create-inventory-movement";
+import { ItemInterface } from "@/types/items";
+import {
+  handleUpdateItemPrice,
+  handleUpdateItems,
+} from "@/services/items/update-items";
+import { findItemsByFields } from "@/services/items/get-item";
 
 export async function updateInventoryItem({
   connection,
@@ -106,6 +112,80 @@ export async function handleConvertItem({
     await connection.commit();
   } catch (e) {
     console.log(e);
+    await connection.rollback();
+    throw e;
+  } finally {
+    connection.release();
+  }
+}
+
+export async function handleUpdateItemOrInventory({
+  itemData,
+  inventoryData,
+}: {
+  itemData: Partial<ItemInterface>[];
+  inventoryData: Partial<InventoryItemInterface>[];
+}) {
+  const pool = await getDBConnection();
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    if (itemData && itemData.length > 0 && itemData[0] !== undefined) {
+      //update item
+      const item = await findItemsByFields({
+        connection,
+        keyFields: { itemId: itemData[0].itemId },
+      });
+      const isSamePrice =
+        Number(item[0].itemPrice) === Number(itemData[0].itemPrice);
+
+      const updateItem: Partial<ItemInterface>[] = [
+        {
+          itemId: itemData[0].itemId,
+          itemUnit: itemData[0].itemUnit,
+          itemName: itemData[0].itemName,
+        },
+      ];
+      if (!isSamePrice) {
+        const updateItemPriceData: Partial<ItemInterface>[] = [
+          {
+            itemId: itemData[0].itemId,
+            itemPrice: itemData[0].itemPrice,
+            itemAddedBy: itemData[0].itemAddedBy,
+          },
+        ];
+
+        await handleUpdateItems({
+          connection,
+          updates: updateItem,
+          keyFields: ["itemId"],
+        });
+        await handleUpdateItemPrice({
+          connection,
+          updates: updateItemPriceData,
+        });
+      } else {
+        await handleUpdateItems({
+          connection,
+          updates: updateItem,
+          keyFields: ["itemId"],
+        });
+      }
+    }
+    if (
+      inventoryData ||
+      (inventoryData > 0 && inventoryData[0] !== undefined)
+    ) {
+      //update inventory
+      await updateInventoryItems({
+        connection,
+        updates: inventoryData,
+        keyFields: ["inventoryItemId"],
+      });
+    }
+    await connection.commit();
+    return;
+  } catch (e) {
     await connection.rollback();
     throw e;
   } finally {

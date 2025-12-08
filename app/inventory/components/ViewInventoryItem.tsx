@@ -23,6 +23,7 @@ import { fetcher } from "@/utils/fetcher";
 import { useCategories } from "@/hooks/useCategory";
 import { ItemInterface } from "@/types/items";
 import ConvertSection from "./ConvertSection";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 interface ViewInventoryItemPros {
   user?: UserAuth | null;
@@ -217,6 +218,15 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
               {data?.categoryName}
             </span>
           </div>
+
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
+            <span className="text-[10px] xl:text-sm text-gray-600">
+              Cost Price
+            </span>
+            <span className="text-[10px] xl:text-sm font-medium">
+              {data?.itemPrice}
+            </span>
+          </div>
           <div className="flex justify-between items-center py-2 border-b border-gray-100">
             <span className="text-[10px] xl:text-sm text-gray-600">
               Available Stock
@@ -339,6 +349,8 @@ const EditItemDetails: React.FC<
         itemId: updatedData.itemId,
         itemName: updatedData.itemName,
         itemUnit: updatedData.itemUnit,
+        itemPrice: updatedData.itemPrice,
+        itemAddedBy: user?.userId,
         // categoryId should be mapped from categoryName if available
         // You might need additional logic to get categoryId from categoryName
       };
@@ -362,6 +374,7 @@ const EditItemDetails: React.FC<
         onClose?.();
         setSelectedButton?.("");
       }
+      console.log({ submitData });
     } catch (error) {
       console.error("Error updating item:", error);
     }
@@ -486,12 +499,27 @@ const EditItemDetails: React.FC<
                   placeholder="Select category"
                 />
               </div>
-
+              <div className="flex justify-between items-center py-2">
+                <span className="text-[10px] xl:text-sm text-gray-600">
+                  Cost Price
+                </span>
+                <div className="w-20 2xl:w-30">
+                  <Input
+                    value={editedAdminInventoryItem?.itemPrice ?? 0}
+                    name="itemPrice"
+                    sizes="sm"
+                    onChange={setAdminChange}
+                    type="number"
+                    min="0"
+                    label=""
+                  />
+                </div>
+              </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-[10px] xl:text-sm text-gray-600">
                   Minimum Stock
                 </span>
-                <div className="w-20">
+                <div className="w-20 2xl:w-30">
                   <Input
                     value={editedAdminInventoryItem?.inventoryItemMin ?? 0}
                     name="inventoryItemMin"
@@ -614,7 +642,10 @@ const StockAdjustment: React.FC<
                 Available Stock
               </span>
               <div className="font-semibold text-sm xl:text-lg">
-                {data?.inventoryItemQuantity}
+                {formatQuantityByUnit(
+                  String(data?.inventoryItemQuantity),
+                  data?.itemUnit ?? ""
+                )}
               </div>
             </div>
             <div className="space-y-1">
@@ -622,7 +653,10 @@ const StockAdjustment: React.FC<
                 Minimum Stock
               </span>
               <div className="font-medium text-sm xl:text-lg">
-                {data?.inventoryItemMin}
+                {formatQuantityByUnit(
+                  String(data?.inventoryItemMin),
+                  data?.itemUnit ?? ""
+                )}
               </div>
             </div>
           </div>

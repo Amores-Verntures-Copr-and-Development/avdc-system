@@ -36,7 +36,7 @@ export async function handleUpdateItemPrice({
       itemId: item.itemId,
       itemPrice: Number(item.itemPrice),
     }));
-    console.log({ updateItemPrice });
+
     const res = await updateItems({
       connection,
       updates: updateItemPrice,
@@ -62,7 +62,7 @@ export async function handleUpdateItemPrice({
     const itemPrices: CreateItemPriceDto[] = itemPricesResults.filter(
       (item): item is CreateItemPriceDto => item !== null
     );
-    console.log({ itemPrices });
+
     await insertItemPrice({ connection, data: itemPrices });
     return res;
   } catch (e) {

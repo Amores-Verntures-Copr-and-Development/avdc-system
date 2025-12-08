@@ -122,7 +122,7 @@ export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
             : "text-green-600"
         }`}
       >
-        {row.inventoryItemQuantity}
+        {formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit)}
       </span>
     ),
   },

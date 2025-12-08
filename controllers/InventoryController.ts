@@ -45,6 +45,7 @@ import { StoreInterface } from "@/types/stores";
 import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
 import { ItemInterface } from "@/types/items";
 import { updateItems } from "@/models/itemModel";
+import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-items/update-inventory-items";
 
 // export const createInventory = async (data: CreateInventoryDto) => {
 //   try {
@@ -350,41 +351,23 @@ export const updateItemOrInventory = async ({
   itemData: Partial<ItemInterface>[];
   inventoryData: Partial<InventoryItemInterface>[];
 }) => {
-  const pool = await getDBConnection();
-  const connection = await pool.getConnection();
   try {
-    await connection.beginTransaction();
-    console.log("In Controller", { itemData, inventoryData });
-    if (itemData && itemData.length > 0 && itemData[0] !== undefined) {
-      //update item
-      await updateItems({
-        connection,
-        updates: itemData,
-        keyFields: ["itemId"],
-      });
-    }
-    if (
-      inventoryData ||
-      (inventoryData > 0 && inventoryData[0] !== undefined)
-    ) {
-      //update inventory
-      await updateInventoryItems({
-        connection,
-        updates: inventoryData,
-        keyFields: ["inventoryItemId"],
-      });
-    }
-    await connection.commit();
-    return { success: true, message: "Item successfully edit!" };
+    const result = await handleUpdateItemOrInventory({
+      itemData,
+      inventoryData,
+    });
+
+    return {
+      success: true,
+      message: "Item successfully edit!",
+      result: result,
+    };
   } catch (e) {
-    await connection.rollback();
     return {
       success: false,
       message: "Failed to update item",
       error: e,
     };
-  } finally {
-    connection.release();
   }
 };
 

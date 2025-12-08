@@ -159,8 +159,6 @@ export const updateItems = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-  console.log(`SQL`, { sql });
-  console.log(`params`, { params });
   const [result] = await pool.execute(sql, params);
   return result;
 };
