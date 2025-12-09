@@ -219,7 +219,7 @@ LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
 LEFT JOIN Categories c ON c.categoryId = it.categoryId
 LEFT JOIN SupplierItems si ON si.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
 LEFT JOIN Suppliers s ON s.suppId = si.suppId
-WHERE 1=1
+WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   `;
 
   const params: any[] = [];
@@ -326,7 +326,7 @@ LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
 LEFT JOIN Categories c ON c.categoryId = it.categoryId
 LEFT JOIN SupplierItems si ON si.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
 LEFT JOIN Suppliers s ON s.suppId = si.suppId
-WHERE 1=1
+WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   `;
 
   const params: any[] = [];

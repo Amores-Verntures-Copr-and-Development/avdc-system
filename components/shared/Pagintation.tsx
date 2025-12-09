@@ -10,7 +10,7 @@ interface PaginationProps {
 
 const Pagination: React.FC<PaginationProps> = ({
   totalItems,
-  defaultLimit = 20,
+  defaultLimit = 300,
   maxVisiblePages = 5,
 }) => {
   const router = useRouter();

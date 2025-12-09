@@ -32,6 +32,7 @@ import {
   CheckCircleIcon,
   XCircle,
   PackageX,
+  Trash2Icon,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -92,6 +93,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
     useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
@@ -663,6 +665,33 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     [router, inventoryConfig]
   );
 
+  const handleDeleteItem = async (id: number) => {
+    setIsEditingItem(true);
+    try {
+      const result = await fetch(
+        `/api/inventory/item/${inventoryId}/${id}/delete`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      mutate();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log({ e });
+      toast.error("Failed to delete item!");
+      return false;
+    } finally {
+      setIsEditingItem(false);
+    }
+  };
   return (
     <>
       <Table
@@ -883,7 +912,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             />
             <IconButton
               onClick={function (): void {
+                console.log("Delete");
                 setSelectedRow(row);
+                setShowDeleteModal(true);
               }}
               label={"Delete"}
               bg={"red"}
@@ -1066,6 +1097,61 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             isSubmitting={isSubmittingAdjustment}
           />
         )}
+      </Modal>
+      <Modal
+        title="Delete Item From Inventory"
+        leadingIcon={Trash2Icon}
+        isOpen={showDeleteModal}
+        onClose={function (): void {
+          setShowDeleteModal(false);
+        }}
+      >
+        <div className="flex flex-col gap-4">
+          <div className="text-center mb-6">
+            <p className="inline-flex flex-wrap items-center justify-center gap-1">
+              <span>Are you sure you want to delete</span>
+              <span className="font-semibold text-red-600">
+                {selectedRow?.itemName}
+              </span>
+              <span>from inventory?</span>
+              <span className="w-full text-sm text-gray-500 mt-2">
+                This action cannot be undone.
+              </span>
+            </p>
+          </div>
+          <div className="flex justify-end gap-2">
+            <div>
+              {" "}
+              <Button
+                size="sm"
+                label="Cancel"
+                color="secondary"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                }}
+              />
+            </div>
+            <div>
+              {" "}
+              <Button
+                size="sm"
+                label="Confirm"
+                color="danger"
+                onClick={async () => {
+                  if (!selectedRow) {
+                    return;
+                  }
+                  const success = await handleDeleteItem(
+                    selectedRow?.inventoryItemId
+                  );
+                  if (success) {
+                    setShowDeleteModal(false);
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </Modal>
     </>
   );

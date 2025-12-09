@@ -46,6 +46,7 @@ import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/Invento
 import { ItemInterface } from "@/types/items";
 import { updateItems } from "@/models/itemModel";
 import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-items/update-inventory-items";
+import { deleteInventoryItems } from "@/services/inventory/inventory-items/delete-inventory-items";
 
 // export const createInventory = async (data: CreateInventoryDto) => {
 //   try {
@@ -404,4 +405,29 @@ export const searchInventoryItems = async ({
   try {
     const data = await findInventoryItemsByField({});
   } catch (e) {}
+};
+
+export const deleteInventoryItemById = async ({
+  inventoryItemId,
+}: {
+  inventoryItemId: number[];
+}) => {
+  try {
+    const data: Partial<InventoryItemInterface>[] = inventoryItemId.map(
+      (id) => ({ inventoryItemId: id })
+    );
+    const result = await deleteInventoryItems({ updates: data });
+
+    return {
+      success: true,
+      message: "Item successfully deleted!",
+      result: result,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to delete item",
+      error: e,
+    };
+  }
 };

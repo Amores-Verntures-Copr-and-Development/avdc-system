@@ -74,6 +74,7 @@ interface TableProps<T> {
   isRounded?: boolean;
   uniqueIdKey?: keyof T;
   onSelectedData?: T[];
+  defaultLimit?: number;
 }
 
 export interface TableHandle {
@@ -111,6 +112,7 @@ const TableInner = <T extends Record<string, any>>(
     onSave,
     uniqueIdKey,
     onSelectedData,
+    defaultLimit = 100,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
@@ -498,7 +500,7 @@ const TableInner = <T extends Record<string, any>>(
         {/* Pagination */}
         {typeof totalCount === "number" && (
           <div className="bg-white border-t border-gray-200 px-2 py-1.5 lg:px-4 lg:py-3">
-            <Pagination totalItems={totalCount} defaultLimit={20} />
+            <Pagination totalItems={totalCount} defaultLimit={defaultLimit} />
           </div>
         )}
       </div>

@@ -50,7 +50,10 @@ const IconButton: React.FC<IconButtonProps> = ({
       <div className="inline-block">
         <button
           ref={btnRef}
-          onClick={onClick}
+          onClick={(e) => {
+            onClick();
+            e.stopPropagation();
+          }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           className={`px-1 py-1 sm:px-2 sm:py-1 border border-gray-200 flex items-center gap-2 ${
