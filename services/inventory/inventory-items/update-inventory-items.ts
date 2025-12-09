@@ -70,7 +70,7 @@ export async function handleConvertItem({
     const toInventoryItem: Partial<InventoryItemInterface>[] = [
       {
         inventoryId: data.inventoryId,
-        inventoryItemId: inventoryItem[0].inventoryItemId,
+        inventoryItemId: inventoryItem.data[0].inventoryItemId,
         inventoryItemQuantity: data.to.inventoryItemQuantity,
       },
     ];
@@ -94,12 +94,12 @@ export async function handleConvertItem({
         inventoryItemId: data.from.inventoryItemId,
         itemMovementQuantity: Number(data.from.inventoryItemQuantity),
         itemMovementReference: "convert",
-        itemMovementReferenceId: inventoryItem[0].inventoryItemId,
+        itemMovementReferenceId: inventoryItem.data[0].inventoryItemId,
         itemMovementType: "out",
       },
       {
         inventoryId: data.inventoryId,
-        inventoryItemId: inventoryItem[0].inventoryItemId,
+        inventoryItemId: inventoryItem.data[0].inventoryItemId,
         itemMovementQuantity: data.to.inventoryItemQuantity,
         itemMovementReference: "convert",
         itemMovementReferenceId: data.from.inventoryItemId,

@@ -17,12 +17,18 @@ export async function GET(
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
     const res = await getInventoryItems({
       keyFields: { inventoryId: inventoryId },
       search,
       status,
       category,
       unit,
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
     });
 
     if (!res.success) {
@@ -35,7 +41,8 @@ export async function GET(
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data?.data,
+        totalItems: res.data?.total, // could sanitize before returning
       },
       { status: 201 }
     );

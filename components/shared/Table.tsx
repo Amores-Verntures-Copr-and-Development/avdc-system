@@ -114,8 +114,6 @@ const TableInner = <T extends Record<string, any>>(
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
-  // ✅ FIX: Store selected unique IDs instead of indexes
-
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
@@ -125,8 +123,6 @@ const TableInner = <T extends Record<string, any>>(
       setEditableData(data);
     }
   }, [data]);
-
-  // ✅ FIX: Sync selected rows when onSelectedRow changes
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -141,10 +137,13 @@ const TableInner = <T extends Record<string, any>>(
   }));
 
   // ✅ FIX: Get unique ID function
-  const getUniqueId = (row: T): string | number => {
-    const key = uniqueIdKey || ("id" as keyof T);
-    return row[key];
-  };
+  const getUniqueId = React.useCallback(
+    (row: T): string | number => {
+      const key = uniqueIdKey || ("id" as keyof T);
+      return row[key];
+    },
+    [uniqueIdKey]
+  );
 
   // ✅ FIX: Toggle row using unique ID
   const toggleRow = (row: T) => {
@@ -186,10 +185,6 @@ const TableInner = <T extends Record<string, any>>(
       });
 
       setSelectedRows(selectedRows);
-
-      const selectedIds = selectedRows.map(
-        (row) => row[uniqueIdKey as keyof T]
-      );
     }
   }, [onSelectedData, editableData, uniqueIdKey]);
   useEffect(() => {
@@ -327,6 +322,10 @@ const TableInner = <T extends Record<string, any>>(
     const value = row[column.key];
     return column.format ? column.format(value) : value;
   };
+  const colSpanCount = React.useMemo(
+    () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),
+    [columns.length, showActions, showCheckBox]
+  );
 
   return (
     <div
@@ -415,14 +414,7 @@ const TableInner = <T extends Record<string, any>>(
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td
-                    colSpan={
-                      columns.length +
-                      (showActions ? 1 : 0) +
-                      (showCheckBox ? 1 : 0)
-                    }
-                    className="py-12 text-center"
-                  >
+                  <td colSpan={colSpanCount} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <Loader2 className="w-6 h-6 animate-spin text-primary-1" />
                       <span className="text-gray-500 text-sm">Loading...</span>
@@ -432,11 +424,7 @@ const TableInner = <T extends Record<string, any>>(
               ) : !Array.isArray(data) || data.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={
-                      columns.length +
-                      (showActions ? 1 : 0) +
-                      (showCheckBox ? 1 : 0)
-                    }
+                    colSpan={colSpanCount}
                     className="py-12 text-center text-gray-500"
                   >
                     <div className="flex flex-col items-center justify-center space-y-2">

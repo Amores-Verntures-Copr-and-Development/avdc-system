@@ -28,7 +28,15 @@ export default function SearchBar({
   const timer = useRef<NodeJS.Timeout | null>(null);
 
   // Update URL only when debounced search changes
+  // SearchBar component - FIXED VERSION
   useEffect(() => {
+    // Only update URL if search actually changed
+    const currentSearch = searchParams.get("search") || "";
+
+    if (debouncedSearch.trim() === currentSearch.trim()) {
+      return; // Don't update if search hasn't changed
+    }
+
     const params = new URLSearchParams(searchParams.toString());
 
     if (debouncedSearch.trim()) {
@@ -37,8 +45,10 @@ export default function SearchBar({
       params.delete("search");
     }
 
-    params.delete("page");
-    router.replace(`${url}?${params.toString()}`);
+    // Only reset page if search actually changed
+    params.set("page", "1");
+
+    router.push(`${url}?${params.toString()}`);
   }, [debouncedSearch, searchParams, url, router]);
 
   // Debounce the local search

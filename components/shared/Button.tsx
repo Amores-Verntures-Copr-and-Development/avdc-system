@@ -10,7 +10,9 @@ type ButtonColor =
   | "success"
   | "tertiary"
   | "notselected"
-  | "nocolor";
+  | "nocolor"
+  | "warning"
+  | "neutral";
 
 interface ButtonProps {
   isRounded?: boolean;
@@ -43,55 +45,81 @@ const colorClasses: Record<
   }
 > = {
   primary: {
-    base: "bg-primary-1 border border-primary-1/70",
-    hover: "hover:bg-primary-1-hover",
-    focus: "focus:ring-2 focus:ring-primary-1 focus:ring-offset-2",
+    base: "bg-[#c51d71] border border-[#c51d71]",
+    hover: "hover:bg-[#a91860] hover:border-[#a91860]",
+    focus: "focus:ring-2 focus:ring-[#c51d71]/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-primary-1/50 text-white/70",
+    disabled: "bg-[#c51d71]/30 border-[#c51d71]/30 text-white/60",
   },
-  nocolor: {
-    base: "bg-white border border-gray-200",
-    hover: "hover:bg-gray-300",
-    focus: "focus:ring-2 focus:ring-primary-1 focus:ring-offset-2",
-    text: "text-black",
-    disabled: "bg-primary-1/50 text-white/70",
-  },
+
+  // Secondary - Soft purple/mauve to complement primary
   secondary: {
-    base: "bg-gray-200 border border-gray-300",
-    hover: "hover:bg-gray-300",
-    focus: "focus:ring-2 focus:ring-gray-600 focus:ring-offset-2",
-    text: "text-black",
-    disabled: "bg-gray-400 text-gray-100",
+    base: "bg-slate-100 border border-slate-200",
+    hover: "hover:bg-slate-200 hover:border-slate-300",
+    focus: "focus:ring-2 focus:ring-slate-300/50 focus:ring-offset-2",
+    text: "text-slate-700",
+    disabled: "bg-slate-50 border-slate-100 text-slate-400",
   },
-  danger: {
-    base: "bg-red-600 border border-red-300",
-    hover: "hover:bg-red-700",
-    focus: "focus:ring-2 focus:ring-red-500 focus:ring-offset-2",
-    text: "text-white",
-    disabled: "bg-red-400 text-white/70",
-  },
-  success: {
-    base: "bg-green-800 border border-green-900",
-    hover: "hover:bg-green-700",
-    focus: "focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
-    text: "text-white",
-    disabled:
-      "bg-green-200 text-green-700 cursor-pointer border border-green-300 ",
-  },
-  // primary: "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 shadow-sm",
-  tertiary: {
-    base: "bg-blue-600 shadow-sm border border-blue-900",
-    hover: "hover:bg-blue-700",
-    focus: "focus:ring-2 focus:ring-blue-700 focus:ring-offset-2",
-    text: "text-white",
-    disabled: "bg-blue-400 text-white/70",
-  },
+
+  // Outline - Clean with softer focus
   notselected: {
-    base: "bg-gray-200 shadow-sm",
-    hover: "hover:bg-gray-700 hover:text-white",
-    focus: "focus:ring-2 focus:ring-blue-700 focus:ring-offset-2",
-    text: "text-black",
-    disabled: "bg-blue-400 text-black/70",
+    base: "bg-white border border-[#c51d71]",
+    hover: "hover:bg-[#c51d71]/8 hover:border-[#a91860]",
+    focus: "focus:ring-2 focus:ring-[#c51d71]/30 focus:ring-offset-2",
+    text: "text-[#c51d71]",
+    disabled: "bg-gray-50 border-[#c51d71]/25 text-[#c51d71]/40",
+  },
+
+  // Ghost - Subtle and minimal
+  nocolor: {
+    base: "bg-transparent border border-transparent",
+    hover: "hover:bg-[#c51d71]/8",
+    focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
+    text: "text-slate-700",
+    disabled: "text-slate-400",
+  },
+
+  // Danger - Softer red that complements the pink
+  danger: {
+    base: "bg-rose-500 border border-rose-500",
+    hover: "hover:bg-rose-600 hover:border-rose-600",
+    focus: "focus:ring-2 focus:ring-rose-500/40 focus:ring-offset-2",
+    text: "text-white",
+    disabled: "bg-rose-300 border-rose-300 text-white/60",
+  },
+
+  // Success - Balanced green
+  success: {
+    base: "bg-emerald-600 border border-emerald-700",
+    hover: "hover:bg-emerald-600 hover:border-emerald-600",
+    focus: "focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2",
+    text: "text-white",
+    disabled: "bg-emerald-300 border-emerald-300 text-white/60",
+  },
+
+  // Warning - Warmer amber
+  warning: {
+    base: "bg-amber-600 border border-amber-600",
+    hover: "hover:bg-amber-600 hover:border-amber-600",
+    focus: "focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2",
+    text: "text-white",
+    disabled: "bg-amber-300 border-amber-300 text-white/60",
+  },
+
+  // Tertiary - Deeper, complementary purple-blue
+  tertiary: {
+    base: "bg-indigo-600 border border-indigo-600",
+    hover: "hover:bg-indigo-700 hover:border-indigo-700",
+    focus: "focus:ring-2 focus:ring-indigo-600/40 focus:ring-offset-2",
+    text: "text-white",
+    disabled: "bg-indigo-300 border-indigo-300 text-white/60",
+  },
+  neutral: {
+    base: "bg-gray-200 border border-gray-300",
+    hover: "hover:bg-[#c51d71]/8",
+    focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
+    text: "text-slate-700",
+    disabled: "text-slate-400",
   },
 };
 

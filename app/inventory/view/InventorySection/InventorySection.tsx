@@ -7,7 +7,13 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -23,6 +29,9 @@ import {
   Trash,
   Clipboard,
   Import,
+  CheckCircleIcon,
+  XCircle,
+  PackageX,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -46,177 +55,16 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCategories } from "@/hooks/useCategory";
 import { useInventoryItemUnit } from "@/hooks/useInventoryItemUnit";
 import { ItemInterface } from "@/types/items";
+import { ApiResponse } from "@/types/api";
+import InStockModal from "../../components/InStockModal";
+import OutStockModal from "../../components/OutStockModal";
 
 export interface AddItemToStoreDto {
   storeId: number;
   addedById: number;
   items: DisplayInventoryItems[];
 }
-export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
-  {
-    name: "#",
-    key: "#",
-    selector: (_row, index) => index + 1,
-  },
-  { name: "Item Name", key: "itemName" },
-  {
-    name: "Stock Available",
-    key: "inventoryItemQuantity",
-    selector: (row) =>
-      formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit),
-  },
-  {
-    name: "Price",
-    key: "itemPrice",
-    selector: (row) => formatPeso(row.itemPrice),
-  },
-  {
-    name: "Minimum Stock",
-    key: "inventoryItemMin",
-  },
 
-  { name: "Unit", key: "itemUnit" },
-  { name: "Category", key: "categoryName" },
-  {
-    name: "Status",
-    key: "status",
-    selector: (row) => {
-      const { status, bgClass, textClass } = getInventoryStatusInfo(
-        row.inventoryItemQuantity,
-        row.inventoryItemMin
-      );
-
-      return (
-        <span
-          className={`px-2 py-1 text-[8px] xl:text-xs rounded-lg font-semibold ${bgClass} ${textClass}`}
-        >
-          {status}
-        </span>
-      );
-    },
-  },
-];
-export const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
-  {
-    name: "#",
-    key: "#",
-    selector: (_row, index) => index + 1,
-  },
-  {
-    name: "Item Name",
-    key: "itemName",
-    selector: (row) => (
-      <span className="text-gray-800 font-semibold">{row.itemName}</span>
-    ),
-  },
-  {
-    name: "Stock Available",
-    key: "inventoryItemQuantity",
-    selector: (row) => (
-      <span
-        className={`font-semibold ${
-          row.inventoryItemQuantity <= 0
-            ? "text-red-600"
-            : row.inventoryItemQuantity < row.inventoryItemMin
-            ? "text-yellow-600"
-            : "text-green-600"
-        }`}
-      >
-        {formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit)}
-      </span>
-    ),
-  },
-  {
-    name: "Price",
-    key: "itemPrice",
-    selector: (row) => (
-      <span className="text-gray-700">
-        ₱
-        {Number(row.itemPrice || 0).toLocaleString("en-PH", {
-          minimumFractionDigits: 2,
-        })}
-      </span>
-    ),
-  },
-  {
-    name: "Minimum",
-    key: "inventoryItemMin",
-    selector: (row) => (
-      <span className="text-gray-600">{row.inventoryItemMin}</span>
-    ),
-  },
-  {
-    name: "Unit",
-    key: "itemUnit",
-    selector: (row) => <span className=" text-gray-600">{row.itemUnit}</span>,
-  },
-  {
-    name: "Category",
-    key: "categoryName",
-    selector: (row) => (
-      <span className="text-gray-700">{row.categoryName || "—"}</span>
-    ),
-  },
-  {
-    name: "Supplier",
-    key: "itemSuppliers",
-    selector: (row) => {
-      const suppliers = row.itemSuppliers || [];
-      // Assuming your row has a suppliers array
-
-      return (
-        <div className="group relative">
-          <select
-            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-            disabled
-          >
-            <option value="">
-              {suppliers.filter((s) => s !== null).length > 0
-                ? `Suppliers (${suppliers.filter((s) => s !== null).length})`
-                : "No Supplier"}
-            </option>
-          </select>
-
-          {/* Show suppliers on hover */}
-          {suppliers.filter((s) => s !== null).length > 0 && (
-            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-              {suppliers
-                .filter((supplier) => supplier !== null)
-                .map((supplier, index) => (
-                  <div
-                    key={index}
-                    className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                  >
-                    {`${supplier.suppName} (${formatPeso(
-                      supplier.suppItemPrice
-                    )})`}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    name: "Status",
-    key: "status",
-    selector: (row) => {
-      const { status, bgClass, textClass } = getInventoryStatusInfo(
-        row.inventoryItemQuantity,
-        row.inventoryItemMin
-      );
-
-      return (
-        <span
-          className={`inline-flex items-center text-center justify-center px-1.5 py-0.5 2xl:px-3 2xl:py-1 rounded-full text-[9px] xl:text-[10px] 2xl:text-xs font-semibold ${bgClass} ${textClass}`}
-        >
-          {status}
-        </span>
-      );
-    },
-  },
-];
 interface InventorySectionProps {
   inventoryId: number | null;
   user: UserAuth | null;
@@ -238,6 +86,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddModal, setShowAdddModal] = useState(false);
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
+  const [showInOrOutStock, setShowInOrOutStock] = useState<"in" | "out" | null>(
+    null
+  );
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
     useState(false);
@@ -250,38 +101,220 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
+    {
+      name: "#",
+      key: "#",
+      selector: (_row, index) => {
+        // Get current page and limit from URL or context
+        const searchParams = new URLSearchParams(window.location.search);
+        const page = parseInt(searchParams.get("page") || "1", 10);
+        const limit = parseInt(searchParams.get("limit") || "100", 10);
+
+        // Calculate actual row number
+        return (page - 1) * limit + index + 1;
+      },
+    },
+    { name: "Item Name", key: "itemName" },
+    {
+      name: "Stock Available",
+      key: "inventoryItemQuantity",
+      selector: (row) =>
+        formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit),
+    },
+    {
+      name: "Price",
+      key: "itemPrice",
+      selector: (row) => formatPeso(row.itemPrice),
+    },
+    {
+      name: "Minimum Stock",
+      key: "inventoryItemMin",
+    },
+
+    { name: "Unit", key: "itemUnit" },
+    { name: "Category", key: "categoryName" },
+    {
+      name: "Status",
+      key: "status",
+      selector: (row) => {
+        const { status, bgClass, textClass } = getInventoryStatusInfo(
+          row.inventoryItemQuantity,
+          row.inventoryItemMin
+        );
+
+        return (
+          <span
+            className={`px-2 py-1 text-[8px] xl:text-xs rounded-lg font-semibold ${bgClass} ${textClass}`}
+          >
+            {status}
+          </span>
+        );
+      },
+    },
+  ];
+  const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
+    {
+      name: "#",
+      key: "#",
+      selector: (_row, index) => {
+        // Get current page and limit from URL or context
+        const searchParams = new URLSearchParams(window.location.search);
+        const page = parseInt(searchParams.get("page") || "1", 10);
+        const limit = parseInt(searchParams.get("limit") || "100", 10);
+
+        // Calculate actual row number
+        return (page - 1) * limit + index + 1;
+      },
+    },
+    {
+      name: "Item Name",
+      key: "itemName",
+      selector: (row) => (
+        <span className="text-gray-800 font-semibold">{row.itemName}</span>
+      ),
+    },
+    {
+      name: "Stock Available",
+      key: "inventoryItemQuantity",
+      selector: (row) => (
+        <span
+          className={`font-semibold ${
+            row.inventoryItemQuantity <= 0
+              ? "text-red-600"
+              : row.inventoryItemQuantity < row.inventoryItemMin
+              ? "text-yellow-600"
+              : "text-green-600"
+          }`}
+        >
+          {formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit)}
+        </span>
+      ),
+    },
+    {
+      name: "Price",
+      key: "itemPrice",
+      selector: (row) => (
+        <span className="text-gray-700">
+          ₱
+          {Number(row.itemPrice || 0).toLocaleString("en-PH", {
+            minimumFractionDigits: 2,
+          })}
+        </span>
+      ),
+    },
+    {
+      name: "Minimum",
+      key: "inventoryItemMin",
+      selector: (row) => (
+        <span className="text-gray-600">{row.inventoryItemMin}</span>
+      ),
+    },
+    {
+      name: "Unit",
+      key: "itemUnit",
+      selector: (row) => <span className=" text-gray-600">{row.itemUnit}</span>,
+    },
+    {
+      name: "Category",
+      key: "categoryName",
+      selector: (row) => (
+        <span className="text-gray-700">{row.categoryName || "—"}</span>
+      ),
+    },
+    {
+      name: "Supplier",
+      key: "itemSuppliers",
+      selector: (row) => {
+        const suppliers = row.itemSuppliers || [];
+        // Assuming your row has a suppliers array
+
+        return (
+          <div className="group relative">
+            <select
+              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+              disabled
+            >
+              <option value="">
+                {suppliers.filter((s) => s !== null).length > 0
+                  ? `Suppliers (${suppliers.filter((s) => s !== null).length})`
+                  : "No Supplier"}
+              </option>
+            </select>
+
+            {/* Show suppliers on hover */}
+            {suppliers.filter((s) => s !== null).length > 0 && (
+              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+                {suppliers
+                  .filter((supplier) => supplier !== null)
+                  .map((supplier, index) => (
+                    <div
+                      key={index}
+                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                    >
+                      {`${supplier.suppName} (${formatPeso(
+                        supplier.suppItemPrice
+                      )})`}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      name: "Status",
+      key: "status",
+      selector: (row) => {
+        const { status, bgClass, textClass } = getInventoryStatusInfo(
+          row.inventoryItemQuantity,
+          row.inventoryItemMin
+        );
+
+        return (
+          <span
+            className={`inline-flex items-center text-center justify-center px-1.5 py-0.5 2xl:px-3 2xl:py-1 rounded-full text-[9px] xl:text-[10px] 2xl:text-xs font-semibold ${bgClass} ${textClass}`}
+          >
+            {status}
+          </span>
+        );
+      },
+    },
+  ];
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   // get the stock inventory if purchaser
   const url = `/api/inventory/item/${inventoryId}`;
-  const getApiUrl = () => {
+  const apiUrl = useMemo(() => {
     if (!inventoryId) return null;
 
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "1";
 
     const params = new URLSearchParams();
-
     if (search) params.append("search", search);
     if (status) params.append("status", status);
     if (category) params.append("category", category);
     if (unit) params.append("unit", unit);
+    if (limit) params.append("limit", limit);
+    params.append("page", page);
 
-    const queryString = params.toString();
-    return queryString ? `${url}?${queryString}` : url;
-  };
+    return `${url}?${params.toString()}`;
+  }, [inventoryId, searchParams]);
   const {
-    data: itemResponse = { data: [] },
+    data: itemResponse,
     isLoading: loading,
     mutate,
-  } = useSWR<{ data: DisplayInventoryItems[] }>(getApiUrl(), fetcher);
-
-  const handleClear = () => {
+  } = useSWR<ApiResponse<DisplayInventoryItems[]>>(apiUrl, fetcher);
+  const handleClear = useCallback(() => {
     tableRef.current?.clearSelection();
-  };
+  }, []);
   const handleSelectionChange = (selected: DisplayInventoryItems[]) => {
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     setSelectedRows(selected);
@@ -446,6 +479,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       setSelectedRow(findSelectedInvItem);
     }
   };
+
   const handleSubmitStockAdjustment = async (
     data: CreateInventoryMovementDto
   ) => {
@@ -476,6 +510,34 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
       setIsSubmittingAdjustment(false);
     }
   };
+  const handleSubmitBulkStockAdjustment = async (
+    data: CreateInventoryMovementDto[]
+  ) => {
+    setIsSubmittingAdjustment(true);
+    try {
+      const result = await fetch(`/api/inventory/movement/${inventoryId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutate();
+      handleClear();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log(e);
+      return false;
+    } finally {
+      setIsSubmittingAdjustment(false);
+    }
+  };
   const handleImportItem = async (data: any[]) => {
     setIsSubmittingImport(true);
     if (!inventoryId) {
@@ -493,7 +555,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         itemDescription: item.Description ?? "",
       })),
     };
-    console.log({ newData });
     try {
       const result = await fetch(`/api/items/import-item/`, {
         method: "POST",
@@ -551,55 +612,56 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
     }
   };
 
-  const handleFilterSave = (newFilters: Record<string, string[]>) => {
-    setFilters(newFilters);
-
-    const currentParams = new URLSearchParams(window.location.search);
-
-    // Get filter keys from config
-    const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];
-
-    // Remove only keys that match filterConfig
-    filterKeys.forEach((key) => {
-      currentParams.delete(key);
-    });
-
-    // Add new filters
-    Object.entries(newFilters).forEach(([key, values]) => {
-      values.forEach((value) => {
-        currentParams.append(key, value);
-      });
-    });
-
-    const queryString = currentParams.toString();
-    router.push(`?${queryString}`);
-  };
   const inventoryItemStatus = [
     { label: "Select Status", value: "" },
     { label: "Available", value: "good" },
     { label: "Low Stock", value: "low" },
     { label: "No stock", value: "no" },
   ];
-  const inventoryConfig = [
-    {
-      id: "status",
-      label: "Status",
-      type: "checkbox" as const,
-      options: inventoryItemStatus,
+  const inventoryConfig = useMemo(
+    () => [
+      {
+        id: "status",
+        label: "Status",
+        type: "checkbox" as const,
+        options: inventoryItemStatus,
+      },
+      {
+        id: "category",
+        label: "Category",
+        type: "checkbox" as const,
+        options: categoryOptions ?? [],
+      },
+      {
+        id: "unit",
+        label: "Unit",
+        type: "checkbox" as const,
+        options: unitOptions ?? [],
+      },
+    ],
+    [categoryOptions, unitOptions]
+  );
+  const columns = useMemo(
+    () => (hasStore ? inventoryItemColumns : adminInventoryItemColumns),
+    [hasStore]
+  );
+
+  const handleFilterSave = useCallback(
+    (newFilters: Record<string, string[]>) => {
+      setFilters(newFilters);
+      const currentParams = new URLSearchParams(window.location.search);
+      const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];
+
+      filterKeys.forEach((key) => currentParams.delete(key));
+
+      Object.entries(newFilters).forEach(([key, values]) => {
+        values.forEach((value) => currentParams.append(key, value));
+      });
+
+      router.push(`?${currentParams.toString()}`);
     },
-    {
-      id: "category",
-      label: "Category",
-      type: "checkbox" as const,
-      options: categoryOptions ?? [],
-    },
-    {
-      id: "unit",
-      label: "Unit",
-      type: "checkbox" as const,
-      options: unitOptions ?? [],
-    },
-  ];
+    [router, inventoryConfig]
+  );
 
   return (
     <>
@@ -611,8 +673,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         ref={tableRef}
         showFilter
         searchUrl="/inventory"
-        columns={hasStore ? inventoryItemColumns : adminInventoryItemColumns}
-        data={itemResponse.data}
+        columns={columns}
+        data={itemResponse?.data ?? []}
         showActions
         maxHeight="h-full"
         rowSize="h-10"
@@ -653,6 +715,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   color="secondary"
                 />
               </div>
+
               {Boolean(
                 selectedRows?.length &&
                   selectedRows?.length > 0 &&
@@ -672,6 +735,48 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                     color="tertiary"
                   />
                 </div>
+              )}
+              {Boolean(selectedRows?.length && selectedRows?.length > 0) && (
+                <>
+                  <div>
+                    <Button
+                      isRounded={false}
+                      icon={
+                        <CheckCircleIcon className="w-3 h-3 xl:w-5 xl:h-5" />
+                      }
+                      label="In Stock"
+                      onClick={() => {
+                        setShowInOrOutStock("in");
+                      }}
+                      size="xs"
+                      className="font-semibold"
+                      color="success"
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      isRounded={false}
+                      icon={<PackageX className="w-3 h-3 xl:w-5 xl:h-5" />}
+                      label="Out Stock"
+                      onClick={() => {
+                        // Check if ANY selected item has NO stock (quantity = 0)
+                        const hasItemsWithNoStock = selectedRows?.some(
+                          (item) => Number(item.inventoryItemQuantity) === 0
+                        );
+                        console.log({ selectedRows });
+                        if (hasItemsWithNoStock) {
+                          toast.error("Cannot move out items with zero stock!");
+                          return;
+                        }
+
+                        setShowInOrOutStock("out");
+                      }}
+                      size="xs"
+                      className="font-semibold"
+                      color="danger"
+                    />
+                  </div>
+                </>
               )}
               {Boolean(
                 selectedRows?.length &&
@@ -709,7 +814,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                     }}
                     size="xs"
                     className="font-semibold"
-                    color="success"
+                    color="warning"
                   />
                 </div>
               )}
@@ -786,7 +891,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
             />
           </div>
         )}
-        totalCount={itemResponse.data.length}
+        totalCount={itemResponse?.totalItems}
       />
       <Modal
         title={"Add Item"}
@@ -932,6 +1037,35 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
           user={user}
           mutateReport={mutate}
         />
+      </Modal>
+      <Modal
+        isOpen={showInOrOutStock !== null}
+        onClose={function (): void {
+          setShowInOrOutStock(null);
+        }}
+        title={`${showInOrOutStock === "in" ? "In Stock" : "Out Stock"}`}
+        size="xl"
+        className="h-[95%]"
+      >
+        {showInOrOutStock === "in" ? (
+          <InStockModal
+            data={selectedRows ?? []}
+            onSubmit={handleSubmitBulkStockAdjustment}
+            onClose={() => {
+              setShowInOrOutStock(null);
+            }}
+            isSubmitting={isSubmittingAdjustment}
+          />
+        ) : (
+          <OutStockModal
+            data={selectedRows ?? []}
+            onSubmit={handleSubmitBulkStockAdjustment}
+            onClose={() => {
+              setShowInOrOutStock(null);
+            }}
+            isSubmitting={isSubmittingAdjustment}
+          />
+        )}
       </Modal>
     </>
   );

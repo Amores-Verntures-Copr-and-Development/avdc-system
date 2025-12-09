@@ -72,7 +72,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
             });
             return {
               inventoryId: warehouseInv[0].inventoryId,
-              inventoryItemId: inventoryItem[0].inventoryItemId, // fallback if not found
+              inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
               itemMovementType: "out",
               itemMovementReferenceId: req.requestId ?? 0,
               itemMovementReference: "ro",

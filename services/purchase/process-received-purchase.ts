@@ -67,7 +67,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
 
         return {
           inventoryId: warehouseInv[0].inventoryId,
-          inventoryItemId: inventoryItem[0]?.inventoryItemId ?? 0, // fallback if not found
+          inventoryItemId: inventoryItem.data[0]?.inventoryItemId ?? 0, // fallback if not found
           itemMovementType: "in",
           itemMovementReferenceId: data.poId ?? 0,
           itemMovementReference: "po",

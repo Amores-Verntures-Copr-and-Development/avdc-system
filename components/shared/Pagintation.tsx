@@ -17,10 +17,7 @@ const Pagination: React.FC<PaginationProps> = ({
   const searchParams = useSearchParams();
 
   // Memoize params for stability
-  const currentParams = useMemo(
-    () => new URLSearchParams(searchParams.toString()),
-    [searchParams]
-  );
+  const params = new URLSearchParams(searchParams.toString());
 
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(
@@ -31,11 +28,12 @@ const Pagination: React.FC<PaginationProps> = ({
 
   const setPageAndLimit = (newPage: number, newLimit: number = limit) => {
     const safePage = Math.max(1, Math.min(newPage, totalPages));
-    const params = new URLSearchParams(currentParams.toString());
+    const params = new URLSearchParams(searchParams.toString());
+
     params.set("page", safePage.toString());
     params.set("limit", newLimit.toString());
 
-    router.replace(`?${params.toString()}`);
+    router.push(`?${params.toString()}`); // CHANGED: replace → push
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -111,7 +109,7 @@ const Pagination: React.FC<PaginationProps> = ({
           className="border rounded px-2 py-1 text-[8px] lg:text-xs font-semibold"
           aria-label="Select rows per page"
         >
-          {[10, 20, 50, 100].map((option) => (
+          {[10, 20, 50, 100, 200, 300].map((option) => (
             <option key={option} value={option}>
               {option}
             </option>

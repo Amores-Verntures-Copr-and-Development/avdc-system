@@ -8,8 +8,6 @@ export async function GET(request: NextRequest) {
     const res = await getStore({ search, limit: 10, skip: 0 });
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
-      console.log(res.error);
       throw new Error("Failed to fetch user");
     }
     return NextResponse.json({

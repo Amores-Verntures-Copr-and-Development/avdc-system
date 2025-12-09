@@ -172,14 +172,20 @@ export const selectInventoryItems = async ({
   status,
   category,
   unit,
+  limit,
+  offset,
+  connection,
 }: {
   keyFields?: Partial<InventoryInterface>;
   search?: string;
   status?: string;
   category?: string;
-  unit?: string; // dynamic filters like {inventoryId: 1, storeId: null}
+  unit?: string;
+  limit?: number;
+  offset?: number;
+  connection?: PoolConnection;
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
   let sql = `
     SELECT 
   ii.inventoryItemId,
@@ -266,6 +272,7 @@ WHERE 1=1
       sql += ` AND ii.inventoryItemQuantity = 0 `;
     }
   }
+
   sql += ` GROUP BY  
   ii.inventoryItemId,
   ii.inventoryId,
@@ -279,8 +286,101 @@ WHERE 1=1
   it.itemPrice,
   it.itemId 
   ORDER BY it.itemName ASC`;
+
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  console.log({ params });
+
+  return rows;
+};
+
+export const selectInventoryItemsCount = async ({
+  keyFields = {},
+  search,
+  status,
+  category,
+  unit,
+  connection,
+}: {
+  keyFields?: Partial<InventoryInterface>;
+  search?: string;
+  status?: string;
+  category?: string;
+  unit?: string;
+  limit?: number;
+  offset?: number;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `
+    SELECT 
+COUNT(DISTINCT ii.inventoryItemId) as totalItems
+FROM InventoryItems ii
+LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
+LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
+LEFT JOIN Categories c ON c.categoryId = it.categoryId
+LEFT JOIN SupplierItems si ON si.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+LEFT JOIN Suppliers s ON s.suppId = si.suppId
+WHERE 1=1
+  `;
+
+  const params: any[] = [];
+
+  // Build WHERE clauses dynamically
+  for (const [key, value] of Object.entries(keyFields)) {
+    // choose the right table alias depending on field
+    const tableAlias = [
+      "inventoryId",
+      "inventoryItemId",
+      "inventoryItemReferenceId",
+      "inventoryItemReference",
+      "inventoryItemReferenceType",
+    ].includes(key)
+      ? "ii"
+      : key === "storeId"
+      ? "i"
+      : key === "categoryId"
+      ? "c"
+      : "i";
+
+    if (value === null) {
+      sql += ` AND ${tableAlias}.${key} IS NULL`;
+    } else {
+      sql += ` AND ${tableAlias}.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (search) {
+    const wildcard = `%${search}%`;
+    sql += ` AND it.itemName LIKE ? `;
+    params.push(wildcard);
+  }
+  if (category) {
+    sql += ` AND c.categoryName = ? `;
+    params.push(category);
+  }
+  if (unit) {
+    sql += ` AND it.itemUnit = ? `;
+    params.push(unit);
+  }
+  if (status) {
+    if (status === "good") {
+      sql += ` AND ii.inventoryItemQuantity > 0 `;
+    }
+    if (status === "low") {
+      sql += ` AND ii.inventoryItemQuantity < ii.inventoryItemMin AND ii.inventoryItemQuantity != 0  `;
+    }
+    if (status === "no") {
+      sql += ` AND ii.inventoryItemQuantity = 0 `;
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
   return rows;
 };
 

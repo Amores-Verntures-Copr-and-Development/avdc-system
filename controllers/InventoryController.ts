@@ -6,10 +6,7 @@ import {
   CreateInventoryMovementDto,
 } from "@/dtos/inventory.dto";
 import {
-  insertInventory,
   insertInventoryItem,
-  selectInventory,
-  selectInventoryItems,
   updateInventoryItems,
 } from "../models/inventoryModels";
 import { handleCreateItem } from "../services/itemServices";
@@ -39,7 +36,10 @@ import {
   getInventoryItemsStatus,
 } from "@/services/inventory/inventory-items/get-inventory-items";
 import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
-import { processStockAdjustment } from "@/services/inventory/inventory-movement/process-stock-adjsutment";
+import {
+  processStockAdjustment,
+  processStockBulkAdjustment,
+} from "@/services/inventory/inventory-movement/process-stock-adjsutment";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import { AddItemToStoreDto } from "@/app/inventory/view/InventorySection/InventorySection";
@@ -121,12 +121,16 @@ export const getInventoryItems = async ({
   status,
   category,
   unit,
+  limit,
+  offset,
 }: {
   keyFields: Partial<InventoryInterface>;
   search?: string;
   status?: string;
   category?: string;
   unit?: string;
+  limit?: number;
+  offset?: number;
 }) => {
   try {
     const data = await findInventoryItemsByField({
@@ -135,6 +139,8 @@ export const getInventoryItems = async ({
       status,
       category,
       unit,
+      limit,
+      offset,
     });
 
     return {
@@ -278,6 +284,17 @@ export const processStockAdjustmetController = async (
 ) => {
   try {
     const res = await processStockAdjustment(data);
+    return { success: true, message: "Successfully adjust stock", result: res };
+  } catch (e) {
+    return { success: false, message: "Failed to adjust stock", error: e };
+  }
+};
+
+export const processStockBulkAdjustmetController = async (
+  data: CreateInventoryMovementDto[]
+) => {
+  try {
+    const res = await processStockBulkAdjustment(data);
     return { success: true, message: "Successfully adjust stock", result: res };
   } catch (e) {
     return { success: false, message: "Failed to adjust stock", error: e };
