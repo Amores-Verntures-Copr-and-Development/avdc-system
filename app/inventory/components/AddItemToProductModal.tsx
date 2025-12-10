@@ -61,6 +61,7 @@ const AddItemToProductModal = ({
           productPrice: 0,
           inventoryItemId: item.inventoryItemId,
           inventoryId: 0,
+          isDeduct: 1,
         }))
       );
     }

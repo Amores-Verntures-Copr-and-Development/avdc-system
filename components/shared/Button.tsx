@@ -71,13 +71,6 @@ const colorClasses: Record<
   },
 
   // Ghost - Subtle and minimal
-  secondary: {
-    base: "bg-transparent border border-transparent",
-    hover: "hover:bg-[#c51d71]/8",
-    focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
-    text: "text-slate-700",
-    disabled: "text-slate-400",
-  },
 
   // Danger - Softer red that complements the pink
   danger: {
