@@ -106,7 +106,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
               onClick={() => {
                 setShowAllItems("status");
               }}
-              color="nocolor"
+              color="neutral"
               icon={<PrinterIcon className="w-3 h-3" />}
             />
           </div>
@@ -118,7 +118,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
               onClick={() => {
                 setShowAllItems("status");
               }}
-              color="nocolor"
+              color="neutral"
               icon={<Download className="w-3 h-3" />}
             />
           </div>
@@ -130,7 +130,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
               onClick={() => {
                 setShowAllItems("status");
               }}
-              color="nocolor"
+              color="neutral"
               icon={<LogOut className="w-3 h-3" />}
             />
           </div>
@@ -226,7 +226,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                   <div className="flex gap-3">
                     <div>
                       <Button
-                        color="nocolor"
+                        color="secondary"
                         size="xs"
                         onClick={() => {
                           console.log("Print request:", reqData.requestNo);
@@ -238,7 +238,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                     </div>
                     <div>
                       <Button
-                        color="nocolor"
+                        color="secondary"
                         size="xs"
                         onClick={() => {
                           console.log("Download PDF:", reqData.requestNo);

@@ -177,7 +177,7 @@ const PosPage = () => {
                   size="xs"
                   isRounded={false}
                   icon={<Plus size={15} />}
-                  color="nocolor"
+                  color="secondary"
                   label=""
                 /> */}
               </div>

@@ -213,7 +213,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
           </div>
           <div className="flex justify-end gap-4">
             <div>
-              <Button size="sm" label="Cancel" color="nocolor" />
+              <Button size="sm" label="Cancel" color="secondary" />
             </div>
             <div>
               <Button

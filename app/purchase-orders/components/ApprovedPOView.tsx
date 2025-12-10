@@ -249,7 +249,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     isView === "all" &&
                                     expandedSupplier.suppId === data.suppId
                                       ? "primary"
-                                      : "nocolor"
+                                      : "secondary"
                                   }
                                   label="All"
                                   icon={<Edit size={15} />}
@@ -272,7 +272,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     isView === "store" &&
                                     expandedSupplier.suppId === data.suppId
                                       ? "primary"
-                                      : "nocolor"
+                                      : "secondary"
                                   }
                                   label="Store"
                                   icon={<Edit size={15} />}
@@ -294,7 +294,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       "Function not implemented."
                                     );
                                   }}
-                                  color="nocolor"
+                                  color="secondary"
                                   label="Edit"
                                   icon={<Edit size={15} />}
                                   className="font-semibold text-gray-700 text-xs"
@@ -306,7 +306,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     setSelectedSupplier(data);
                                     setShowROPDF("supplier");
                                   }}
-                                  color="nocolor"
+                                  color="secondary"
                                   label="PDF"
                                   icon={
                                     <FileText
@@ -345,7 +345,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                         index
                                       )
                                     }
-                                    color="nocolor"
+                                    color="secondary"
                                     label="Send"
                                     icon={
                                       <Send
@@ -458,7 +458,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                         "Function not implemented."
                                       );
                                     }}
-                                    color="nocolor"
+                                    color="secondary"
                                     label="Edit"
                                     icon={<Edit size={15} />}
                                     className="font-semibold text-gray-700 text-xs"
@@ -473,7 +473,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       setSelectedSupplier(data);
                                       setShowROPDF("supplier");
                                     }}
-                                    color="nocolor"
+                                    color="secondary"
                                     label="PDF"
                                     icon={
                                       <FileText
@@ -568,7 +568,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           <div className="flex gap-3">
             <div className="">
               <Button
-                color="nocolor"
+                color="secondary"
                 size="sm"
                 onClick={function (): void {
                   setShowROPDF("po");

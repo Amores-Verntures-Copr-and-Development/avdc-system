@@ -539,7 +539,7 @@ const EditItemDetails: React.FC<
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
         <Button
           size="sm"
-          color="nocolor"
+          color="secondary"
           label="Cancel"
           onClick={handleCancel}
           className="font-medium"
@@ -709,7 +709,7 @@ const StockAdjustment: React.FC<
       <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
         <Button
           size="sm"
-          color="nocolor"
+          color="secondary"
           label="Cancel"
           onClick={handleCancel}
           className="font-medium"

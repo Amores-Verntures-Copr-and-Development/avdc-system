@@ -36,7 +36,6 @@ const PurchaserDashboard = () => {
     fetcher
   );
 
-
   // Provide proper default values
   const defaultStats: DashboardStats = {
     totalPurchase: 0,

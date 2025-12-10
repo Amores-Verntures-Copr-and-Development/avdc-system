@@ -70,7 +70,12 @@ const AddItemToSupplierModal: React.FC<AddItemToSupplierModalProps> = ({
       </div>
       <div className="flex justify-end gap-5">
         <div>
-          <Button onClick={onCancel} size="sm" label="Cancel" color="nocolor" />
+          <Button
+            onClick={onCancel}
+            size="sm"
+            label="Cancel"
+            color="secondary"
+          />
         </div>
         <div>
           <Button

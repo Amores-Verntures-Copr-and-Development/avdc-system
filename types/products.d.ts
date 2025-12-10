@@ -7,9 +7,10 @@ export interface Products {
   productUpdatedAt: string;
   productDeletedAt: string;
   productCreatedBy: number;
+  isDeduct: number;
   inventoryItemId: number;
   inventoryId: number;
-  prodCatId: number;
+  prodCatId: number | null;
   productPrices?: ProductPrices[];
 }
 

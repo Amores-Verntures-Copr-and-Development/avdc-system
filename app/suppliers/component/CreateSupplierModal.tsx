@@ -90,7 +90,7 @@ const CreateSupplierModal: React.FC<CreateSupplierModalProps> = ({
             size="sm"
             label="Cancel"
             onClick={onCancel}
-            color="nocolor"
+            color="secondary"
             className="font-semibold"
           />
         </div>

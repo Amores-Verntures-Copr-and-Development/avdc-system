@@ -8,7 +8,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, LogOut } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -137,6 +137,8 @@ const ShowAllIItems = ({
         </h3>
         <div>
           <Button
+            icon={<LogOut className="w-3 h-3 2xl:w-3 2xl:h-3" />}
+            color="neutral"
             size="xs"
             label="Back"
             onClick={() => {

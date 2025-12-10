@@ -134,7 +134,7 @@ const FilterDropdown = ({
               <Button
                 label="Cancel"
                 size="sm"
-                color="nocolor"
+                color="secondary"
                 onClick={() => setShowFilters(false)}
               />
             </div>

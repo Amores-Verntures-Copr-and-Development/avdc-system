@@ -146,28 +146,28 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
             <Button
               size="xs"
               label="Today"
-              color="nocolor"
+              color="secondary"
               onClick={setToday}
               className="justify-center"
             />
             <Button
               size="xs"
               label="Yesterday"
-              color="nocolor"
+              color="secondary"
               onClick={setYesterday}
               className="justify-center"
             />
             <Button
               size="xs"
               label="Past Month"
-              color="nocolor"
+              color="secondary"
               onClick={setPastMonth}
               className="justify-center"
             />
             <Button
               size="xs"
               label="Past 3 Months"
-              color="nocolor"
+              color="secondary"
               onClick={setPastThreeMonths}
               className="justify-center"
             />
@@ -178,7 +178,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
             <Button
               size="xs"
               label="Clear"
-              color="nocolor"
+              color="secondary"
               onClick={clearDates}
             />
             <Button size="xs" label="Apply" onClick={() => setIsShow(false)} />

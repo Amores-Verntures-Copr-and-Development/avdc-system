@@ -3,7 +3,7 @@ import React from "react";
 interface InventoryCardProps {
   title: string;
   subtitle?: string;
-  value: number;
+  value: string;
   icon?: React.ReactNode;
   iconBg?: string;
 }

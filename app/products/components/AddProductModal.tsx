@@ -8,7 +8,8 @@ import { ItemInterface } from "@/types/items";
 import React, { useState } from "react";
 
 const AddProductModal = () => {
-  const [selection, setSelection] = useState<"inventory" | "new">("inventory");
+  const [selection, setSelection] = useState<"inventory" | "new">("new");
+
   return (
     <div className="flex flex-col gap-2 w-full">
       <span className="text-sm font-semibold">
@@ -19,41 +20,24 @@ const AddProductModal = () => {
         <div>
           <Button
             size="xs"
-            label="Inventory"
-            color={selection === "inventory" ? "primary" : "nocolor"}
+            label="New"
+            color={selection === "new" ? "primary" : "secondary"}
             onClick={() => {
-              setSelection("inventory");
+              setSelection("new");
             }}
           />
         </div>
         <div>
           <Button
             size="xs"
-            label="New"
-            color={selection === "new" ? "primary" : "nocolor"}
+            label="Inventory"
+            color={selection === "inventory" ? "primary" : "secondary"}
             onClick={() => {
-              setSelection("new");
+              setSelection("inventory");
             }}
           />
         </div>
       </div>
-      {selection === "inventory" && (
-        <>
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-4">
-              {" "}
-              <DropDownSearchItem
-                sizes="xs"
-                onSelect={function (item: ItemInterface): void {
-                  console.log(item);
-                }}
-                label="Search item"
-              />{" "}
-              <Input label={"Price"} sizes={"xs"} />
-            </div>
-          </div>
-        </>
-      )}
       {selection === "new" && (
         <>
           <div className="flex flex-wrap gap-4">
@@ -123,6 +107,24 @@ const AddProductModal = () => {
           </div>
         </>
       )}
+      {selection === "inventory" && (
+        <>
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-4">
+              {" "}
+              <DropDownSearchItem
+                sizes="xs"
+                onSelect={function (item: ItemInterface): void {
+                  console.log(item);
+                }}
+                label="Search item"
+              />{" "}
+              <Input label={"Price"} sizes={"xs"} />
+            </div>
+          </div>
+        </>
+      )}
+
       <div className="flex justify-end gap-2 mt-10">
         <div>
           {" "}

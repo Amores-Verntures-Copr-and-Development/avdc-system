@@ -96,7 +96,7 @@ const AddItemROModal = ({
           <Button
             label="Cancel"
             size="sm"
-            color="nocolor"
+            color="secondary"
             disabled={
               requestInventoryItem.includes(formatData.invItem) || loading
             }

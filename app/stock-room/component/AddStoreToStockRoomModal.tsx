@@ -73,7 +73,7 @@ const AddStoreToStockRoomModal = ({
       </div>
       <div className="flex justify-end gap-4">
         <div>
-          <Button color="nocolor" size="sm" label="Cancel" />
+          <Button color="secondary" size="sm" label="Cancel" />
         </div>
         <div>
           <Button size="sm" label="Submit" onClick={handleSubmit} />

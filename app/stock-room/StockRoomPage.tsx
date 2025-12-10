@@ -76,7 +76,7 @@ const StockRoomPage = () => {
             <div>
               <div>
                 <Button
-                  color="nocolor"
+                  color="secondary"
                   size="sm"
                   icon={<ArrowLeft className="w-4 h-4" />}
                   label="Back"
@@ -97,7 +97,9 @@ const StockRoomPage = () => {
                     setViewSelection("inventory");
                   }}
                   label="Inventory"
-                  color={viewSelection === "inventory" ? "primary" : "nocolor"}
+                  color={
+                    viewSelection === "inventory" ? "primary" : "secondary"
+                  }
                   className="text-xs font-semibold"
                   icon={<Package size={16} />}
                 />
@@ -107,7 +109,9 @@ const StockRoomPage = () => {
                   onClick={function (): void {
                     setViewSelection("purchaser");
                   }}
-                  color={viewSelection === "purchaser" ? "primary" : "nocolor"}
+                  color={
+                    viewSelection === "purchaser" ? "primary" : "secondary"
+                  }
                   isRounded={false}
                   size="sm"
                   label="Purchaser"
@@ -117,7 +121,7 @@ const StockRoomPage = () => {
               </div>
               <div>
                 <Button
-                  color={viewSelection === "stores" ? "primary" : "nocolor"}
+                  color={viewSelection === "stores" ? "primary" : "secondary"}
                   onClick={function (): void {
                     setViewSelection("stores");
                   }}

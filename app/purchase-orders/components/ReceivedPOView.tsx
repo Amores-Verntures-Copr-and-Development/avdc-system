@@ -310,7 +310,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   isView === "all" &&
                                   expandedSupplier === supplier.suppId
                                     ? "primary"
-                                    : "nocolor"
+                                    : "secondary"
                                 }
                                 label="All"
                                 icon={<Edit size={15} />}
@@ -331,7 +331,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   isView === "store" &&
                                   expandedSupplier === supplier.suppId
                                     ? "primary"
-                                    : "nocolor"
+                                    : "secondary"
                                 }
                                 label="Store"
                                 icon={<Store size={15} />}
@@ -348,7 +348,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     <Button
                                       isRounded={false}
                                       size="xs"
-                                      color="nocolor"
+                                      color="secondary"
                                       label="Edit"
                                       icon={<Edit size={15} />}
                                       className="font-semibold text-gray-700 text-xs"
@@ -363,7 +363,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     <Button
                                       isRounded={false}
                                       size="xs"
-                                      color="nocolor"
+                                      color="secondary"
                                       label="PDF"
                                       icon={
                                         <Download
@@ -597,7 +597,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           <div className="flex gap-3">
             <div>
               <Button
-                color="nocolor"
+                color="secondary"
                 size="sm"
                 onClick={function (): void {
                   throw new Error("Function not implemented.");
@@ -609,7 +609,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             </div>
             <div className="">
               <Button
-                color="nocolor"
+                color="secondary"
                 size="sm"
                 label={"Download PDF"}
                 icon={<Edit size={15} className="text-gray-700" />}
@@ -661,7 +661,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             </p>
           </div>
           <div className="flex justify-end gap-3">
-            <Button size="sm" label="No, Cancel" color="nocolor" />
+            <Button size="sm" label="No, Cancel" color="secondary" />
             <Button
               size="sm"
               label="Yes, Deliver"

@@ -10,7 +10,7 @@ type ButtonColor =
   | "success"
   | "tertiary"
   | "notselected"
-  | "nocolor"
+  | "secondary"
   | "warning"
   | "neutral";
 
@@ -71,7 +71,7 @@ const colorClasses: Record<
   },
 
   // Ghost - Subtle and minimal
-  nocolor: {
+  secondary: {
     base: "bg-transparent border border-transparent",
     hover: "hover:bg-[#c51d71]/8",
     focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",

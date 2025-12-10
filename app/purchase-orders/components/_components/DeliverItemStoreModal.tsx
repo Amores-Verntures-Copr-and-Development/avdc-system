@@ -81,7 +81,7 @@ const DeliverItemStoreModal = ({
       <div className="flex gap-2 mt-auto pt-4">
         {" "}
         {/* mt-auto pushes to bottom */}
-        <Button size="xs" color="nocolor" label="Cancel" />
+        <Button size="xs" color="secondary" label="Cancel" />
         <Button size="xs" label="Submit" onClick={handleSubmit} />
       </div>
     </div>

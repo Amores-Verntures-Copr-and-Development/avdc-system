@@ -256,7 +256,6 @@ const Sidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useSession();
 
-
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 1024; // lg breakpoint (1024px)

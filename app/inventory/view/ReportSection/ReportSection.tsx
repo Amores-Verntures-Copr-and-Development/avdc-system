@@ -77,7 +77,7 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
                   }}
                   size="xs"
                   className="font-semibold"
-                  color="nocolor"
+                  color="secondary"
                 />
               </div>
               <div>

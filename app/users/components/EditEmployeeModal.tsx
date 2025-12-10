@@ -101,7 +101,7 @@ const EditEmployeeModal = ({
         />
         <div className="flex justify-end mt-auto gap-4">
           <div>
-            <Button label="Cancel" size="xs" color="nocolor" />
+            <Button label="Cancel" size="xs" color="secondary" />
           </div>
           <div>
             <Button label="Save Position" size="xs" />
@@ -143,7 +143,7 @@ const EditEmployeeModal = ({
               <Button
                 label="Cancel"
                 size="xs"
-                color="nocolor"
+                color="secondary"
                 disabled={isLoadingAssign}
               />
             </div>

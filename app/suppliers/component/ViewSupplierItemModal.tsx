@@ -94,7 +94,7 @@ const ViewSupplierItemModal = ({
           label="Update Price"
           size="xs"
           isRounded={false}
-          color="nocolor"
+          color="secondary"
           icon={<Edit className="w-3 h-3" />}
           onClick={() => {
             setShowUpdatePrice(true);
@@ -221,7 +221,7 @@ const ViewSupplierItemModal = ({
             <Button
               size="sm"
               label="Cancel"
-              color="nocolor"
+              color="secondary"
               onClick={() => setShowUpdatePrice(false)}
               disabled={isUpdatingPrice}
             />

@@ -177,7 +177,7 @@ const SelectedSupplierPage = ({
             size="xs"
             icon={<LogOut />}
             label="Back"
-            color="nocolor"
+            color="secondary"
             onClick={onBack}
           />
         </div>
@@ -318,7 +318,7 @@ const SelectedSupplierPage = ({
             </div>
             <div className="flex justify-end gap-4">
               <div>
-                <Button size="sm" label="Cancel" color="nocolor" />
+                <Button size="sm" label="Cancel" color="secondary" />
               </div>
               <div>
                 <Button

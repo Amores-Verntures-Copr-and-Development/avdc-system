@@ -60,7 +60,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
 
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
- 
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "Item Name",
@@ -338,7 +337,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   <div className="flex gap-3">
                     <div>
                       <Button
-                        color="nocolor"
+                        color="secondary"
                         size="xs"
                         onClick={() => {
                           console.log("Print request:", reqData.requestNo);
@@ -350,7 +349,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                     </div>
                     <div>
                       <Button
-                        color="nocolor"
+                        color="secondary"
                         size="xs"
                         onClick={() => {
                           console.log("Download PDF:", reqData.requestNo);
@@ -421,7 +420,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         <div className="flex gap-3">
           <div className="">
             <Button
-              color="nocolor"
+              color="secondary"
               size="sm"
               onClick={function (): void {
                 throw new Error("Function not implemented.");

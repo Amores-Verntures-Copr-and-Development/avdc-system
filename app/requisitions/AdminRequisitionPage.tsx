@@ -138,7 +138,7 @@ const AdminRequisitionPage = () => {
                         // setShowCreatePO(true);
                       }}
                       size="xs"
-                      color="nocolor"
+                      color="secondary"
                     />
                   </div>
                   {selectedtedRows.every(

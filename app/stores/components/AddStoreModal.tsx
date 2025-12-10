@@ -57,7 +57,7 @@ const AddStoreModal: React.FC<AddStoreModalProps> = ({
           <Button
             size="md"
             className="text-sm font-semibold"
-            color="nocolor"
+            color="secondary"
             label="Cancel"
             onClick={onCancel}
           />

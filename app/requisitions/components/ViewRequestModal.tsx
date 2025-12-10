@@ -364,7 +364,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   size="sm"
                   label="PDF"
                   className="text-xs font-semibold"
-                  color="nocolor"
+                  color="secondary"
                 />
               </div>
               {/* <div>
@@ -373,7 +373,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   size="sm"
                   label="Print"
                   className="text-xs font-semibold"
-                  color="nocolor"
+                  color="secondary"
                 />
               </div> */}
               {isSelectingAddItemPO ? (
@@ -387,7 +387,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       size="sm"
                       label="Cancel"
                       className="text-xs font-semibold"
-                      color="nocolor"
+                      color="secondary"
                     />
                   </div>
                   <div>
@@ -412,7 +412,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       size="sm"
                       label="Edit"
                       className="text-xs font-semibold"
-                      color="nocolor"
+                      color="secondary"
                     />
                   </div>
                   {Boolean(

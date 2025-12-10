@@ -549,9 +549,12 @@ export const selectInventoryItemsStockStatus = async (inventoryId: number) => {
   COUNT(ii.inventoryItemId) AS totalItems,
   SUM(CASE WHEN ii.inventoryItemQuantity > ii.inventoryItemMin THEN 1 ELSE 0 END) AS goodStock,
   SUM(CASE WHEN ii.inventoryItemQuantity <= ii.inventoryItemMin AND ii.inventoryItemQuantity > 0 THEN 1 ELSE 0 END) AS lowStock,
-  SUM(CASE WHEN ii.inventoryItemQuantity = 0 THEN 1 ELSE 0 END) AS outStock
-  FROM Inventories i
-  LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId WHERE i.inventoryId = ?`;
+  SUM(CASE WHEN ii.inventoryItemQuantity = 0 THEN 1 ELSE 0 END) AS outStock,
+  SUM(ii.inventoryItemQuantity * it.itemPrice) AS totalCost
+FROM Inventories i
+LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId
+LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
+WHERE i.inventoryId = ?`;
   const [rows] = await pool.execute(sql, [inventoryId]);
   return rows;
 };

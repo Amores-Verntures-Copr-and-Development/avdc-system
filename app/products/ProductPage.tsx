@@ -4,7 +4,14 @@ import PageHeader from "@/components/shared/PageHeader";
 import React, { useEffect, useState } from "react";
 import ProductCardDetails from "./components/ProductCardDetails";
 import PageLayout from "@/components/shared/PageLayout";
-import { Boxes, Package2, PhilippinePeso, Plus, Users } from "lucide-react";
+import {
+  Boxes,
+  Layers,
+  Package2,
+  PhilippinePeso,
+  Plus,
+  Users,
+} from "lucide-react";
 import Table, { Column } from "@/components/shared/Table";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
@@ -91,19 +98,21 @@ const ProductPage = () => {
           data={itemResponse.data}
           totalCount={20}
           maxHeight="h-full"
+          searchUrl="products"
+          // filterConfig={[]}
           renderTopActions={
             <div className="flex gap-2">
               <div>
                 <Button
                   isRounded={false}
                   className="text-sm"
-                  label="Add Category"
+                  label="Create Category"
                   size="xs"
-                  icon={<Plus size={20} />}
+                  icon={<Layers size={20} />}
                   onClick={() => {
                     setShowAddProductModal(true);
                   }}
-                  color="secondary"
+                  color="neutral"
                 />
               </div>
               <div>
@@ -124,6 +133,17 @@ const ProductPage = () => {
       </div>
       <Modal
         title="Add Product"
+        size="lg"
+        className="min-h-[50%]"
+        isOpen={showAddProductModal}
+        onClose={function (): void {
+          setShowAddProductModal(false);
+        }}
+      >
+        <AddProductModal />
+      </Modal>
+      <Modal
+        title="Create Product Category"
         size="lg"
         className="min-h-[50%]"
         isOpen={showAddProductModal}

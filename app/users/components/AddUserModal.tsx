@@ -345,7 +345,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             <Button
               size="md"
               className="text-sm font-semibold"
-              color="nocolor"
+              color="secondary"
               label="Back"
               onClick={goToPrevStep}
             />
@@ -353,7 +353,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             <Button
               size="md"
               className="text-sm font-semibold"
-              color="nocolor"
+              color="secondary"
               label="Cancel"
               onClick={onCancel}
             />

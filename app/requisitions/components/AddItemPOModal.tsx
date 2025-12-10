@@ -81,7 +81,7 @@ const AddItemPOModal = ({
             {" "}
             {/* Add some padding */}
             <div>
-              <Button size="sm" label="Cancel" color="nocolor" />
+              <Button size="sm" label="Cancel" color="secondary" />
             </div>
             <div>
               <Button

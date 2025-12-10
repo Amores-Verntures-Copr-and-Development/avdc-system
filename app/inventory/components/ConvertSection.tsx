@@ -191,7 +191,7 @@ const ConvertSection = ({
                 <Button
                   label="Convert"
                   size="xs"
-                  color="nocolor"
+                  color="secondary"
                   disabled
                   onClick={handleConvertItem}
                 />

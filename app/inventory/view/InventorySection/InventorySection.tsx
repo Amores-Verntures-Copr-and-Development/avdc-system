@@ -70,8 +70,12 @@ interface InventorySectionProps {
   inventoryId: number | null;
   user: UserAuth | null;
   inventoryType: "stores" | "stock-room" | "inventoryId";
+  mutate: () => void;
 }
-const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
+const InventorySection: React.FC<InventorySectionProps> = ({
+  inventoryId,
+  mutate: mutateStats,
+}) => {
   const searchParams = useSearchParams();
   const { categoryOptions } = useCategories({
     inventoryId: inventoryId ?? 0,
@@ -471,6 +475,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
   };
 
   const handleUpdateData = async () => {
+    mutateStats();
     const updatedData = await mutate();
     // The updatedData should contain the fresh data
     const findSelectedInvItem = updatedData?.data.find(
@@ -503,6 +508,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         throw new Error(res.err);
       }
       mutate();
+      mutateStats();
       toast.success(res.message);
       return true;
     } catch (e) {
@@ -529,6 +535,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
         console.log("Res: ", res);
         throw new Error(res.err);
       }
+      mutateStats();
       mutate();
       handleClear();
       toast.success(res.message);
@@ -728,7 +735,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({ inventoryId }) => {
                   }}
                   size="xs"
                   className="font-semibold"
-                  color="nocolor"
+                  color="secondary"
                 />
               </div>
               <div>

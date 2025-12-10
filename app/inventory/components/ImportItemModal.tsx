@@ -122,7 +122,12 @@ const ImportItemModal = ({
 
       <div className="flex justify-end gap-2 mt-auto">
         <div>
-          <Button size="xs" label="cancel" color="nocolor" disabled={loading} />
+          <Button
+            size="xs"
+            label="cancel"
+            color="secondary"
+            disabled={loading}
+          />
         </div>
         <div>
           <Button

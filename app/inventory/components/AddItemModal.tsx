@@ -56,7 +56,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
           <Button
             size="xs"
             label="Create New Item"
-            color={selection === "create" ? "primary" : "nocolor"}
+            color={selection === "create" ? "primary" : "secondary"}
             onClick={() => {
               setSelection("create");
             }}
@@ -66,7 +66,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
           <Button
             size="xs"
             label="Warehouse"
-            color={selection === "warehouse" ? "primary" : "nocolor"}
+            color={selection === "warehouse" ? "primary" : "secondary"}
             onClick={() => {
               setSelection("warehouse");
             }}

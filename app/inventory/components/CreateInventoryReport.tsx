@@ -271,7 +271,7 @@ const CreateInventoryReport = ({
         <Button
           size="sm"
           label="Cancel"
-          color="nocolor"
+          color="secondary"
           onClick={onCancel}
           disabled={loading || isGenerating}
         />

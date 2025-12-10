@@ -53,7 +53,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
           <Button
             size="md"
             className="text-sm font-semibold"
-            color="nocolor"
+            color="secondary"
             label="Cancel"
             onClick={onCancel}
           />

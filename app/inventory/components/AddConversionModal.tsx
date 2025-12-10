@@ -185,7 +185,7 @@ const AddConversionModal = ({
         <Button
           label="Cancel"
           size="sm"
-          color="nocolor"
+          color="secondary"
           className="px-6 border border-gray-300 hover:bg-gray-50"
         />
         <Button

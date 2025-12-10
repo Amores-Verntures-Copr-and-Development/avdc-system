@@ -101,7 +101,7 @@ const InventoryPage = () => {
                       setSelectionSection("inventory");
                     }}
                     color={
-                      selectionSection === "inventory" ? "primary" : "nocolor"
+                      selectionSection === "inventory" ? "primary" : "secondary"
                     }
                     label="Inventory"
                     icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
@@ -115,7 +115,7 @@ const InventoryPage = () => {
                       setSelectionSection("movement");
                     }}
                     color={
-                      selectionSection === "movement" ? "primary" : "nocolor"
+                      selectionSection === "movement" ? "primary" : "secondary"
                     }
                     label="Stock Movement"
                     icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
@@ -129,7 +129,7 @@ const InventoryPage = () => {
                       setSelectionSection("report");
                     }}
                     color={
-                      selectionSection === "report" ? "primary" : "nocolor"
+                      selectionSection === "report" ? "primary" : "secondary"
                     }
                     label="Report"
                     icon={<FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />}
