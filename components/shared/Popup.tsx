@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import clsx from "clsx";
 
 import { LucideIcon, X } from "lucide-react";
@@ -12,6 +12,7 @@ interface PopupProps {
   children: React.ReactNode;
   subtitle?: string;
   icon?: LucideIcon;
+  closeOnClickOutside?: boolean; // New prop to control this behavior
 }
 
 const Popup: React.FC<PopupProps> = ({
@@ -23,19 +24,54 @@ const Popup: React.FC<PopupProps> = ({
   background = "bg-black bg-opacity-40 backdrop-blur-sm",
   children,
   subtitle,
+  closeOnClickOutside = true, // Default to true
 }) => {
   const [show, setShow] = useState(isOpen);
+  const popupRef = useRef<HTMLDivElement>(null);
 
-  // Handle mount/unmount for animation
+  // Handle ESC key press
   useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
     if (isOpen) {
+      document.addEventListener("keydown", handleEsc);
       setShow(true);
     } else {
-      // delay unmount until animation finishes
-      const timer = setTimeout(() => setShow(false), 300); // duration-300
+      // Delay unmount until animation finishes
+      const timer = setTimeout(() => setShow(false), 300);
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+
+    return () => {
+      document.removeEventListener("keydown", handleEsc);
+    };
+  }, [isOpen, onClose]);
+
+  // Handle click outside
+  useEffect(() => {
+    if (!isOpen || !closeOnClickOutside) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        popupRef.current &&
+        !popupRef.current.contains(event.target as Node)
+      ) {
+        onClose();
+      }
+    };
+
+    // Add event listener with a slight delay to avoid immediate triggering
+    const timer = setTimeout(() => {
+      document.addEventListener("mousedown", handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen, onClose, closeOnClickOutside]);
 
   if (!show) return null;
 
@@ -62,11 +98,22 @@ const Popup: React.FC<PopupProps> = ({
         background
       )}
     >
+      {/* Clickable overlay - alternative approach */}
+      {closeOnClickOutside && (
+        <div
+          className="absolute inset-0"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
       <div
+        ref={popupRef}
         className={clsx(
-          "fixed bg-white shadow-lg rounded-lg flex flex-col",
+          "fixed bg-white shadow-lg rounded-lg flex flex-col z-10",
           positionClasses[position]
         )}
+        onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
       >
         {/* Header */}
         <div className="flex items-center justify-between p-3 3xl:p-6 border-b border-gray-200 bg-white">
@@ -86,6 +133,7 @@ const Popup: React.FC<PopupProps> = ({
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Close popup"
           >
             <X className="w-3 h-3 xl:w-5 xl:h-5 text-gray-500" />
           </button>
