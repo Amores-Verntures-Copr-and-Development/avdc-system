@@ -45,7 +45,9 @@ const SelectedSupplierPage = ({
   user,
 }: SelectedSupplierPageProps) => {
   const searchParams = useSearchParams();
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<"row" | "rows" | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedRows, setSelectedRows] = useState<DisplaySupplierItemDto[]>();
   const [selectedRow, setSelectedRow] = useState<DisplaySupplierItemDto | null>(
@@ -224,7 +226,7 @@ const SelectedSupplierPage = ({
                     icon={<Trash2 size={20} />}
                     label="Remove Item"
                     onClick={function (): void {
-                      setShowDeleteModal(true);
+                      setShowDeleteModal("rows");
                     }}
                     color="danger"
                   />
@@ -265,7 +267,10 @@ const SelectedSupplierPage = ({
                 icon={<Eye size={18} />}
               />
               <IconButton
-                onClick={() => {}}
+                onClick={() => {
+                  setShowDeleteModal("row");
+                  setSelectedRow(row);
+                }}
                 label={"Remove"}
                 bg={"red"}
                 icon={<Trash2 size={18} />}
@@ -301,45 +306,86 @@ const SelectedSupplierPage = ({
             data={selectedRow}
             user={user}
             mutateSupplierItem={handleUpdateData}
+            handleRemoveItemFromSupplier={handleRemoveItemFromSupplier}
+            isDeleting={isDeleting}
+            suppData={data}
+            onClose={function (): void {
+              setShowViewItem(false);
+            }}
           />
         </Popup>
         <Modal
           title={`Remove ${data?.suppName}'s items`}
-          isOpen={showDeleteModal}
+          isOpen={showDeleteModal !== null}
           onClose={function (): void {
-            setShowDeleteModal(false);
+            setShowDeleteModal(null);
           }}
         >
-          <div className="space-y-4">
-            {" "}
-            <div className="text-center">
-              Are you sure you want to remove {selectedRows?.length} item(s)
-              from {data?.suppName}?
-            </div>
-            <div className="flex justify-end gap-4">
-              <div>
-                <Button size="sm" label="Cancel" color="secondary" />
+          {showDeleteModal === "rows" ? (
+            <div className="space-y-4">
+              {" "}
+              <div className="text-center">
+                Are you sure you want to remove{" "}
+                <span className="font-semibold">{selectedRows?.length}</span>{" "}
+                item(s) from {data?.suppName}?
               </div>
-              <div>
-                <Button
-                  size="sm"
-                  label="Remove"
-                  loading={isDeleting}
-                  onClick={async () => {
-                    if (!selectedRows) {
-                      return;
-                    }
-                    const success = await handleRemoveItemFromSupplier(
-                      selectedRows
-                    );
-                    if (success) {
-                      setShowDeleteModal(false);
-                    }
-                  }}
-                />
+              <div className="flex justify-end gap-4">
+                <div>
+                  <Button size="sm" label="Cancel" color="secondary" />
+                </div>
+                <div>
+                  <Button
+                    size="sm"
+                    label="Remove"
+                    loading={isDeleting}
+                    onClick={async () => {
+                      if (!selectedRows) {
+                        return;
+                      }
+                      const success = await handleRemoveItemFromSupplier(
+                        selectedRows
+                      );
+                      if (success) {
+                        setShowDeleteModal(null);
+                      }
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {" "}
+              <div className="text-center">
+                Are you sure you want to remove{" "}
+                <span className="font-semibold">{selectedRow?.itemName}</span>{" "}
+                item(s) from {data?.suppName}?
+              </div>
+              <div className="flex justify-end gap-4">
+                <div>
+                  <Button size="sm" label="Cancel" color="secondary" />
+                </div>
+                <div>
+                  <Button
+                    size="sm"
+                    label="Remove"
+                    loading={isDeleting}
+                    onClick={async () => {
+                      if (!selectedRow) {
+                        return;
+                      }
+                      const success = await handleRemoveItemFromSupplier([
+                        selectedRow,
+                      ]);
+                      if (success) {
+                        setShowDeleteModal(null);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </Modal>
       </div>
     </PageLayout>

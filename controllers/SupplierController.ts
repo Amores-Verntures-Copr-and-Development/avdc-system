@@ -136,13 +136,11 @@ export const updateSupplierItems = async ({
       }
 
       case "price": {
-        console.log({ data });
         const updateItemPrice: Partial<SupplierItem>[] = data.map((item) => ({
           suppItemId: item.suppItemId,
           suppItemPrice: item.suppItemPrice,
           suppItemCreatedBy: item.suppItemCreatedBy,
         }));
-        console.log({ updateItemPrice });
         await handleUpdateSupplierItemPrice({ updates: updateItemPrice });
         message = "Price updated successfully!";
         break;

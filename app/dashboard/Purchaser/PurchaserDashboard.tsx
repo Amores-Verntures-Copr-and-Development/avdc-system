@@ -51,19 +51,19 @@ const PurchaserDashboard = () => {
       <div className="lg:col-span-3  flex flex-1 flex-col gap-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <DashboardCard
-            title="Total Purchase Order"
+            title="Total Inventory Cost"
             value={stats.totalPurchase ?? 0}
             icon={ShoppingCart}
             bgColor="bg-primary-1"
           />
           <DashboardCard
-            title="Total Completed Request"
+            title="Total Purchase Cost"
             value={stats.completedRequest ?? 0}
             icon={Calendar}
             bgColor="bg-purple-600"
           />
           <DashboardCard
-            title="Low Stock"
+            title="Total Purchase Cost"
             value={stats.lowStock ?? 0}
             icon={AlertTriangle}
             bgColor="bg-amber-500"

@@ -9,7 +9,7 @@ import React, { useEffect, useState } from "react";
 import PriceUpdateCard from "./PriceUpdateCard";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
-import { SupplierItem, SupplierItemPrices } from "@/types/supplier";
+import { Supplier, SupplierItem, SupplierItemPrices } from "@/types/supplier";
 import Modal from "@/components/shared/Modal";
 import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
@@ -17,16 +17,25 @@ import toast from "react-hot-toast";
 import { UserAuth } from "@/hooks/useSession";
 
 interface ViewSupplierItemModalProps {
+  suppData: Supplier | null;
   data: DisplaySupplierItemDto | null;
   user: UserAuth | null;
   mutateSupplierItem: () => void;
+  handleRemoveItemFromSupplier: (data: SupplierItem[]) => Promise<boolean>;
+  isDeleting?: boolean;
+  onClose: () => void;
 }
 
 const ViewSupplierItemModal = ({
   data,
   user,
   mutateSupplierItem,
+  handleRemoveItemFromSupplier,
+  isDeleting,
+  suppData,
+  onClose,
 }: ViewSupplierItemModalProps) => {
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showUpdatePrice, setShowUpdatePrice] = useState(false);
   const [isUpdatingPrice, setIsUpdatingPrice] = useState(false);
   const [updateForm, setUpdateForm] = useState<SupplierItem>({
@@ -104,6 +113,9 @@ const ViewSupplierItemModal = ({
           label="Delete"
           size="xs"
           isRounded={false}
+          onClick={() => {
+            setShowDeleteModal(true);
+          }}
           color="danger"
           icon={<Delete className="w-3 h-3" />}
         />
@@ -231,6 +243,44 @@ const ViewSupplierItemModal = ({
               onClick={handleUpdatePrice}
               loading={isUpdatingPrice}
             />
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        title={`Remove ${data?.supplierName}'s items`}
+        isOpen={showDeleteModal}
+        onClose={function (): void {
+          setShowDeleteModal(false);
+        }}
+      >
+        <div className="space-y-4">
+          {" "}
+          <div className="text-center">
+            Are you sure you want to remove{" "}
+            <span className="font-semibold">{data?.itemName}</span> from{" "}
+            {suppData?.suppName}?
+          </div>
+          <div className="flex justify-end gap-4">
+            <div>
+              <Button size="sm" label="Cancel" color="secondary" />
+            </div>
+            <div>
+              <Button
+                size="sm"
+                label="Remove"
+                loading={isDeleting}
+                onClick={async () => {
+                  if (!data) {
+                    return;
+                  }
+                  const success = await handleRemoveItemFromSupplier([data]);
+                  if (success) {
+                    setShowDeleteModal(false);
+                    onClose();
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </Modal>

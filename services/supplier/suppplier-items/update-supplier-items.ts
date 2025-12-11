@@ -64,7 +64,6 @@ export async function handleUpdateSupplierItemPrice({
     const hasSuppItemId = updates.every((item) => item.suppItemId);
 
     if (hasSuppItemId) {
-      console.log(`hasSuppItemId: `, { hasSuppItemId });
       const itemPrices: CreateSupplierItemPriceDto[] = updates
         .filter(
           (item) =>
