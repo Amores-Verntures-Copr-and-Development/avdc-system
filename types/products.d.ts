@@ -1,17 +1,32 @@
 export interface Products {
-  productId: number;
-  productCode: string;
-  productPrice: number;
-  productDescription: string;
-  productCreatedAt: string;
-  productUpdatedAt: string;
-  productDeletedAt: string;
-  productCreatedBy: number;
-  isDeduct: number;
-  inventoryItemId: number;
-  inventoryId: number;
+  prodId: number;
+  prodName: string;
+  prodCreatedAt: string;
+  prodUpdatedAt: string;
+  prodDeletedAt: string;
+  storeId: number;
+  prodCreatedBy: number;
   prodCatId: number | null;
-  productPrices?: ProductPrices[];
+  productVariants?: ProductVariants[];
+}
+
+export interface ProductVariants {
+  prodVarId: number;
+  prodVarName: string;
+  prodVarPrice: number;
+  prodVarCreatedAt: string;
+  prodVarUpdatedAt: string;
+  prodVarDeletedAt: string;
+  prodVarCreatedBy: string;
+  prodId: number;
+  varianComponents?: VariantComponents[];
+}
+
+export interface VariantComponents {
+  varComId: number;
+  quantityRequired: number;
+  prodVarId: number;
+  inventoryItemId: number;
 }
 
 export interface ProductPrices {

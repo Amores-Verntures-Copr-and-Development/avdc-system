@@ -247,7 +247,7 @@ const ViewSupplierItemModal = ({
         </div>
       </Modal>
       <Modal
-        title={`Remove ${data?.supplierName}'s items`}
+        title={`Remove ${suppData?.suppName}'s item`}
         isOpen={showDeleteModal}
         onClose={function (): void {
           setShowDeleteModal(false);

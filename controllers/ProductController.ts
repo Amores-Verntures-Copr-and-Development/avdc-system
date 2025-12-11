@@ -1,11 +1,17 @@
-import { CreateProductDtos } from "@/dtos/products.dto";
+import {
+  CreateProductDtos,
+  CreateProductVariantDto,
+  CreateVarianComponentDto,
+} from "@/dtos/products.dto";
+import { createProducts } from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 
-export const createProducts = async (data: CreateProductDtos[]) => {
+export const createProductController = async (data: CreateProductDtos) => {
   try {
-    await processAddProducts(data);
+    const res = await createProducts({ data });
     return {
+      data: res,
       success: true,
       message: "Product added successfully!",
     };
@@ -18,14 +24,22 @@ export const createProducts = async (data: CreateProductDtos[]) => {
   }
 };
 
+export const createProductVariantController = async (
+  data: CreateProductVariantDto
+) => {};
+
+export const createVariantComponentController = async (
+  data: CreateVarianComponentDto
+) => {};
+
 export const getProduct = async ({
-  inventoryId,
+  storeId,
 }: {
-  inventoryId?: number;
+  storeId?: number;
   search?: String;
 }) => {
   try {
-    const data = await getProducts({ keyFields: { inventoryId } });
+    const data = await getProducts({ keyFields: { storeId } });
     return {
       data: data,
       message: "Product fetched successfully!",

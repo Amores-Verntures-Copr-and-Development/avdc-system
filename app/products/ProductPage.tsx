@@ -27,11 +27,11 @@ const columns: Column<DisplayProductsDtos>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
   { key: "productCode", name: "Product Code " },
   { key: "itemName", name: "Product Name" },
-  {
-    key: "inventoryItemQuantity",
-    name: "Stock Available",
-    selector: (row) => formatQuantityByUnit(row.productPrice, row.itemUnit),
-  },
+  // {
+  //   key: "inventoryItemQuantity",
+  //   name: "Stock Available",
+  //   selector: (row) => formatQuantityByUnit(row.productPrice, row.itemUnit),
+  // },
   {
     key: "inventoryItemMin",
     name: "Min. Stock",
@@ -43,6 +43,9 @@ const columns: Column<DisplayProductsDtos>[] = [
 
 const ProductPage = () => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [selectedRow, setSelectedRows] = useState<DisplayProductsDtos | null>(
+    null
+  );
   const [inventoryId, setInventoryId] = useState(0);
   const { user, hasStore } = useSession();
   const inventoryBaseUrl = hasStore
@@ -132,20 +135,8 @@ const ProductPage = () => {
         />
       </div>
       <Modal
-        title="Add Product"
+        title="Create Product"
         size="lg"
-        className="min-h-[50%]"
-        isOpen={showAddProductModal}
-        onClose={function (): void {
-          setShowAddProductModal(false);
-        }}
-      >
-        <AddProductModal />
-      </Modal>
-      <Modal
-        title="Create Product Category"
-        size="lg"
-        className="min-h-[50%]"
         isOpen={showAddProductModal}
         onClose={function (): void {
           setShowAddProductModal(false);

@@ -7,10 +7,11 @@ export async function createProducts({
   data,
 }: {
   connection?: PoolConnection;
-  data: CreateProductDtos[];
+  data: CreateProductDtos;
 }) {
   try {
-    await insertProducts({ connection, data });
+    const id = await insertProducts({ connection, data });
+    return id;
   } catch (e) {
     throw e;
   }

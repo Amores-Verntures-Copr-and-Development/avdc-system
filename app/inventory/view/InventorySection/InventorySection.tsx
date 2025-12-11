@@ -385,6 +385,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           ...prod,
           productCreatedBy: user?.userId ?? 0,
           inventoryId: inventoryId ?? 0,
+          isDeduct: 1,
         })) ?? [];
       console.log("Product: ", newData);
       const result = await fetch(`api/products/`, {
