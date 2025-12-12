@@ -3,23 +3,34 @@ import { ProductVariants } from "@/types/products";
 import { formatPeso } from "@/utils/formatPeso";
 import { Package, ShoppingCart, Tag } from "lucide-react";
 import React from "react";
+import { OrderList } from "../PosPage";
 
 interface ProductVariantCardProps {
   data: ProductVariants | null;
   product: DisplayProductsDtos | null;
   onClick: (data: ProductVariants) => void;
+  addProductOrder: (data: OrderList) => void;
 }
 
 const ProductVariantCard = ({
   onClick,
   data,
   product,
+  addProductOrder,
 }: ProductVariantCardProps) => {
   return (
     <div
       className="group min-h-40 flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 hover:border-primary-1/50 cursor-pointer overflow-hidden relative"
       onClick={() => {
-        if (onClick && data) onClick(data);
+        if (!data) {
+          return;
+        }
+        addProductOrder({
+          prodVarId: data?.prodVarId,
+          prodVarName: `${product?.prodName} ${data.prodVarName}`,
+          quantity: 1,
+          prodVarPrice: data.prodVarPrice,
+        });
       }}
     >
       {/* Accent line */}

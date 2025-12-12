@@ -1,20 +1,20 @@
 import React from "react";
-import { OrderProduct } from "../PosPage";
 import { Ellipsis, Minus, Plus } from "lucide-react";
+import { OrderList } from "../PosPage";
 
 interface OrderProductCardProps {
-  data: OrderProduct;
+  data: OrderList;
 }
 const OrderProductCard = ({ data }: OrderProductCardProps) => {
   return (
     <div className="flex justify-between items-center rounded-lg shadow-md p-3 bg-gray-100 hover:shadow-lg transition">
       {/* Left side: product info */}
-      {/* <div className="flex flex-col">
+      <div className="flex flex-col">
         <span className="text-sm font-medium text-gray-800">
-          {data.itemName}
+          {data.prodVarName}
         </span>
         <span className="text-xs font-semibold text-primary-600">
-          {(Number(data.productPrice) * Number(data.quantity)).toLocaleString(
+          {(Number(data.prodVarPrice) * Number(data.quantity)).toLocaleString(
             "en-PH",
             {
               style: "currency",
@@ -22,7 +22,7 @@ const OrderProductCard = ({ data }: OrderProductCardProps) => {
             }
           )}
         </span>
-      </div> */}
+      </div>
 
       {/* Right side: actions */}
       <div className="flex flex-col items-end space-y-1">

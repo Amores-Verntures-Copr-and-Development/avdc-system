@@ -18,8 +18,12 @@ import { paymentMethodOptions } from "@/constants/dropdown-options";
 
 import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
+import OrderDetails from "./components/layout/OrderDetails";
 
-export interface OrderProduct extends ProductVariants {
+export interface OrderList {
+  prodVarId: number;
+  prodVarName: string;
+  prodVarPrice: number;
   quantity: number;
 }
 
@@ -32,9 +36,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
   const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
-  // const [selectedOrder, setSelectedOrder] = useState<OrderProduct[] | null>(
-  //   null
-  // );
+  const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayProductsDtos[];
   }>(storeId ? `/api/products/${storeId}` : null, fetcher);
@@ -43,45 +45,53 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setProductList(itemResponse.data);
     }
   }, [itemResponse.data]);
-  // const addProductOrder = (newProduct: DisplayProductsDtos) => {
-  //   const exists = selectedProduct.find(
-  //     (p) => p.productId === newProduct.productId
-  //   );
+  const addProductOrder = (newProduct: OrderList) => {
+    console.log({ newProduct });
+    const exists = selectedOrder?.find(
+      (p) => p.prodVarId === newProduct.prodVarId
+    );
+    console.log({ exists });
+    if (exists) {
+      // ✅ Deduct 1 from inventory first
+      // removeQuantityProductList(exists);
 
-  //   if (exists) {
-  //     // ✅ Deduct 1 from inventory first
-  //     removeQuantityProductList(exists);
+      // ✅ Then update selected products
+      setSelectedOrder((prev) =>
+        prev
+          ? prev.map((p) =>
+              p.prodVarId === newProduct.prodVarId
+                ? { ...p, quantity: (p.quantity || 0) + 1 }
+                : p
+            )
+          : null
+      );
+    } else {
+      // ✅ Deduct inventory for a new product
+      removeQuantityProductList(newProduct);
 
-  //     // ✅ Then update selected products
-  //     setSelectedProduct((prev) =>
-  //       prev.map((p) =>
-  //         p.productId === newProduct.productId
-  //           ? { ...p, quantity: (p.quantity || 0) + 1 }
-  //           : p
-  //       )
-  //     );
-  //   } else {
-  //     // ✅ Deduct inventory for a new product
-  //     removeQuantityProductList(newProduct);
+      setSelectedOrder((prev) => [
+        ...(prev ?? []), // <-- if null, use empty array
+        { ...newProduct, quantity: 1 },
+      ]);
+    }
+  };
+  const removeQuantityProductList = (product: OrderList) => {
+    setSelectedOrder((prev) => {
+      if (!prev) return null; // <-- prevents returning undefined
 
-  //     setSelectedProduct((prev) => [...prev, { ...newProduct, quantity: 1 }]);
-  //   }
-  // };
-  // const removeQuantityProductList = (product: DisplayProductsDtos) => {
-  //   setProductList((prev) =>
-  //     prev.map((p) =>
-  //       p.productId === product.productId
-  //         ? {
-  //             ...p,
-  //             inventoryItemQuantity: Math.max(
-  //               (p.inventoryItemQuantity || 0) - 1,
-  //               0
-  //             ), // ✅ deduct 1, prevent negative
-  //           }
-  //         : p
-  //     )
-  //   );
-  // };
+      return prev.map((p) =>
+        p.prodVarId === product.prodVarId
+          ? {
+              ...p,
+              quantity: Math.max(
+                (p.quantity || 0) - 1, // ensure this uses p.quantity
+                0
+              ),
+            }
+          : p
+      );
+    });
+  };
   // const addQuantity = (product: DisplayProductsDtos) => {};
   // const removeQuantity = (product: DisplayProductsDtos) => {};
   // const getTotalAmount = () => {
@@ -191,6 +201,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               onBack={() => {
                 setSelectedProduct(null);
               }}
+              addProductOrder={addProductOrder}
             />
           ) : (
             <ProductContent
@@ -198,6 +209,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               selectProduct={(data) => {
                 setSelectedProduct(data);
               }}
+              addProductOrder={addProductOrder}
             />
           )}
         </div>
@@ -211,9 +223,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           </div>
 
           {/* Middle content */}
-          {/* <div className="flex-1 p-2 overflow-auto">
-            <OrderDetails data={} />
-          </div> */}
+          <div className="flex-1 p-2 overflow-auto">
+            <OrderDetails data={selectedOrder} />
+          </div>
           <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-4">
             <h1 className="border-b border-gray-200  py-2">Payment Details</h1>
             <div className="flex gap-2">

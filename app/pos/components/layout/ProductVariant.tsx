@@ -4,14 +4,21 @@ import { ProductVariants } from "@/types/products";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import Button from "@/components/shared/Button";
 import { ArrowLeft } from "lucide-react";
+import { OrderList } from "../../PosPage";
 
 interface ProductVariantProps {
   data?: DisplayProductsDtos | null | undefined;
   onClick: (data: ProductVariants) => void;
   onBack: () => void;
+  addProductOrder: (data: OrderList) => void;
 }
 
-const ProductVariant = ({ data, onClick, onBack }: ProductVariantProps) => {
+const ProductVariant = ({
+  data,
+  onClick,
+  onBack,
+  addProductOrder,
+}: ProductVariantProps) => {
   return (
     <div className="h-full">
       <div className="flex justify-between p-2 bg-white border border-gray-200 items-center">
@@ -34,6 +41,7 @@ const ProductVariant = ({ data, onClick, onBack }: ProductVariantProps) => {
               throw new Error("Function not implemented.");
             }}
             product={data}
+            addProductOrder={addProductOrder}
           />
         ))}
       </div>

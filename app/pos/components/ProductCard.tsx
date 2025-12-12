@@ -1,20 +1,31 @@
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { Package } from "lucide-react";
 import React from "react";
+import { OrderList } from "../PosPage";
 
 interface ProductCardProps {
   data: DisplayProductsDtos;
   selectProduct?: (data: DisplayProductsDtos) => void;
+  addProductOrder: (data: OrderList) => void;
 }
 
-const ProductCard = ({ data, selectProduct }: ProductCardProps) => {
+const ProductCard = ({
+  data,
+  selectProduct,
+  addProductOrder,
+}: ProductCardProps) => {
   const variantCount = data.productVariants?.length ?? 0;
   return (
     <div
       className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 hover:border-primary-1/50 cursor-pointer overflow-hidden relative"
       onClick={() => {
-        if (variantCount === 1) {
-          alert("Insert to order");
+        if (variantCount === 1 && data.productVariants) {
+          addProductOrder({
+            prodVarId: data.productVariants[0]?.prodVarId,
+            prodVarName: `${data.prodName} ${data.productVariants[0]?.prodVarName}`,
+            quantity: 1,
+            prodVarPrice: data.productVariants[0]?.prodVarPrice,
+          });
         }
         if (variantCount > 1 && selectProduct) {
           selectProduct(data);
