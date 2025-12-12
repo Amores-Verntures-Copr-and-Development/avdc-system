@@ -19,31 +19,31 @@ const AddItemToProductModal = ({
   const [products, setProducts] = useState<CreateProductDtos[]>([]);
   const columns: Column<CreateProductDtos>[] = [
     { name: "#", key: "#", selector: (_row, index) => index + 1 },
-    {
-      name: "Item Name",
-      key: "itemName",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemName,
-    },
-    {
-      name: "Unit",
-      key: "itemUnit",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemUnit,
-    },
-    {
-      name: "Category",
-      key: "categoryName",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)
-          ?.categoryName,
-    },
-    {
-      name: "Cost  Price",
-      key: "itemPrice",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemPrice,
-    },
+    // {
+    //   name: "Item Name",
+    //   key: "itemName",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemName,
+    // },
+    // {
+    //   name: "Unit",
+    //   key: "itemUnit",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemUnit,
+    // },
+    // {
+    //   name: "Category",
+    //   key: "categoryName",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)
+    //       ?.categoryName,
+    // },
+    // {
+    //   name: "Cost  Price",
+    //   key: "itemPrice",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemPrice,
+    // },
     {
       name: "Selling  Price",
       key: "productPrice",
@@ -51,21 +51,21 @@ const AddItemToProductModal = ({
       inputType: "number",
     },
   ];
-  useEffect(() => {
-    if (data) {
-      setProducts(
-        data.map((item) => ({
-          productCode: "",
-          productCreatedBy: 0,
-          productDescription: "",
-          productPrice: 0,
-          inventoryItemId: item.inventoryItemId,
-          inventoryId: 0,
-          isDeduct: 1,
-        }))
-      );
-    }
-  }, [data]);
+  // useEffect(() => {
+  //   if (data) {
+  //     setProducts(
+  //       data.map((item) => ({
+  //         productCode: "",
+  //         productCreatedBy: 0,
+  //         productDescription: "",
+  //         productPrice: 0,
+  //         inventoryItemId: item.inventoryItemId,
+  //         inventoryId: 0,
+  //         isDeduct: 1,
+  //       }))
+  //     );
+  //   }
+  // }, [data]);
 
   const handleSubmit = async () => {
     const success = await onSubmit(products);

@@ -4,7 +4,7 @@ export interface Products {
   prodCreatedAt: string;
   prodUpdatedAt: string;
   prodDeletedAt: string;
-  storeId: number;
+  storeId?: number | null;
   prodCreatedBy: number;
   prodCatId: number | null;
   productVariants?: ProductVariants[];
@@ -17,7 +17,7 @@ export interface ProductVariants {
   prodVarCreatedAt: string;
   prodVarUpdatedAt: string;
   prodVarDeletedAt: string;
-  prodVarCreatedBy: string;
+  prodVarCreatedBy: number;
   prodId: number;
   varianComponents?: VariantComponents[];
 }
@@ -38,11 +38,11 @@ export interface ProductPrices {
 }
 
 export interface ProductCategories {
-  prodCatId: number;
+  prodCatId: number | null;
   prodCatName: string;
   prodCatCreatedAt: string;
   prodCatUpdatedAt: string;
   prodCatDeletedAt: string;
   prodCatCreatedBy: number;
-  inventoryId: number;
+  storeId?: number | null;
 }

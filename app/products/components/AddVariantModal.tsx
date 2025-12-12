@@ -1,34 +1,25 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
-
 import Input from "@/components/shared/Input";
-
-import { CreateProductDtos } from "@/dtos/products.dto";
-import { UserAuth } from "@/hooks/useSession";
-
+import { CreateProductVariantDto } from "@/dtos/products.dto";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 
-interface AddProductModalProps {
-  user?: UserAuth | null;
-  storeId: number;
-  mutate?: () => void;
-  onSubmit: (data: CreateProductDtos) => Promise<boolean>;
-  isSubmitting?: boolean;
+interface AddVariantModalProps {
+  onSubmit: (data: CreateProductVariantDto) => Promise<boolean>;
+  mutate: () => void;
+  isSubmitting: boolean;
 }
-
-const AddProductModal = ({
-  user,
-  storeId,
-  mutate,
+const AddVariantModal = ({
   onSubmit,
+  mutate,
   isSubmitting,
-}: AddProductModalProps) => {
-  const [formData, setFormData] = useState<CreateProductDtos>({
-    prodCatId: null,
-    storeId: storeId,
-    prodCreatedBy: user?.userId ?? 0,
-    prodName: "",
+}: AddVariantModalProps) => {
+  const [formData, setFormData] = useState<CreateProductVariantDto>({
+    prodId: 0,
+    prodVarCreatedBy: 0,
+    prodVarName: "",
+    prodVarPrice: 0,
   });
   const handleDataChange = handleChange(formData, setFormData);
   const handleAddProduct = async () => {
@@ -37,10 +28,10 @@ const AddProductModal = ({
       if (mutate) {
         mutate();
         setFormData({
-          prodCatId: null,
-          storeId: storeId,
-          prodCreatedBy: user?.userId ?? 0,
-          prodName: "",
+          prodId: 0,
+          prodVarCreatedBy: 0,
+          prodVarName: "",
+          prodVarPrice: 0,
         });
       }
     }
@@ -55,16 +46,15 @@ const AddProductModal = ({
             label={"Name"}
             sizes={"sm"}
             onChange={handleDataChange}
-            value={formData.prodName}
-            name="prodName"
+            value={formData.prodVarName}
+            name="prodVarName"
           />
-          <DropdownSelect
-            label="Category"
-            name={"Category"}
-            value={undefined}
-            options={[]}
+          <Input
+            label={"Price"}
             sizes={"sm"}
             onChange={handleDataChange}
+            value={formData.prodVarPrice}
+            name="prodVarPrice"
           />
         </div>
       </div>
@@ -77,7 +67,7 @@ const AddProductModal = ({
           disabled={isSubmitting}
         />
         <Button
-          label="Add Product"
+          label="Add Variant"
           size="sm"
           className="font-semibold"
           onClick={handleAddProduct}
@@ -88,4 +78,4 @@ const AddProductModal = ({
   );
 };
 
-export default AddProductModal;
+export default AddVariantModal;

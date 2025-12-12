@@ -9,7 +9,7 @@ const OrderProductCard = ({ data }: OrderProductCardProps) => {
   return (
     <div className="flex justify-between items-center rounded-lg shadow-md p-3 bg-gray-100 hover:shadow-lg transition">
       {/* Left side: product info */}
-      <div className="flex flex-col">
+      {/* <div className="flex flex-col">
         <span className="text-sm font-medium text-gray-800">
           {data.itemName}
         </span>
@@ -22,7 +22,7 @@ const OrderProductCard = ({ data }: OrderProductCardProps) => {
             }
           )}
         </span>
-      </div>
+      </div> */}
 
       {/* Right side: actions */}
       <div className="flex flex-col items-end space-y-1">

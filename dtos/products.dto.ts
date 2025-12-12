@@ -1,9 +1,16 @@
 import { CategoryInterface } from "@/types/categories";
 import { InventoryItemInterface } from "@/types/inventory";
 import { ItemInterface } from "@/types/items";
-import { Products, ProductVariants, VariantComponents } from "@/types/products";
+import {
+  ProductCategories,
+  Products,
+  ProductVariants,
+  VariantComponents,
+} from "@/types/products";
 import { CreateItemDto } from "./items.dto";
 import { CreateInventoryItemDto } from "./inventory.dto";
+import { StoreInterface } from "@/types/stores";
+import { UserInterface } from "@/types/users";
 
 export type CreateProductDtos = Pick<
   Products,
@@ -16,7 +23,6 @@ export type CreateProductVariantDto = Pick<
   | "prodVarCreatedBy"
   | "prodVarName"
   | "prodVarPrice"
-  | "prodVarCreatedAt"
   | "varianComponents"
 >;
 
@@ -33,7 +39,10 @@ export interface CreateProductItemDtos {
 }
 
 export interface DisplayProductsDtos
-  extends ItemInterface,
-    InventoryItemInterface,
-    Products,
-    CategoryInterface {}
+  extends Products,
+    StoreInterface,
+    ProductCategories {}
+
+export interface DisplaProductVariantsDtos
+  extends ProductVariants,
+    UserInterface {}

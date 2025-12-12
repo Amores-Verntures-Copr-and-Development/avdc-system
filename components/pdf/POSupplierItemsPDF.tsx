@@ -210,7 +210,6 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
         <Text style={styles.colDesc}>Item Description</Text>
         <Text style={styles.colUnit}>Unit</Text>
         <Text style={styles.colQty}>Quantity</Text>
-        <Text style={styles.colTotal}>Total</Text>
       </View>
       {items.map((item, i) => (
         <View key={i} style={styles.row}>
@@ -226,9 +225,6 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit || "-"}</Text>
           <Text style={styles.colQty}>
-            {formatQuantityByUnit(item.poItemOrderedQty, item.itemUnit ?? "")}
-          </Text>
-          <Text style={styles.colTotal}>
             {formatQuantityByUnit(item.poItemOrderedQty, item.itemUnit ?? "")}
           </Text>
         </View>

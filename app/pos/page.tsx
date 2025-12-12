@@ -1,8 +1,8 @@
 import React from "react";
-import PosPage from "./PosPage";
+import PosMainPage from "./PosMainPage";
 
 const page = () => {
-  return <PosPage />;
+  return <PosMainPage />;
 };
 
 export default page;

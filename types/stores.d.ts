@@ -13,7 +13,7 @@ export interface StoreInterface {
 
 export interface StoreEmployee {
   storeEmpId: number;
-  storeId: number;
+  storeId: number | null;
   empId: number;
   storeEmpCreatedAt: number;
   storeEmpUpdatedAt: number;

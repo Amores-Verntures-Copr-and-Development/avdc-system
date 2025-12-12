@@ -1,11 +1,8 @@
-import {
-  deleteInventoryItemById,
-  updateItemOrInventory,
-} from "@/controllers/InventoryController";
+import { deleteInventoryItemById } from "@/controllers/InventoryController";
 import { NextResponse } from "next/server";
 
 export async function PUT(
-  request: Request,
+  _request: Request,
   {
     params,
   }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> }

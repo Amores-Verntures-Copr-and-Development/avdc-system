@@ -4,7 +4,7 @@ import {
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
 import { getDBConnection } from "@/lib/db";
-import { Products } from "@/types/products";
+import { Products, ProductVariants } from "@/types/products";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertProducts = async ({
@@ -32,20 +32,18 @@ export const insertProductVariants = async ({
   data,
 }: {
   connection?: PoolConnection;
-  data: CreateProductVariantDto[];
+  data: CreateProductVariantDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  if (!data.length) return 0;
-  console.log({ data });
   const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId)
-                VALUES ${data.map(() => "(?,?,?,?)").join(",")}`;
-  const values = data.flatMap((item) => [
-    item.prodVarName,
-    item.prodVarPrice,
-    item.prodVarCreatedAt,
-    item.prodId,
+                VALUES(?,?,?,?)`;
+
+  const [results] = await pool.execute<ResultSetHeader>(sql, [
+    data.prodVarName,
+    data.prodVarPrice,
+    data.prodVarCreatedBy,
+    data.prodId,
   ]);
-  const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
 };
 
@@ -80,7 +78,21 @@ export const selectProducts = async ({
   search?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  let sql = `SELECT * FROM Products p
+  let sql = `SELECT p.*,s.*,(
+    SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'prodVarId', pv.prodVarId,
+        'prodVarName', pv.prodVarName,
+        'prodVarPrice', pv.prodVarPrice,
+        'prodVarId', pv.prodVarId
+      )
+    )
+    FROM ProductVariants pv   
+    WHERE pv.prodId = p.prodId
+  ) as productVariants
+ 
+  FROM Products p
+  LEFT JOIN Stores s ON s.storeId = p.storeId
   WHERE 1=1`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -88,6 +100,32 @@ export const selectProducts = async ({
       sql += ` AND p.${key} IS NULL`;
     } else {
       sql += ` AND p.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const selectProductVariants = async ({
+  connection,
+  keyFields = {},
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<ProductVariants>;
+  search?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT pv.*,u.userName,u.userFname,u.userRole FROM ProductVariants pv
+LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
+  WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND pv.${key} IS NULL`;
+    } else {
+      sql += ` AND pv.${key} = ?`;
       params.push(value);
     }
   }

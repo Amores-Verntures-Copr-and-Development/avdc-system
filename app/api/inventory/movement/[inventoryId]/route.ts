@@ -1,6 +1,5 @@
 import {
   getInventoryMovements,
-  processStockAdjustmetController,
   processStockBulkAdjustmetController,
 } from "@/controllers/InventoryController";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";

@@ -1,13 +1,7 @@
 import PageLayout from "@/components/shared/PageLayout";
 import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import {
-  Box,
-  ShoppingCart,
-  AlertTriangle,
-  XCircle,
-  PhilippinePeso,
-} from "lucide-react";
+import { Box, ShoppingCart, AlertTriangle, PhilippinePeso } from "lucide-react";
 import React from "react";
 import useSWR from "swr";
 import InventoryCard from "../components/InventoryCard";

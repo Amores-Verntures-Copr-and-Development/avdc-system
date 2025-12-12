@@ -10,7 +10,7 @@ const OrderDetails = ({ data }: OrderDetailsProps) => {
   return (
     <div className="flex flex-col gap-4">
       {data.map((prod) => (
-        <OrderProductCard data={prod} key={prod.productId} />
+        <OrderProductCard data={prod} key={prod.prodVarId} />
       ))}
     </div>
   );

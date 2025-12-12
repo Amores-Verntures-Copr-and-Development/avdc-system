@@ -7,13 +7,7 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -30,7 +24,6 @@ import {
   Clipboard,
   Import,
   CheckCircleIcon,
-  XCircle,
   PackageX,
   Trash2Icon,
 } from "lucide-react";

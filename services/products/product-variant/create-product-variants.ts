@@ -7,7 +7,7 @@ export async function createProductVariants({
   data,
 }: {
   connection?: PoolConnection;
-  data: CreateProductVariantDto[];
+  data: CreateProductVariantDto;
 }) {
   try {
     await insertProductVariants({ connection, data });

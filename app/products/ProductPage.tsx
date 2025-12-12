@@ -2,148 +2,42 @@
 
 import PageHeader from "@/components/shared/PageHeader";
 import React, { useEffect, useState } from "react";
-import ProductCardDetails from "./components/ProductCardDetails";
-import PageLayout from "@/components/shared/PageLayout";
-import {
-  Boxes,
-  Layers,
-  Package2,
-  PhilippinePeso,
-  Plus,
-  Users,
-} from "lucide-react";
-import Table, { Column } from "@/components/shared/Table";
-import Button from "@/components/shared/Button";
-import Modal from "@/components/shared/Modal";
-import AddProductModal from "./components/AddProductModal";
-import useSWR from "swr";
-import { useSession } from "@/hooks/useSession";
-import { InventoryInterface } from "@/types/inventory";
-import { fetcher } from "@/utils/fetcher";
-import { DisplayProductsDtos } from "@/dtos/products.dto";
-import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
-const columns: Column<DisplayProductsDtos>[] = [
-  { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  { key: "productCode", name: "Product Code " },
-  { key: "itemName", name: "Product Name" },
-  // {
-  //   key: "inventoryItemQuantity",
-  //   name: "Stock Available",
-  //   selector: (row) => formatQuantityByUnit(row.productPrice, row.itemUnit),
-  // },
-  {
-    key: "inventoryItemMin",
-    name: "Min. Stock",
-    selector: (row) => row.inventoryItemMin,
-  },
-  { key: "itemPrice", name: "Cost Price" },
-  { key: "productPrice", name: "Selling Price" },
-];
+import PageLayout from "@/components/shared/PageLayout";
+
+import { useSession } from "@/hooks/useSession";
+
+import LoaderComponent from "@/components/shared/LoaderComponent";
+import ProductStorePage from "./ProductStorePage";
 
 const ProductPage = () => {
-  const [showAddProductModal, setShowAddProductModal] = useState(false);
-  const [selectedRow, setSelectedRows] = useState<DisplayProductsDtos | null>(
-    null
-  );
-  const [inventoryId, setInventoryId] = useState(0);
-  const { user, hasStore } = useSession();
-  const inventoryBaseUrl = hasStore
-    ? `/api/inventory/${user?.storeId}`
-    : `/api/inventory`;
-  const { data: inventoryResponse = { data: [] } } = useSWR<{
-    data: InventoryInterface[];
-  }>(inventoryBaseUrl, fetcher);
+  const { user, hasStore, loading } = useSession();
+  const [storeId, setStoreId] = useState<number | null>(null);
+  console.log({ user });
+
   useEffect(() => {
-    if (
-      inventoryResponse &&
-      Array.isArray(inventoryResponse.data) &&
-      inventoryResponse.data.length > 0
-    ) {
-      setInventoryId(inventoryResponse.data[0].inventoryId);
+    if (hasStore || user?.storeId || user?.storeId) {
+      setStoreId(user?.storeId ?? 0);
+      console.log({ storeId });
     }
-  }, [inventoryResponse]);
-  const { data: itemResponse = { data: [] } } = useSWR<{
-    data: DisplayProductsDtos[];
-  }>(inventoryId ? `/api/products/${inventoryId}` : null, fetcher);
+  }, [user]);
+  if (loading) return <LoaderComponent />;
   return (
     <PageLayout className="gap-4 p-2">
-      <PageHeader title={"Products"} subtitle="Add, edit, and track products" />
-      <div className="grid grid-cols-4 gap-4">
-        <ProductCardDetails
-          title={"Total Products"}
-          value={20}
-          icon={<Package2 className="w-6 h-6 text-primary-1" />}
-          iconBg="bg-pink-100"
-        />
-        <ProductCardDetails
-          title={"Total Stock"}
-          value={20}
-          icon={<Boxes className="w-6 h-6 text-blue-500" />}
-          iconBg="bg-blue-100"
-        />
-        <ProductCardDetails
-          title={"Total Sales"}
-          value={20}
-          icon={<PhilippinePeso className="w-6 h-6 text-green-500" />}
-          iconBg="bg-green-100"
-        />
-        <ProductCardDetails
-          title={"Total Customers"}
-          value={20}
-          icon={<Users className="w-6 h-6 text-yellow-500" />}
-          iconBg="bg-yellow-100"
-        />
-      </div>
-      <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-        <Table
-          columns={columns}
-          data={itemResponse.data}
-          totalCount={20}
-          maxHeight="h-full"
-          searchUrl="products"
-          // filterConfig={[]}
-          renderTopActions={
-            <div className="flex gap-2">
-              <div>
-                <Button
-                  isRounded={false}
-                  className="text-sm"
-                  label="Create Category"
-                  size="xs"
-                  icon={<Layers size={20} />}
-                  onClick={() => {
-                    setShowAddProductModal(true);
-                  }}
-                  color="neutral"
-                />
-              </div>
-              <div>
-                <Button
-                  isRounded={false}
-                  className="text-sm"
-                  label="Add Product"
-                  size="xs"
-                  icon={<Plus size={20} />}
-                  onClick={() => {
-                    setShowAddProductModal(true);
-                  }}
-                />
-              </div>
-            </div>
-          }
-        />
-      </div>
-      <Modal
-        title="Create Product"
-        size="lg"
-        isOpen={showAddProductModal}
-        onClose={function (): void {
-          setShowAddProductModal(false);
-        }}
-      >
-        <AddProductModal />
-      </Modal>
+      {/* <PageHeader title={"Products"} subtitle="Add, edit, and track products" /> */}
+      {loading ? (
+        <LoaderComponent />
+      ) : hasStore ? (
+        <ProductStorePage storeId={storeId} />
+      ) : (
+        <>
+          {" "}
+          <PageHeader
+            title={"Products"}
+            subtitle="Add, edit, and track products"
+          />
+        </>
+      )}
     </PageLayout>
   );
 };

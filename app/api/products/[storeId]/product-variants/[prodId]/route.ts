@@ -1,18 +1,18 @@
 import {
-  createProductController,
-  getProduct,
+  createProductVariantController,
+  getProductVariantController,
 } from "@/controllers/ProductController";
-import { CreateProductDtos } from "@/dtos/products.dto";
+import { CreateProductVariantDto } from "@/dtos/products.dto";
 import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ prodId: string }> }
 ) {
   try {
-    const slug = (await params).storeId;
-    const storeId = Number(slug);
-    const res = await getProduct({ storeId });
+    const slug = (await params).prodId;
+    const prodId = Number(slug);
+    const res = await getProductVariantController({ keyFields: { prodId } });
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
@@ -30,7 +30,7 @@ export async function GET(
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetched products!",
+        message: "Failed to fetched products variants!",
         error: err?.message || String(err),
       },
       { status: 500 }
@@ -46,10 +46,10 @@ export async function POST(
     const slug = (await params).storeId;
     const storeId = Number(slug);
     if (!storeId) {
-      throw new Error("No inventory found");
+      throw new Error("No storeId found");
     }
-    const data = (await _request.json()) as CreateProductDtos;
-    const res = await createProductController(data);
+    const data = (await _request.json()) as CreateProductVariantDto;
+    const res = await createProductVariantController(data);
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
@@ -67,7 +67,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetched products!",
+        message: "Failed to add product variants!",
         error: err?.message || String(err),
       },
       { status: 500 }
