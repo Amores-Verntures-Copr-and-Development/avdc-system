@@ -213,15 +213,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
       </View>
       {items.map((item, i) => (
         <View key={i} style={styles.row}>
-          <Text
-            style={{
-              fontWeight: styles.twoColIndex.width,
-              width: styles.twoColIndex.width,
-              textAlign: styles.twoColIndex.textAlign,
-            }}
-          >
-            {"#" + `${startIndex + i + 1}`}
-          </Text>
+          <Text style={styles.colIndex}>{"#" + `${startIndex + i + 1}`}</Text>
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit || "-"}</Text>
           <Text style={styles.colQty}>
