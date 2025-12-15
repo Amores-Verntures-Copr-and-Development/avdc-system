@@ -9,13 +9,16 @@ import {
   DisplayProductsDtos,
 } from "@/dtos/products.dto";
 import { fetcher } from "@/utils/fetcher";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Eye, Plus, Trash } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 import AddVariantModal from "./components/AddVariantModal";
 import { UserAuth } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 import { formatPeso } from "@/utils/formatPeso";
+import IconButton from "@/components/shared/IconButton";
+import Popup from "@/components/shared/Popup";
+import VariantComponentPage from "./components/VariantComponentPage";
 
 interface ProductVariantPageProps {
   data: DisplayProductsDtos | null;
@@ -39,6 +42,12 @@ const ProductVariantPage = ({
   user,
 }: ProductVariantPageProps) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showAddComponent, setShowAddComponent] = useState(false);
+  const [selectedRow, setSelectedRow] =
+    useState<DisplaProductVariantsDtos | null>(null);
+  const [isShowModal, setIsShowModal] = useState<"variant" | "delete" | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     data: itemResponse = { data: [] },
@@ -111,6 +120,29 @@ const ProductVariantPage = ({
           columns={columns}
           data={itemResponse.data}
           loading={isLoading}
+          showActions
+          onRowSelection={(row) => {
+            setSelectedRow(row);
+            setIsShowModal("variant");
+          }}
+          renderActions={(row) => (
+            <div className="flex gap-1 xl:gap-2 px-1 justify-center">
+              <IconButton
+                onClick={function (): void {}}
+                label={"View"}
+                bg={"nobg"}
+                icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+              <IconButton
+                onClick={function (): void {
+                  console.log("Delete");
+                }}
+                label={"Delete"}
+                bg={"red"}
+                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+            </div>
+          )}
           maxHeight="h-full"
           renderTopActions={
             <div className="flex items-center">
@@ -141,6 +173,27 @@ const ProductVariantPage = ({
           isSubmitting={isSubmitting}
         />
       </Modal>
+      <Popup
+        title={`${
+          data?.prodName
+        } (${selectedRow?.prodVarName?.toLocaleLowerCase()})`}
+        background="bg-white/10 backdrop-blur-xs"
+        isOpen={isShowModal === "variant"}
+        onClose={function (): void {
+          setIsShowModal(null);
+        }}
+        closeOnClickOutside={!showAddComponent}
+      >
+        {isShowModal === "variant" ? (
+          <VariantComponentPage
+            data={selectedRow}
+            showAddComponent={showAddComponent}
+            setShowAddComponent={setShowAddComponent}
+          />
+        ) : (
+          <></>
+        )}
+      </Popup>
     </>
   );
 };

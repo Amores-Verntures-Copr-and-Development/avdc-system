@@ -31,7 +31,7 @@ const BigCard = ({
   }`}
       onClick={onClick}
     >
-      <div className="mb-4">
+      <div className="mb-2">
         {" "}
         {/* Added margin to separate header */}
         <div className="flex flex-col">

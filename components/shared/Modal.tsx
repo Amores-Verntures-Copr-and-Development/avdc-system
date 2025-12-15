@@ -134,6 +134,9 @@ const Modal: React.FC<ModalProps> = ({
 
   return ReactDOM.createPortal(
     <div
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
       className={`${mobileOverlayClass} ${overlayClassName}`}
       style={
         isMobile
@@ -151,6 +154,7 @@ const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
+        onClick={(e) => e.stopPropagation()}
         className={mobileModalClass}
         role="dialog"
         aria-modal="true"

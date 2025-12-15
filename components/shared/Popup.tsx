@@ -103,7 +103,9 @@ const Popup: React.FC<PopupProps> = ({
       {closeOnClickOutside && (
         <div
           className="absolute inset-0"
-          onClick={onClose}
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent click from bubbling
+          }}
           aria-hidden="true"
         />
       )}

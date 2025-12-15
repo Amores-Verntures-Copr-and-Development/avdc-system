@@ -4,13 +4,24 @@ import OrderProductCard from "../OrderProductCard";
 
 interface OrderDetailsProps {
   data: OrderList[] | null;
+  removeQuantityProductList: (data: OrderList) => void;
+  addQuantity: (data: OrderList) => void;
 }
 
-const OrderDetails = ({ data }: OrderDetailsProps) => {
+const OrderDetails = ({
+  data,
+  removeQuantityProductList,
+  addQuantity,
+}: OrderDetailsProps) => {
   return (
     <div className="flex flex-col gap-4">
       {data?.map((prod) => (
-        <OrderProductCard data={prod} key={prod.prodVarId} />
+        <OrderProductCard
+          removeQuantityProductList={removeQuantityProductList}
+          data={prod}
+          key={prod.prodVarId}
+          addQuantity={addQuantity}
+        />
       ))}
     </div>
   );

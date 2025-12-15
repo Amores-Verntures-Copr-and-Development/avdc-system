@@ -4,7 +4,7 @@ import PageLayout from "@/components/shared/PageLayout";
 import React, { useEffect, useState } from "react";
 
 import Button from "@/components/shared/Button";
-import { Files, History, PhilippinePesoIcon } from "lucide-react";
+import { Files, History, PhilippinePesoIcon, Receipt } from "lucide-react";
 import IconButton from "@/components/shared/IconButton";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
@@ -19,6 +19,7 @@ import { paymentMethodOptions } from "@/constants/dropdown-options";
 import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
+import { formatPeso } from "@/utils/formatPeso";
 
 export interface OrderList {
   prodVarId: number;
@@ -75,32 +76,69 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       ]);
     }
   };
+
   const removeQuantityProductList = (product: OrderList) => {
     setSelectedOrder((prev) => {
-      if (!prev) return null; // <-- prevents returning undefined
+      if (!prev) return null;
 
+      return prev
+        .map((p) =>
+          p.prodVarId === product.prodVarId
+            ? {
+                ...p,
+                quantity: Math.max((p.quantity || 0) - 1, 0),
+              }
+            : p
+        )
+        .filter((p) => p.quantity > 0); // ✅ remove items with 0 quantity
+    });
+  };
+  const addQuantity = (product: OrderList) => {
+    setSelectedOrder((prev) => {
+      if (!prev) {
+        // if empty, add product with quantity 1
+        return [
+          {
+            ...product,
+            quantity: 1,
+          },
+        ];
+      }
+
+      const exists = prev.some((p) => p.prodVarId === product.prodVarId);
+
+      if (!exists) {
+        // if not in list, add it
+        return [
+          ...prev,
+          {
+            ...product,
+            quantity: 1,
+          },
+        ];
+      }
+
+      // if exists, increase quantity
       return prev.map((p) =>
         p.prodVarId === product.prodVarId
           ? {
               ...p,
-              quantity: Math.max(
-                (p.quantity || 0) - 1, // ensure this uses p.quantity
-                0
-              ),
+              quantity: (p.quantity || 0) + 1,
             }
           : p
       );
     });
   };
-  // const addQuantity = (product: DisplayProductsDtos) => {};
   // const removeQuantity = (product: DisplayProductsDtos) => {};
-  // const getTotalAmount = () => {
-  //   return selectedProduct.reduce((total, prod) => {
-  //     const price = Number(prod.productPrice) || 0;
-  //     const qty = Number(prod.quantity) || 0;
-  //     return total + price * qty;
-  //   }, 0);
-  // };
+  const getTotalAmount = (): number => {
+    return (
+      selectedOrder?.reduce((total, prod) => {
+        const price = Number(prod.prodVarPrice) || 0;
+        const qty = Number(prod.quantity) || 0;
+        return total + price * qty;
+      }, 0) ?? 0
+    );
+  };
   // const handleSubmitOrder = async () => {
   //   const modifyProduct: CreateSaleItemDto[] = selectedProduct.map((prod) => ({
   //     inventoryItemId: prod.inventoryItemId,
@@ -194,6 +232,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           </div>
           {selectedProduct ? (
             <ProductVariant
+              addQuantity={addQuantity}
               data={selectedProduct}
               onClick={function (data: ProductVariants): void {
                 throw new Error("Function not implemented.");
@@ -214,20 +253,27 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </div>
 
-        {/* Right section */}
         <div className="flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
-          {/* Header */}
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between">
             <h1 className="font-semibold">Order Details</h1>
-            {/* <span className="text-sm">{selectedProduct.length} item(s)</span> */}
           </div>
 
-          {/* Middle content */}
           <div className="flex-1 p-2 overflow-auto">
-            <OrderDetails data={selectedOrder} />
+            <OrderDetails
+              data={selectedOrder}
+              removeQuantityProductList={removeQuantityProductList}
+              addQuantity={addQuantity}
+            />
           </div>
           <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-4">
-            <h1 className="border-b border-gray-200  py-2">Payment Details</h1>
+            <div className="flex items-center gap-3 pb-2 border-b-2 border-gray-200">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
+                <Receipt className="w-5 h-5 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-gray-800">
+                Payment Details
+              </h1>
+            </div>
             <div className="flex gap-2">
               <DropdownSelect
                 sizes="sm"
@@ -246,21 +292,23 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </div>
             <div className="flex justify-between">
               <span className="text-sm  text-gray-400">Subtotal</span>
-              {/* <span className="text-sm  text-gray-400">
+              <span className="text-sm  text-gray-400">
                 {formatPeso(getTotalAmount())}
-              </span> */}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm  text-gray-400">Tax(10%)</span>
-              {/* <span className="text-sm  text-gray-400">
+              <span className="text-sm  text-gray-400">Discount(10%)</span>
+              <span className="text-sm  text-gray-400">
                 {formatPeso(getTotalAmount() * 0.1)}
-              </span> */}
+              </span>
             </div>
             <div className="flex justify-between border-t border-gray-200 py-2">
               <span className="text-sm font-semibold">Total</span>
-              {/* <span className="text-sm font-semibold">
-                {formatPeso(getTotalAmount() + getTotalAmount() * 0.1)}
-              </span> */}
+              <span className="text-sm font-semibold">
+                <span className="text-sm font-semibold">
+                  {formatPeso(getTotalAmount())}
+                </span>
+              </span>
             </div>
           </div>
           {/* Footer / bottom button */}

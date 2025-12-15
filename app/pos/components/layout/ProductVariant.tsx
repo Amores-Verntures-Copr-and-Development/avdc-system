@@ -3,7 +3,7 @@ import ProductVariantCard from "../ProductVariantCard";
 import { ProductVariants } from "@/types/products";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import Button from "@/components/shared/Button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { OrderList } from "../../PosPage";
 
 interface ProductVariantProps {
@@ -11,6 +11,7 @@ interface ProductVariantProps {
   onClick: (data: ProductVariants) => void;
   onBack: () => void;
   addProductOrder: (data: OrderList) => void;
+  addQuantity: (data: OrderList) => void;
 }
 
 const ProductVariant = ({
@@ -18,11 +19,19 @@ const ProductVariant = ({
   onClick,
   onBack,
   addProductOrder,
+  addQuantity,
 }: ProductVariantProps) => {
   return (
     <div className="h-full">
       <div className="flex justify-between p-2 bg-white border border-gray-200 items-center">
-        <h1 className="font-semibold text-2xl">{data?.prodName}</h1>
+        <div className="flex items-center gap-2">
+          <div className="p-2 bg-gradient-to-br from-primary-1 to-primary-1/50 rounded">
+            <Package className="text-white" />
+          </div>
+          <h1 className="font-semibold text-xl">
+            {data?.prodName} ({data?.productVariants?.length} variants)
+          </h1>
+        </div>
         <div>
           <Button
             label="Back"

@@ -42,6 +42,19 @@ const ProductCard = ({
             {data.prodCatName ?? "No Category"}
           </span>
         </div>
+        {data.productVariants?.length === 1 && (
+          <div>
+            <span className="text-xs font-semibold text-primary-600">
+              {Number(data?.productVariants[0]?.prodVarPrice).toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="flex items-baseline justify-between mt-2 pt-3 border-t border-gray-100">
