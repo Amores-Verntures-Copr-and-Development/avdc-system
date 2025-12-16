@@ -37,7 +37,7 @@ import { RequestItems } from "@/types/request";
 
 const columns: Column<PurchaseOrderItems>[] = [
   { name: "Item Name", key: "itemName" },
-  { name: "Price", key: "unitPrice" },
+  { name: "Unit", key: "itemUnit" },
   { name: "Ordered Qty", key: "poItemOrderedQty" },
   {
     name: "Received Qty",
@@ -45,6 +45,7 @@ const columns: Column<PurchaseOrderItems>[] = [
     editable: (row) => row.poItemStatus === "sent",
     inputType: "number",
   },
+  { name: "Price", key: "unitPrice" },
   {
     name: "Supplier Price",
     key: "supplierPrice",
@@ -54,7 +55,12 @@ const columns: Column<PurchaseOrderItems>[] = [
   {
     name: "Total",
     key: "total",
-    selector: (row) => row.poItemOrderedQty * row.unitPrice,
+    selector: (row) =>
+      formatPeso((row.supplierPrice ?? 0) * row.poItemReceivedQty),
+    compute: (row) => {
+      return row.poItemReceivedQty * (row.supplierPrice ?? 0);
+    },
+    dependsOn: ["poItemOrderedQty", "unitPrice"],
   },
   {
     name: "Status",
@@ -127,6 +133,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     }
   );
   const handleReceivePO = async (row: DisplayPOItemsSupplier[]) => {
+    console.log({ row });
     const success = await onReceivePO(row);
     if (success) {
       // onClose();
@@ -149,15 +156,22 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     }
   }, [data]);
   // ✅ Auto-fill for one supplier (one row)
-  const handleAutoFill = (suppId: number, rowIndex: number) => {
+  const handleAutoFill = (suppId: number, poItemId: number) => {
     setSupplierData((prev) =>
       prev.map((supplier) => {
         if (supplier.suppId !== suppId) return supplier;
-        const newItems = [...supplier.items];
-        const updatedRow = { ...newItems[rowIndex] };
-        updatedRow.poItemReceivedQty = updatedRow.poItemOrderedQty;
-        newItems[rowIndex] = updatedRow;
-        return { ...supplier, items: newItems };
+
+        return {
+          ...supplier,
+          items: supplier.items.map((item) =>
+            item.poItemId === poItemId
+              ? {
+                  ...item,
+                  poItemReceivedQty: item.poItemOrderedQty,
+                }
+              : item
+          ),
+        };
       })
     );
   };
@@ -209,7 +223,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       return false;
     }
   };
-  const isAllItemsDelivered = data.flatMap((po) =>
+  const isAllItemsDelivered = data.every((po) =>
     po.items.every((item) => item.poItemStatus === "delivered")
   );
   console.log("isAllItemsDelivered: ", isAllItemsDelivered);
@@ -230,9 +244,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
               Order Items by Supplier
             </h3>
-            <div className="flex gap-2">
+            <div className="flex">
               <div className="self-center">
                 <Button
+                  color="neutral"
+                  isRounded={false}
                   size="sm"
                   label="View All PO"
                   onClick={() => {
@@ -242,6 +258,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               </div>
               <div className="self-center">
                 <Button
+                  color="neutral"
+                  isRounded={false}
                   size="sm"
                   label="View PO Request"
                   onClick={() => {
@@ -484,6 +502,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                           {selectedStoreSupplier === null ? (
                             isView === "all" ? (
                               <Table
+                                uniqueIdKey="itemId"
+                                localSearch={true}
                                 textSize="xs"
                                 columns={columns}
                                 data={supplier.items}
@@ -494,25 +514,41 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 }
                                 loading={isLoading}
                                 renderTopActions={
-                                  !isAllItemsDelivered && (
-                                    <Button
-                                      color="primary"
-                                      size="xs"
-                                      onClick={() =>
-                                        handleAutoFillAll(supplier.suppId)
-                                      }
-                                      label="Auto-Fill All"
-                                      icon={<PackageCheck size={15} />}
-                                      className="font-semibold text-white text-xs"
-                                    />
-                                  )
+                                  <div className="flex gap-2">
+                                    <div>
+                                      <Button
+                                        color="neutral"
+                                        size="xs"
+                                        onClick={() =>
+                                          // handleAutoFillAll(supplier.suppId)
+                                          console.log("asd")
+                                        }
+                                        label="Add Item"
+                                        icon={<Package size={15} />}
+                                      />
+                                    </div>
+                                    {!isAllItemsDelivered && (
+                                      <div>
+                                        <Button
+                                          color="primary"
+                                          size="xs"
+                                          onClick={() =>
+                                            handleAutoFillAll(supplier.suppId)
+                                          }
+                                          label="Auto-Fill All"
+                                          icon={<PackageCheck size={15} />}
+                                          className="font-semibold text-white text-xs"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
                                 }
-                                renderActions={(row, rowIndex) =>
+                                renderActions={(row) =>
                                   row.poItemStatus === "sent" ? (
                                     <IconButton
                                       icon={<PackageCheck size={18} />}
                                       onClick={() =>
-                                        handleAutoFill(row.suppId, rowIndex)
+                                        handleAutoFill(row.suppId, row.poItemId)
                                       }
                                       label="Auto-Fill Received Qty"
                                       bg="primary"

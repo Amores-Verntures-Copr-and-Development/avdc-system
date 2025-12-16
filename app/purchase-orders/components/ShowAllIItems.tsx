@@ -1,4 +1,5 @@
 import Button from "@/components/shared/Button";
+import Popup from "@/components/shared/Popup";
 import Table, { Column } from "@/components/shared/Table";
 import {
   DisplayPurchaseOrderItemsDto,
@@ -149,6 +150,13 @@ const ShowAllIItems = ({
       </div>
       <div className="flex-1 overflow-y-auto">
         <Table
+          renderTopActions={
+            <div>
+              <Button size="sm" label="Add Item" />
+            </div>
+          }
+          uniqueIdKey="poItemId"
+          localSearch={true}
           isRounded={false}
           loading={loadingData}
           columns={columns}
@@ -188,6 +196,14 @@ const ShowAllIItems = ({
           />
         </div>
       </div>
+      <Popup
+        isOpen={false}
+        onClose={function (): void {
+          throw new Error("Function not implemented.");
+        }}
+      >
+        <></>
+      </Popup>
     </div>
   );
 };

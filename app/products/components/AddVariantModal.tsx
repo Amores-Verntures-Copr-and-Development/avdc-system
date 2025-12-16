@@ -1,5 +1,4 @@
 import Button from "@/components/shared/Button";
-import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
 import { CreateProductVariantDto } from "@/dtos/products.dto";
 import { handleChange } from "@/utils/handle-change";
@@ -20,6 +19,7 @@ const AddVariantModal = ({
     prodVarCreatedBy: 0,
     prodVarName: "",
     prodVarPrice: 0,
+    inventoryItemId: null,
   });
   const handleDataChange = handleChange(formData, setFormData);
   const handleAddProduct = async () => {
@@ -32,6 +32,7 @@ const AddVariantModal = ({
           prodVarCreatedBy: 0,
           prodVarName: "",
           prodVarPrice: 0,
+          inventoryItemId: null,
         });
       }
     }

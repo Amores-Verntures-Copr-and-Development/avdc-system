@@ -93,6 +93,8 @@ const ProductVariantPage = ({
       }
       return true;
     } catch (e) {
+      console.log(e);
+      toast.success("Failed!");
       return false;
     } finally {
       setIsSubmitting(false);
@@ -128,7 +130,9 @@ const ProductVariantPage = ({
           renderActions={(row) => (
             <div className="flex gap-1 xl:gap-2 px-1 justify-center">
               <IconButton
-                onClick={function (): void {}}
+                onClick={function (): void {
+                  console.log(row);
+                }}
                 label={"View"}
                 bg={"nobg"}
                 icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
@@ -189,6 +193,7 @@ const ProductVariantPage = ({
             data={selectedRow}
             showAddComponent={showAddComponent}
             setShowAddComponent={setShowAddComponent}
+            prod={data}
           />
         ) : (
           <></>

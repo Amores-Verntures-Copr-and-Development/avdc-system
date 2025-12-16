@@ -2,13 +2,14 @@
 
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface SearchBarProps {
   url: string;
   debounce?: number;
   label?: string;
   placeholder?: string;
+  fetchMode?: boolean;
 }
 
 export default function SearchBar({

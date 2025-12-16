@@ -1,20 +1,26 @@
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
-import { DisplaProductVariantsDtos } from "@/dtos/products.dto";
+import {
+  DisplaProductVariantsDtos,
+  DisplayProductsDtos,
+} from "@/dtos/products.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import React, { useState } from "react";
+import React from "react";
+import AssignComponentModal from "./AssignComponentModal";
 
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
   showAddComponent: boolean;
   setShowAddComponent: React.Dispatch<React.SetStateAction<boolean>>;
+  prod: DisplayProductsDtos | null;
 }
 
 const VariantComponentPage = ({
   data,
   showAddComponent,
   setShowAddComponent,
+  prod,
 }: VariantComponentPageProps) => {
   // const [showAddComponent, setShowAddComponent] = useState(false);
   return (
@@ -113,20 +119,15 @@ const VariantComponentPage = ({
         )}
       </BigCard>
       <Modal
-        size="xl"
-        className="h-[95%]"
+        size="lg"
+        className="h-[50%]"
         title="Assign Component"
         isOpen={showAddComponent}
         onClose={function (): void {
           setShowAddComponent(false);
         }}
       >
-        <div
-          className=""
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-        ></div>
+        <AssignComponentModal storeId={prod?.storeId ?? 0} />
       </Modal>
     </div>
   );

@@ -84,6 +84,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   return (
     <div className="flex flex-col">
       <Table
+        uniqueIdKey="invItem"
         columns={columns}
         data={newData.items}
         updateData={handleDataUpdate}

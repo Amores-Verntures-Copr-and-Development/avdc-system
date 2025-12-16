@@ -9,6 +9,7 @@ import React, {
 import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropDown";
+import Input from "./Input";
 
 export interface Column<T = any> {
   name: string;
@@ -75,6 +76,8 @@ interface TableProps<T> {
   uniqueIdKey?: keyof T;
   onSelectedData?: T[];
   defaultLimit?: number;
+  fetchMode?: boolean;
+  localSearch?: boolean;
 }
 
 export interface TableHandle {
@@ -113,13 +116,26 @@ const TableInner = <T extends Record<string, any>>(
     uniqueIdKey,
     onSelectedData,
     defaultLimit = 100,
+    localSearch,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const filteredData = React.useMemo(() => {
+    if (!localSearchQuery) return editableData;
 
+    return editableData.filter((row) =>
+      columns.some((col) => {
+        const value = row[col.key];
+        return String(value)
+          .toLowerCase()
+          .includes(localSearchQuery.toLowerCase());
+      })
+    );
+  }, [localSearchQuery, editableData, columns]);
   useEffect(() => {
     if (data && data.length > 0) {
       setEditableData(data);
@@ -146,6 +162,8 @@ const TableInner = <T extends Record<string, any>>(
     },
     [uniqueIdKey]
   );
+  const getRowById = (row: T) =>
+    editableData.find((r) => getUniqueId(r) === getUniqueId(row));
 
   // ✅ FIX: Toggle row using unique ID
   const toggleRow = (row: T) => {
@@ -200,46 +218,56 @@ const TableInner = <T extends Record<string, any>>(
     return selectedRows.some((item) => getUniqueId(item) === getUniqueId(row));
   };
 
-  const handleInputChange = (
-    rowIndex: number,
-    columnKey: string,
-    value: string,
-    column: Column<T>
-  ) => {
-    const newData = [...editableData];
-    newData[rowIndex] = { ...newData[rowIndex], [columnKey]: value };
+  const handleInputChange = (row: T, columnKey: string, value: any) => {
+    const rowId = getUniqueId(row);
 
+    // Update editableData
+    const newData = editableData.map((r) =>
+      getUniqueId(r) === rowId ? { ...r, [columnKey]: value } : r
+    );
+
+    // Recompute dependent columns if needed
     columns.forEach((col) => {
-      if (col.compute && col.key) {
+      if (!col.compute) return;
+
+      newData.forEach((r, idx) => {
         if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
-          const computedValue = col.compute(newData[rowIndex]);
-          newData[rowIndex] = {
-            ...newData[rowIndex],
-            [col.key]: computedValue,
+          newData[idx] = {
+            ...newData[idx],
+            [col.key]: col.compute!(r),
           };
         }
-      }
+      });
     });
 
     setEditableData(newData);
 
-    if (column.validate) {
-      const isValid = column.validate(value, newData[rowIndex]);
-      const errorKey = `${rowIndex}-${columnKey}`;
+    const updatedRow = newData.find((r) => getUniqueId(r) === rowId)!;
 
-      if (!isValid) {
-        setErrors(new Map(errors.set(errorKey, `Invalid ${column.name}`)));
+    onCellChange?.(
+      editableData.findIndex((r) => getUniqueId(r) === rowId),
+      columnKey,
+      value,
+      updatedRow
+    );
+
+    // ✅ Set or clear errors here
+    const errorKey = `${editableData.findIndex(
+      (r) => getUniqueId(r) === rowId
+    )}-${columnKey}`;
+    setErrors((prev) => {
+      const newErrors = new Map(prev);
+      const column = columns.find((c) => c.key === columnKey);
+
+      if (column?.validate && !column.validate(value, updatedRow)) {
+        newErrors.set(errorKey, "Invalid value"); // or custom error message
       } else {
-        const newErrors = new Map(errors);
         newErrors.delete(errorKey);
-        setErrors(newErrors);
       }
-    }
+      return newErrors;
+    });
 
-    if (onCellChange) {
-      onCellChange(rowIndex, columnKey, value, newData[rowIndex]);
-    }
-
+    // Update data if needed (debounced)
     if (updateData) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
@@ -265,6 +293,7 @@ const TableInner = <T extends Record<string, any>>(
     const hasError = errors.has(errorKey);
 
     if (editable && editMode === "inline") {
+      const realRow = getRowById(row);
       if (column.inputType === "select") {
         const opts =
           typeof column.options === "function"
@@ -274,16 +303,14 @@ const TableInner = <T extends Record<string, any>>(
         // 👇 Get the value from column.value function or fallback to editableData
         const selectedValue = column.value
           ? column.value(row)
-          : editableData[rowIndex]?.[column.key] ?? "";
+          : realRow?.[column.key] ?? "";
 
         return (
           <select
             onClick={(e) => e.stopPropagation()}
             className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
             value={selectedValue} // 👈 Use the computed value
-            onChange={(e) =>
-              handleInputChange(rowIndex, column.key, e.target.value, column)
-            }
+            onChange={(e) => handleInputChange(row, column.key, e.target.value)}
           >
             <option value="">Select...</option>
             {opts.map((opt, idx) => (
@@ -294,15 +321,16 @@ const TableInner = <T extends Record<string, any>>(
           </select>
         );
       } else {
+        const realRow = getRowById(row);
         return (
           <div className="flex flex-col">
             <input
               onClick={(e) => e.stopPropagation()}
               type={column.inputType ?? "text"}
               name={column.name}
-              value={editableData[rowIndex]?.[column.key] ?? ""}
+              value={realRow?.[column.key] ?? ""}
               onChange={(e) =>
-                handleInputChange(rowIndex, column.key, e.target.value, column)
+                handleInputChange(row, column.key, e.target.value)
               }
               className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
               ${
@@ -341,7 +369,11 @@ const TableInner = <T extends Record<string, any>>(
         } border border-gray-200`}
       >
         {/* Top Actions Bar */}
-        {(searchUrl || renderTopActions || subtitle || title) && (
+        {(searchUrl ||
+          renderTopActions ||
+          subtitle ||
+          title ||
+          localSearch) && (
           <div className="bg-white flex p-1 lg:p-2 gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
@@ -352,9 +384,35 @@ const TableInner = <T extends Record<string, any>>(
               </div>
             )}
             <div className="flex gap-5">
-              <div className="w-25 xl:w-40 items-center align-middle">
-                {searchUrl && <SearchBar url={searchUrl} />}
-              </div>
+              {searchUrl && (
+                <div className="w-25 xl:w-40 items-center align-middle">
+                  {searchUrl && <SearchBar url={searchUrl} />}
+                </div>
+              )}
+
+              {localSearch && (
+                <div
+                  className="w-25 xl:w-40 items-center align-middle"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <Input
+                    label={""}
+                    value={localSearchQuery}
+                    onChange={(e) => setLocalSearchQuery(e.target.value)}
+                    sizes="sm"
+                    placeholder="Search item in list"
+                  />
+                  {/* <input
+                    type="text"
+                    placeholder="Search locally..."
+                    value={localSearchQuery}
+                    onChange={(e) => setLocalSearchQuery(e.target.value)}
+                    className="w-full pr-2 pl-2 py-1 border border-gray-300 rounded-md text-xs xl:text-sm"
+                  /> */}
+                </div>
+              )}
               {showFilter && onSave && (
                 <FilterDropdown
                   filterConfig={filterConfig ?? []}
@@ -448,7 +506,7 @@ const TableInner = <T extends Record<string, any>>(
                   </td>
                 </tr>
               ) : (
-                editableData.map((row, rowIndex) => (
+                filteredData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
                     className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] xl:text-${textSize} border-b-2 border-gray-100`}

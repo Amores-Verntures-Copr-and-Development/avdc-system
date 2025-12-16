@@ -102,10 +102,10 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
     }
     const updateSupplierItemPrice: Partial<SupplierItem>[] =
       data.poItems
-        ?.filter((item) => {
-          const price = Number(item.supplierPrice);
-          return price !== 0 && price !== 0.0;
-        })
+        ?.filter(
+          (item) =>
+            item.supplierPrice !== undefined && Number(item.supplierPrice) !== 0
+        )
         .map((item) => ({
           suppId: item.suppId,
           suppItemPrice: item.supplierPrice,

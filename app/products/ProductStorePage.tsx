@@ -129,6 +129,7 @@ const ProductStorePage = ({ storeId }: ProductStorePageProps) => {
       }
       return true;
     } catch (e) {
+      console.log({ e });
       toast.error("Failed to add product.");
       return false;
     } finally {

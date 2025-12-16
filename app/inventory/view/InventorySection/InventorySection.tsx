@@ -100,6 +100,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
   const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
     {
       name: "#",
@@ -281,6 +282,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       },
     },
   ];
+
+  //
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -829,9 +832,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 </div>
               )}
               {Boolean(
-                selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  user?.empPosition !== "staff" &&
+                user?.empPosition !== "staff" &&
                   user?.empPosition !== "supervisor"
               ) && (
                 <div className="">
@@ -849,10 +850,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 </div>
               )}
               {Boolean(
-                selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  (user?.empPosition === "staff" ||
-                    user?.empPosition === "supervisor")
+                user?.empPosition === "staff" ||
+                  user?.empPosition === "supervisor"
               ) && (
                 <div className="">
                   <Button
@@ -860,7 +859,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item to product"
                     onClick={() => {
-                      setShowAddProductModal(true);
+                      setIsAddingProduct(true);
+                      console.log({ isAddingProduct });
                     }}
                     size="xs"
                     className="font-semibold"

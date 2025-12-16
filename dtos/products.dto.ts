@@ -24,6 +24,7 @@ export type CreateProductVariantDto = Pick<
   | "prodVarName"
   | "prodVarPrice"
   | "varianComponents"
+  | "inventoryItemId"
 >;
 
 export type CreateVarianComponentDto = Pick<

@@ -13,7 +13,6 @@ interface ProductVariantCardProps {
 }
 
 const ProductVariantCard = ({
-  onClick,
   data,
   product,
   addProductOrder,

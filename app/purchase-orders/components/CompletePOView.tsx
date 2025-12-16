@@ -304,6 +304,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 {isRequestExpanded === reqData.requestNo && (
                   <div>
                     <Table
+                      uniqueIdKey="reqItemId"
                       columns={columns}
                       showActions={
                         !["delivered", "completed", "received"].includes(

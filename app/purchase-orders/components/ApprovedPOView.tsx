@@ -410,10 +410,13 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               {" "}
                               {/* Fixed height for table */}
                               <Table
+                                uniqueIdKey="poItemId"
                                 textSize="xs"
                                 columns={columns}
                                 data={data.items}
                                 isRounded={false}
+                                localSearch={true}
+                                renderTopActions
                               />
                             </div>
                           ) : (
@@ -531,6 +534,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                           {isView === "all" ? (
                             <div className="h-96 overflow-auto">
                               <Table
+                                uniqueIdKey="poItemId"
                                 textSize="xs"
                                 columns={columns}
                                 data={data.items}

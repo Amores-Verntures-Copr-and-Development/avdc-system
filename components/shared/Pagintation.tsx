@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -17,7 +17,7 @@ const Pagination: React.FC<PaginationProps> = ({
   const searchParams = useSearchParams();
 
   // Memoize params for stability
-  const params = new URLSearchParams(searchParams.toString());
+  // const params = new URLSearchParams(searchParams.toString());
 
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(

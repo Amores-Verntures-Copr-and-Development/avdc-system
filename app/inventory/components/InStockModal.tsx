@@ -100,6 +100,7 @@ const InStockModal = ({
       </span>
       <div className="flex flex-col min-h-0 flex-1">
         <Table
+          uniqueIdKey="inventoryItemId"
           columns={columns}
           data={formData ?? []}
           maxHeight="h-full"

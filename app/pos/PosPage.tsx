@@ -4,7 +4,14 @@ import PageLayout from "@/components/shared/PageLayout";
 import React, { useEffect, useState } from "react";
 
 import Button from "@/components/shared/Button";
-import { Files, History, PhilippinePesoIcon, Receipt } from "lucide-react";
+import {
+  ArrowLeft,
+  Files,
+  History,
+  Package,
+  PhilippinePesoIcon,
+  Receipt,
+} from "lucide-react";
 import IconButton from "@/components/shared/IconButton";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
@@ -33,7 +40,7 @@ interface PosPageProps {
   user: UserAuth | null;
 }
 
-const PosPage = ({ storeId, user }: PosPageProps) => {
+const PosPage = ({ storeId }: PosPageProps) => {
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
   const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
@@ -197,45 +204,76 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       <div className="flex flex-1 overflow-visible h-full">
         {/* Left section */}
         <div className="flex flex-col flex-[0.75] h-full">
-          <div className="bg-white h-15 border border-gray-200 flex justify-end items-center p-2 overflow-visible">
-            <div className="flex gap-2">
-              <div>
-                <IconButton
-                  onClick={function (): void {
-                    throw new Error("Function not implemented.");
-                  }}
-                  label={"Product List"}
-                  bg={""}
-                  icon={<Files size={15} />}
-                  isRounded={false}
-                />
-                {/* <Button
-                  size="xs"
-                  isRounded={false}
-                  icon={<Plus size={15} />}
-                  color="secondary"
-                  label=""
-                /> */}
-              </div>
-              <div>
-                <IconButton
-                  onClick={function (): void {
-                    throw new Error("Function not implemented.");
-                  }}
-                  label={"History"}
-                  bg={""}
-                  icon={<History size={15} />}
-                  isRounded={false}
-                />
-              </div>
-            </div>
+          <div className="bg-white h-15 border border-gray-200 flex justify-between items-center px-4 py-2 overflow-visible">
+            {selectedProduct ? (
+              <>
+                {/* Product Detail Header */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-primary-1 to-primary-1/50 rounded-lg shadow-sm">
+                    <Package className="text-white w-5 h-5" />
+                  </div>
+                  <div>
+                    <h1 className="text-lg font-semibold text-gray-900">
+                      {selectedProduct.prodName}
+                    </h1>
+                    <p className="text-xs text-gray-500">
+                      {selectedProduct.productVariants?.length || 0} variant
+                      {selectedProduct.productVariants?.length !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {" "}
+                  <Button
+                    label="Back"
+                    size="sm"
+                    icon={<ArrowLeft className="w-3 h-3" />}
+                    onClick={() => setSelectedProduct(null)}
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Main Header */}
+                <div className="flex items-center">
+                  <h1 className="text-lg font-semibold text-gray-900">
+                    Products
+                  </h1>
+                </div>
+
+                <div className="flex gap-2">
+                  <IconButton
+                    onClick={() => {
+                      // TODO: Implement product list functionality
+                      console.log("Product list clicked");
+                    }}
+                    label="Product List"
+                    bg=""
+                    icon={<Files size={15} />}
+                    isRounded={false}
+                  />
+
+                  <IconButton
+                    onClick={() => {
+                      // TODO: Implement history functionality
+                      console.log("History clicked");
+                    }}
+                    label="History"
+                    bg=""
+                    icon={<History size={15} />}
+                    isRounded={false}
+                  />
+                </div>
+              </>
+            )}
           </div>
           {selectedProduct ? (
             <ProductVariant
               addQuantity={addQuantity}
               data={selectedProduct}
               onClick={function (data: ProductVariants): void {
-                throw new Error("Function not implemented.");
+                console.log({ data });
               }}
               onBack={() => {
                 setSelectedProduct(null);

@@ -163,6 +163,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       {/* Scrollable Table Section */}
       <div className="flex-1 overflow-y-auto">
         <Table
+          uniqueIdKey="itemId"
           isRounded={false}
           columns={requestItemColumn}
           data={orderItem}

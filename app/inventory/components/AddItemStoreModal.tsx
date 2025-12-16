@@ -45,7 +45,7 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <Table columns={columns} data={data} />
+        <Table columns={columns} data={data} uniqueIdKey="itemId" />
       </div>
       <div className="">
         <DropDownSearchStore

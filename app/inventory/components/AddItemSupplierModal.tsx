@@ -87,6 +87,7 @@ const AddItemSupplierModal = ({
           data={itemData ?? []}
           maxHeight="h-full"
           updateData={setItemData}
+          uniqueIdKey="itemId"
         />
       </div>
       <div className="p-2">

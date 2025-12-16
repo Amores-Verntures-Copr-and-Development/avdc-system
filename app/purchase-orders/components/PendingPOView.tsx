@@ -90,9 +90,6 @@ const columns: Column<DisplayPurchaseOrderItemsDto>[] = [
       );
       const supplierPrice = selected?.suppItemPrice ?? 0;
       const quantity = row.poItemOrderedQty ?? 0;
-      console.log("supplierPrice: ", supplierPrice);
-      console.log("Row: ", row);
-      console.log("Total: ", supplierPrice * quantity);
       return supplierPrice * quantity;
     },
     dependsOn: ["selectedSupplierId", "poItemOrderedQty"], // NEW

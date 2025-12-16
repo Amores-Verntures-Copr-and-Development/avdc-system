@@ -121,6 +121,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             <div className="flex flex-2 flex-col ">
               <div className="p-2 flex-1 min-h-0  flex flex-col">
                 <Table
+                  uniqueIdKey="itemId"
                   textSize="xs"
                   columns={columns}
                   data={itemResponse.data}
