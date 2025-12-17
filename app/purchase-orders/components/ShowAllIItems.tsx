@@ -1,4 +1,5 @@
 import Button from "@/components/shared/Button";
+import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
 import Table, { Column } from "@/components/shared/Table";
 import {
@@ -12,6 +13,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock, LogOut } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
+import AddItemToPoModal from "./_components/AddItemToPoModal";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -109,6 +111,7 @@ const ShowAllIItems = ({
   onSubmit,
   isLoading,
 }: ShowAllIItemsProps) => {
+  const [showAddItem, setShowAddItem] = useState(false);
   const { data: itemResponse = { data: [] }, isLoading: loadingData } = useSWR<{
     data: any;
   }>(`/api/purchase-order/po-items/${data?.poId}`, fetcher);
@@ -152,7 +155,13 @@ const ShowAllIItems = ({
         <Table
           renderTopActions={
             <div>
-              <Button size="sm" label="Add Item" />
+              <Button
+                size="sm"
+                label="Add Item"
+                onClick={() => {
+                  setShowAddItem(true);
+                }}
+              />
             </div>
           }
           uniqueIdKey="poItemId"
@@ -196,14 +205,17 @@ const ShowAllIItems = ({
           />
         </div>
       </div>
-      <Popup
-        isOpen={false}
+      <Modal
+        title="Add Item to PO"
+        isOpen={showAddItem}
         onClose={function (): void {
-          throw new Error("Function not implemented.");
+          setShowAddItem(false);
         }}
+        size="lg"
+        className="h-[80%]"
       >
-        <></>
-      </Popup>
+        <AddItemToPoModal user={user} poId={data?.poId ?? 0} />
+      </Modal>
     </div>
   );
 };

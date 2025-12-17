@@ -14,6 +14,7 @@ import ShowPOModal from "./components/ShowPOModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { getPOStatusInfo } from "@/utils/formatPOStatus";
 import { useSession } from "@/hooks/useSession";
+import POMainPage from "./POMainPage";
 
 const purchaseOrderColumns: Column<PurchaseOrders>[] = [
   {
@@ -52,7 +53,7 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
 
 const PurchaseOrderPage = () => {
   const [showViewPO, setShowViewPO] = useState(false);
-  const [selectedPo, setSelecetedPo] = useState<PurchaseOrders>();
+  const [selectedPo, setSelectedPo] = useState<PurchaseOrders | null>(null);
   const { user } = useSession();
   const baseApi =
     user?.userRole === "employee" && user?.empPosition === "purchaser"
@@ -71,78 +72,26 @@ const PurchaseOrderPage = () => {
     );
     if (findSelectedPo) {
       console.log("Selected PO: ", findSelectedPo);
-      setSelecetedPo(findSelectedPo);
+      setSelectedPo(findSelectedPo);
     }
   };
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader title={"Purchase Orders"} subtitle="Manage purchase orders" />
-      <div className="flex-1 min-h-0  flex flex-col justify-between">
-        <Table
-          searchUrl="/purchase-orders"
-          showCheckBox
-          uniqueIdKey="poId"
-          columns={purchaseOrderColumns}
+      {!selectedPo ? (
+        <POMainPage
           data={inventoryResponse.data}
-          onRowSelection={(row) => {
-            setShowViewPO(true);
-            setSelecetedPo(row);
-          }}
-          loading={isLoading}
-          maxHeight="h-full"
-          totalCount={10}
-          rowSize="h-10"
-          textSize="xs"
-          showActions
-          renderActions={(row) => (
-            <div className="flex gap-1 sm:gap-2 px-1 justify-center">
-              {/* View Button */}
-              <IconButton
-                onClick={() => {
-                  setShowViewPO(true);
-                  setSelecetedPo(row);
-                }}
-                label={"View"}
-                bg={"gray"}
-                icon={<Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
-              />
-              <IconButton
-                onClick={() => {}}
-                label={"Print"}
-                bg={"green"}
-                icon={<Printer className=" w-3 h-3  sm:w-4 sm:h-4" />}
-              />
-              <IconButton
-                onClick={() => {}}
-                label={"Convert to PO"}
-                bg={"blue"}
-                icon={<FileText className=" w-3 h-3  sm:w-4 sm:h-4" />}
-              />
-            </div>
-          )}
+          setSelectedPo={setSelectedPo}
         />
-        <Modal
-          size="xl"
-          hasPadding={false}
-          className="h-[90%]"
-          modalDetails={renderModalDetails(selectedPo)}
-          // getPOStatusInfo(selectedPo?.poStatus)
-          title={`${selectedPo?.poNumber}`}
-          isOpen={showViewPO}
+      ) : (
+        <ShowPOModal
+          data={selectedPo}
+          mutate={handleUpdateData}
           onClose={function (): void {
-            setShowViewPO(false);
+            setSelectedPo(null);
           }}
-        >
-          <ShowPOModal
-            user={user}
-            data={selectedPo ?? null}
-            mutate={handleUpdateData}
-            onClose={() => {
-              setShowViewPO(false);
-            }}
-          />
-        </Modal>
-      </div>
+          user={user}
+        />
+      )}
     </PageLayout>
   );
 };

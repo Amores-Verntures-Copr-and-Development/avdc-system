@@ -16,6 +16,9 @@ import { Request } from "@/types/request";
 import { UserAuth } from "@/hooks/useSession";
 import ShowAllIItems from "./ShowAllIItems";
 import ShowPOByRequest from "./ShowPOByRequest";
+import PageHeader from "@/components/shared/PageHeader";
+import Button from "@/components/shared/Button";
+import { ArrowLeft } from "lucide-react";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -246,7 +249,19 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   };
   return (
     <div className="flex flex-col h-full">
-      {/* Stepper */}
+      <div className="flex justify-between items-center">
+        <PageHeader title={`${data?.poNumber}`} subtitle={"Purchase Order"} />
+        <div>
+          <Button
+            size="sm"
+            onClick={onClose}
+            label="Back"
+            icon={<ArrowLeft className="w-4 h-4" />}
+            color="neutral"
+            isRounded={false}
+          />
+        </div>
+      </div>
       <div className="bg-gray-50 p-2">
         <div className="flex justify-between items-center max-w-3xl mx-auto">
           {statusSteps.map((step, index) => (
