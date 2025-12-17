@@ -56,11 +56,11 @@ const columns: Column<PurchaseOrderItems>[] = [
     name: "Total",
     key: "total",
     selector: (row) =>
-      formatPeso((row.supplierPrice ?? 0) * row.poItemReceivedQty),
+      formatPeso((row.supplierPrice || row.unitPrice) * row.poItemReceivedQty),
     compute: (row) => {
-      return row.poItemReceivedQty * (row.supplierPrice ?? 0);
+      return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);
     },
-    dependsOn: ["poItemOrderedQty", "unitPrice"],
+    dependsOn: ["poItemOrderedQty", "unitPrice", "supplierPrice"],
   },
   {
     name: "Status",

@@ -7,7 +7,7 @@ export async function createPurchaseOrderItem({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreatePurchaseOrderItemDto[];
 }) {
   try {

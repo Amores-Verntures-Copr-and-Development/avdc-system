@@ -1,4 +1,5 @@
 import {
+  createPurchaseOrderItemByPOId,
   getPurchaseOrderItemById,
   updatePurchaseOrderItem,
   updatePurchaseOrderItemByPoId,
@@ -90,10 +91,10 @@ export async function POST(
     if (!poId) {
       throw new Error("No poId found!");
     }
-    const res = await updatePurchaseOrderItemByPoId(poItemData);
+    const res = await createPurchaseOrderItemByPOId(poItemData);
     if (!res.success) {
       console.log(res.error);
-      throw new Error(res.message || "Failed to Update PO");
+      throw new Error(res.message || "Failed to Add PO item");
     }
     return NextResponse.json(
       {

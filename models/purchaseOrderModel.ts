@@ -55,7 +55,7 @@ export const insertPurchaseOrderItems = async ({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreatePurchaseOrderItemDto[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
@@ -141,6 +141,7 @@ export const selectPurchaseOrderItems = async ({
   const sql = `SELECT 
   poi.*,
   i.itemName,
+  i.itemUnit,
   (
     SELECT JSON_ARRAYAGG(
       JSON_OBJECT(

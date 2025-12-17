@@ -1,4 +1,5 @@
 import {
+  CreatePurchaseOrderItemDto,
   DisplayPOItemsSupplier,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
@@ -247,6 +248,64 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     mutateInventory();
     mutate();
   };
+  const handleAddItemPo = async (
+    data: CreatePurchaseOrderItemDto[],
+    poId: number
+  ) => {
+    // console.log("Data: ", dataReq[0].requestItemsData);
+    try {
+      const result = await fetch(`api/purchase-order/po-items/${poId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      mutateInventory();
+      mutate();
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add item in po.");
+      return false;
+    }
+  };
+  const handleUpdatePOItem = async (
+    data: Partial<PurchaseOrderItems>,
+    poId: number
+  ) => {
+    try {
+      const result = await fetch(
+        `/api/purchase-order/po-items/${poId}/${data.poItemId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutateInventory();
+      mutate();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to update PO Item.");
+      return false;
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center">
@@ -364,6 +423,8 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           onClose={onClose}
           mutate={mutate}
           user={user}
+          onAddItem={handleAddItemPo}
+          onUpdateItem={handleUpdatePOItem}
         />
       ) : (
         <ShowPOByRequest setShowAllItems={setShowPage} data={data} />

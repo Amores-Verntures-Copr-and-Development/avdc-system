@@ -51,7 +51,7 @@ export type DisplayPurchaseOrderItemsDto = Pick<
   | "unitPrice"
   | "suppId"
 > &
-  Pick<ItemInterface, "itemName"> & {
+  Pick<ItemInterface, "itemName" | "itemUnit"> & {
     suppliers: SupplierItemDetails[] | null;
     selectedSupplierId?: number;
     totalPrice?: number;

@@ -8,6 +8,7 @@ interface IconButtonProps {
   bg: string;
   isRounded?: boolean;
   showLabel?: boolean;
+  disable?: boolean;
 }
 
 const colorMap: Record<string, string> = {
@@ -27,12 +28,14 @@ const IconButton: React.FC<IconButtonProps> = ({
   bg,
   isRounded = true,
   showLabel = true,
+  disable = false,
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
   const handleEnter = () => {
+    if (disable) return; // don't show tooltip if disabled
     const rect = btnRef.current?.getBoundingClientRect();
     if (rect) {
       setPos({
@@ -51,14 +54,19 @@ const IconButton: React.FC<IconButtonProps> = ({
         <button
           ref={btnRef}
           onClick={(e) => {
-            onClick();
+            if (!disable) onClick();
             e.stopPropagation();
           }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           className={`px-1 py-1 sm:px-2 sm:py-1 border border-gray-200 flex items-center gap-2 ${
             isRounded ? "rounded" : ""
-          } ${colorMap[bg] || ""}`}
+          } ${
+            disable
+              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+              : colorMap[bg] || ""
+          }`}
+          disabled={disable}
         >
           {icon}
         </button>
@@ -66,6 +74,7 @@ const IconButton: React.FC<IconButtonProps> = ({
 
       {showTooltip &&
         showLabel &&
+        !disable && // tooltip hidden when disabled
         createPortal(
           <span
             className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200 hidden xl:inline"

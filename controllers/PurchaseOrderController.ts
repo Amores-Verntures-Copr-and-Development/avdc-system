@@ -14,9 +14,11 @@ import { processCreatePO } from "@/services/purchase/process-create-po";
 import { processDeliverItemToStore } from "@/services/purchase/process-deliver-po-store";
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
+import { createPurchaseOrderItem } from "@/services/purchase/purchase-items/create-purchase-items";
 import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
 import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
+import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 import {
   findAllPurchaseOrder,
   findPOItemsById,
@@ -41,6 +43,24 @@ export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
     return {
       success: false,
       message: "Failed to create purchase order",
+      error: e,
+    };
+  }
+};
+
+export const createPurchaseOrderItemByPOId = async (
+  data: CreatePurchaseOrderItemDto[]
+) => {
+  try {
+    await createPurchaseOrderItem({ data });
+    return {
+      success: true,
+      message: "Purchase order item added successfully!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to add purchase order item!",
       error: e,
     };
   }
@@ -204,6 +224,9 @@ export const updatePurchaseOrderItem = async (
     if (!controller) {
       throw new Error("No controller found!");
     }
+    if (controller === "update") {
+      console.log(data);
+    }
     if (controller === "sent") {
       await processSentPOItems(data);
       message = "Items sent successfully!";
@@ -269,6 +292,29 @@ export const updatePurchaseOrderItemByPoId = async (
     return {
       success: true,
       message: "Item added to Purchase Order",
+      result: result,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      message: "Failed to add item",
+      error: e,
+    };
+  }
+};
+
+export const updatePurchaserOrderById = async (
+  data: Partial<PurchaseOrderItems>
+) => {
+  try {
+    const result = await updatePurchaseOrderItems({
+      updates: [data],
+      keyFields: ["poItemId"],
+    });
+    return {
+      success: true,
+      message: "PO Item updated successfully!",
       result: result,
     };
   } catch (e) {

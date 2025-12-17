@@ -321,6 +321,23 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       )}
       <div className="flex-1 overflow-y-auto pr-4 pl-4">
         <Table
+          localSearch
+          renderTopActions={
+            selectedReq?.requestStatus === "delivered" && (
+              <div>
+                <Button
+                  icon={<Plus size={15} />}
+                  onClick={() => {
+                    //Perform add item from inventory from deliver
+                  }}
+                  size="sm"
+                  label="Add Item from Deliver"
+                  className="text-xs font-semibold"
+                  color="secondary"
+                />
+              </div>
+            )
+          }
           maxHeight="h-full"
           uniqueIdKey="reqItemId"
           showCheckBox={isSelectingAddItemPO}
