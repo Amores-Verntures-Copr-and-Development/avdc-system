@@ -22,7 +22,9 @@ const Header = () => {
   return (
     <div className="flex justify-between h-8 md:h-13 xl:h-15 items-center pr-2 pl-2 shadow  bg-white overflow-visible">
       <div className="flex flex-col">
-        <span className="font-semibold">{storeData?.storeName}</span>
+        <span className="font-semibold text-[10px] 2xl:text-lg">
+          {storeData?.storeName}
+        </span>
       </div>
       <div className="flex gap-5 items-center">
         <div className="relative flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-gray-300 text-white">

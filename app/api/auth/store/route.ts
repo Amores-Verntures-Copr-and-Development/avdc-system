@@ -72,7 +72,7 @@ export async function PUT(req: NextRequest) {
       secure: false,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60, // 1 hour
+      maxAge: 60 * 60 * 24 * 7, // 1 week
     });
 
     response.cookies.set({

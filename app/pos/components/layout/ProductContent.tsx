@@ -15,7 +15,7 @@ const ProductContent = ({
   addProductOrder,
 }: ProductContentProps) => {
   return (
-    <div className="flex-1 grid grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+    <div className="flex-1 grid grid-cols-3 xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
       {data.map((prod) => (
         <ProductCard
           key={prod.prodId}

@@ -27,10 +27,11 @@ import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { useSession } from "@/hooks/useSession";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import ViewRequestModal from "./components/ViewRequestModal";
+
 import toast from "react-hot-toast";
 import PageLayout from "@/components/shared/PageLayout";
 import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import ViewRequestModal from "./ViewRequestModal";
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order No", key: "requestNo" },
   { name: "Total Items", key: "totalItems" },
@@ -56,7 +57,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
         getRequestStatusFormat(row.requestStatus);
       return (
         <span
-          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+          className={`${bgClass} ${textClass} ${borderClass} text-[9px] xl:text-xs rounded px-0.5 py-0.5 xl:px-1 xl:py-1 text-center font-semibold`}
         >
           {status}
         </span>
@@ -135,115 +136,128 @@ const StoreRequisitionPage = () => {
   };
 
   return (
-    <PageLayout className="p-2 gap-4">
-      <PageHeader
-        title={"Requisition"}
-        subtitle="Manage request order from your store."
-      />
-      <div className="grid grid-cols-4 gap-4">
-        <Card
-          title="Total Request"
-          value={20}
-          icon={
-            <ListChecks className="w-3 h-3 xl:w-6 xl:h-6 text-indigo-500" />
-          }
-          iconBg="bg-indigo-100"
-        />
-        <Card
-          title="Completed Request"
-          value={20}
-          icon={
-            <CheckCircle className="w-3 h-3 xl:w-6 xl:h-6 text-green-500" />
-          }
-          iconBg="bg-green-100"
-        />
-        <Card
-          title="Pending Request"
-          value={20}
-          icon={<Clock className="w-3 h-3 xl:w-6 xl:h-6 text-amber-500" />}
-          iconBg="bg-amber-100"
-        />
-        <Card
-          title="Deleted Request"
-          value={20}
-          icon={<Trash2 className="w-3 h-3 xl:w-6 xl:h-6 text-red-500" />}
-          iconBg="bg-red-100"
-        />
-      </div>
-      <div className="flex-1 min-h-0  flex flex-col justify-between">
-        <Table<DisplayRequestOrderDto>
-          searchUrl="/requisitions"
-          columns={requisitionColumns}
-          data={itemResponse.data}
-          ref={tableRef}
-          totalCount={10}
-          loading={loading}
-          onRowSelection={(row) => {
-            setIsShowViewRequest(true);
-            setSelectedRow(row);
+    <PageLayout className="p-2 gap-2 xl:gap-4">
+      {selectedRow && isShowViewRequest ? (
+        <ViewRequestModal
+          selectedReq={selectedRow}
+          mutateRequest={handleUpdateData}
+          user={user}
+          onBack={() => {
+            setIsShowViewRequest(false), setSelectedRow(null);
           }}
-          uniqueIdKey="requestId"
-          textSize="xs"
-          showActions
-          maxHeight="h-full"
-          rowSize="h-10"
-          showCheckBox
-          onSelectionChange={handleSelectionChange}
-          renderTopActions={
-            <>
-              {selectedtedRows && selectedtedRows.length > 0 ? (
-                <Button
-                  size="sm"
-                  icon={<Trash size={18} />}
-                  onClick={function (): void {
-                    throw new Error("Function not implemented.");
-                  }}
-                  label="Delete"
-                  className="font-semibold text-xs"
-                  color="danger"
-                />
-              ) : (
-                <>
-                  <Button
-                    size="sm"
-                    icon={<Plus size={18} />}
-                    onClick={function (): void {
-                      setIsShowCreateRequest(true);
-                    }}
-                    label="Request Stock"
-                    className="font-semibold text-xs"
-                  />
-                </>
-              )}
-            </>
-          }
-          renderActions={(row) => (
-            <div className="flex gap-2 justify-center">
-              {/* Edit Button */}
-              <IconButton
-                onClick={() => {
-                  // handleEditRow(row);
-                  setIsShowViewRequest(true);
-                  setSelectedRow(row);
-                }}
-                label={"View"}
-                bg={"gray"}
-                icon={<Eye size={18} />}
-              />
-              <IconButton
-                onClick={() => {
-                  handleEditRow(row);
-                }}
-                label={"Edit"}
-                bg={"red"}
-                icon={<Trash size={18} />}
-              />
-
-              {/* Delete Button */}
-            </div>
-          )}
         />
-      </div>
+      ) : (
+        <>
+          <PageHeader
+            title={"Requisition"}
+            subtitle="Manage request order from your store."
+          />
+          <div className="grid grid-cols-4 gap-4">
+            <Card
+              title="Total Request"
+              value={20}
+              icon={
+                <ListChecks className="w-3 h-3 xl:w-6 xl:h-6 text-indigo-500" />
+              }
+              iconBg="bg-indigo-100"
+            />
+            <Card
+              title="Completed Request"
+              value={20}
+              icon={
+                <CheckCircle className="w-3 h-3 xl:w-6 xl:h-6 text-green-500" />
+              }
+              iconBg="bg-green-100"
+            />
+            <Card
+              title="Pending Request"
+              value={20}
+              icon={<Clock className="w-3 h-3 xl:w-6 xl:h-6 text-amber-500" />}
+              iconBg="bg-amber-100"
+            />
+            <Card
+              title="Deleted Request"
+              value={20}
+              icon={<Trash2 className="w-3 h-3 xl:w-6 xl:h-6 text-red-500" />}
+              iconBg="bg-red-100"
+            />
+          </div>
+          <div className="flex-1 min-h-0  flex flex-col justify-between">
+            <Table<DisplayRequestOrderDto>
+              searchUrl="/requisitions"
+              columns={requisitionColumns}
+              data={itemResponse.data}
+              ref={tableRef}
+              totalCount={10}
+              loading={loading}
+              onRowSelection={(row) => {
+                setIsShowViewRequest(true);
+                setSelectedRow(row);
+              }}
+              uniqueIdKey="requestId"
+              textSize="xs"
+              showActions
+              maxHeight="h-full"
+              rowSize="h-10"
+              showCheckBox
+              onSelectionChange={handleSelectionChange}
+              renderTopActions={
+                <>
+                  {selectedtedRows && selectedtedRows.length > 0 ? (
+                    <Button
+                      size="sm"
+                      icon={<Trash className="w-4 h-4 xl:w-4 xl:h-4" />}
+                      onClick={function (): void {
+                        throw new Error("Function not implemented.");
+                      }}
+                      label="Delete"
+                      className="font-semibold text-xs"
+                      color="danger"
+                    />
+                  ) : (
+                    <>
+                      <Button
+                        size="sm"
+                        icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        onClick={function (): void {
+                          setIsShowCreateRequest(true);
+                        }}
+                        label="Request Stock"
+                        className="font-semibold text-xs"
+                      />
+                    </>
+                  )}
+                </>
+              }
+              renderActions={(row) => (
+                <div className="flex gap-2 justify-center">
+                  {/* Edit Button */}
+                  <IconButton
+                    onClick={() => {
+                      // handleEditRow(row);
+                      setIsShowViewRequest(true);
+                      setSelectedRow(row);
+                    }}
+                    label={"View"}
+                    bg={"gray"}
+                    icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      handleEditRow(row);
+                    }}
+                    label={"Edit"}
+                    bg={"red"}
+                    icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+
+                  {/* Delete Button */}
+                </div>
+              )}
+            />
+          </div>
+        </>
+      )}
       <Modal
         title="Create Request Order"
         size="xl"
@@ -261,7 +275,7 @@ const StoreRequisitionPage = () => {
           }}
         />
       </Modal>
-      <Modal
+      {/* <Modal
         hasPadding={false}
         className="bg-white h-[95%]"
         title={`Request Order (${selectedRow?.requestNo})`}
@@ -270,24 +284,24 @@ const StoreRequisitionPage = () => {
             getRequestStatusFormat(selectedRow?.requestStatus ?? "pending");
           return (
             <div className="flex flex-1 justify-between align-middle items-center">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-600">
+              <div className="flex gap-2 xl:gap-0 xl:flex-col">
+                <span className="text-[10px] xl:text-xs text-gray-600">
                   Store:{" "}
                   <span className="font-bold text-black">
                     {selectedRow?.storeName}
                   </span>
                 </span>
-                <span className="text-xs text-gray-600">
+                <span className=" text-[10px] xl:text-xs text-gray-600">
                   Requestor:{" "}
                   <span className="font-bold text-black">
                     {selectedRow?.requestedByName}
                   </span>
                 </span>
               </div>
-              <span className="text-xs text-gray-600">
+              <span className="text-[10px] xl:text-xs text-gray-600">
                 Status:{" "}
                 <span
-                  className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+                  className={`${bgClass} ${textClass} ${borderClass} text-[10px] xl:text-xs rounded px-0.5 py-0.5 xl:px-1 xl:py-1 text-center font-semibold`}
                 >
                   {status}
                 </span>
@@ -306,7 +320,7 @@ const StoreRequisitionPage = () => {
           mutateRequest={handleUpdateData}
           user={user}
         />
-      </Modal>
+      </Modal> */}
     </PageLayout>
   );
 };

@@ -59,7 +59,7 @@ const IconButton: React.FC<IconButtonProps> = ({
           }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
-          className={`px-1 py-1 sm:px-2 sm:py-1 border border-gray-200 flex items-center gap-2 ${
+          className={`px-1 py-0.5 xl:px-2 xl:py-1 border border-gray-200 flex items-center gap-2 ${
             isRounded ? "rounded" : ""
           } ${
             disable

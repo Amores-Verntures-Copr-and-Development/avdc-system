@@ -328,7 +328,11 @@ const TableInner = <T extends Record<string, any>>(
               onClick={(e) => e.stopPropagation()}
               type={column.inputType ?? "text"}
               name={column.name}
-              value={realRow?.[column.key] ?? ""}
+              value={
+                column.inputType === "number"
+                  ? realRow?.[column.key] || "" // 0, null, undefined => empty
+                  : realRow?.[column.key] || ""
+              }
               onChange={(e) =>
                 handleInputChange(row, column.key, e.target.value)
               }
@@ -374,7 +378,7 @@ const TableInner = <T extends Record<string, any>>(
           subtitle ||
           title ||
           localSearch) && (
-          <div className="bg-white flex p-1 lg:p-2 gap-5 items-center align-middle justify-between border-b border-gray-200">
+          <div className="bg-white flex p-1 lg:p-2 gap-2 xl:gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
                 {title && <span className="text-black text-sm">{title}</span>}
@@ -451,7 +455,7 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-1 py-1 xl:px-2 xl:py-3 font-semibold text-left text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-1 py-1 xl:px-2 xl:py-3 font-semibold text-left text-[9px] lg:text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
                         ? "border-r border-gray-300"
                         : ""
@@ -533,7 +537,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[10px] xl:text-${textSize} ${
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[9px] xl:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >

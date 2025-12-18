@@ -36,13 +36,13 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
     const showLabel = !placeholder;
     const labelClass = {
       xs: "text-[10px] lg:text-xs",
-      sm: "text-xs lg:text-sm",
+      sm: "text-xs xl:text-sm",
       md: "text-md md:text-base",
       lg: "text-md md:text-lg",
     }[sizes];
     const sizeClass = {
-      xs: "h-8 text-xs px-2",
-      sm: "h-8 text-xs md:text-sm  px-2",
+      xs: "h-5 xl:h-6 text-xs px-2",
+      sm: "h-6 xl:h-8 text-xs xl:text-sm  px-2",
       md: "h-10 text-base px-3",
       lg: "h-12 text-md md:text-lg px-4",
     }[sizes];
@@ -81,11 +81,11 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             readOnly={readOnly}
             defaultValue={defaultValue}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black  rounded-md py-1 md:py-2 md:pl-3 md:pr-1 focus:outline-none focus:ring-2 ${
+            className={`w-full border border-gray-300 text-black  rounded-md py-0.5 xl:py-2 xl:pl-3 xl:pr-1 focus:outline-none focus:ring-2 ${
               readOnly
                 ? "bg-gray-100 cursor-not-allowed"
                 : "focus:ring-blue-400"
-            } ${sizeClass} pr-10`} // extra right padding for toggle
+            } ${sizeClass} placeholder:text-[9px] xl:placeholder:text-xs`} // extra right padding for toggle
             {...rest}
           />
           {isPassword && (

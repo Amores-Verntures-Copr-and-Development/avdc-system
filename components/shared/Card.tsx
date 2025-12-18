@@ -18,8 +18,8 @@ const Card: React.FC<CardProps> = ({ title, value, icon, iconBg }) => {
           </div>
         )}
         <div>
-          <p className="text-xs xl:text-sm text-gray-500">{title}</p>
-          <p className="text-sm xl:text-xl font-bold">{value}</p>
+          <p className="text-[9px] xl:text-sm text-gray-500">{title}</p>
+          <p className="text-[9px] xl:text-xl font-bold">{value}</p>
         </div>
       </div>
     </div>

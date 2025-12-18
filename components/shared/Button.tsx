@@ -28,8 +28,8 @@ interface ButtonProps {
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: "text-[10px] md:text-xs px-2 py-1",
-  sm: "text-[9px] sm:text-xs md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 lg:px-3 lg:py-1.5 ",
+  xs: "text-[9px] md:text-xs px-2 py-1",
+  sm: "text-[9px] md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 xl:px-3 xl:py-1.5 ",
   md: "text-base px-4 py-2",
   lg: "text-lg px-5 py-2.5",
 };
@@ -45,74 +45,74 @@ const colorClasses: Record<
   }
 > = {
   primary: {
-    base: "bg-[#c51d71] border border-[#c51d71]",
+    base: "bg-[#c51d71] border border-[#c51d71] shadow-md border-b-2 border-b-[#a91860]",
     hover: "hover:bg-[#a91860] hover:border-[#a91860]",
     focus: "focus:ring-2 focus:ring-[#c51d71]/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-[#c51d71]/30 border-[#c51d71]/30 text-white/60",
+    disabled:
+      "bg-[#c51d71]/30 border-[#c51d71]/30 text-white/60 shadow-none border-b-[#c51d71]/50",
   },
 
-  // Secondary - Soft purple/mauve to complement primary
   secondary: {
-    base: "bg-slate-100 border border-slate-200",
+    base: "bg-slate-100 border border-slate-200 shadow-md border-b-2 border-b-slate-400",
     hover: "hover:bg-slate-200 hover:border-slate-300",
     focus: "focus:ring-2 focus:ring-slate-300/50 focus:ring-offset-2",
     text: "text-slate-700",
-    disabled: "bg-slate-50 border-slate-100 text-slate-400",
+    disabled:
+      "bg-slate-50 border-slate-100 text-slate-400 shadow-none border-b-slate-200",
   },
 
-  // Outline - Clean with softer focus
   notselected: {
-    base: "bg-white border border-[#c51d71]",
+    base: "bg-white border border-[#c51d71] shadow-md border-b-2 border-b-[#a91860]",
     hover: "hover:bg-[#c51d71]/8 hover:border-[#a91860]",
     focus: "focus:ring-2 focus:ring-[#c51d71]/30 focus:ring-offset-2",
     text: "text-[#c51d71]",
-    disabled: "bg-gray-50 border-[#c51d71]/25 text-[#c51d71]/40",
+    disabled:
+      "bg-gray-50 border-[#c51d71]/25 text-[#c51d71]/40 shadow-none border-b-[#c51d71]/40",
   },
 
-  // Ghost - Subtle and minimal
-
-  // Danger - Softer red that complements the pink
   danger: {
-    base: "bg-rose-500 border border-rose-500",
+    base: "bg-rose-500 border border-rose-500 shadow-md border-b-2 border-b-rose-600",
     hover: "hover:bg-rose-600 hover:border-rose-600",
     focus: "focus:ring-2 focus:ring-rose-500/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-rose-300 border-rose-300 text-white/60",
+    disabled:
+      "bg-rose-300 border-rose-300 text-white/60 shadow-none border-b-rose-400",
   },
 
-  // Success - Balanced green
   success: {
-    base: "bg-emerald-600 border border-emerald-700",
+    base: "bg-emerald-600 border border-emerald-700 shadow-md border-b-2 border-b-emerald-800",
     hover: "hover:bg-emerald-600 hover:border-emerald-600",
     focus: "focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-emerald-300 border-emerald-300 text-white/60",
+    disabled:
+      "bg-emerald-300 border-emerald-300 text-white/60 shadow-none border-b-emerald-400",
   },
 
-  // Warning - Warmer amber
   warning: {
-    base: "bg-amber-600 border border-amber-600",
+    base: "bg-amber-600 border border-amber-600 shadow-md border-b-2 border-b-amber-700",
     hover: "hover:bg-amber-600 hover:border-amber-600",
     focus: "focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-amber-300 border-amber-300 text-white/60",
+    disabled:
+      "bg-amber-300 border-amber-300 text-white/60 shadow-none border-b-amber-400",
   },
 
-  // Tertiary - Deeper, complementary purple-blue
   tertiary: {
-    base: "bg-indigo-600 border border-indigo-600",
+    base: "bg-indigo-600 border border-indigo-600 shadow-md border-b-2 border-b-indigo-700",
     hover: "hover:bg-indigo-700 hover:border-indigo-700",
     focus: "focus:ring-2 focus:ring-indigo-600/40 focus:ring-offset-2",
     text: "text-white",
-    disabled: "bg-indigo-300 border-indigo-300 text-white/60",
+    disabled:
+      "bg-indigo-300 border-indigo-300 text-white/60 shadow-none border-b-indigo-400",
   },
+
   neutral: {
-    base: "bg-gray-200 border border-gray-300",
+    base: "bg-gray-200 border border-gray-300 shadow-md border-b-2 border-b-gray-400",
     hover: "hover:bg-[#c51d71]/8",
     focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
     text: "text-slate-700",
-    disabled: "text-slate-400",
+    disabled: "text-slate-400 shadow-none border-b-gray-300",
   },
 };
 

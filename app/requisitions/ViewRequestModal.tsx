@@ -16,22 +16,36 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 import { PDFViewer } from "@react-pdf/renderer";
-import { CheckLine, Clock, FileText, Pencil, Plus, X } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckLine,
+  ChevronLeft,
+  Clock,
+  FileText,
+  MoveLeft,
+  Pencil,
+  Plus,
+  X,
+} from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-import AddItemROModal from "./AddItemROModal";
-import AddItemPOModal from "./AddItemPOModal";
+
 import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
+import AddItemROModal from "./components/AddItemROModal";
+import AddItemPOModal from "./components/AddItemPOModal";
+import PageHeader from "@/components/shared/PageHeader";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
   mutateRequest: () => void;
   user: UserAuth | null;
+  onBack?: () => void;
 }
 const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   selectedReq,
   mutateRequest,
+  onBack,
   user,
 }) => {
   const [isSelectingAddItemPO, setIsSelectingAddItemPO] = useState(false);
@@ -288,103 +302,123 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     }
   };
   return (
-    <div className="bg-white h-full flex flex-col overflow-hidden">
-      {selectedReq?.requestStatus === "pending" ||
-      selectedReq?.requestStatus === "in_progress" ||
-      selectedReq?.requestStatus === "approved" ? (
-        <span className="text-[10px] xl:text-sm text-gray-600 font-medium p-4">
-          Note: Please wait for the order request to be delivered before
-          receiving it. If it takes longer than expected, kindly contact your
-          Purchasing Department.
-        </span>
-      ) : selectedReq?.requestStatus === "delivered" ? (
-        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
-          Note: Please verify all delivered items and accurately input the
-          received quantities into the system to keep your inventory records up
-          to date.
-        </span>
-      ) : selectedReq?.requestStatus === "received" ? (
-        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
-          Note: The request status is currently marked as Received. Please
-          complete the request to finalize the process, ensure that all items
-          are accurately recorded, and generate the corresponding inventory
-          report.
-        </span>
-      ) : selectedReq?.requestStatus === "completed" ? (
-        <span className="text-[10px] xl:text-sm text-blue-600 font-medium p-4">
-          Note: This request order is completed.
-        </span>
-      ) : (
-        <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
-          Note: This request has been cancelled. No further action is required.
-        </span>
-      )}
-      <div className="flex-1 overflow-y-auto pr-4 pl-4">
-        <Table
-          localSearch
-          renderTopActions={
-            selectedReq?.requestStatus === "delivered" && (
-              <div>
-                <Button
-                  icon={<Plus size={15} />}
-                  onClick={() => {
-                    //Perform add item from inventory from deliver
-                  }}
-                  size="sm"
-                  label="Add Item from Deliver"
-                  className="text-xs font-semibold"
-                  color="secondary"
-                />
-              </div>
-            )
-          }
-          maxHeight="h-full"
-          uniqueIdKey="reqItemId"
-          showCheckBox={isSelectingAddItemPO}
-          isRounded={false}
-          updateData={setRequestItemData}
-          columns={
-            isRequestor
-              ? selectedReq?.requestStatus === "pending" ||
-                selectedReq?.requestStatus === "in_progress"
-                ? columnPending
-                : selectedReq?.requestStatus === "delivered"
-                ? column
-                : column
-              : adminColumn
-          }
-          data={requestItemData}
-          loading={loading}
-          onSelectionChange={handleRowSelection}
+    <>
+      <div className="flex justify-between">
+        {" "}
+        <PageHeader
+          title={`${selectedReq?.requestNo}`}
+          subtitle="Request Order"
         />
+        <div>
+          <Button
+            label="Back"
+            size="xs"
+            icon={<ChevronLeft className="w-3 h-3 xl:w-5 xl:h-5" />}
+            onClick={() => {
+              if (onBack) {
+                onBack();
+              }
+            }}
+          />
+        </div>
       </div>
-      <div className="border-t border-gray-300 flex justify-between p-4 gap-4 items-center mt-auto">
-        <span className="flex items-center">
-          <Clock size={15} />{" "}
-          <span className="text-xs ml-2">
-            {" "}
-            Requested: {formatDateToWords(
-              selectedReq?.requestCreatedAt ?? ""
-            )}{" "}
+      <div className="bg-white h-full flex flex-col overflow-hidden">
+        {selectedReq?.requestStatus === "pending" ||
+        selectedReq?.requestStatus === "in_progress" ||
+        selectedReq?.requestStatus === "approved" ? (
+          <span className="text-[9px] xl:text-sm text-gray-600 font-medium p-2 xl:p-4">
+            Note: Please wait for the order request to be delivered before
+            receiving it. If it takes longer than expected, kindly contact your
+            Purchasing Department.
           </span>
-        </span>
-        <div className="flex gap-2">
-          {selectedReq?.requestStatus !== "cancelled" && (
-            <>
-              <div>
-                <Button
-                  icon={<FileText size={15} />}
-                  onClick={() => {
-                    handleDownloadPDF();
-                    setShowROPDF(true);
-                  }}
-                  size="sm"
-                  label="PDF"
-                  className="text-xs font-semibold"
-                  color="secondary"
-                />
-              </div>
-              {/* <div>
+        ) : selectedReq?.requestStatus === "delivered" ? (
+          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-2 xl:p-4">
+            Note: Please verify all delivered items and accurately input the
+            received quantities into the system to keep your inventory records
+            up to date.
+          </span>
+        ) : selectedReq?.requestStatus === "received" ? (
+          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-2 xl:p-4">
+            Note: The request status is currently marked as Received. Please
+            complete the request to finalize the process, ensure that all items
+            are accurately recorded, and generate the corresponding inventory
+            report.
+          </span>
+        ) : selectedReq?.requestStatus === "completed" ? (
+          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-4">
+            Note: This request order is completed.
+          </span>
+        ) : (
+          <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
+            Note: This request has been cancelled. No further action is
+            required.
+          </span>
+        )}
+        <div className="flex-1 overflow-y-auto pr-4 pl-4">
+          <Table
+            localSearch
+            renderTopActions={
+              selectedReq?.requestStatus === "delivered" && (
+                <div>
+                  <Button
+                    icon={<Plus size={15} />}
+                    onClick={() => {
+                      //Perform add item from inventory from deliver
+                    }}
+                    size="sm"
+                    label="Add Item from Deliver"
+                    className="text-xs font-semibold"
+                    color="secondary"
+                  />
+                </div>
+              )
+            }
+            maxHeight="h-full"
+            uniqueIdKey="reqItemId"
+            showCheckBox={isSelectingAddItemPO}
+            isRounded={false}
+            updateData={setRequestItemData}
+            columns={
+              isRequestor
+                ? selectedReq?.requestStatus === "pending" ||
+                  selectedReq?.requestStatus === "in_progress"
+                  ? columnPending
+                  : selectedReq?.requestStatus === "delivered"
+                  ? column
+                  : column
+                : adminColumn
+            }
+            data={requestItemData}
+            loading={loading}
+            onSelectionChange={handleRowSelection}
+          />
+        </div>
+        <div className="border-t border-gray-300 flex justify-between p-1 xl:p-4 gap-4 items-center mt-auto">
+          <span className="flex items-center">
+            <Clock className="w-3 h-3 xl:w-4 xl:h-4" />{" "}
+            <span className="text-[9px] xl:text-xs ml-2">
+              {" "}
+              Requested:{" "}
+              {formatDateToWords(selectedReq?.requestCreatedAt ?? "")}{" "}
+            </span>
+          </span>
+          <div className="flex gap-2">
+            {selectedReq?.requestStatus !== "cancelled" && (
+              <>
+                <div>
+                  <Button
+                    icon={<FileText className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    onClick={() => {
+                      handleDownloadPDF();
+                      setShowROPDF(true);
+                    }}
+                    size="sm"
+                    label="PDF"
+                    className="text-xs font-semibold"
+                    color="secondary"
+                  />
+                </div>
+                {/* <div>
                 <Button
                   icon={<Printer size={15} />}
                   size="sm"
@@ -393,120 +427,121 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   color="secondary"
                 />
               </div> */}
-              {isSelectingAddItemPO ? (
-                <>
-                  <div>
-                    <Button
-                      icon={<X size={15} />}
-                      onClick={() => {
-                        setIsSelectingAddItemPO(false);
-                      }}
-                      size="sm"
-                      label="Cancel"
-                      className="text-xs font-semibold"
-                      color="secondary"
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      icon={<Pencil size={15} />}
-                      onClick={() => {
-                        setShowAddPOItem(true);
-                      }}
-                      size="sm"
-                      label="Confirm Item"
-                      className="text-xs font-semibold"
-                      color="primary"
-                    />
-                  </div>
-                </>
-              ) : isRequestor ? (
-                <>
-                  <div>
-                    <Button
-                      icon={<Pencil size={15} />}
-                      onClick={handleReceivedRO}
-                      size="sm"
-                      label="Edit"
-                      className="text-xs font-semibold"
-                      color="secondary"
-                    />
-                  </div>
-                  {Boolean(
+                {isSelectingAddItemPO ? (
+                  <>
+                    <div>
+                      <Button
+                        icon={<X className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        onClick={() => {
+                          setIsSelectingAddItemPO(false);
+                        }}
+                        size="sm"
+                        label="Cancel"
+                        className=" font-semibold"
+                        color="secondary"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        onClick={() => {
+                          setShowAddPOItem(true);
+                        }}
+                        size="sm"
+                        label="Confirm Item"
+                        className=" font-semibold"
+                        color="primary"
+                      />
+                    </div>
+                  </>
+                ) : isRequestor ? (
+                  <>
+                    <div>
+                      <Button
+                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        onClick={handleReceivedRO}
+                        size="sm"
+                        label="Edit"
+                        className="font-semibold"
+                        color="secondary"
+                      />
+                    </div>
+                    {Boolean(
+                      selectedReq?.requestStatus === "approved" ||
+                        selectedReq?.requestStatus === "in_progress"
+                    ) && (
+                      <div>
+                        <Button
+                          icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                          onClick={() => {
+                            setShowAddItem(true);
+                          }}
+                          size="sm"
+                          label="Add Item"
+                          className="font-semibold"
+                          color="primary"
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  Boolean(
                     selectedReq?.requestStatus === "approved" ||
                       selectedReq?.requestStatus === "in_progress"
                   ) && (
                     <div>
                       <Button
-                        icon={<Plus size={15} />}
+                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
                         onClick={() => {
-                          setShowAddItem(true);
+                          setIsSelectingAddItemPO(true);
                         }}
                         size="sm"
-                        label="Add Item"
-                        className="text-xs font-semibold"
+                        label="Add Item to PO"
+                        className=" font-semibold"
                         color="primary"
                       />
                     </div>
-                  )}
-                </>
-              ) : (
-                Boolean(
-                  selectedReq?.requestStatus === "approved" ||
-                    selectedReq?.requestStatus === "in_progress"
-                ) && (
+                  )
+                )}
+
+                {/* Conditional buttons based on status */}
+                {selectedReq?.requestStatus === "received" && (
                   <div>
                     <Button
-                      icon={<Pencil size={15} />}
-                      onClick={() => {
-                        setIsSelectingAddItemPO(true);
-                      }}
+                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      onClick={handleCompleteRO}
                       size="sm"
-                      label="Add Item to PO"
+                      label="Complete Request"
                       className="text-xs font-semibold"
-                      color="primary"
                     />
                   </div>
-                )
-              )}
-
-              {/* Conditional buttons based on status */}
-              {selectedReq?.requestStatus === "received" && (
-                <div>
-                  <Button
-                    icon={<CheckLine size={15} />}
-                    onClick={handleCompleteRO}
-                    size="sm"
-                    label="Complete Request"
-                    className="text-xs font-semibold"
-                  />
-                </div>
-              )}
-              {selectedReq?.requestStatus === "delivered" && (
-                <div>
-                  <Button
-                    icon={<CheckLine size={15} />}
-                    onClick={handleFillUpAll}
-                    size="sm"
-                    label="Fill up received"
-                    className="text-xs font-semibold"
-                    color="success"
-                  />
-                </div>
-              )}
-              {selectedReq?.requestStatus === "delivered" && (
-                <div>
-                  <Button
-                    icon={<CheckLine size={15} />}
-                    onClick={handleReceivedRO}
-                    size="sm"
-                    label="Received"
-                    className="text-xs font-semibold"
-                  />
-                </div>
-              )}
-            </>
-          )}
+                )}
+                {selectedReq?.requestStatus === "delivered" && (
+                  <div>
+                    <Button
+                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      onClick={handleFillUpAll}
+                      size="sm"
+                      label="Fill up received"
+                      className="text-xs font-semibold"
+                      color="success"
+                    />
+                  </div>
+                )}
+                {selectedReq?.requestStatus === "delivered" && (
+                  <div>
+                    <Button
+                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      onClick={handleReceivedRO}
+                      size="sm"
+                      label="Received"
+                      className="text-xs font-semibold"
+                    />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -556,7 +591,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           loading={isAddingItemPo}
         />
       </Popup>
-    </div>
+    </>
   );
 };
 

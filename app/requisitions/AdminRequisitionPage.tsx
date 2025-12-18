@@ -17,7 +17,7 @@ import toast from "react-hot-toast";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import PageLayout from "@/components/shared/PageLayout";
 import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
-import ViewRequestModal from "./components/ViewRequestModal";
+import ViewRequestModal from "./ViewRequestModal";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },

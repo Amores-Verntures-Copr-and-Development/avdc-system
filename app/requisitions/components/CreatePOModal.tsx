@@ -121,15 +121,15 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     ...baseColumns.slice(5), // totals and editable fields
   ];
   const handleSubmit = async () => {
-    const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem.map(
-      (item) => ({
+    const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem
+      .filter((i) => i.poItemOrder !== 0)
+      .map((item) => ({
         poId: 0,
         poItemReceivedQty: 0,
         poItemOrderedQty: item.poItemOrder,
         itemId: item.itemId,
         unitPrice: item.itemPrice,
-      })
-    );
+      }));
 
     const purchaseFormData: CreatePurchaseOrderFormDto = {
       poCreatedBy: user?.userId ?? 0,
@@ -141,9 +141,9 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         poId: 0,
       })),
     };
-    const success = await onSubmit(purchaseFormData);
-    if (success) {
-    }
+    // const success = await onSubmit(purchaseFormData);
+    // if (success) {
+    // }
   };
 
   const handleFillUpAll = () => {

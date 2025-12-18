@@ -15,7 +15,7 @@ interface ProductVariantProps {
 const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
   return (
     <div className="h-full">
-      <div className="flex-1 grid grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+      <div className="flex-1 grid grid-cols-3 xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
         {data?.productVariants?.map((prod) => (
           <ProductVariantCard
             key={prod.prodVarId}

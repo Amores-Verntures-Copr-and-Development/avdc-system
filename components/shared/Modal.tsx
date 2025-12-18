@@ -113,22 +113,35 @@ const Modal: React.FC<ModalProps> = ({
     full: "w-full h-full",
   };
 
-  const positionClasses = {
-    center: "items-center justify-center",
-    left: "items-center justify-start",
-    right: "items-center justify-end",
-    top: "items-start justify-center",
-    bottom: "items-end justify-center",
-  };
+  // const positionClasses = {
+  //   center: "items-center justify-center",
+  //   left: "items-center justify-start",
+  //   right: "items-center justify-end",
+  //   top: "items-start justify-center",
+  //   bottom: "items-end justify-center",
+  // };
 
   // Mobile-specific styles
-  const mobileOverlayClass = isMobile
-    ? "fixed inset-0 z-50 flex p-4 bg-black/20 items-center justify-center"
-    : `fixed inset-0 z-50 flex p-4 bg-black/20 ${positionClasses[position]}`;
+  const mobileOverlayClass = `
+  fixed inset-0 z-50 flex
+  items-center
+  justify-center
+  bg-black/20
+  px-4
+`;
 
-  const mobileModalClass = isMobile
-    ? `bg-background-white rounded-lg shadow-2xl overflow-hidden w-full max-h-[90dvh] flex flex-col ${sizeClasses[size]} ${className}`
-    : `bg-background-white rounded-lg shadow-2xl overflow-hidden w-full flex flex-col ${sizeClasses[size]} ${className}`;
+  const mobileModalClass = `
+  bg-background-white
+  rounded-lg
+  shadow-2xl
+  w-full
+  max-h-[85dvh]
+  overflow-hidden
+  flex
+  flex-col
+  ${sizeClasses[size]}
+  ${className}
+`;
 
   if (!isOpen || !portalRoot) return null;
 
@@ -171,14 +184,14 @@ const Modal: React.FC<ModalProps> = ({
         {/* Modal Header */}
         {(title || showCloseButton) && (
           <div className="flex flex-col justify-between p-2 2xl:p-4 border-b bg-white border-gray-200 shrink-0">
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center">
               {title && (
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    {Icon && <Icon size={30} />}
+                  <div className="flex items-center gap-1 xl:gap-2">
+                    {Icon && <Icon className="w-5 h-5 xl:w-7 xl:h-7" />}
                     <h2
                       id="modal-title"
-                      className="text-sm 2xl:text-xl font-bold text-black"
+                      className="text-xs 2xl:text-xl font-bold text-black"
                     >
                       {title}
                     </h2>
@@ -191,7 +204,7 @@ const Modal: React.FC<ModalProps> = ({
                   className="p-1 rounded-full hover:bg-gray-700 transition-color"
                   aria-label="Close modal"
                 >
-                  <X className="w-4 h-4 xl:w-6 xl:h-6 text-black hover:text-white" />
+                  <X className="w-3 h-3 xl:w-6 xl:h-6 text-black hover:text-white" />
                 </button>
               )}
             </div>
@@ -206,15 +219,9 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Content Area (scrollable) - Fixed height for mobile */}
         <div
-          className={`flex-1 overflow-y-auto ${hasPadding ? "p-4" : ""}`}
-          style={
-            isMobile
-              ? {
-                  WebkitOverflowScrolling: "touch",
-                  overflowY: "auto",
-                }
-              : undefined
-          }
+          className={`flex-1 overflow-y-auto overscroll-contain ${
+            hasPadding ? "p-4" : ""
+          }`}
         >
           {children}
         </div>
