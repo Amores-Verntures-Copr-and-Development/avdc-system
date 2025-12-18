@@ -23,10 +23,10 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ) => {
     const showLabel = !placeholder;
     const labelClass = {
-      xs: "text-xs",
-      sm: "text-sm",
-      md: "text-base",
-      lg: "text-lg",
+      xs: "text-[10px] xl:text-xs",
+      sm: "text-md xl:text-sm",
+      md: "text-md md:text-base",
+      lg: "text-md md:text-lg",
     }[sizes];
     const sizeClass = {
       xs: "text-xs px-2 py-1",

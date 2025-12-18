@@ -35,13 +35,13 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
 
     const showLabel = !placeholder;
     const labelClass = {
-      xs: "text-[10px] lg:text-xs",
-      sm: "text-xs xl:text-sm",
+      xs: "text-[10px] xl:text-xs",
+      sm: "text-md xl:text-sm",
       md: "text-md md:text-base",
       lg: "text-md md:text-lg",
     }[sizes];
     const sizeClass = {
-      xs: "h-5 xl:h-6 text-xs px-2",
+      xs: "h-6 xl:h-8 text-xs px-2",
       sm: "h-6 xl:h-8 text-xs xl:text-sm  px-2",
       md: "h-10 text-base px-3",
       lg: "h-12 text-md md:text-lg px-4",
@@ -85,7 +85,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
               readOnly
                 ? "bg-gray-100 cursor-not-allowed"
                 : "focus:ring-blue-400"
-            } ${sizeClass} placeholder:text-[9px] xl:placeholder:text-xs`} // extra right padding for toggle
+            } ${sizeClass} placeholder:${labelClass}`} // extra right padding for toggle
             {...rest}
           />
           {isPassword && (
