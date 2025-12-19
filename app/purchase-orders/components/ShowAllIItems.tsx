@@ -97,43 +97,60 @@ const ShowAllIItems = ({
     },
     {
       name: "Supplier",
-      key: "selectedSupplierId",
+      key: "suppId",
       editable: (row) => row.poItemId === isEditId,
       inputType: "select",
-
-      // 👇 Automatically choose the supplier with the lowest price if none is selected yet
+      selectOptionVariant: "native",
       selector: (row) => {
-        if (row.suppId)
-          return row.suppliers?.find((supp) => supp.suppId === row.suppId)
-            ?.suppName;
         if (!row.suppliers?.length) return "No suppliers";
 
-        // Auto-select the cheapest supplier if not selected yet
-        if (!row.selectedSupplierId) {
-          const cheapestSupplier = row.suppliers.reduce((prev, curr) =>
-            curr.suppItemPrice < prev.suppItemPrice ? curr : prev
-          );
-          row.selectedSupplierId = cheapestSupplier.suppId;
-          row.suppId = cheapestSupplier.suppId;
-          row.unitPrice = cheapestSupplier.suppItemPrice;
-        }
+        const selectedId =
+          row.selectedSupplierId !== undefined ? null : row.suppId;
 
-        // Display supplier name
+        if (!selectedId) return "Select Supplier";
+
         const selected = row.suppliers.find(
-          (s) => s.suppId === Number(row.selectedSupplierId)
+          (s) => s.suppId === Number(selectedId)
         );
-        console.log("Selected: ", selected);
+
         return selected ? selected.suppName : "Select Supplier";
       },
       value: (row) => {
-        return (row.suppId || row.selectedSupplierId)?.toString();
+        console.log("Supplier value function:", {
+          selectedSupplierId: row.selectedSupplierId,
+          suppId: row.suppId,
+          returnValue:
+            row.selectedSupplierId === null ||
+            row.selectedSupplierId === undefined ||
+            row.selectedSupplierId === ""
+              ? null
+              : (row.selectedSupplierId || row.suppId)?.toString() || null,
+        });
+        // Return empty string if explicitly cleared, otherwise use existing value
+        if (
+          row.selectedSupplierId !== undefined ||
+          row.selectedSupplierId === null ||
+          row.selectedSupplierId === ""
+        ) {
+          return row.selectedSupplierId === null
+            ? null
+            : String(row.selectedSupplierId);
+        }
+
+        // Initial load fallback (backend value)
+        return row.suppId != null ? String(row.suppId) : null;
       },
       // Dropdown options
-      options: (row: DisplayPurchaseOrderItemsDto) =>
-        row.suppliers?.map((s: any) => ({
-          label: `${s.suppName} (₱${s.suppItemPrice})`,
-          value: s.suppId.toString(),
-        })) ?? [],
+      options: (row: DisplayPurchaseOrderItemsDto) => {
+        const supplierOptions =
+          row.suppliers?.map((s: any) => ({
+            label: `${s.suppName} (₱${s.suppItemPrice})`,
+            value: s.suppId.toString(),
+          })) ?? [];
+
+        // Change from value: null to value: ""
+        return [{ label: "Select...", value: "" }, ...supplierOptions];
+      },
     },
     {
       name: "Total Price",
@@ -143,14 +160,12 @@ const ShowAllIItems = ({
         const selected = row.suppliers?.find(
           (s) => s.suppId === Number(row.selectedSupplierId)
         );
-        const supplierPrice = selected?.suppItemPrice ?? 0;
-        const quantity = row.poItemOrderedQty ?? 0;
-        console.log("supplierPrice: ", supplierPrice);
-        console.log("Row: ", row);
-        console.log("Total: ", supplierPrice * quantity);
+        const supplierPrice = Number(selected?.suppItemPrice) || 0;
+        const quantity = Number(row.poItemOrderedQty) || 0;
         return supplierPrice * quantity;
       },
-      dependsOn: ["selectedSupplierId", "poItemOrderedQty"], // NEW
+      dependsOn: ["selectedSupplierId", "poItemOrderedQty"],
+      value: (row) => row.poItemOrderedQty * row.unitPrice, // NEW
     },
   ];
   useEffect(() => {
@@ -177,7 +192,7 @@ const ShowAllIItems = ({
 
     // Compare all fields you care about
     return (
-      original.suppId !== row.suppId ||
+      original.suppId !== (Number(row.suppId) || null) ||
       original.unitPrice !== row.unitPrice ||
       original.poItemOrderedQty !== row.poItemOrderedQty ||
       original.poItemReceivedQty !== row.poItemReceivedQty
@@ -191,7 +206,12 @@ const ShowAllIItems = ({
     setIsUpdatingId(dataItem.poItemId);
     try {
       if (!data?.poId) return;
-      const success = await onUpdateItem(dataItem, data.poId);
+      const newData: Partial<PurchaseOrderItems> = {
+        ...dataItem,
+        suppId: Number(dataItem.suppId) || null,
+      };
+      console.log("Updating PO Item:", newData);
+      const success = await onUpdateItem(newData, data.poId);
       if (success) {
         mutate();
         setIsEditId(null);
@@ -255,11 +275,11 @@ const ShowAllIItems = ({
                     />
                     <IconButton
                       onClick={() => {
-                        // setIsEditId(row.poItemId);
-                        // // handleUpdatePoItemSuppId({
-                        // //   poItemId: row.poItemId,
-                        // //   suppId: row.suppId,
-                        // // });
+                        // // setIsEditId(row.poItemId);
+                        // // // handleUpdatePoItemSuppId({
+                        // // //   poItemId: row.poItemId,
+                        // // //   suppId: row.suppId,
+                        // // // });
                       }}
                       label="Remove"
                       icon={<Trash2 size={14} />}
@@ -310,10 +330,18 @@ const ShowAllIItems = ({
               const selected = row.suppliers?.find(
                 (s) => s.suppId === Number(value)
               );
-              if (selected) {
-                row.suppId = selected.suppId; // ✅ mirror value
-                row.unitPrice = selected.suppItemPrice; // ✅ keep price updated
-              }
+              setPoItems((prev) =>
+                prev.map((item) =>
+                  item.poItemId === row.poItemId
+                    ? {
+                        ...item,
+                        selectedSupplierId: value ? Number(value) : null,
+                        suppId: selected?.suppId ?? null,
+                        unitPrice: selected?.suppItemPrice ?? 0,
+                      }
+                    : item
+                )
+              );
             }
             if (key === "poItemOrderedQty") {
               setPoItems((prev) =>

@@ -8,7 +8,8 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+
 import {
   ChevronDown,
   ChevronUp,
@@ -141,8 +142,9 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col p-4 gap-4">
           {itemResponse.data.map((reqData) => {
-            const { textClass, bgClass, status, borderClass } =
-              getRequestStatusFormat(reqData.requestStatus);
+            const { label, bg, color, border } = getRequestStatusOption(
+              reqData.requestStatus
+            );
             const totalRequestItemPrice = reqData.requestItemsData.reduce(
               (total, item) => {
                 const quantity = Number(item.reqItemQuantity || 1);
@@ -185,9 +187,9 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                     <div className="flex gap-2 items-center">
                       <div className="flex flex-col gap-1">
                         <span
-                          className={`text-xs font-medium ${bgClass} py-1 px-1 rounded-2xl ${textClass} ${borderClass}`}
+                          className={`text-xs font-medium ${bg} py-1 px-1 rounded-2xl ${color} ${border}`}
                         >
-                          {status}
+                          {label}
                         </span>
                         <span className="text-xs">
                           Total:

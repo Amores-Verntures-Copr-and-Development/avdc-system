@@ -16,6 +16,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+
     const request: Partial<Request>[] = data.map((req) => ({
       requestId: req.requestId,
       requestStatus: "delivered",
@@ -25,12 +26,31 @@ export async function processDeliveredPO(data: Request[], userId: number) {
       keyFields: ["requestId"],
       updates: request,
     });
+    const requestNotOrderItemData: Partial<RequestItems>[] = data.flatMap(
+      (req) =>
+        req.requestItems
+          .filter((item) => item.reqItemStatus === "not_ordered")
+          .flatMap((item) => ({
+            reqItemId: item.reqItemId,
+            reqItemStatus: item.reqItemStatus,
+            reqItemRemarks: item.reqItemRemarks ?? "",
+          }))
+    );
+    if (requestNotOrderItemData) {
+      await updateRequestItems({
+        connection,
+        updates: requestNotOrderItemData,
+        keyFields: ["reqItemId"],
+      });
+    }
     const requestItemData: Partial<RequestItems>[] = data.flatMap((req) =>
-      req.requestItems.flatMap((item) => ({
-        reqItemId: item.reqItemId,
-        reqItemTransfer: item.reqItemTransfer,
-        reqItemStatus: "delivered",
-      }))
+      req.requestItems
+        .filter((reqItem) => reqItem.reqItemStatus !== "not_ordered")
+        .flatMap((item) => ({
+          reqItemId: item.reqItemId,
+          reqItemTransfer: item.reqItemTransfer,
+          reqItemStatus: "delivered",
+        }))
     );
     await updateRequestItems({
       connection,

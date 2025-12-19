@@ -34,6 +34,7 @@ import StoreCardInSupplier from "./_components/StoreCardInSupplier";
 import Modal from "@/components/shared/Modal";
 import { Supplier } from "@/types/supplier";
 import { RequestItems } from "@/types/request";
+import { getStatusOption } from "./CompletePOView";
 
 const columns: Column<PurchaseOrderItems>[] = [
   { name: "Item Name", key: "itemName" },
@@ -76,6 +77,20 @@ const storeColumns: Column<RequestItems>[] = [
   {
     name: "Status",
     key: "reqItemStatus",
+    selector: (row) => {
+      const { label, bg, color } = getStatusOption(row.reqItemStatus);
+      return (
+        <div
+          className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+        >
+          <span
+            className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+          >
+            {label}
+          </span>
+        </div>
+      );
+    },
   },
   {
     name: "Remarks",
@@ -226,7 +241,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const isAllItemsDelivered = data.every((po) =>
     po.items.every((item) => item.poItemStatus === "delivered")
   );
-  console.log("isAllItemsDelivered: ", isAllItemsDelivered);
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-1  flex-col h-full w-full overflow-hidden">
@@ -253,6 +267,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   label="View All PO"
                   onClick={() => {
                     setShowAllItems("all");
+                    setSelectedStoreSupplier(null);
                   }}
                 />
               </div>
@@ -291,11 +306,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   return (
                     <div
                       key={supplier.suppId}
-                      className="border border-gray-300 rounded-lg overflow-hidden flex flex-col"
+                      className="border border-gray-200 shadow  rounded-lg overflow-hidden flex flex-col"
                     >
-                      <div className="bg-gradient-to-r from-gray-50 to-gray-100 p-4 cursor-pointer hover:from-gray-100 transition overflow-visible">
-                        <div className="flex justify-between items-center overflow-visible">
-                          <div className="flex items-center gap-2">
+                      <div className="bg-gradient-to-r flex flex-col gap-2  bg-white p-4 cursor-pointer hover:from-gray-100 transition overflow-visible">
+                        <div className="flex justify-between overflow-visible">
+                          <div className="flex items-start gap-2">
                             <Package className="text-primary-1" size={24} />
                             <div className="flex flex-col items-start gap-1">
                               <h1 className="font-semibold text-sm">
@@ -314,6 +329,148 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               </div>
                             </div>
                           </div>
+
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="flex flex-col gap-2 items-end">
+                              <span className="text-[9px] xl:text-xs">
+                                Total Amount
+                              </span>
+                              <p className="font-bold text-primary-1 text-sm xl:text-lg">
+                                {formatPeso(
+                                  supplier.items.reduce((total, item) => {
+                                    const price = Number(item.unitPrice) || 0;
+                                    const qty =
+                                      Number(item.poItemOrderedQty) || 0;
+                                    return total + price * qty;
+                                  }, 0)
+                                )}
+                              </p>
+                              <span className="text-[9px] xl:text-xs">
+                                {supplier.items.length} item(s)
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="border-t border-gray-300"></div>
+                        <div className="flex justify-between mt-5">
+                          <div className="flex">
+                            {" "}
+                            <div>
+                              {" "}
+                              <Button
+                                isRounded={false}
+                                size="xs"
+                                color="secondary"
+                                label="Edit"
+                                icon={<Edit size={15} />}
+                                className="font-semibold text-gray-700 text-xs"
+                                onClick={function (): void {
+                                  throw new Error("Function not implemented.");
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <Button
+                                isRounded={false}
+                                size="xs"
+                                color="secondary"
+                                label="PDF"
+                                icon={
+                                  <Download
+                                    size={15}
+                                    className="text-gray-700"
+                                  />
+                                }
+                                className="font-semibold text-gray-700 text-xs"
+                                onClick={function (): void {
+                                  throw new Error("Function not implemented.");
+                                }}
+                              />
+                            </div>
+                            {isSupplierItemsSent ? (
+                              <>
+                                <div>
+                                  {" "}
+                                  <div>
+                                    {" "}
+                                    <Button
+                                      isRounded={false}
+                                      size="xs"
+                                      onClick={() => {
+                                        handleReceivePO([supplier]);
+                                      }}
+                                      color="primary"
+                                      label="Receive PO"
+                                      icon={<Package size={15} />}
+                                      className="font-semibold"
+                                    />
+                                  </div>
+                                </div>
+                              </>
+                            ) : isSupplierItemsDelivered ? (
+                              <>
+                                <div>
+                                  {" "}
+                                  <div>
+                                    {" "}
+                                    <Button
+                                      isRounded={false}
+                                      size="xs"
+                                      onClick={() => {
+                                        setShowDeliverToStore(supplier);
+                                      }}
+                                      disabled={true}
+                                      color="success"
+                                      label="Delivered"
+                                      icon={<Check size={15} />}
+                                      className="font-semibold"
+                                    />
+                                  </div>
+                                </div>
+                              </>
+                            ) : (
+                              <div>
+                                {" "}
+                                <Button
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={() =>
+                                    handleSendBySupplier(supplier.items)
+                                  }
+                                  color="success"
+                                  label="Received"
+                                  disabled={true}
+                                  icon={
+                                    <PackageCheck
+                                      size={15}
+                                      className="text-black "
+                                    />
+                                  }
+                                  className="font-semibold"
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() =>
+                              setExpandedSupplier(
+                                isExpanded ? null : supplier.suppId
+                              )
+                            }
+                            className="inline-flex items-center px-2 py-1 xl:px-4 xl:py-2 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
+                          >
+                            {isExpanded ? "Hide Details" : "View Details"}
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4 ml-2" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 ml-2" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div className="p-4 flex flex-col h-full gap-2 bg-gray-100/30">
                           <div className="flex items-center">
                             <div>
                               {" "}
@@ -323,6 +480,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 onClick={function (): void {
                                   setExpandedSupplier(supplier.suppId);
                                   setIsView("all");
+                                  setSelectedStoreSupplier(null);
                                 }}
                                 color={
                                   isView === "all" &&
@@ -357,265 +515,115 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               />
                             </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <div>
-                              <div className=" bg-white border-gray-200">
-                                <div className="flex">
-                                  <div>
-                                    {" "}
-                                    <Button
-                                      isRounded={false}
-                                      size="xs"
-                                      color="secondary"
-                                      label="Edit"
-                                      icon={<Edit size={15} />}
-                                      className="font-semibold text-gray-700 text-xs"
-                                      onClick={function (): void {
-                                        throw new Error(
-                                          "Function not implemented."
-                                        );
-                                      }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <Button
-                                      isRounded={false}
-                                      size="xs"
-                                      color="secondary"
-                                      label="PDF"
-                                      icon={
-                                        <Download
-                                          size={15}
-                                          className="text-gray-700"
-                                        />
-                                      }
-                                      className="font-semibold text-gray-700 text-xs"
-                                      onClick={function (): void {
-                                        throw new Error(
-                                          "Function not implemented."
-                                        );
-                                      }}
-                                    />
-                                  </div>
-                                  {isSupplierItemsSent ? (
-                                    <>
-                                      <div>
-                                        {" "}
-                                        <div>
-                                          {" "}
-                                          <Button
-                                            isRounded={false}
-                                            size="xs"
-                                            onClick={() => {
-                                              handleReceivePO([supplier]);
-                                            }}
-                                            color="primary"
-                                            label="Receive PO"
-                                            icon={<Package size={15} />}
-                                            className="font-semibold"
-                                          />
-                                        </div>
-                                      </div>
-                                    </>
-                                  ) : isSupplierItemsDelivered ? (
-                                    <>
-                                      <div>
-                                        {" "}
-                                        <div>
-                                          {" "}
-                                          <Button
-                                            isRounded={false}
-                                            size="xs"
-                                            onClick={() => {
-                                              setShowDeliverToStore(supplier);
-                                            }}
-                                            disabled={true}
-                                            color="success"
-                                            label="Delivered"
-                                            icon={<Check size={15} />}
-                                            className="font-semibold"
-                                          />
-                                        </div>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <div>
-                                      {" "}
-                                      <Button
-                                        isRounded={false}
-                                        size="xs"
-                                        onClick={() =>
-                                          handleSendBySupplier(supplier.items)
-                                        }
-                                        color="success"
-                                        label="Received"
-                                        disabled={true}
-                                        icon={
-                                          <PackageCheck
-                                            size={15}
-                                            className="text-black "
-                                          />
-                                        }
-                                        className="font-semibold"
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="flex flex-col items-center">
-                              <span className="text-xs">
-                                {supplier.items.length} item(s)
-                              </span>
-                              <p className="font-bold text-primary-1 text-sm">
-                                {formatPeso(
-                                  supplier.items.reduce((total, item) => {
-                                    const price = Number(item.unitPrice) || 0;
-                                    const qty =
-                                      Number(item.poItemOrderedQty) || 0;
-                                    return total + price * qty;
-                                  }, 0)
-                                )}
-                              </p>
-                            </div>
-
-                            <div
-                              onClick={() =>
-                                setExpandedSupplier(
-                                  isExpanded ? null : supplier.suppId
-                                )
-                              }
-                            >
-                              {isExpanded ? (
-                                <ChevronUp size={20} />
-                              ) : (
-                                <ChevronDown size={20} />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="overflow-x-auto">
-                          {selectedStoreSupplier === null ? (
-                            isView === "all" ? (
-                              <Table
-                                uniqueIdKey="itemId"
-                                localSearch={true}
-                                textSize="xs"
-                                columns={columns}
-                                data={supplier.items}
-                                isRounded={false}
-                                showActions
-                                updateData={(newData) =>
-                                  updateSupplierItems(supplier.suppId, newData)
-                                }
-                                loading={isLoading}
-                                renderTopActions={
-                                  <div className="flex gap-2">
-                                    <div>
-                                      <Button
-                                        color="neutral"
-                                        size="xs"
-                                        onClick={() =>
-                                          // handleAutoFillAll(supplier.suppId)
-                                          console.log("asd")
-                                        }
-                                        label="Add Item"
-                                        icon={<Package size={15} />}
-                                      />
-                                    </div>
-                                    {!isAllItemsDelivered && (
+                          <div className="overflow-x-auto">
+                            {selectedStoreSupplier === null ? (
+                              isView === "all" ? (
+                                <Table
+                                  uniqueIdKey="itemId"
+                                  localSearch={true}
+                                  textSize="xs"
+                                  columns={columns}
+                                  data={supplier.items}
+                                  isRounded={false}
+                                  showActions
+                                  updateData={(newData) =>
+                                    updateSupplierItems(
+                                      supplier.suppId,
+                                      newData
+                                    )
+                                  }
+                                  loading={isLoading}
+                                  renderTopActions={
+                                    <div className="flex gap-2">
                                       <div>
                                         <Button
-                                          color="primary"
+                                          color="neutral"
                                           size="xs"
                                           onClick={() =>
-                                            handleAutoFillAll(supplier.suppId)
+                                            // handleAutoFillAll(supplier.suppId)
+                                            console.log("asd")
                                           }
-                                          label="Auto-Fill All"
-                                          icon={<PackageCheck size={15} />}
-                                          className="font-semibold text-white text-xs"
+                                          label="Add Item"
+                                          icon={<Package size={15} />}
                                         />
                                       </div>
-                                    )}
-                                  </div>
-                                }
-                                renderActions={(row) =>
-                                  row.poItemStatus === "sent" ? (
-                                    <IconButton
-                                      icon={<PackageCheck size={18} />}
-                                      onClick={() =>
-                                        handleAutoFill(row.suppId, row.poItemId)
-                                      }
-                                      label="Auto-Fill Received Qty"
-                                      bg="primary"
-                                    />
-                                  ) : (
-                                    <></>
-                                  )
-                                }
-                              />
-                            ) : (
-                              <div className="flex flex-1 p-2 gap-4 overflow-auto-y">
-                                {itemResponse.data.map((data) => (
-                                  <StoreCardInSupplier
-                                    data={data}
-                                    key={data.storeId}
-                                    onClick={(row: StoreSupplierDetails) => {
-                                      console.log(row);
-                                      setSelectedStoreSupplier({
-                                        data: row,
-                                        supplier: supplier,
-                                      });
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                            )
-                          ) : (
-                            <Table
-                              title={selectedStoreSupplier.data.storeName}
-                              subtitle={`${selectedStoreSupplier.data.items.length} items`}
-                              renderTopActions={
-                                <div className="flex">
-                                  <div className="mr-50">
-                                    {" "}
-                                    <div>
-                                      {" "}
-                                      <Button
-                                        isRounded={false}
-                                        size="xs"
-                                        onClick={() => {
-                                          // setShowDeliverToStore(supplier);
-                                          setIsShowDeliverConfirmation(true);
-                                        }}
-                                        color="success"
-                                        label="Deliver to Store"
-                                        icon={<Package size={15} />}
-                                        className="font-semibold"
-                                      />
+                                      {!isAllItemsDelivered && (
+                                        <div>
+                                          <Button
+                                            color="primary"
+                                            size="xs"
+                                            onClick={() =>
+                                              handleAutoFillAll(supplier.suppId)
+                                            }
+                                            label="Auto-Fill All"
+                                            icon={<PackageCheck size={15} />}
+                                            className="font-semibold text-white text-xs"
+                                          />
+                                        </div>
+                                      )}
                                     </div>
-                                  </div>
+                                  }
+                                  renderActions={(row) =>
+                                    row.poItemStatus === "sent" ? (
+                                      <IconButton
+                                        icon={<PackageCheck size={18} />}
+                                        onClick={() =>
+                                          handleAutoFill(
+                                            row.suppId,
+                                            row.poItemId
+                                          )
+                                        }
+                                        label="Auto-Fill Received Qty"
+                                        bg="primary"
+                                      />
+                                    ) : (
+                                      <></>
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <div className="flex flex-1 p-2 gap-4 overflow-auto-y">
+                                  {itemResponse.data.map((data) => (
+                                    <StoreCardInSupplier
+                                      data={data}
+                                      key={data.storeId}
+                                      onClick={(row: StoreSupplierDetails) => {
+                                        console.log(row);
+                                        setSelectedStoreSupplier({
+                                          data: row,
+                                          supplier: supplier,
+                                        });
+                                      }}
+                                    />
+                                  ))}
+                                </div>
+                              )
+                            ) : (
+                              <Table
+                                title={selectedStoreSupplier.data.storeName}
+                                subtitle={`${selectedStoreSupplier.data.items.length} items`}
+                                renderTopActions={
                                   <div>
                                     {" "}
-                                    <button
+                                    <Button
+                                      hasBorder={true}
+                                      size="xs"
                                       onClick={() => {
-                                        setSelectedStoreSupplier(null);
+                                        // setShowDeliverToStore(supplier);
+                                        setIsShowDeliverConfirmation(true);
                                       }}
-                                      className="rounded-full hover:bg-gray-500 py-2 px-2"
-                                    >
-                                      <X className="text-black" size={15} />
-                                    </button>
+                                      color="success"
+                                      label="Deliver to Store"
+                                      icon={<Package size={15} />}
+                                      className="font-semibold"
+                                    />
                                   </div>
-                                </div>
-                              }
-                              columns={storeColumns}
-                              data={selectedStoreSupplier.data.items}
-                            />
-                          )}
+                                }
+                                columns={storeColumns}
+                                data={selectedStoreSupplier.data.items}
+                              />
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>

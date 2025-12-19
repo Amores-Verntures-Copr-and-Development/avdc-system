@@ -23,33 +23,50 @@ export async function processReceivedRequest(data: Request[]) {
       keyFields: ["requestId"],
       updates: request,
     });
-    console.log(
-      "Data: ",
-      data.flatMap((req) => req.requestItems.flatMap((item) => item))
-    );
-    const requestItems: Partial<RequestItems>[] = data.flatMap((req) =>
-      req.requestItems.flatMap((item) => ({
-        reqItemId: item.reqItemId,
-        reqItemReceived: item.reqItemReceived,
-        reqItemStatus: "received",
-        reqItemRemarks: item.reqItemRemarks,
-        ...(Number(item.reqItemTransfer) === 0
-          ? { reqItemTransfer: item.reqItemReceived }
-          : {}),
-      }))
+
+    const validReceivedRequestItems: Partial<RequestItems>[] = data.flatMap(
+      (req) =>
+        req.requestItems
+          .filter((it) => it.reqItemStatus !== "not_ordered")
+          .flatMap((item) => ({
+            invItem: item.invItem,
+            reqItemId: item.reqItemId,
+            reqItemReceived: item.reqItemReceived,
+            reqItemStatus: "received",
+            reqItemRemarks: item.reqItemRemarks,
+            ...(Number(item.reqItemTransfer) === 0
+              ? { reqItemTransfer: item.reqItemReceived }
+              : {}),
+          }))
     );
     await updateRequestItems({
       connection,
-      updates: requestItems,
+      updates: validReceivedRequestItems,
       keyFields: ["reqItemId"],
     });
-    const addInventoryQty: Partial<InventoryItemInterface>[] =
-      data.flatMap((req) =>
-        req.requestItems.flatMap((item) => ({
-          inventoryItemId: item.invItem,
-          inventoryItemQuantity: item.reqItemReceived,
+    const notOrderedData: Partial<RequestItems>[] = data.flatMap((req) =>
+      req.requestItems
+        .filter((it) => it.reqItemStatus === "not_ordered")
+        .flatMap((item) => ({
+          reqItemId: item.reqItemId,
+          reqItemStatus: "not_ordered",
+          reqItemReceived: 0,
         }))
-      ) || [];
+    );
+    if (notOrderedData && notOrderedData.length > 0) {
+      await updateRequestItems({
+        connection,
+        updates: notOrderedData,
+        keyFields: ["reqItemId"],
+      });
+    }
+    console.log({ notOrderedData });
+    const addInventoryQty: Partial<InventoryItemInterface>[] =
+      validReceivedRequestItems.flatMap((item) => ({
+        inventoryItemId: item.invItem,
+        inventoryItemQuantity: item.reqItemReceived,
+      })) || [];
+    console.log({ addInventoryQty });
     await updateInventoryItem({
       connection,
       fieldModes: { inventoryItemQuantity: "increment" },
@@ -59,23 +76,25 @@ export async function processReceivedRequest(data: Request[]) {
     const storeInventoryMovement: CreateInventoryMovementDto[] =
       await Promise.all(
         data.flatMap((data) =>
-          data.requestItems.flatMap(async (item) => {
-            const inventoryId = await findInventoryByFields({
-              keyFields: {
-                inventoryReferenceId: data.storeId,
-                inventoryReference: "store",
-              },
-            });
-            return {
-              inventoryId: inventoryId[0].inventoryId,
-              inventoryItemId: item.invItem, // fallback if not found
-              itemMovementType: "in",
-              itemMovementReferenceId: item.requestId ?? 0,
-              itemMovementReference: "ro",
-              itemMovementQuantity: Number(item.reqItemReceived),
-              itemMovementRemarks: "Received item from request order",
-            };
-          })
+          data.requestItems
+            .filter((i) => i.reqItemStatus !== "not_ordered")
+            .flatMap(async (item) => {
+              const inventoryId = await findInventoryByFields({
+                keyFields: {
+                  inventoryReferenceId: data.storeId,
+                  inventoryReference: "store",
+                },
+              });
+              return {
+                inventoryId: inventoryId[0].inventoryId,
+                inventoryItemId: item.invItem, // fallback if not found
+                itemMovementType: "in",
+                itemMovementReferenceId: item.requestId ?? 0,
+                itemMovementReference: "ro",
+                itemMovementQuantity: Number(item.reqItemReceived),
+                itemMovementRemarks: "Received item from request order",
+              };
+            })
         )
       );
     console.log("[createInventoryMovementDeliver]");

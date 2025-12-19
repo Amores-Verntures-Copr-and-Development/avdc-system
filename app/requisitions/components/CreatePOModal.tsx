@@ -141,9 +141,9 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         poId: 0,
       })),
     };
-    // const success = await onSubmit(purchaseFormData);
-    // if (success) {
-    // }
+    const success = await onSubmit(purchaseFormData);
+    if (success) {
+    }
   };
 
   const handleFillUpAll = () => {

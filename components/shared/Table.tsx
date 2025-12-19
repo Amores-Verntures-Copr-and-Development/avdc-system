@@ -10,23 +10,32 @@ import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropDown";
 import Input from "./Input";
-
+export interface SelectOption {
+  label: string;
+  value: any;
+  color?: string;
+  bg?: string;
+  disabled?: boolean;
+}
 export interface Column<T = any> {
   name: string;
   key: string;
   selector?: (row: T, index: number) => React.ReactNode;
   editable?: boolean | ((row: T, rowIndex: number) => boolean);
   inputType?: "text" | "number" | "date" | "email" | "tel" | "url" | "select";
-  options?:
-    | { label: string; value: any }[]
-    | ((row: T) => { label: string; value: any }[]);
+
+  options?: SelectOption[] | ((row: T) => SelectOption[]);
+
   value?: (row: T) => any;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   validate?: (value: any, row: T) => boolean;
   format?: (value: any) => string;
   compute?: (row: T) => any;
   dependsOn?: (keyof T | string)[];
+
+  selectOptionVariant?: SelectOptionVariant; // ✅ FIXED NAME
 }
+type SelectOptionVariant = "native" | "custom";
 
 interface FilterConfig {
   id: string;
@@ -300,19 +309,34 @@ const TableInner = <T extends Record<string, any>>(
             ? column.options(row)
             : column.options || [];
 
-        // 👇 Get the value from column.value function or fallback to editableData
-        const selectedValue = column.value
+        const rawValue = column.value
           ? column.value(row)
-          : realRow?.[column.key] ?? "";
+          : realRow?.[column.key];
 
+        const selectedValue =
+          rawValue === null || rawValue === undefined ? "" : String(rawValue);
+
+        // 👇 SWITCH HERE
+        if (column.selectOptionVariant === "custom") {
+          return (
+            <CustomSelect
+              value={selectedValue}
+              options={opts}
+              onChange={(v) => handleInputChange(row, column.key, v)}
+            />
+          );
+        }
+
+        // 👇 fallback to native select
         return (
           <select
             onClick={(e) => e.stopPropagation()}
             className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
-            value={selectedValue} // 👈 Use the computed value
-            onChange={(e) => handleInputChange(row, column.key, e.target.value)}
+            value={selectedValue}
+            onChange={(e) =>
+              handleInputChange(realRow ?? row, column.key, e.target.value)
+            }
           >
-            <option value="">Select...</option>
             {opts.map((opt, idx) => (
               <option key={idx} value={opt.value}>
                 {opt.label}
@@ -329,21 +353,22 @@ const TableInner = <T extends Record<string, any>>(
               type={column.inputType ?? "text"}
               name={column.name}
               value={
-                column.inputType === "number"
-                  ? realRow?.[column.key] || "" // 0, null, undefined => empty
-                  : realRow?.[column.key] || ""
+                // ✅ FIRST: Use column.value function if it exists
+                column.value
+                  ? column.value(row)
+                  : // ✅ SECOND: For numbers, handle 0 properly
+                  column.inputType === "number"
+                  ? realRow?.[column.key] ?? ""
+                  : // ✅ THIRD: Fallback to row value
+                    realRow?.[column.key] || ""
               }
               onChange={(e) =>
                 handleInputChange(row, column.key, e.target.value)
               }
               className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
-              ${
-                hasError
-                  ? "border-red-500 bg-red-50"
-                  : "border-gray-300 bg-white"
-              }
-              w-auto
-            `}
+        ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
+        w-auto
+      `}
               {...(column.inputProps || {})}
             />
           </div>
@@ -573,3 +598,54 @@ const TableInner = <T extends Record<string, any>>(
 export default forwardRef(TableInner) as <T extends Record<string, any>>(
   props: TableProps<T> & { ref?: React.Ref<TableHandle> }
 ) => React.ReactElement;
+
+const CustomSelect = ({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: any[];
+  onChange: (v: string) => void;
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const selected = options.find((o) => String(o.value) === String(value));
+
+  return (
+    <div className="relative w-full">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full px-2 py-1 rounded border border-gray-300 text-left text-[9px] xl:text-xs
+          ${selected?.bg ?? "bg-white"} ${selected?.color ?? "text-gray-700"}`}
+      >
+        {selected?.label ?? "Select"}
+      </button>
+
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setOpen(false);
+              }}
+              disabled={opt.disabled}
+              className={`w-full text-left px-2 py-1 text-[9px] xl:text-xs hover:bg-gray-100 
+                ${
+                  opt.disabled
+                    ? "text-gray-400 cursor-not-allowed"
+                    : opt.color || ""
+                }
+                ${value === opt.value ? "bg-blue-50" : ""}`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};

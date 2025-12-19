@@ -10,7 +10,8 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+
 import {
   PrinterIcon,
   Edit,
@@ -22,10 +23,53 @@ import {
   PackageCheckIcon,
   Check,
   Truck,
+  Package,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-
+interface StatusOption {
+  label: string;
+  value: string;
+  bg: string;
+  color: string;
+}
+export const statusOptions: StatusOption[] = [
+  {
+    label: "Not Ordered",
+    value: "not_ordered",
+    bg: "bg-red-100",
+    color: "text-red-600",
+  },
+  {
+    label: "Pending",
+    value: "pending",
+    bg: "bg-gray-100",
+    color: "text-gray-700",
+  },
+  {
+    label: "Delivered",
+    value: "delivered",
+    bg: "bg-yellow-100",
+    color: "text-yellow-700",
+  },
+  {
+    label: "Received",
+    value: "received",
+    bg: "bg-emerald-100",
+    color: "text-emerald-700",
+  },
+];
+export function getStatusOption(value: string): StatusOption {
+  const option = statusOptions.find((opt) => opt.value === value);
+  return (
+    option ?? {
+      label: "Unknown",
+      value,
+      bg: "bg-gray-100",
+      color: "text-gray-700",
+    }
+  );
+}
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
   poData: PurchaseOrders | null;
@@ -62,6 +106,11 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
 
   const columns: Column<RequestItemsCombine>[] = [
     {
+      name: "#",
+      key: "#",
+      selector: (_row, index) => index + 1,
+    },
+    {
       name: "Item Name",
       key: "itemName",
     },
@@ -89,14 +138,72 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         const status = data.find(
           (req) => req.requestId === row.requestId
         )?.requestStatus;
-        return !["delivered", "completed", "received"].includes(status ?? "");
+        return (
+          !["delivered", "completed", "received", "not_ordered"].includes(
+            status ?? ""
+          ) && row.reqItemStatus !== "not_ordered"
+        );
       },
       inputType: "number",
     },
     {
       name: "Total",
       key: "total",
+
       selector: (row) => formatPeso(row.reqItemQuantity * row.itemPrice),
+    },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+      editable: (row) => {
+        const status = data.find(
+          (req) => req.requestId === row.requestId
+        )?.requestStatus;
+        return !["delivered", "completed", "received"].includes(status ?? "");
+      },
+      inputType: "select",
+      selectOptionVariant: "custom", // ✅ matches interface
+      options: [
+        {
+          label: "Not Ordered",
+          value: "not_ordered",
+          bg: "bg-red-100",
+          color: "text-red-600",
+        },
+        {
+          label: "Pending",
+          value: "pending",
+          bg: "bg-gray-100",
+          color: "text-gray-700",
+        },
+        {
+          label: "Delivered",
+          value: "delivered",
+          bg: "bg-yellow-100",
+          color: "text-yellow-700",
+        },
+        {
+          label: "Received",
+          value: "received",
+          bg: "bg-emerald-100",
+          color: "text-emerald-700",
+        },
+      ],
+      value: (row) => row.reqItemStatus,
     },
     {
       name: "Remarks",
@@ -105,7 +212,10 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         const status = data.find(
           (req) => req.requestId === row.requestId
         )?.requestStatus;
-        return !["delivered", "completed", "received"].includes(status ?? "");
+        return (
+          !["delivered", "completed", "received"].includes(status ?? "") &&
+          row.reqItemStatus === "not_ordered"
+        );
       },
       inputType: "text",
     },
@@ -129,25 +239,34 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   }, [data]);
 
   const handleAutoFillAll = (requestNo: string) => {
-    let inssuficientCount = 0;
+    let insufficientCount = 0;
 
-    // First, calculate the count
+    // Find current items
     const currentItems = requestItems.find(
       (items) => items.requestNo === requestNo
     );
+
     currentItems?.requestItemsData?.forEach((item) => {
-      if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
-        inssuficientCount++;
+      // Only count items that are not "not_ordered"
+      if (
+        item.reqItemStatus !== "not_ordered" &&
+        item.reqItemQuantity > (item.stockRoomQty || 0)
+      ) {
+        insufficientCount++;
       }
     });
 
-    // Then update state
+    // Update state
     setRequestItems((prev) =>
       prev.map((items) =>
         items.requestNo === requestNo
           ? {
               ...items,
               requestItemsData: items.requestItemsData?.map((item) => {
+                // Skip "not_ordered" items
+                if (item.reqItemStatus === "not_ordered") return item;
+
+                // If quantity exceeds stock, don't fulfill
                 if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
                   return {
                     ...item,
@@ -164,18 +283,31 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       )
     );
 
-    if (inssuficientCount > 0) {
+    if (insufficientCount > 0) {
       toast.error(
-        `${inssuficientCount} items are not fulfilled due to out of stock!`
+        `${insufficientCount} items are not fulfilled due to out of stock!`
       );
     }
   };
+
   const handleMarkPaid = async (data: DisplayRequisitionWithItems) => {
     const newRequestItems: RequestItems[] = data.requestItemsData.map(
       (items) => ({
         ...items,
       })
     );
+    console.log({ newRequestItems });
+
+    const hasNoFulFillQty = newRequestItems.some(
+      (item) =>
+        item.reqItemStatus !== "not_ordered" &&
+        Number(item.reqItemTransfer) === 0
+    );
+    console.log({ hasNoFulFillQty });
+    if (hasNoFulFillQty) {
+      toast.error("Failed to deliver. Cannot deliver 0 quantity");
+      return;
+    }
     const newRequest: Request[] = [
       {
         ...data,
@@ -207,7 +339,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         <div className="p-4 border-b-1 border-gray-200">
           <div className="flex justify-between  items-center">
             <div className="flex flex-col">
-              <h1 className="text-xs md:text-md font-semibold">
+              <h1 className="text-xs xl:text-md font-semibold">
                 Requisition Fulfillment
               </h1>
               <p className="text-[9px] xl:text-xs text-gray-500 mt-1">
@@ -238,8 +370,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         </div>
         <div className="flex flex-col p-4 gap-4 overflow-y-auto">
           {requestItems.map((reqData) => {
-            const { textClass, bgClass, status, borderClass } =
-              getRequestStatusFormat(reqData.requestStatus);
+            const { label, bg, color, border } = getRequestStatusOption(
+              reqData.requestStatus
+            );
             const totalRequestItemPrice = reqData.requestItemsData.reduce(
               (total, item) => {
                 const quantity = Number(item.reqItemQuantity || 1);
@@ -250,7 +383,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             );
             return (
               <div
-                className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer "
+                className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer"
                 key={reqData.requestId}
                 onClick={() =>
                   setIsRequestExpanded(
@@ -268,6 +401,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                     <span className="text-[9px] xl:text-xs text-gray-500">
                       {reqData.storeName}
                     </span>
+                    <span className="text-[9px] xl:text-xs text-gray-500">
+                      {reqData.requestItemsData.length} item(s)
+                    </span>
                   </div>
                   <div
                     onClick={() =>
@@ -282,9 +418,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                     <div className="flex gap-2 items-center">
                       <div className="flex flex-col gap-1">
                         <span
-                          className={`text-xs font-medium ${bgClass} py-1 px-1 rounded-2xl ${textClass} ${borderClass}`}
+                          className={`text-xs font-medium ${bg} py-1 px-1 rounded-2xl ${color} ${border}`}
                         >
-                          {status}
+                          {label}
                         </span>
                         <span className="text-xs">
                           Total:
@@ -302,8 +438,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   </div>
                 </div>
                 {isRequestExpanded === reqData.requestNo && (
-                  <div>
+                  <div className="overflow-visible">
                     <Table
+                      localSearch
                       uniqueIdKey="reqItemId"
                       columns={columns}
                       showActions={
@@ -315,7 +452,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                         <div>
                           <IconButton
                             onClick={function (): void {
-                              setIsProcessing(reqData.requestNo);
+                              // setIsProcessing(reqData.requestNo);
                             }}
                             label={`Fulfill ${row.itemName}`}
                             icon={<Check size={18} />}
@@ -357,6 +494,18 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                         }}
                         label="Download PDF"
                         icon={<FileText size={14} className="text-gray-700" />}
+                        className="font-semibold text-gray-700 text-xs px-2 py-2"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        color="tertiary"
+                        size="xs"
+                        onClick={() => {
+                          console.log("Download PDF:", reqData.requestNo);
+                        }}
+                        label="Add Item in Request"
+                        icon={<Package size={14} className="text-white-700" />}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>

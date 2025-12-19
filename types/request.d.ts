@@ -13,7 +13,8 @@ export type RequestItemStatus =
   | "cancelled"
   | "delivered"
   | "received"
-  | "partial";
+  | "partial"
+  | "not_ordered";
 export interface Request {
   requestId: number;
   requestNo: string;

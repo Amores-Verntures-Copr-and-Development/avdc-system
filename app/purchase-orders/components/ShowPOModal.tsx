@@ -318,6 +318,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             icon={<ArrowLeft className="w-4 h-4" />}
             color="neutral"
             isRounded={false}
+            hasBorder={true}
           />
         </div>
       </div>

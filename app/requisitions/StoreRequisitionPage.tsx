@@ -30,8 +30,8 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 
 import toast from "react-hot-toast";
 import PageLayout from "@/components/shared/PageLayout";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
 import ViewRequestModal from "./ViewRequestModal";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order No", key: "requestNo" },
   { name: "Total Items", key: "totalItems" },
@@ -53,13 +53,14 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     name: "Status",
     key: "requestStatus",
     selector: (row) => {
-      const { status, bgClass, textClass, borderClass } =
-        getRequestStatusFormat(row.requestStatus);
+      const { label, bg, color, border } = getRequestStatusOption(
+        row.requestStatus
+      );
       return (
         <span
-          className={`${bgClass} ${textClass} ${borderClass} text-[9px] xl:text-xs rounded px-0.5 py-0.5 xl:px-1 xl:py-1 text-center font-semibold`}
+          className={`${bg} ${color} ${border} text-[9px] xl:text-xs rounded px-0.5 py-0.5 xl:px-1 xl:py-1 text-center font-semibold`}
         >
-          {status}
+          {label}
         </span>
       );
     },

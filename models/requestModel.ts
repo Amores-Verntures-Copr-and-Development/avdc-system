@@ -310,7 +310,7 @@ export const selectRequestOrdersByPONumber = async (poNumber: string) => {
         'reqItemRemarks', ri.reqItemRemarks,
         'reqItemQuantity', ri.reqItemQuantity,
         'reqItemTransfer', ri.reqItemTransfer,
-        'reqItemRemarks', ri.reqItemRemarks,
+        'reqItemStatus', ri.reqItemStatus,
         'stockRoomQty', (
           SELECT iis.inventoryItemQuantity
           FROM InventoryItems iis

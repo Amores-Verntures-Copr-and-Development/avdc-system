@@ -35,6 +35,11 @@ import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
 import AddItemROModal from "./components/AddItemROModal";
 import AddItemPOModal from "./components/AddItemPOModal";
 import PageHeader from "@/components/shared/PageHeader";
+import { getStatusOption } from "../purchase-orders/components/CompletePOView";
+import {
+  getRequestStatusOption,
+  requestStatusOptions,
+} from "@/utils/requestOrderUtils";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -55,6 +60,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [requestItemData, setRequestItemData] = useState<DisplayRequestItems[]>(
     []
   );
+  const [showReceivedConfirmation, setShowReceivedConfirmation] =
+    useState(false);
   const [showROPDF, setShowROPDF] = useState(false);
   const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
   const [showAddItem, setShowAddItem] = useState(false);
@@ -112,15 +119,85 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     { name: "Unit", key: "itemUnit" },
     { name: "Request Qty", key: "reqItemQuantity" },
     { name: "Delivered Qty", key: "reqItemTransfer" },
-    { name: "Status", key: "reqItemStatus" },
     { name: "Remarks", key: "reqItemRemarks" },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+      editable: (row) =>
+        row.reqItemStatus === "delivered" ||
+        selectedReq?.requestStatus === "delivered",
+
+      inputType: "select",
+      selectOptionVariant: "custom", // ✅ matches interface
+      options: [
+        {
+          label: "Not Ordered",
+          value: "not_ordered",
+          bg: "bg-red-100",
+          color: "text-red-600",
+        },
+        {
+          label: "Pending",
+          value: "pending",
+          bg: "bg-gray-100",
+          color: "text-gray-700",
+        },
+        {
+          label: "Delivered",
+          value: "delivered",
+          bg: "bg-yellow-100",
+          color: "text-yellow-700",
+        },
+        {
+          label: "Received",
+          value: "received",
+          bg: "bg-emerald-100",
+          color: "text-emerald-700",
+        },
+      ],
+
+      value: (row) => row.reqItemStatus,
+    },
     {
       name: "Received",
       key: "reqItemReceived",
       editable: (row) =>
-        row.reqItemStatus === "delivered" ||
-        selectedReq?.requestStatus === "delivered",
+        (row.reqItemStatus === "delivered" ||
+          selectedReq?.requestStatus === "delivered") &&
+        row.reqItemStatus !== "not_ordered",
       inputType: "number",
+      selector: (row) => {
+        console.log(
+          "selector called:",
+          row.reqItemId,
+          row.reqItemReceived,
+          row.reqItemStatus
+        );
+        return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
+      },
+      value: (row) => {
+        console.log(
+          "value called:",
+          row.reqItemId,
+          row.reqItemReceived,
+          row.reqItemStatus
+        );
+        return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
+      },
     },
   ];
   const handleReceivedRO = async () => {
@@ -134,7 +211,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       controller: "received",
       data: requestData,
     };
-    console.log("SendDatA: ", sendData);
+    console.log({ sendData });
     try {
       const result = await fetch(`api/requests/`, {
         method: "PUT",
@@ -151,6 +228,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       toast.success(res.message);
       mutateRequest();
       mutate();
+      setShowReceivedConfirmation(false);
       return true;
     } catch (e) {
       console.log(e);
@@ -301,14 +379,26 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       );
     }
   };
+  const { label, bg, color } = getRequestStatusOption(
+    selectedReq?.requestStatus || ""
+  );
   return (
     <>
       <div className="flex justify-between">
         {" "}
-        <PageHeader
-          title={`${selectedReq?.requestNo}`}
-          subtitle="Request Order"
-        />
+        <div className="flex flex-col gap-2">
+          {" "}
+          <PageHeader
+            title={`${selectedReq?.requestNo}`}
+            subtitle="Request Order"
+          />
+          <div
+            className={`${bg} ${color} py-1 px-2 rounded-md text-sm items-center text-center shadow`}
+          >
+            {" "}
+            <span className="">{label}</span>
+          </div>
+        </div>
         <div>
           <Button
             label="Back"
@@ -532,7 +622,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   <div>
                     <Button
                       icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
-                      onClick={handleReceivedRO}
+                      onClick={() => {
+                        const hasNoQuantityReceived = requestItemData.some(
+                          (item) =>
+                            Number(item.reqItemReceived) === 0 &&
+                            item.reqItemStatus !== "not_ordered"
+                        );
+                        if (hasNoQuantityReceived) {
+                          toast.error("Cannot received 0 quantity item!");
+                          return;
+                        }
+                        setShowReceivedConfirmation(true);
+                      }}
                       size="sm"
                       label="Received"
                       className="text-xs font-semibold"
@@ -591,6 +692,45 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           loading={isAddingItemPo}
         />
       </Popup>
+      <Modal
+        title="Received Confirmation"
+        isOpen={showReceivedConfirmation}
+        onClose={function (): void {
+          setShowReceivedConfirmation(false);
+        }}
+      >
+        <div className="flex flex-col">
+          <div className="text-center">
+            <span>
+              Are you sure you want to receive these items and add them to your
+              inventory?
+            </span>
+          </div>
+          <div className="flex justify-end gap-4">
+            <div>
+              <Button
+                label="Cancel"
+                size="sm"
+                onClick={() => {
+                  setShowReceivedConfirmation(false);
+                }}
+                hasBorder
+                color="secondary"
+              />
+            </div>
+            <div>
+              <Button
+                label="Confirm"
+                size="sm"
+                onClick={() => {
+                  handleReceivedRO();
+                }}
+                hasBorder
+              />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </>
   );
 };

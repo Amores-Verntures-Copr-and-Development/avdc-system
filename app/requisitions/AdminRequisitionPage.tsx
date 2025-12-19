@@ -16,8 +16,9 @@ import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
 import toast from "react-hot-toast";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import PageLayout from "@/components/shared/PageLayout";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+
 import ViewRequestModal from "./ViewRequestModal";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
@@ -38,13 +39,14 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     name: "Status",
     key: "requestStatus",
     selector: (row) => {
-      const { status, bgClass, textClass, borderClass } =
-        getRequestStatusFormat(row.requestStatus);
+      const { label, bg, color, border } = getRequestStatusOption(
+        row.requestStatus
+      );
       return (
         <span
-          className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+          className={`${bg} ${color} ${border} text-xs rounded px-1 py-1 text-center font-semibold`}
         >
-          {status}
+          {label}
         </span>
       );
     },
@@ -226,8 +228,9 @@ const AdminRequisitionPage = () => {
         className="bg-white h-[95%]"
         title={`Request Order (${selectedtedRow?.requestNo})`}
         modalDetails={(() => {
-          const { status, bgClass, textClass, borderClass } =
-            getRequestStatusFormat(selectedtedRow?.requestStatus ?? "pending");
+          const { label, bg, color, border } = getRequestStatusOption(
+            selectedtedRow?.requestStatus || ""
+          );
           return (
             <div className="flex flex-1 justify-between align-middle items-center">
               <div className="flex flex-col">
@@ -247,9 +250,9 @@ const AdminRequisitionPage = () => {
               <span className="text-xs text-gray-600">
                 Status:{" "}
                 <span
-                  className={`${bgClass} ${textClass} ${borderClass} text-xs rounded px-1 py-1 text-center font-semibold`}
+                  className={`${bg} ${color} ${border} text-xs rounded px-1 py-1 text-center font-semibold`}
                 >
-                  {status}
+                  {label}
                 </span>
               </span>
             </div>

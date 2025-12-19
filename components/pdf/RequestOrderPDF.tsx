@@ -10,7 +10,7 @@ import {
 import { RequestOrderPdf } from "@/dtos/request.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-import { getRequestStatusFormat } from "@/utils/formatRequestStatus";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 
 const styles = StyleSheet.create({
   page: {
@@ -303,10 +303,6 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
       </View>
     );
   };
-
-  const { status } = getRequestStatusFormat(
-    data?.requestOrder.requestStatus ?? "pending"
-  );
 
   return (
     <Document>
