@@ -1,5 +1,6 @@
 import {
   selectInventory,
+  selectInventoryByRequestId,
   selectInventoryByStockPurchaserFields,
   selectInventoryByStoreFields,
   selectInventoryItems,
@@ -7,6 +8,7 @@ import {
 import { InventoryInterface } from "@/types/inventory";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
+import { PoolConnection } from "mysql2/promise";
 
 export async function findInventoryByFields({
   keyFields = {},
@@ -47,4 +49,18 @@ export async function findInventoryByStoreFields({
   }
 }
 
+export async function findStoreInventoryByRequestId({
+  id,
+  connection,
+}: {
+  id: number;
+  connection: PoolConnection;
+}) {
+  try {
+    const data = await selectInventoryByRequestId({ id });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
 // export async function findAllInventory(params: type) {}

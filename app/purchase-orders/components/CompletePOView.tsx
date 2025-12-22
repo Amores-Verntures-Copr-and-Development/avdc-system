@@ -1,5 +1,6 @@
 import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
+import Modal from "@/components/shared/Modal";
 import Table, { Column } from "@/components/shared/Table";
 import {
   DisplayRequisitionWithItems,
@@ -27,6 +28,11 @@ import {
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import AddItemToRequestModal from "./_components/AddItemToRequestModal";
+import Popup from "@/components/shared/PopupModal";
+import AddItemToRequestFromPOModal, {
+  POAddToRequestItemForm,
+} from "./_components/AddItemToRequestFromPOModal";
 interface StatusOption {
   label: string;
   value: string;
@@ -103,7 +109,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     useState<DisplayRequisitionWithItems[]>(data);
 
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-
+  const [isShowAddItemRequest, setIsShowAddItemRequest] =
+    useState<boolean>(false);
+  const [isShowAddItemFromPO, setIsShowAddItemFromPO] =
+    useState<boolean>(false);
+  const [selectedRequestNo, setSelectedRequestNo] =
+    useState<DisplayRequisitionWithItems | null>(null);
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "#",
@@ -333,6 +344,31 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     }
   };
 
+  const handleAddItemPOToRequest = async (data: POAddToRequestItemForm) => {
+    try {
+      console.log({ data });
+      const res = await fetch(
+        `/api/purchase-order/po-request-order/requestId/${data.poId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error("Failed to add items to request");
+      }
+      toast.success(result.message || "Items added to request successfully");
+      return true;
+    } catch (e) {
+      toast.error((e as Error).message || "Failed to add items to request");
+      return false;
+    }
+  };
+
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-2  flex-col h-full w-full overflow-y-auto">
@@ -497,14 +533,29 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
+
                     <div>
                       <Button
                         color="tertiary"
                         size="xs"
                         onClick={() => {
-                          console.log("Download PDF:", reqData.requestNo);
+                          setIsShowAddItemRequest(true);
+                          setSelectedRequestNo(reqData);
                         }}
                         label="Add Item in Request"
+                        icon={<Package size={14} className="text-white-700" />}
+                        className="font-semibold text-gray-700 text-xs px-2 py-2"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        color="warning"
+                        size="xs"
+                        onClick={() => {
+                          setIsShowAddItemFromPO(true);
+                          setSelectedRequestNo(reqData);
+                        }}
+                        label="Add Item from PO"
                         icon={<Package size={14} className="text-white-700" />}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
@@ -598,6 +649,36 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           )}
         </div>
       </div>
+      <Modal
+        isOpen={isShowAddItemFromPO}
+        onClose={function (): void {
+          setIsShowAddItemFromPO(false);
+        }}
+        title="Add Item in Request from PO"
+        subtitle={`${selectedRequestNo?.requestNo}`}
+        size="xl"
+        className="h-[80%]"
+      >
+        <AddItemToRequestFromPOModal
+          reqData={selectedRequestNo}
+          poData={poData}
+          onAddItem={handleAddItemPOToRequest}
+          mutate={mutate}
+          onClose={() => {
+            setIsShowAddItemFromPO(false);
+          }}
+        />
+      </Modal>
+      <Popup
+        background="transaparent"
+        title={`Add item to ${selectedRequestNo?.requestNo}`}
+        isOpen={isShowAddItemRequest}
+        onClose={function (): void {
+          setIsShowAddItemRequest(false);
+        }}
+      >
+        <AddItemToRequestModal data={selectedRequestNo} />
+      </Popup>
     </div>
   );
 };

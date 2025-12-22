@@ -41,13 +41,25 @@ const AddItemToPoModal = ({
     console.log({ form });
     console.log({ currentItemId });
     setIsSubmitting(true);
+
     try {
+      if (form.itemId === 0) {
+        toast.error("Please select an item");
+        return;
+      }
       if (currentItemId.includes(form.itemId)) {
         toast.error("Item is already in PO");
         return;
       }
       const success = await onAddItem([form], form.poId);
       if (success) {
+        setForm({
+          poId: poId,
+          itemId: 0,
+          poItemOrderedQty: 0,
+          poItemReceivedQty: 0,
+          unitPrice: 0,
+        });
         mutate();
       }
     } catch (e) {

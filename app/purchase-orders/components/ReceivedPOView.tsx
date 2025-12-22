@@ -308,7 +308,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                       key={supplier.suppId}
                       className="border border-gray-200 shadow  rounded-lg overflow-hidden flex flex-col"
                     >
-                      <div className="bg-gradient-to-r flex flex-col gap-2  bg-white p-4 cursor-pointer hover:from-gray-100 transition overflow-visible">
+                      <div className="bg-gradient-to-r flex flex-col gap-2  bg-white p-2 cursor-pointer hover:from-gray-100 transition overflow-visible">
                         <div className="flex justify-between overflow-visible">
                           <div className="flex items-start gap-2">
                             <Package className="text-primary-1" size={24} />
@@ -457,7 +457,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 isExpanded ? null : supplier.suppId
                               )
                             }
-                            className="inline-flex items-center px-2 py-1 xl:px-4 xl:py-2 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
+                            className="inline-flex items-center px-1 py-.5 xl:px-3 xl:py-1.5 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors"
                           >
                             {isExpanded ? "Hide Details" : "View Details"}
                             {isExpanded ? (
@@ -470,7 +470,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                       </div>
 
                       {isExpanded && (
-                        <div className="p-4 flex flex-col h-full gap-2 bg-gray-100/30">
+                        <div className="p-2 flex flex-col h-full gap-2 bg-gray-100/30">
                           <div className="flex items-center">
                             <div>
                               {" "}
@@ -567,12 +567,15 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     row.poItemStatus === "sent" ? (
                                       <IconButton
                                         icon={<PackageCheck size={18} />}
-                                        onClick={() =>
+                                        onClick={() => {
+                                          if (!row.suppId) {
+                                            return;
+                                          }
                                           handleAutoFill(
                                             row.suppId,
                                             row.poItemId
-                                          )
-                                        }
+                                          );
+                                        }}
                                         label="Auto-Fill Received Qty"
                                         bg="primary"
                                       />

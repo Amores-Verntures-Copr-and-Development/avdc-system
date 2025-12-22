@@ -48,6 +48,7 @@ export const insertRequestItemsBulk = async ({
     throw new Error("No data provided for bulk insert");
   }
   const pool = connection ? connection : await getDBConnection();
+  console.log({ data });
   const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity) 
             VALUES ${data.map(() => "(?, ?, ?)").join(", ")}`;
   const values = data.flatMap((item) => [
@@ -81,8 +82,8 @@ GROUP BY ro.requestId
 ORDER BY CASE ro.requestStatus
 WHEN 'pending' THEN 1
 WHEN 'in_progress' THEN 2
-WHEN 'received' THEN 3
-WHEN 'delivered' THEN 4
+WHEN 'delivered' THEN 3
+WHEN 'received' THEN 4
 ELSE 5
 END,
 ro.requestCreatedAt DESC`;
@@ -399,7 +400,6 @@ export const updateRequestItem = async ({
 
   // Push all key values again for WHERE condition
   uniqueKeyCombinations.forEach((vals) => params.push(...vals));
-
   const sql = `
     UPDATE RequestItems
     SET ${setClauses.join(", ")}

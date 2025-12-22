@@ -113,7 +113,9 @@ const ShowAllIItems = ({
           (s) => s.suppId === Number(selectedId)
         );
 
-        return selected ? selected.suppName : "Select Supplier";
+        return selected
+          ? `${selected.suppName} (₱${selected.suppItemPrice})`
+          : "Select Supplier";
       },
       value: (row) => {
         console.log("Supplier value function:", {
@@ -155,17 +157,32 @@ const ShowAllIItems = ({
     {
       name: "Total Price",
       key: "totalPrice",
-      selector: (row) => `₱${(row.totalPrice ?? 0).toFixed(2)}`,
-      compute: (row) => {
-        const selected = row.suppliers?.find(
-          (s) => s.suppId === Number(row.selectedSupplierId)
+
+      selector: (row) => {
+        const supplier = row.suppliers?.find(
+          (s) => s.suppId === Number(row.suppId)
         );
-        const supplierPrice = Number(selected?.suppItemPrice) || 0;
-        const quantity = Number(row.poItemOrderedQty) || 0;
-        return supplierPrice * quantity;
+
+        const supplierPrice = Number(supplier?.suppItemPrice) || 0;
+        const qty = Number(row.poItemOrderedQty) || 0;
+
+        return `₱${(supplierPrice * qty).toFixed(2)}`;
       },
-      dependsOn: ["selectedSupplierId", "poItemOrderedQty"],
-      value: (row) => row.poItemOrderedQty * row.unitPrice, // NEW
+
+      value: (row) => {
+        const supplier = row.suppliers?.find(
+          (s) => s.suppId === Number(row.suppId)
+        );
+
+        return (
+          (Number(supplier?.suppItemPrice) || 0) *
+          (Number(row.poItemOrderedQty) || 0)
+        );
+      },
+    },
+    {
+      name: "Status",
+      key: "poItemStatus",
     },
   ];
   useEffect(() => {

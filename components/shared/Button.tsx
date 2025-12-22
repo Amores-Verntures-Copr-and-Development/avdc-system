@@ -48,12 +48,11 @@ const colorClasses: Record<
 > = {
   primary: {
     base: "bg-[#c51d71] border border-[#c51d71] shadow-md",
-    border: "border-b-2 border-b-[#a91860]",
+    border: "border-b-2 border-b-[#930160]",
     hover: "hover:bg-[#a91860] hover:border-[#a91860]",
     focus: "focus:ring-2 focus:ring-[#c51d71]/40 focus:ring-offset-2",
     text: "text-white",
-    disabled:
-      "bg-[#c51d71]/30 border-b-2 border-[#c51d71]/30 text-white/60 shadow-none border-b-[#c51d71]/50",
+    disabled: "bg-[#c51d71]/30 text-white/60 shadow-none",
   },
 
   secondary: {

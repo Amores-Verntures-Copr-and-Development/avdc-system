@@ -105,6 +105,21 @@ WHERE 1=1`;
   return rows;
 };
 
+export const selectInventoryByRequestId = async ({
+  id,
+}: {
+  id: number; // dynamic filters like {inventoryId: 1, storeId: null}
+}) => {
+  const pool = await getDBConnection();
+  const sql = ` 
+ SELECT i.* FROM Inventories i
+ LEFT JOIN Stores s ON s.storeId = i.inventoryReferenceId AND i.inventoryReference = 'store'
+ LEFT JOIN RequestOrders ro ON ro.storeId = s.storeId
+ WHERE ro.requestId = ?`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [id]);
+  return rows as InventoryInterface[];
+};
+
 export const insertInventoryItem = async ({
   connection,
   data,

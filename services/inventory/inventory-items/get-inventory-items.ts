@@ -49,7 +49,7 @@ export async function findInventoryItemsByField({
     });
     // console.log("total[0].totalItemsL ", total[0].totalItems);
     return {
-      data: data,
+      data: data as InventoryItemInterface[],
       total: total[0].totalItems,
     };
   } catch (e) {

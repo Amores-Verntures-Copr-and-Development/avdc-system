@@ -1,3 +1,4 @@
+import { POAddToRequestItemForm } from "@/app/purchase-orders/components/_components/AddItemToRequestFromPOModal";
 import { CreateRequestFormDto, CreateRequestItemDto } from "@/dtos/request.dto";
 import {
   getRequestOrderFromStockRoomByPurchaserFields,
@@ -9,6 +10,7 @@ import { processDeliveredPO } from "@/services/request/process-deliver-request";
 import { processReceivedRequest } from "@/services/request/process-received-request";
 import { createRequestItem } from "@/services/request/request-items/create-request-items";
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
+import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
 import {
   getRequestItems,
   getRequestItemsByIds,
@@ -45,7 +47,6 @@ export const getRequest = async ({
   try {
     if (controller === "stock-room" && userId) {
       data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
-      
     } else if (controller === "store") {
       data = await getRequestOrders({ storeId });
     } else {
@@ -169,6 +170,24 @@ export const addRequestItem = async (data: CreateRequestItemDto[]) => {
     return {
       success: false,
       message: "Failed to add item in request",
+      error: e,
+    };
+  }
+};
+
+export const addItemFromPOtoRequest = async (data: POAddToRequestItemForm) => {
+  try {
+    console.log("[addItemFromPOtoRequest]", { data });
+    const res = await processAddItemFromPOtoRequest(data);
+    return {
+      success: true,
+      message: "Items added to request successfully",
+      // result: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to add items to request",
       error: e,
     };
   }
