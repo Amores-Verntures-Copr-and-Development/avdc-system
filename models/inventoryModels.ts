@@ -300,15 +300,19 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   c.categoryName,
   it.itemPrice,
   it.itemId 
-  ORDER BY it.itemName ASC`;
-
+  ORDER BY `;
+  console.log({ status, category, unit, search });
+  if (!status) {
+    sql += `  CASE WHEN ii.inventoryItemQuantity > 0 THEN 0 ELSE 1 END,`;
+  }
+  sql += ` it.itemName ASC`;
   if (limit !== undefined) {
     sql += ` LIMIT ${limit}`;
   }
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
-
+  console.log("Final SQL: ", sql);
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;
