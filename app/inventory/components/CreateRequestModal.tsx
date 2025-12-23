@@ -6,7 +6,9 @@ import {
   InsertItemsRequestDto,
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
-import React, { useRef } from "react";
+import { set } from "date-fns";
+import React, { useRef, useState } from "react";
+import toast from "react-hot-toast";
 interface CreateRequestModalProps {
   data: DisplayInventoryItems[];
   onCancel: () => void;
@@ -43,6 +45,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   onCancel,
   onSubmit,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const updatedItemsRef = useRef<EditableItem[]>([]);
   const handleDataUpdate = (updatedData: EditableItem[]) => {
     updatedItemsRef.current = updatedData; // Store without causing re-render
@@ -64,20 +67,36 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
   const handleSubmit = async () => {
     console.log("User: ", user);
+
     const updatedItems = updatedItemsRef.current;
-    const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
-      ...items,
-      reqItemQuantity: Number(items.reqItemQuantity),
-    }));
-    const requestData: CreateRequestFormDto = {
-      storeId: user?.storeId ?? 0,
-      requestById: user?.userId ?? 0,
-      requestNo: "",
-      items: newItems,
-    };
-    const success = await onSubmit(requestData);
-    if (success) {
-      onCancel();
+    const hasZeroQuantity = updatedItems.some(
+      (item) => Number(item.reqItemQuantity) <= 0 || item.reqItemQuantity === ""
+    );
+    if (hasZeroQuantity) {
+      toast.error("Please enter a valid quantity for all items.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
+        ...items,
+        reqItemQuantity: Number(items.reqItemQuantity),
+      }));
+      const requestData: CreateRequestFormDto = {
+        storeId: user?.storeId ?? 0,
+        requestById: user?.userId ?? 0,
+        requestNo: "",
+        items: newItems,
+      };
+      const success = await onSubmit(requestData);
+      if (success) {
+        onCancel();
+      }
+    } catch (error) {
+      console.error("Error submitting request:", error);
+      toast.error("An error occurred while submitting the request.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

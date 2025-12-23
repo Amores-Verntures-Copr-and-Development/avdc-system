@@ -107,11 +107,12 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
             item.supplierPrice !== undefined && Number(item.supplierPrice) !== 0
         )
         .map((item) => ({
-          suppId: item.suppId,
+          suppId: item.suppId ?? undefined, // convert null to undefined
           suppItemPrice: item.supplierPrice,
           itemId: item.itemId,
           suppItemCreatedBy: data.updatedBy,
         })) ?? [];
+
     if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
       await handleUpdateSupplierItemPrice({
         connection,

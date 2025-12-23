@@ -28,7 +28,6 @@ const Modal: React.FC<ModalProps> = ({
   children,
   subtitle,
   size = "md",
-  position = "center",
   showCloseButton = true,
   className = "",
   overlayClassName = "",

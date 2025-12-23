@@ -19,7 +19,7 @@ interface DisplayPurchasers
     EmployeeInterface,
     StockPurchasers {}
 const userColumn: Column<DisplayPurchasers>[] = [
-  { key: "#", name: "#", selector: (row, index) => index + 1 },
+  { key: "#", name: "#", selector: (_row, index) => index + 1 },
   {
     key: "userFname",
     name: "Name",

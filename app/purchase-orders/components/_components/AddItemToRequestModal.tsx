@@ -8,7 +8,7 @@ import React from "react";
 interface AddItemToRequestModalProps {
   data: DisplayRequisitionWithItems | null;
 }
-const AddItemToRequestModal = ({ data }: AddItemToRequestModalProps) => {
+const AddItemToRequestModal = ({}: AddItemToRequestModalProps) => {
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs xl:text-sm font-semibold">
@@ -24,7 +24,7 @@ const AddItemToRequestModal = ({ data }: AddItemToRequestModalProps) => {
         <DropDownSearchItem
           label="Search Item"
           onSelect={function (item: ItemInterface): void {
-            throw new Error("Function not implemented.");
+            console.log(item);
           }}
           sizes="xs"
         />

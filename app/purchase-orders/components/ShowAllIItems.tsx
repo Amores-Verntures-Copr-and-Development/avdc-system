@@ -1,6 +1,6 @@
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
-import Popup from "@/components/shared/Popup";
+
 import Table, { Column } from "@/components/shared/Table";
 import {
   CreatePurchaseOrderItemDto,
@@ -11,21 +11,11 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import {
-  Check,
-  Clock,
-  Edit,
-  LogOut,
-  Save,
-  SaveOff,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Check, Clock, Edit, LogOut, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";
 import IconButton from "@/components/shared/IconButton";
-import { Rowdies } from "next/font/google";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<

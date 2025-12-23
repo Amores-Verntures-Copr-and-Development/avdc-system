@@ -319,18 +319,25 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       toast.error("Failed to deliver. Cannot deliver 0 quantity");
       return;
     }
-    const newRequest: Request[] = [
-      {
-        ...data,
-        requestItems: newRequestItems,
-      },
-    ];
+    setIsProcessing(data.requestNo);
+    try {
+      const newRequest: Request[] = [
+        {
+          ...data,
+          requestItems: newRequestItems,
+        },
+      ];
 
-    if (onMarkDelivered) {
-      const success = await onMarkDelivered(newRequest);
-      if (success) {
-        mutate();
+      if (onMarkDelivered) {
+        const success = await onMarkDelivered(newRequest);
+        if (success) {
+          mutate();
+        }
       }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsProcessing(null);
     }
   };
 

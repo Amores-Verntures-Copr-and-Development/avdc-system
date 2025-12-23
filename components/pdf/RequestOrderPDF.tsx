@@ -10,7 +10,7 @@ import {
 import { RequestOrderPdf } from "@/dtos/request.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+
 
 const styles = StyleSheet.create({
   page: {

@@ -17,12 +17,10 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 import { PDFViewer } from "@react-pdf/renderer";
 import {
-  ArrowLeft,
   CheckLine,
   ChevronLeft,
   Clock,
   FileText,
-  MoveLeft,
   Pencil,
   Plus,
   X,
@@ -38,7 +36,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import {
   getRequestStatusOption,
-  requestStatusOptions,
+
 } from "@/utils/requestOrderUtils";
 
 interface ViewRequestModalProps {

@@ -353,14 +353,13 @@ const TableInner = <T extends Record<string, any>>(
               type={column.inputType ?? "text"}
               name={column.name}
               value={
-                // ✅ FIRST: Use column.value function if it exists
                 column.value
                   ? column.value(row)
-                  : // ✅ SECOND: For numbers, handle 0 properly
-                  column.inputType === "number"
-                  ? realRow?.[column.key] ?? ""
-                  : // ✅ THIRD: Fallback to row value
-                    realRow?.[column.key] || ""
+                  : column.inputType === "number"
+                  ? realRow?.[column.key] === 0 || realRow?.[column.key] === 0.0
+                    ? ""
+                    : realRow?.[column.key] ?? ""
+                  : realRow?.[column.key] || ""
               }
               onChange={(e) =>
                 handleInputChange(row, column.key, e.target.value)

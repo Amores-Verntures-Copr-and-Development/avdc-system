@@ -18,7 +18,7 @@ import {
   ChevronDown,
   Clock,
   PackageCheck,
-  X,
+
   Truck,
   Store,
   Loader2,
@@ -35,6 +35,7 @@ import Modal from "@/components/shared/Modal";
 import { Supplier } from "@/types/supplier";
 import { RequestItems } from "@/types/request";
 import { getStatusOption } from "./CompletePOView";
+import AddItemToPoSupplier from "./_components/AddItemToPoSupplier";
 
 const columns: Column<PurchaseOrderItems>[] = [
   { name: "Item Name", key: "itemName" },
@@ -125,6 +126,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   mutateInventory,
   setShowAllItems,
 }) => {
+  const [showAddItem, setShowAddItem] = useState(false);
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier[]>(data);
   const [isView, setIsView] = useState<"all" | "store">("all");
@@ -539,10 +541,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         <Button
                                           color="neutral"
                                           size="xs"
-                                          onClick={() =>
-                                            // handleAutoFillAll(supplier.suppId)
-                                            console.log("asd")
-                                          }
+                                          onClick={() => setShowAddItem(true)}
                                           label="Add Item"
                                           icon={<Package size={15} />}
                                         />
@@ -733,6 +732,16 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           </div>
         </div>
       </Modal>
+      <Popup
+        title="Add Item to PO Supplier"
+        background="bg-white/20"
+        isOpen={showAddItem}
+        onClose={function (): void {
+          setShowAddItem(false);
+        }}
+      >
+        <AddItemToPoSupplier />
+      </Popup>
     </div>
   );
 };

@@ -7,7 +7,6 @@ import {
 } from "@/dtos/purchase.dto";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
-import { set } from "date-fns";
 import { Plus } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
@@ -42,11 +41,7 @@ const AddItemToRequestFromPOModal = ({
   onClose,
   mutate: mutateRequest,
 }: AddItemToRequestFromPOModaProps) => {
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loadingData,
-    mutate,
-  } = useSWR<{
+  const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayPurchaseOrderItemsDto[];
   }>(`/api/purchase-order/po-items/${poData?.poId}`, fetcher);
   const [poItems, setPoItems] = useState<
