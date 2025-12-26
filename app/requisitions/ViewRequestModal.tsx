@@ -25,7 +25,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -34,10 +34,7 @@ import AddItemROModal from "./components/AddItemROModal";
 import AddItemPOModal from "./components/AddItemPOModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
-import {
-  getRequestStatusOption,
-
-} from "@/utils/requestOrderUtils";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -77,11 +74,32 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     fetcher
   );
   useEffect(() => {
-    if (itemResponse.data && itemResponse.data.length > 0) {
-      setRequestItemData(itemResponse.data);
-    }
-  }, [itemResponse.data]);
-  const updatedItemsRef = useRef<DisplayRequestItems[]>([]);
+    if (!itemResponse.data || itemResponse.data.length === 0) return;
+
+    const saved: DisplayRequestItems[] | null = JSON.parse(
+      localStorage.getItem(`${selectedReq?.requestNo}-request-item-draft`) ||
+        "null"
+    );
+
+    const mergedData = itemResponse.data.map((item) => {
+      const savedItem = saved?.find((s) => s.reqItemId === item.reqItemId);
+      return savedItem
+        ? { ...item, reqItemReceived: savedItem.reqItemReceived }
+        : item;
+    });
+
+    setRequestItemData(mergedData);
+  }, [itemResponse.data, selectedReq?.requestNo]);
+
+  // Save draft on every change
+  useEffect(() => {
+    if (!requestItemData || requestItemData.length === 0) return;
+
+    localStorage.setItem(
+      `${selectedReq?.requestNo}-request-item-draft`,
+      JSON.stringify(requestItemData)
+    );
+  }, [requestItemData, selectedReq?.requestNo]);
 
   const isRequestor =
     user?.empPosition === "staff" || user?.empPosition === "supervisor";
@@ -188,13 +206,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
       },
       value: (row) => {
-        console.log(
-          "value called:",
-          row.reqItemId,
-          row.reqItemReceived,
-          row.reqItemStatus
-        );
-        return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
+        return row.reqItemStatus === "not_ordered"
+          ? 0
+          : Number(row.reqItemReceived) || "";
       },
     },
   ];
@@ -235,11 +249,10 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     }
   };
   const handleCompleteRO = async () => {
-    const updatedItems = updatedItemsRef.current;
     const requestData: Partial<Request>[] = [
       {
         ...selectedReq,
-        requestItems: updatedItems,
+        requestItems: requestItemData,
       },
     ];
     const sendData = {

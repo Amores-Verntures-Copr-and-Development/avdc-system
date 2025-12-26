@@ -49,3 +49,10 @@ export const stockAdjustmentOptions = [
   { label: "Out", value: "out" },
   { label: "Replace", value: "replace" },
 ];
+
+export const paymentDiscount = [
+  { label: "Select Discount", value: "" },
+  { label: "Senior", value: "senior" },
+  { label: "PWD", value: "pwd" },
+  { label: "Employee", value: "employee" },
+];

@@ -38,8 +38,13 @@ import AddItemSupplierModal from "../../components/AddItemSupplierModal";
 import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
-import AddItemToProductModal from "../../components/AddItemToProductModal";
-import { CreateProductDtos } from "@/dtos/products.dto";
+import AddItemToProductModal, {
+  AddItemToProductStoreInterface,
+} from "../../components/AddItemToProductModal";
+import {
+  CreateProductDtos,
+  CreateProductVariantDto,
+} from "@/dtos/products.dto";
 
 import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemInfo } from "@/dtos/items.dto";
@@ -374,30 +379,47 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       return false;
     }
   };
-  const handleAddItemsToProduct = async (data: CreateProductDtos[]) => {
+  const handleAddItemsToProduct = async (
+    data: AddItemToProductStoreInterface
+  ) => {
     try {
-      const newData: CreateProductDtos[] =
-        data.map((prod) => ({
+      let productVariants: CreateProductVariantDto[] = [];
+      if (data.isAddAsVariant && data.prodId) {
+        productVariants = data.productVariant.map((prod) => ({
           ...prod,
-          productCreatedBy: user?.userId ?? 0,
-          inventoryId: inventoryId ?? 0,
-          isDeduct: 1,
-        })) ?? [];
-      console.log("Product: ", newData);
-      const result = await fetch(`api/products/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        throw new Error(res.err);
+          prodId: data.prodId || 0,
+        }));
+        const result = await fetch(
+          `api/products/${data.storeId}/product-variants/${data.prodId}/create-bulk`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(productVariants),
+          }
+        );
+        const res = await result.json();
+        if (!res.success) {
+          throw new Error(res.err);
+        }
+        toast.success("Inventory added successfully!");
+        mutate();
+        return true;
       }
-      toast.success("Inventory added successfully!");
-      mutate();
-      return true;
+      if (!data.isAddAsVariant) {
+        alert("Create automatically as product");
+        return true;
+      }
+      // const newData: CreateProductVariantDto[] =
+      //   data.map((prod) => ({
+      //     ...prod,
+      //     productCreatedBy: user?.userId ?? 0,
+      //     inventoryId: inventoryId ?? 0,
+      //     isDeduct: 1,
+      //   })) ?? [];
+      // console.log("Product: ", newData);
+      return false;
     } catch (e) {
       console.log(e);
       toast.error("Failed to add Inventory.");
@@ -859,12 +881,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
                     label="Add Item to product"
                     onClick={() => {
-                      setIsAddingProduct(true);
+                      setShowAddProductModal(true);
                       console.log({ isAddingProduct });
                     }}
                     size="xs"
                     className="font-semibold"
-                    color="success"
+                    color="warning"
                   />
                 </div>
               )}
@@ -1012,11 +1034,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         size="xl"
       >
         <AddItemToProductModal
+          storeId={user?.storeId ?? 0}
           data={selectedRows ?? []}
           onCancel={function (): void {
             setShowAddProductModal(false);
           }}
           onSubmit={handleAddItemsToProduct}
+          user={user}
         />
       </Modal>
       <Modal

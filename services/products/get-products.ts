@@ -9,7 +9,7 @@ export async function getProducts({
   search?: string;
 }) {
   try {
-    const data = await selectProducts({ keyFields });
+    const data = await selectProducts({ keyFields, search });
     return data;
   } catch (e) {
     throw e;

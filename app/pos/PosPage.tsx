@@ -21,12 +21,16 @@ import useSWR from "swr";
 import ProductContent from "./components/layout/ProductContent";
 
 import DropdownSelect from "@/components/shared/DropdownSelect";
-import { paymentMethodOptions } from "@/constants/dropdown-options";
+import {
+  paymentDiscount,
+  paymentMethodOptions,
+} from "@/constants/dropdown-options";
 
 import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
+import { DropdownSearch } from "@/components/shared/DropDownSearch";
 
 export interface OrderList {
   prodVarId: number;
@@ -146,6 +150,12 @@ const PosPage = ({ storeId }: PosPageProps) => {
       }, 0) ?? 0
     );
   };
+  const removeProduct = (product: OrderList) => {
+    const newSelectedOrder = selectedOrder?.filter(
+      (prod) => prod.prodVarId !== product.prodVarId
+    );
+    setSelectedOrder(newSelectedOrder ?? []);
+  };
   // const handleSubmitOrder = async () => {
   //   const modifyProduct: CreateSaleItemDto[] = selectedProduct.map((prod) => ({
   //     inventoryItemId: prod.inventoryItemId,
@@ -237,9 +247,23 @@ const PosPage = ({ storeId }: PosPageProps) => {
               <>
                 {/* Main Header */}
                 <div className="flex items-center">
-                  <h1 className="text-lg font-semibold text-gray-900">
+                  <h1 className="text-lg font-semibold text-gray-900 mr-5">
                     Products
                   </h1>
+                  <div className="flex gap-2">
+                    <div>
+                      {" "}
+                      <Button size="xs" label="All" />
+                    </div>
+                    <div>
+                      {" "}
+                      <Button size="xs" label="All" />
+                    </div>
+                    <div>
+                      {" "}
+                      <Button size="xs" label="All" />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-2">
@@ -292,8 +316,32 @@ const PosPage = ({ storeId }: PosPageProps) => {
         </div>
 
         <div className="flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
-          <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between">
+          <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
             <h1 className="font-semibold">Order Details</h1>
+            <span className="text-sm font-semibold">
+              {selectedOrder?.length} items
+            </span>
+          </div>
+          <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
+            <h1 className="font-semibold text-sm">Customer:</h1>
+            <div className="flex-1">
+              <DropdownSearch
+                sizes="xs"
+                placeholder="Search customer"
+                searchFn={function (query: string): Promise<unknown[]> {
+                  throw new Error("Function not implemented.");
+                }}
+                onSelect={function (item: unknown): void {
+                  throw new Error("Function not implemented.");
+                }}
+                renderItem={function (item: unknown): React.ReactNode {
+                  throw new Error("Function not implemented.");
+                }}
+                displayValue={function (item: unknown): string {
+                  throw new Error("Function not implemented.");
+                }}
+              />
+            </div>
           </div>
 
           <div className="flex-1 p-2 overflow-auto">
@@ -301,6 +349,7 @@ const PosPage = ({ storeId }: PosPageProps) => {
               data={selectedOrder}
               removeQuantityProductList={removeQuantityProductList}
               addQuantity={addQuantity}
+              removeProduct={removeProduct}
             />
           </div>
           <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-4">
@@ -314,10 +363,18 @@ const PosPage = ({ storeId }: PosPageProps) => {
             </div>
             <div className="flex gap-2">
               <DropdownSelect
-                sizes="sm"
+                label="Method"
+                sizes="xs"
                 name={""}
                 value={undefined}
                 options={paymentMethodOptions}
+              />
+              <DropdownSelect
+                label="Discount"
+                sizes="xs"
+                name={""}
+                value={undefined}
+                options={paymentDiscount}
               />
               <IconButton
                 onClick={function (): void {

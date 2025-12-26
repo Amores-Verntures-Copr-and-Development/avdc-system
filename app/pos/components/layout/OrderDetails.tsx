@@ -6,12 +6,14 @@ interface OrderDetailsProps {
   data: OrderList[] | null;
   removeQuantityProductList: (data: OrderList) => void;
   addQuantity: (data: OrderList) => void;
+  removeProduct: (data: OrderList) => void;
 }
 
 const OrderDetails = ({
   data,
   removeQuantityProductList,
   addQuantity,
+  removeProduct,
 }: OrderDetailsProps) => {
   return (
     <div className="flex flex-col gap-4">
@@ -21,6 +23,7 @@ const OrderDetails = ({
           data={prod}
           key={prod.prodVarId}
           addQuantity={addQuantity}
+          removeProduct={removeProduct}
         />
       ))}
     </div>

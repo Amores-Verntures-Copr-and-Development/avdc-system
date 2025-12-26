@@ -6,7 +6,10 @@ import {
 import { createProducts } from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
-import { createProductVariants } from "@/services/products/product-variant/create-product-variants";
+import {
+  createProductVariant,
+  createProductVariants,
+} from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
 import { ProductVariants } from "@/types/products";
 
@@ -32,7 +35,7 @@ export const createProductVariantController = async (
   data: CreateProductVariantDto
 ) => {
   try {
-    const res = await createProductVariants({ data });
+    const res = await createProductVariant({ data });
     return {
       data: res,
       success: true,
@@ -48,18 +51,38 @@ export const createProductVariantController = async (
   }
 };
 
+export const createProductVariantBulkController = async (
+  data: CreateProductVariantDto[]
+) => {
+  try {
+    const res = await createProductVariants({ data });
+    return {
+      data: res,
+      success: true,
+      message: "Product variant added successfully!",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to add product variant!",
+      error: e,
+    };
+  }
+};
 export const createVariantComponentController = async (
   data: CreateVarianComponentDto
 ) => {};
 
 export const getProduct = async ({
   storeId,
+  search,
 }: {
   storeId?: number;
-  search?: String;
+  search?: string;
 }) => {
   try {
-    const data = await getProducts({ keyFields: { storeId } });
+    const data = await getProducts({ keyFields: { storeId }, search });
     return {
       data: data,
       message: "Product fetched successfully!",

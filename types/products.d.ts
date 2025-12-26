@@ -14,13 +14,14 @@ export interface ProductVariants {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
+  prodVarUnit?: string | null;
   prodVarCreatedAt: string;
   prodVarUpdatedAt: string;
   prodVarDeletedAt: string;
   prodVarCreatedBy: number;
   prodId: number;
   inventoryItemId: number | null;
-  varianComponents?: VariantComponents[];
+  variantComponents?: VariantComponents[];
 }
 
 export interface VariantComponents {
@@ -28,6 +29,8 @@ export interface VariantComponents {
   quantityRequired: number;
   prodVarId: number;
   inventoryItemId: number;
+  sold?: number;
+  left?: number;
 }
 
 export interface ProductPrices {

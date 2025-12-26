@@ -27,7 +27,7 @@ export const insertProducts = async ({
   return results.insertId;
 };
 
-export const insertProductVariants = async ({
+export const insertProductVariant = async ({
   connection,
   data,
 }: {
@@ -44,6 +44,26 @@ export const insertProductVariants = async ({
     data.prodVarCreatedBy,
     data.prodId,
   ]);
+  return results.insertId;
+};
+export const insertProductVariants = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateProductVariantDto[];
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId)
+                VALUES ${data.map(() => "(?,?,?,?)").join(",")}`;
+
+  const values = data.flatMap((item) => [
+    item.prodVarName,
+    item.prodVarPrice,
+    item.prodVarCreatedBy,
+    item.prodId,
+  ]);
+  const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
 };
 
@@ -78,19 +98,41 @@ export const selectProducts = async ({
   search?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  let sql = `SELECT p.*,s.*,(
-    SELECT JSON_ARRAYAGG(
-      JSON_OBJECT(
-        'prodVarId', pv.prodVarId,
-        'prodVarName', pv.prodVarName,
-        'prodVarPrice', pv.prodVarPrice,
-        'prodVarId', pv.prodVarId
+  let sql = `SELECT 
+    p.*,
+    s.*,
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'prodVarId', pv.prodVarId,
+          'prodVarName', pv.prodVarName,
+          'prodVarPrice', pv.prodVarPrice,
+          'variantComponents',
+            (
+              SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'varComId', vc.varComId,
+                  'prodVarId', vc.prodVarId,
+                  'quantityRequired', vc.quantityRequired,
+                  'inventoryItemId', vc.inventoryItemId,
+                  'left', ii.inventoryItemQuantity,
+                  'sold', (
+                      SELECT COALESCE(SUM(si.saleItemQuantity), 0)
+                      FROM SaleItems si
+                      WHERE si.prodVarId = vc.prodVarId
+                    )
+                )
+              )
+              FROM VariantComponents vc
+              LEFT JOIN InventoryItems ii ON ii.inventoryItemId = vc.inventoryItemId
+              WHERE vc.prodVarId = pv.prodVarId
+              
+            )
+        )
       )
-    )
-    FROM ProductVariants pv   
-    WHERE pv.prodId = p.prodId
-  ) as productVariants
- 
+      FROM ProductVariants pv
+      WHERE pv.prodId = p.prodId
+    ) AS productVariants
   FROM Products p
   LEFT JOIN Stores s ON s.storeId = p.storeId
   WHERE 1=1`;
@@ -103,7 +145,10 @@ export const selectProducts = async ({
       params.push(value);
     }
   }
-
+  if (search) {
+    sql += ` AND p.prodName LIKE ?`;
+    params.push(`%${search}%`);
+  }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

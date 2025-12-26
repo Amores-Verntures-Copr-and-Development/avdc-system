@@ -94,7 +94,7 @@ const colorClasses: Record<
   },
 
   warning: {
-    base: "bg-amber-600 border border-amber-600  border-b-2 border-b-amber-700",
+    base: "bg-amber-600 border border-amber-600 ",
     border: " border-b-2 border-b-amber-700",
     hover: "hover:bg-amber-600 hover:border-amber-600",
     focus: "focus:ring-2 focus:ring-amber-500/40 focus:ring-offset-2",
@@ -104,7 +104,7 @@ const colorClasses: Record<
   },
 
   tertiary: {
-    base: "bg-indigo-500   border-b-2 border-b-indigo-800",
+    base: "bg-indigo-500   border border-indigo-600 ",
     border: "border-b-2 border-b-indigo-800",
     hover: "hover:bg-indigo-700 hover:border-indigo-700",
     focus: "focus:ring-2 focus:ring-indigo-600/40 focus:ring-offset-2",

@@ -1,73 +1,81 @@
-import React from "react";
-import { Ellipsis, Minus, Plus } from "lucide-react";
+import IconButton from "@/components/shared/IconButton";
+import { Minus, Plus, Trash } from "lucide-react";
 import { OrderList } from "../PosPage";
 
-interface OrderProductCardProps {
+interface OrderItemProps {
   data: OrderList;
   removeQuantityProductList: (data: OrderList) => void;
   addQuantity: (data: OrderList) => void;
+  removeProduct: (data: OrderList) => void;
 }
-const OrderProductCard = ({
+
+const CompactOrderItem = ({
   data,
   removeQuantityProductList,
   addQuantity,
-}: OrderProductCardProps) => {
+  removeProduct,
+}: OrderItemProps) => {
+  const unitPrice = Number(data.prodVarPrice);
+  const totalPrice = unitPrice * Number(data.quantity);
+
   return (
-    <div className="flex justify-between items-center rounded-lg shadow-md p-3 bg-gray-100 hover:shadow-lg border border-gray-300 transition">
-      {/* Left side: product info */}
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium text-gray-800">
+    <div className="flex items-center justify-between gap-2 rounded-lg shadow-sm p-2 bg-white hover:shadow-md border border-gray-200 hover:border-primary-1/50 transition-all group">
+      {/* Product name - flex-1 to take available space */}
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-gray-800 truncate group-hover:text-primary-1 transition-colors">
           {data.prodVarName}
+        </p>
+        <p className="text-[10px] text-gray-500 mt-0.5">
+          {unitPrice.toLocaleString("en-PH", {
+            style: "currency",
+            currency: "PHP",
+          })}
+        </p>
+      </div>
+
+      {/* Quantity controls - compact */}
+      <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-1.5 py-1 group-hover:bg-primary-1/5 transition-colors">
+        <button
+          className="flex items-center justify-center w-6 h-6 rounded-md bg-gray-200 hover:bg-red-100 text-gray-700 hover:text-red-600 transition-colors active:scale-95"
+          onClick={() => removeQuantityProductList(data)}
+          aria-label="Decrease quantity"
+        >
+          <Minus className="w-3.5 h-3.5" />
+        </button>
+
+        <span className="text-sm font-bold text-gray-800 w-6 text-center">
+          {data.quantity}
         </span>
-        <span className="text-xs font-semibold text-primary-600">
-          {Number(data.prodVarPrice).toLocaleString("en-PH", {
+
+        <button
+          className="flex items-center justify-center w-6 h-6 rounded-md bg-primary-1 hover:bg-primary-1-hover text-white transition-colors active:scale-95 shadow-sm"
+          onClick={() => addQuantity(data)}
+          aria-label="Increase quantity"
+        >
+          <Plus className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Total price - compact */}
+      <div className="flex-shrink-0 text-right">
+        <span className="text-sm font-bold text-primary-1 whitespace-nowrap">
+          {totalPrice.toLocaleString("en-PH", {
             style: "currency",
             currency: "PHP",
           })}
         </span>
       </div>
 
-      {/* Right side: actions */}
-      <div className="flex flex-col items-end space-y-1">
-        <div className="flex items-center gap-4">
-          <span className="text-xs font-semibold text-primary-600">
-            {(Number(data.prodVarPrice) * Number(data.quantity)).toLocaleString(
-              "en-PH",
-              {
-                style: "currency",
-                currency: "PHP",
-              }
-            )}
-          </span>
-          <Ellipsis
-            size={18}
-            className="text-gray-500 hover:text-gray-700 cursor-pointer"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-200 hover:bg-primary-100 text-gray-700 cursor-pointer"
-            onClick={() => {
-              removeQuantityProductList(data);
-            }}
-          >
-            <Minus size={14} />
-          </button>
-          <span className="text-sm font-semibold w-6 text-center">
-            {data.quantity}
-          </span>
-          <button
-            className="flex items-center justify-center w-6 h-6 rounded-full bg-primary-1 hover:bg-primary-600 text-white cursor-pointer"
-            onClick={() => {
-              addQuantity(data);
-            }}
-          >
-            <Plus size={14} />
-          </button>
-        </div>
-      </div>
+      <IconButton
+        onClick={() => {
+          removeProduct(data);
+        }}
+        label={"Remove Product"}
+        bg={"red"}
+        icon={<Trash className="w-3.5 h-3.5" />}
+      />
     </div>
   );
 };
 
-export default OrderProductCard;
+export default CompactOrderItem;

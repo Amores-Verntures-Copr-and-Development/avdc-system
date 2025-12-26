@@ -20,11 +20,23 @@ const ProductCard = ({
       className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 hover:border-primary-1/50 cursor-pointer overflow-hidden relative"
       onClick={() => {
         if (variantCount === 1 && data.productVariants) {
+          const variant = data.productVariants[0];
+          const productName = data.prodName;
+          const variantWords = variant.prodVarName.toLowerCase().split(" ");
+          const productLower = productName.toLowerCase();
+          const alreadyIncluded = variantWords.some((word) =>
+            productLower.includes(word)
+          );
+
+          const prodVarName = alreadyIncluded
+            ? variant.prodVarName
+            : `${productName} ${variant.prodVarName}`;
+
           addProductOrder({
-            prodVarId: data.productVariants[0]?.prodVarId,
-            prodVarName: `${data.prodName} ${data.productVariants[0]?.prodVarName}`,
+            prodVarId: variant.prodVarId,
+            prodVarName: prodVarName,
             quantity: 1,
-            prodVarPrice: data.productVariants[0]?.prodVarPrice,
+            prodVarPrice: variant.prodVarPrice,
           });
         }
         if (variantCount > 1 && selectProduct) {

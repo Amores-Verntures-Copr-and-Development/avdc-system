@@ -12,7 +12,10 @@ export async function GET(
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
-    const res = await getProduct({ storeId });
+    const { searchParams } = new URL(_request.url);
+    const search = searchParams.get("search") || "";
+    const res = await getProduct({ storeId, search });
+
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);

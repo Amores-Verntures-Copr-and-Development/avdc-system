@@ -301,7 +301,7 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   it.itemPrice,
   it.itemId 
   ORDER BY `;
-  console.log({ status, category, unit, search });
+
   if (!status) {
     sql += `  CASE WHEN ii.inventoryItemQuantity > 0 THEN 0 ELSE 1 END,`;
   }
@@ -312,7 +312,7 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
-  console.log("Final SQL: ", sql);
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;
