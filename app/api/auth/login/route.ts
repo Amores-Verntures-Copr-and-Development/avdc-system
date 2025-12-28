@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       secure: false,
       sameSite: "lax",
       path: "/",
-      maxAge: 60 * 60 * 24 * 30, // 1 hour
+      maxAge: 60 * 60 * 24 * 30, 
     });
 
     response.cookies.set({

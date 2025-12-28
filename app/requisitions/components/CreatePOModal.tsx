@@ -148,20 +148,22 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
 
   const handleFillUpAll = () => {
     setOrderItem((prev) =>
-      prev.map((item) => ({
-        ...item,
-        poItemOrder:
-          item.totalQuantity > item.stockItem
-            ? item.totalQuantity - item.stockItem
-            : 0, // keep the existing value if condition is false
-      }))
+      prev.map((item) => {
+        const totalQty = Number(item.totalQuantity);
+        const stockQty = Number(item.stockItem);
+
+        return {
+          ...item,
+          poItemOrder: totalQty > stockQty ? totalQty - stockQty : 0,
+        };
+      })
     );
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Section */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto p-4">
         <Table
           uniqueIdKey="itemId"
           isRounded={false}

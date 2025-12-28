@@ -27,105 +27,130 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
     if (data.poItems?.length === 0) {
       throw new Error("No items found");
     }
-
-    const poItemsData: Partial<PurchaseOrderItems>[] =
-      data.poItems?.map((item) => ({
-        poItemId: item.poItemId,
-        poItemStatus: "received",
-      })) || [];
-    await updatePurchaseOrderItems({
-      connection,
-      keyFields: ["poItemId"],
-      updates: poItemsData,
-    });
-    //add to warehouse inventory
-    console.log(`data.poCreatedBy: `, data.poCreatedBy);
-    const warehouseInv = await findInventoryByStockPurchaserFields({
-      keyFields: { userId: data.updatedBy },
-    });
-    const addItemsData: Partial<InventoryItemInterface>[] =
-      data.poItems?.flatMap((item) => ({
-        inventoryItemReferenceId: item.itemId,
-        inventoryItemQuantity: item.poItemReceivedQty,
-        inventoryId: warehouseInv[0].inventoryId,
-      })) || [];
-    await updateInventoryItem({
-      connection,
-      fieldModes: { inventoryItemQuantity: "increment" },
-      updates: addItemsData,
-      keyFields: ["inventoryItemReferenceId", "inventoryId"],
-    });
-    const inventoryMovement: CreateInventoryMovementDto[] = await Promise.all(
-      (data.poItems ?? []).map(async (item) => {
-        // Assuming findInventoryItemsByField returns a single inventory item or array
-        const inventoryItem = await findInventoryItemsByField({
-          keyFields: {
-            inventoryId: warehouseInv[0].inventoryId ?? 0,
-            inventoryItemReferenceId: item.itemId,
-          },
-        });
-
-        return {
-          inventoryId: warehouseInv[0].inventoryId,
-          inventoryItemId: inventoryItem.data[0]?.inventoryItemId ?? 0, // fallback if not found
-          itemMovementType: "in",
-          itemMovementReferenceId: data.poId ?? 0,
-          itemMovementReference: "po",
-          itemMovementQuantity: Number(item.poItemReceivedQty),
-          itemMovementRemarks: "Received from supplier",
-        };
-      })
+    const notOrderedItems = data.poItems?.filter(
+      (item) => item.poItemStatus === "not_ordered"
     );
-    console.log("[createInventoryMovement]");
-    await createInventoryMovement({ connection, data: inventoryMovement });
-    const poItems = await findPurchaserOrder({
-      connection,
-      keyfields: { poId: data.poId, suppId: 0 },
-    });
-    const isAllDeliverd = poItems.every(
-      (item) => item.poItemStatus === "received"
-    );
-
-    if (isAllDeliverd) {
-      const poData: Partial<PurchaseOrders>[] = [
-        {
-          poId: data.poId,
-          poStatus: "received",
-        },
-      ];
-      console.log("UpdatePurchaseOrdersDto: ", data);
-      await updatePurchase({
+    if (notOrderedItems && notOrderedItems.length > 0) {
+      //updatePoItemStatus to notOrdered
+      const updateNotOrdered: Partial<PurchaseOrderItems>[] =
+        notOrderedItems.map((item) => ({
+          poItemId: item.poItemId,
+          poItemStatus: "not_ordered",
+        }));
+      await updatePurchaseOrderItems({
         connection,
-        keyFields: ["poId"],
-        updates: poData,
+        keyFields: ["poItemId"],
+        updates: updateNotOrdered,
       });
     }
-    const updateSupplierItemPrice: Partial<SupplierItem>[] =
-      data.poItems
-        ?.filter(
-          (item) =>
-            item.supplierPrice !== undefined && Number(item.supplierPrice) !== 0
-        )
-        .map((item) => ({
-          suppId: item.suppId ?? undefined, // convert null to undefined
-          suppItemPrice: item.supplierPrice,
-          itemId: item.itemId,
-          suppItemCreatedBy: data.updatedBy,
-        })) ?? [];
-
-    if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
-      await handleUpdateSupplierItemPrice({
+    const validReceivedData = data.poItems?.filter(
+      (item) => item.poItemStatus !== "not_ordered"
+    );
+    console.log({ validReceivedData });
+    if (validReceivedData && validReceivedData.length > 0) {
+      const poItemsData: Partial<PurchaseOrderItems>[] =
+        validReceivedData.map((item) => ({
+          poItemId: item.poItemId,
+          poItemReceivedQty: Number(item.poItemReceivedQty),
+          poItemStatus: "received",
+        })) || [];
+      await updatePurchaseOrderItems({
         connection,
-        updates: updateSupplierItemPrice,
-        keyFields: ["suppId", "itemId"],
+        keyFields: ["poItemId"],
+        updates: poItemsData,
       });
-      const itemPrice: Partial<ItemInterface>[] =
-        updateSupplierItemPrice?.map((item) => ({
-          itemId: item.itemId,
-          itemPrice: item.suppItemPrice,
-          itemAddedBy: data.updatedBy,
-        })) ?? [];
-      await handleUpdateItemPrice({ connection, updates: itemPrice });
+      //add to warehouse inventory
+      console.log(`data.poCreatedBy: `, data.poCreatedBy);
+      const warehouseInv = await findInventoryByStockPurchaserFields({
+        keyFields: { userId: data.updatedBy },
+      });
+      const addItemsData: Partial<InventoryItemInterface>[] =
+        validReceivedData.flatMap((item) => ({
+          inventoryItemReferenceId: item.itemId,
+          inventoryItemQuantity: Number(item.poItemReceivedQty),
+          inventoryId: warehouseInv[0].inventoryId,
+        })) || [];
+      await updateInventoryItem({
+        connection,
+        fieldModes: { inventoryItemQuantity: "increment" },
+        updates: addItemsData,
+        keyFields: ["inventoryItemReferenceId", "inventoryId"],
+      });
+      const inventoryMovement: CreateInventoryMovementDto[] = await Promise.all(
+        (validReceivedData ?? []).map(async (item) => {
+          // Assuming findInventoryItemsByField returns a single inventory item or array
+          const inventoryItem = await findInventoryItemsByField({
+            keyFields: {
+              inventoryId: warehouseInv[0].inventoryId ?? 0,
+              inventoryItemReferenceId: item.itemId,
+            },
+          });
+
+          return {
+            inventoryId: warehouseInv[0].inventoryId,
+            inventoryItemId: inventoryItem.data[0]?.inventoryItemId ?? 0, // fallback if not found
+            itemMovementType: "in",
+            itemMovementReferenceId: data.poId ?? 0,
+            itemMovementReference: "po",
+            itemMovementQuantity: Number(item.poItemReceivedQty),
+            itemMovementRemarks: "Received from supplier",
+          };
+        })
+      );
+      console.log("[createInventoryMovement]");
+      await createInventoryMovement({ connection, data: inventoryMovement });
+      const poItems = await findPurchaserOrder({
+        connection,
+        keyfields: { poId: data.poId, suppId: 0 },
+      });
+      const filterDelivered = poItems.filter(
+        (item) => item.poItemStatus !== "not_ordered"
+      );
+      const isAllDeliverd = filterDelivered.every(
+        (item) => item.poItemStatus === "received"
+      );
+
+      if (isAllDeliverd) {
+        const poData: Partial<PurchaseOrders>[] = [
+          {
+            poId: data.poId,
+            poStatus: "received",
+          },
+        ];
+        await updatePurchase({
+          connection,
+          keyFields: ["poId"],
+          updates: poData,
+        });
+      }
+      const updateSupplierItemPrice: Partial<SupplierItem>[] =
+        data.poItems
+          ?.filter(
+            (item) =>
+              item.supplierPrice !== undefined &&
+              Number(item.supplierPrice) !== 0
+          )
+          .map((item) => ({
+            suppId: item.suppId ?? undefined, // convert null to undefined
+            suppItemPrice: item.supplierPrice,
+            itemId: item.itemId,
+            suppItemCreatedBy: data.updatedBy,
+          })) ?? [];
+
+      if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
+        await handleUpdateSupplierItemPrice({
+          connection,
+          updates: updateSupplierItemPrice,
+          keyFields: ["suppId", "itemId"],
+        });
+        const itemPrice: Partial<ItemInterface>[] =
+          updateSupplierItemPrice?.map((item) => ({
+            itemId: item.itemId,
+            itemPrice: item.suppItemPrice,
+            itemAddedBy: data.updatedBy,
+          })) ?? [];
+        await handleUpdateItemPrice({ connection, updates: itemPrice });
+      }
     }
     await connection.commit();
   } catch (e) {

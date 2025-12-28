@@ -33,6 +33,7 @@ import Popup from "@/components/shared/PopupModal";
 import AddItemToRequestFromPOModal, {
   POAddToRequestItemForm,
 } from "./_components/AddItemToRequestFromPOModal";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 interface StatusOption {
   label: string;
   value: string;
@@ -105,9 +106,14 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null
   );
+  const [isShowDeliverConfirm, setIsShowDeliverConfirm] = useState(false);
+  const [deliverRequestData, setDeliverRequestData] =
+    useState<DisplayRequisitionWithItems | null>(null);
   const [requestItems, setRequestItems] =
     useState<DisplayRequisitionWithItems[]>(data);
-
+  const [isDeliveringRequest, setIsDeliveringRequest] = useState<number | null>(
+    null
+  );
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isShowAddItemRequest, setIsShowAddItemRequest] =
     useState<boolean>(false);
@@ -332,6 +338,8 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         const success = await onMarkDelivered(newRequest);
         if (success) {
           mutate();
+          setIsShowDeliverConfirm(false);
+          setDeliverRequestData(null);
         }
       }
     } catch (e) {
@@ -593,7 +601,20 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       <Button
                         size="xs"
                         onClick={() => {
-                          handleMarkPaid(reqData);
+                          const hasNoFulFillQty = reqData.requestItemsData.some(
+                            (item) =>
+                              item.reqItemStatus !== "not_ordered" &&
+                              Number(item.reqItemTransfer) === 0
+                          );
+                          console.log({ hasNoFulFillQty });
+                          if (hasNoFulFillQty) {
+                            toast.error(
+                              "Failed to deliver. Cannot deliver 0 quantity"
+                            );
+                            return;
+                          }
+                          setIsShowDeliverConfirm(true);
+                          setDeliverRequestData(reqData);
                         }}
                         label={
                           isProcessing === reqData.requestNo
@@ -686,6 +707,21 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       >
         <AddItemToRequestModal data={selectedRequestNo} />
       </Popup>
+      <ConfirmationModal
+        onConfirm={() => {
+          if (deliverRequestData) {
+            handleMarkPaid(deliverRequestData);
+          }
+        }}
+        confirmationInfo={`Are you sure you want to deliver items to ${deliverRequestData?.storeName}?`}
+        onClose={() => {
+          setIsShowDeliverConfirm(false);
+          setDeliverRequestData(null);
+        }}
+        isShow={isShowDeliverConfirm}
+        confirmLabel="Confirm"
+        isLoading={isProcessing !== null}
+      />
     </div>
   );
 };

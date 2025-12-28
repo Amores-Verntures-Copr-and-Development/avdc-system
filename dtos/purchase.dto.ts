@@ -50,6 +50,7 @@ export type DisplayPurchaseOrderItemsDto = Pick<
   | "poItemReceivedQty"
   | "unitPrice"
   | "suppId"
+  | "poItemStatus"
 > &
   Pick<ItemInterface, "itemName" | "itemUnit"> & {
     suppliers: SupplierItemDetails[] | null;

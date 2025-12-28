@@ -16,6 +16,8 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";
 import IconButton from "@/components/shared/IconButton";
+import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -80,6 +82,8 @@ const ShowAllIItems = ({
       key: "poItemOrderedQty",
       editable: (row) => row.poItemId === isEditId,
       inputType: "number",
+      selector: (row) =>
+        formatQuantityByUnit(row.poItemOrderedQty, row.itemUnit ?? ""),
     },
     {
       name: "Received Qty",
@@ -173,6 +177,16 @@ const ShowAllIItems = ({
     {
       name: "Status",
       key: "poItemStatus",
+      selector: (row) => {
+        const { bg, color, label } = getPurchaseStatusOption(
+          row.poItemStatus ?? ""
+        );
+        return (
+          <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
+            <span>{label}</span>
+          </div>
+        );
+      },
     },
   ];
   useEffect(() => {

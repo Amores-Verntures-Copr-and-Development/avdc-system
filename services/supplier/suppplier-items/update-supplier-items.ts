@@ -54,8 +54,6 @@ export async function handleUpdateSupplierItemPrice({
   keyFields?: (keyof SupplierItem)[];
 }) {
   try {
-    console.log({ updates });
-
     const result = await updateSupplierItemsByFields({
       connection,
       keyFields: keyFields,
@@ -96,7 +94,7 @@ export async function handleUpdateSupplierItemPrice({
       const itemPrices: CreateSupplierItemPriceDto[] = await Promise.all(
         itemPricesPromises
       );
-      console.log({ itemPrices });
+
       // Now use itemPrices
       await createSupplierItemPrices({ connection, data: itemPrices });
     }
