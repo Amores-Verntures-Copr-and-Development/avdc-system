@@ -4,12 +4,14 @@ type ToggleProps = {
   label?: string;
   initial?: boolean;
   onToggle?: (state: boolean) => void;
+  sizes?: "xs" | "sm" | "md" | "lg";
 };
 
 export default function Toggle({
   label,
   initial = false,
   onToggle,
+  sizes = "md",
 }: ToggleProps) {
   const [enabled, setEnabled] = useState(initial);
 
@@ -18,10 +20,19 @@ export default function Toggle({
     setEnabled(newState);
     onToggle?.(newState);
   };
-
+  const labelClass = {
+    xs: "text-[10px] xl:text-xs",
+    sm: "text-md xl:text-sm",
+    md: "text-md md:text-base",
+    lg: "text-md md:text-lg",
+  }[sizes];
   return (
     <div className="flex items-center space-x-4">
-      {label && <span className="text-sm font-medium">{label}</span>}
+      {label && (
+        <span className={`${labelClass} font-semibold text-gray-700 `}>
+          {label}
+        </span>
+      )}
       <button
         onClick={handleToggle}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${

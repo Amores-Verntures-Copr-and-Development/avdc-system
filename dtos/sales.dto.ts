@@ -1,11 +1,18 @@
 import { SaleItems, SalePayments, Sales } from "@/types/sales";
+import { SalesDiscounts } from "@/types/sales-discounts";
 
 export type CreateSaleDto = Pick<
   Sales,
-  "customerId" | "receiptNo" | "salesCreatedBy" | "salesTotalAmount" | "storeId"
+  | "customerId"
+  | "salesCreatedBy"
+  | "salesInvoice"
+  | "salesNo"
+  | "salesTotalAmount"
+  | "storeId"
 > & {
   salesItems?: CreateSaleItemDto[];
-  salePayments?: CreateSalePaymentDto[];
+  salesPayments?: CreateSalePaymentDto[];
+  saleDiscounts?: CreateSalesDiscount[];
 };
 
 export type CreateSaleItemDto = Pick<
@@ -20,4 +27,9 @@ export type CreateSaleItemDto = Pick<
 export type CreateSalePaymentDto = Pick<
   SalePayments,
   "paymentReference" | "salesId" | "salesPaymentAmount" | "salesPaymentMethod"
+>;
+
+export type CreateSalesDiscount = Pick<
+  SalesDiscounts,
+  "discountAmount" | "discountId" | "saleId"
 >;

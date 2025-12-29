@@ -6,11 +6,15 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/shared/Button";
 import {
   ArrowLeft,
+  CardSim,
+  CreditCard,
   Files,
   History,
   Package,
   PhilippinePesoIcon,
   Receipt,
+  Tag,
+  TicketPercent,
 } from "lucide-react";
 import IconButton from "@/components/shared/IconButton";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
@@ -30,6 +34,19 @@ import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
+import Popup from "@/components/shared/Popup";
+import DiscountList, {
+  formatDiscountValue,
+} from "./components/sidebar/DiscountList";
+import PaymentMethodList from "./components/sidebar/PaymentMethodList";
+import ProductList from "./components/sidebar/ProductList";
+import SalesHistory from "./components/sidebar/SalesHistory";
+import Card from "@/components/shared/Card";
+import { Discounts } from "@/types/discount";
+import { PaymentMethods } from "@/types/payment-methods";
+import { CreateSaleDto } from "@/dtos/sales.dto";
+import Modal from "@/components/shared/Modal";
+import ViewAppliedDiscountModal from "./components/ViewAppliedDiscountModal";
 
 export interface OrderList {
   prodVarId: number;
@@ -43,7 +60,19 @@ interface PosPageProps {
   user: UserAuth | null;
 }
 
-const PosPage = ({ storeId }: PosPageProps) => {
+const PosPage = ({ storeId, user }: PosPageProps) => {
+  const [isShowIcons, setIsShowIcons] = useState<
+    "discount" | "methods" | "product" | "history" | null
+  >(null);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [saleForm, setSalesForm] = useState<CreateSaleDto>({
+    storeId: 0,
+    customerId: null,
+    salesCreatedBy: 0,
+    salesInvoice: "",
+    salesNo: "",
+    salesTotalAmount: 0,
+  });
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
   const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
@@ -51,11 +80,42 @@ const PosPage = ({ storeId }: PosPageProps) => {
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayProductsDtos[];
   }>(storeId ? `/api/products/${storeId}` : null, fetcher);
+  const {
+    data: paymentMethodResponse = { data: [] },
+    isLoading: isPaymentloading,
+    mutate: mutatePaymentMethod,
+  } = useSWR<{
+    data: PaymentMethods[];
+  }>(storeId ? `/api/payment-method/store/${storeId}/` : null, fetcher);
+  const {
+    data: discountResponse = { data: [] },
+    isLoading: loading,
+    mutate,
+  } = useSWR<{
+    data: Discounts[];
+  }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
+
   useEffect(() => {
     if (itemResponse.data && itemResponse.data.length > 0) {
       setProductList(itemResponse.data);
     }
   }, [itemResponse.data]);
+  const paymentMethodOptions = [
+    { label: "Select Payment Method", value: 0 },
+    ...(paymentMethodResponse?.data?.map((payMet) => ({
+      label: payMet.payMetName,
+      value: payMet.payMetId,
+    })) ?? []),
+  ];
+
+  const getDiscount = (id: number) => {
+    const discount = discountResponse?.data?.find(
+      (dis) => dis.discountId === id
+    );
+    return discount?.discountType === "percent"
+      ? `${formatDiscountValue(Number(discount?.discountValue))}`
+      : `${formatPeso(Number(discount?.discountValue))}`;
+  };
   const addProductOrder = (newProduct: OrderList) => {
     console.log({ newProduct });
     const exists = selectedOrder?.find(
@@ -268,22 +328,43 @@ const PosPage = ({ storeId }: PosPageProps) => {
                 <div className="flex gap-2">
                   <IconButton
                     onClick={() => {
+                      setIsShowIcons("methods");
+                      console.log("Product list clicked");
+                    }}
+                    label="Payment Method List"
+                    bg="green"
+                    icon={<CreditCard size={15} />}
+                    isRounded={false}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setIsShowIcons("discount");
                       // TODO: Implement product list functionality
                       console.log("Product list clicked");
                     }}
+                    label="Discount List"
+                    bg="blue"
+                    icon={<TicketPercent size={15} />}
+                    isRounded={false}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setIsShowIcons("product");
+                      console.log("Product list clicked");
+                    }}
                     label="Product List"
-                    bg=""
+                    bg="yellow"
                     icon={<Files size={15} />}
                     isRounded={false}
                   />
 
                   <IconButton
                     onClick={() => {
-                      // TODO: Implement history functionality
+                      setIsShowIcons("history");
                       console.log("History clicked");
                     }}
                     label="History"
-                    bg=""
+                    bg="primary"
                     icon={<History size={15} />}
                     isRounded={false}
                   />
@@ -352,38 +433,28 @@ const PosPage = ({ storeId }: PosPageProps) => {
             />
           </div>
           <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-4">
-            <div className="flex items-center gap-3 pb-2 border-b-2 border-gray-200">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
-                <Receipt className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-3 pb-2 border-b-2 border-gray-200 justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
+                  <Receipt className="w-4 h-4 text-white" />
+                </div>
+                <h1 className="text-md font-bold text-gray-800">
+                  Payment Details
+                </h1>
               </div>
-              <h1 className="text-xl font-bold text-gray-800">
-                Payment Details
-              </h1>
+              <div>
+                <Button
+                  icon={<Tag className="w-3 h-3 xl:h-4 xl:w-4" />}
+                  size="xs"
+                  label="Discount"
+                  onClick={() => {
+                    setShowDiscountModal(true);
+                  }}
+                  color="secondary"
+                />
+              </div>
             </div>
-            <div className="flex gap-2">
-              <DropdownSelect
-                label="Method"
-                sizes="xs"
-                name={""}
-                value={undefined}
-                options={paymentMethodOptions}
-              />
-              <DropdownSelect
-                label="Discount"
-                sizes="xs"
-                name={""}
-                value={undefined}
-                options={paymentDiscount}
-              />
-              <IconButton
-                onClick={function (): void {
-                  throw new Error("Function not implemented.");
-                }}
-                label={"Split Payment"}
-                bg={"gray"}
-                icon={<PhilippinePesoIcon size={20} />}
-              />
-            </div>
+
             <div className="flex justify-between">
               <span className="text-sm  text-gray-400">Subtotal</span>
               <span className="text-sm  text-gray-400">
@@ -391,7 +462,9 @@ const PosPage = ({ storeId }: PosPageProps) => {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm  text-gray-400">Discount(10%)</span>
+              <span className="text-sm  text-gray-400">
+                Discount({getDiscount(1)})
+              </span>
               <span className="text-sm  text-gray-400">
                 {formatPeso(getTotalAmount() * 0.1)}
               </span>
@@ -418,6 +491,46 @@ const PosPage = ({ storeId }: PosPageProps) => {
           </div>
         </div>
       </div>
+      <Popup
+        title={
+          isShowIcons === "discount"
+            ? "Discount List"
+            : isShowIcons === "methods"
+            ? "Payment Method List"
+            : isShowIcons === "product"
+            ? "Product List"
+            : isShowIcons === "history"
+            ? "Sales History"
+            : ""
+        }
+        isOpen={isShowIcons !== null}
+        onClose={function (): void {
+          setIsShowIcons(null);
+        }}
+        background="transparent"
+      >
+        {isShowIcons === "discount" ? (
+          <DiscountList storeId={storeId} user={user} />
+        ) : isShowIcons === "methods" ? (
+          <PaymentMethodList storeId={storeId} user={user} />
+        ) : isShowIcons === "product" ? (
+          <ProductList />
+        ) : isShowIcons === "history" ? (
+          <SalesHistory />
+        ) : (
+          ""
+        )}
+      </Popup>
+      <Modal
+        leadingIcon={Tag}
+        title="Apply Discount"
+        isOpen={showDiscountModal}
+        onClose={function (): void {
+          setShowDiscountModal(false);
+        }}
+      >
+        <ViewAppliedDiscountModal discountData={discountResponse.data ?? []} />
+      </Modal>
     </PageLayout>
   );
 };

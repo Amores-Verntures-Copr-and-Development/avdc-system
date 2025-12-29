@@ -1,6 +1,7 @@
 export interface Sales {
   salesId: number;
-  receiptNo: string;
+  salesNo: string;
+  salesInvoice: string;
   salesTotalAmount: number;
   salesCreatedAt: string;
   salesUpdatedAt: string;

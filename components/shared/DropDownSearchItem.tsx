@@ -48,7 +48,10 @@ const DropDownSearchItem = ({
       onSelect={onSelect}
       renderItem={(item) => (
         <span>
-          <span>{item.itemName}</span>
+          <span>
+            {item.itemName}{" "}
+            <span className="font-semibold">({item.itemUnit})</span>
+          </span>
         </span>
       )}
       displayValue={(s) => `${s.itemName}`}
