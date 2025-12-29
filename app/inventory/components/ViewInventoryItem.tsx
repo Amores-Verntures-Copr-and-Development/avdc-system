@@ -603,13 +603,13 @@ const StockAdjustment: React.FC<
     const adjustData: CreateInventoryMovementDto = {
       inventoryItemId: data?.inventoryItemId ?? 0,
       itemMovementRemarks: adjustmentForm?.itemMovementRemarks,
-      itemMovementQuantity: adjustmentForm?.itemMovementQuantity,
+      itemMovementQuantity: Number(adjustmentForm?.itemMovementQuantity),
       itemMovementType: adjustmentForm?.itemMovementType,
       inventoryId: data?.inventoryId ?? 0,
       itemMovementReferenceId: null,
       itemMovementReference: "adjustment",
     };
-
+    console.log({ adjustData });
     if (onSubmitStockAdjustment) {
       const success = await onSubmitStockAdjustment(adjustData);
       if (success && mutate) {

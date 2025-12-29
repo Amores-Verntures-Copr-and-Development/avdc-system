@@ -5,18 +5,25 @@ export function formatQuantityByUnit(
   if (value === null || value === undefined) return "0";
 
   const num = Number(value);
-
-  // Handle invalid number
   if (isNaN(num)) return "0";
 
-  // Units that can have decimals (you can expand this list)
-  const decimalUnits = ["kg", "gal"];
+  const decimalUnits = ["kg", "gal"]; // units that allow decimals
+  const isDecimalUnit = decimalUnits.includes(unit.toLowerCase());
 
-  // Show 2 decimals only for decimal-based units
-  if (decimalUnits.includes(unit.toLowerCase())) {
-    return num.toFixed(2); // e.g. 1.50 kg
+  if (isDecimalUnit) {
+    // Convert number to string without rounding
+    const str = num.toString();
+    const [intPart, decPart] = str.split(".");
+
+    if (!decPart || Number(decPart) === 0) {
+      return intPart; // e.g., 1.00 → "1"
+    }
+
+    // Truncate to max 2 decimals, remove trailing zeros
+    const truncated = decPart.slice(0, 2).replace(/0+$/, "");
+    return truncated ? `${intPart}.${truncated}` : intPart;
   }
 
-  // Show whole numbers for discrete units
-  return Math.round(num).toString(); // e.g. 10 pack
+  // Discrete units: show as whole number
+  return Math.trunc(num).toString();
 }
