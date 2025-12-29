@@ -64,8 +64,6 @@ export async function POST(
     const res = await addItemToStoreInventory(data);
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message || "Failed to create store");
     }
 
@@ -78,11 +76,10 @@ export async function POST(
       { status: 201 }
     );
   } catch (err: any) {
-    console.error("POST /api/auth/users error:", err);
     return NextResponse.json(
       {
         success: false,
-        message: "Store add failed!",
+        message: err?.message || "Store add failed!",
         error: err?.message || String(err),
       },
       { status: 500 }

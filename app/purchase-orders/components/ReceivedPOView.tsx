@@ -36,11 +36,8 @@ import { RequestItems } from "@/types/request";
 import { getStatusOption } from "./CompletePOView";
 import AddItemToPoSupplier from "./_components/AddItemToPoSupplier";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
-import {
-  getPurchaseStatusOption,
-  requestStatusOptions,
-} from "@/utils/purchaserOrderUtils";
-import { Original_Surfer } from "next/font/google";
+import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
+
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 const storeColumns: Column<RequestItems>[] = [
@@ -144,7 +141,12 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       key: "poItemReceivedQty",
       editable: (row) => row.poItemStatus === "sent",
       inputType: "number",
-      value: (row) => Number(row.poItemReceivedQty) || "",
+      selector: (row) =>
+        row.poItemStatus === "not_ordered" ? 0 : row.poItemReceivedQty,
+      value: (row) =>
+        row.poItemStatus === "not_ordered"
+          ? 0
+          : Number(row.poItemReceivedQty) || "",
     },
     {
       name: "Price",
@@ -260,7 +262,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               ...supplier,
               items: supplier.items.map((item) => ({
                 ...item,
-                poItemReceivedQty: item.poItemOrderedQty,
+                poItemReceivedQty:
+                  item.poItemStatus === "not_ordered"
+                    ? 0
+                    : item.poItemOrderedQty,
               })),
             }
           : supplier
@@ -268,9 +273,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     );
   };
 
-  const handleSendBySupplier = async (items: PurchaseOrderItems[]) => {
-    console.log("Send to supplier:", items);
-  };
+  // const handleSendBySupplier = async (items: PurchaseOrderItems[]) => {
+  //   console.log("Send to supplier:", items);
+  // };
   const handleDeliverItemStore = async (data: DeliverItemsToStore) => {
     try {
       const result = await fetch(`api/purchase-order/deliver/${data.storeId}`, {
@@ -473,6 +478,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           );
                                           return;
                                         }
+
                                         if (supplier) {
                                           setIsShowReceivedConfirm(true);
                                           setSupplierReceivedData([supplier]);
@@ -628,7 +634,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       {!isAllItemsDelivered && (
                                         <div>
                                           <Button
-                                            color="primary"
+                                            color="success"
+                                            hasBorder
                                             size="xs"
                                             onClick={() =>
                                               handleAutoFillAll(supplier.suppId)
@@ -827,7 +834,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             handleReceivePO(supplierReceivedData);
           }
         }}
-        confirmationInfo={"Are you sure you want to received items."}
+        confirmationInfo={`Are you sure you want to received items from ${supplierReceivedData?.[0].suppName}`}
         onClose={() => {
           setIsShowReceivedConfirm(false);
           setSupplierReceivedData(null);

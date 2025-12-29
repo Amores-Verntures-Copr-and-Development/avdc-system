@@ -1,13 +1,13 @@
 import IconButton from "@/components/shared/IconButton";
-import Modal from "@/components/shared/Modal";
+
 import PageHeader from "@/components/shared/PageHeader";
 import Table, { Column } from "@/components/shared/Table";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { getPOStatusInfo } from "@/utils/formatPOStatus";
 import { Eye, Printer, FileText } from "lucide-react";
-import React, { Dispatch } from "react";
-import ShowPOModal from "./components/ShowPOModal";
+import React from "react";
+
 const purchaseOrderColumns: Column<PurchaseOrders>[] = [
   {
     name: "PO No",

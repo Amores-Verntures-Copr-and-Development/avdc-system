@@ -111,9 +111,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     useState<DisplayRequisitionWithItems | null>(null);
   const [requestItems, setRequestItems] =
     useState<DisplayRequisitionWithItems[]>(data);
-  const [isDeliveringRequest, setIsDeliveringRequest] = useState<number | null>(
-    null
-  );
+
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isShowAddItemRequest, setIsShowAddItemRequest] =
     useState<boolean>(false);

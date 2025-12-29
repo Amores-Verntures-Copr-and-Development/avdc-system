@@ -220,15 +220,41 @@ export const selectItemConversionFromFields = async ({
   const params: any[] = [];
   const pool = connection ? connection : await getDBConnection();
 
-  let sql = `SELECT 
-  ic.*,
-  fromItem.itemName as fromItemName,
-  fromItem.itemUnit as fromItemUnit
-  FROM ItemConversions ic
-  LEFT JOIN Items fromItem ON fromItem.itemId = ic.fromItemId 
-  LEFT JOIN Items toItem ON toItem.itemId = ic.toItemId
-   WHERE 1=1`;
-  for (const [key, value] of Object.entries(keyFields)) {
+  let sql = `
+    SELECT 
+      ic.*,
+      fromItem.itemName AS fromItemName,
+      fromItem.itemUnit AS fromItemUnit,
+      toItem.itemName AS toItemName,
+      toItem.itemUnit AS toItemUnit
+    FROM ItemConversions ic
+    LEFT JOIN Items fromItem ON fromItem.itemId = ic.fromItemId
+    LEFT JOIN Items toItem ON toItem.itemId = ic.toItemId
+    WHERE 1=1
+  `;
+
+  const { fromItemId, toItemId, ...rest } = keyFields;
+
+  // 🔁 BOTH IDs → reversible
+  if (fromItemId && toItemId) {
+    sql += `
+      AND (
+        (ic.fromItemId = ? AND ic.toItemId = ?)
+        OR
+        (ic.fromItemId = ? AND ic.toItemId = ?)
+      )
+    `;
+    params.push(fromItemId, toItemId, toItemId, fromItemId);
+  }
+  // 🧲 ONLY ONE ID → either side
+  else if (fromItemId || toItemId) {
+    const id = fromItemId ?? toItemId;
+    sql += ` AND (ic.fromItemId = ? OR ic.toItemId = ?)`;
+    params.push(id, id);
+  }
+
+  // 🔎 remaining normal filters
+  for (const [key, value] of Object.entries(rest)) {
     if (value === null) {
       sql += ` AND ic.${key} IS NULL`;
     } else {
@@ -236,6 +262,7 @@ export const selectItemConversionFromFields = async ({
       params.push(value);
     }
   }
+  console.log({})
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

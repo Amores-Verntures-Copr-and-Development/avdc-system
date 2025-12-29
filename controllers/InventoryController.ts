@@ -213,15 +213,35 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
     if (!storeInventory) {
       throw new Error("No inventory found for that store");
     }
-    console.log("[data]: ", { data });
-    console.log("[handleFindInventoryByStoreId]: ", { storeInventory });
+
+    const existingItems = await findInventoryItemsByField({
+      connection,
+      keyFields: {
+        inventoryId: storeInventory[0].inventoryId,
+        inventoryItemReferenceType: "item",
+      },
+    });
+    const existingIds = new Set(
+      existingItems.data.map((i) => i.inventoryItemReferenceId)
+    );
+
+    // Filter duplicates
+    const duplicateItems = data.items.filter((item) =>
+      existingIds.has(item.inventoryItemReferenceId)
+    );
+
+    if (duplicateItems.length > 0) {
+      const names = duplicateItems.map((i) => i.itemName);
+      throw new Error(`Item(s) already exist in store: ${names.join(", ")}`);
+    }
+
     const storeInventoryId = storeInventory[0].inventoryId;
     const newData: CreateInventoryItemDto[] = data.items.map((item) => ({
       inventoryId: storeInventoryId,
       inventoryItemReferenceType: "item", // <-- adjust if you have other types
       inventoryItemReferenceId: item.inventoryItemReferenceId,
-      inventoryItemQuantity: item.inventoryItemQuantity,
-      inventoryItemMin: item.inventoryItemMin,
+      inventoryItemQuantity: 0,
+      inventoryItemMin: 0,
       inventoryItemCreatedBy: data.addedById,
     }));
     await handleInsertItemInventoryBulk(connection, newData);
@@ -231,10 +251,11 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
       message: "Item add successfully!",
     };
   } catch (e) {
+    console.log("Error at contoller: ", e);
     await connection.rollback();
     return {
       success: false,
-      message: "Failed to add item!",
+      message: e instanceof Error ? e.message : "Failed to add item!",
       error: e,
     };
   } finally {

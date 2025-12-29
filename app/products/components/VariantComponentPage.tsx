@@ -97,11 +97,11 @@ const VariantComponentPage = ({
           </div>
         }
       >
-        {data?.varianComponents && data?.varianComponents.length > 0 ? (
+        {data?.variantComponents && data?.variantComponents.length > 0 ? (
           <div className="mt-4">
             <span className="text-xs text-gray-400 uppercase">Components</span>
             <ul className="mt-2 space-y-1">
-              {data.varianComponents.map((comp) => (
+              {data.variantComponents.map((comp) => (
                 <li
                   key={comp.varComId}
                   className="text-sm text-gray-700 bg-gray-50 p-2 rounded flex justify-between items-center"

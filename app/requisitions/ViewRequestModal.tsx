@@ -188,6 +188,29 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
       value: (row) => row.reqItemStatus,
     },
+    // {
+    //   name: "Received",
+    //   key: "reqItemReceived",
+    //   editable: (row) =>
+    //     (row.reqItemStatus === "delivered" ||
+    //       selectedReq?.requestStatus === "delivered") &&
+    //     row.reqItemStatus !== "not_ordered",
+    //   inputType: "number",
+    //   selector: (row) => {
+    //     console.log(
+    //       "selector called:",
+    //       row.reqItemId,
+    //       row.reqItemReceived,
+    //       row.reqItemStatus
+    //     );
+    //     return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
+    //   },
+    //   value: (row) => {
+    //     return row.reqItemStatus === "not_ordered"
+    //       ? 0
+    //       : Number(row.reqItemReceived) || "";
+    //   },
+    // },
     {
       name: "Received",
       key: "reqItemReceived",

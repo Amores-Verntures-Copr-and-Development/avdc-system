@@ -31,7 +31,6 @@ const Popup: React.FC<PopupProps> = ({
 
   // Handle ESC key press
   useEffect(() => {
-    console.log("Click outside");
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };

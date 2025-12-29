@@ -14,7 +14,25 @@ export async function getItemConversionByFields({
       connection,
       keyFields,
     });
-    return data;
+
+    // Normalize conversions so that fromItemId always matches the requested fromItemId
+    const normalized = data.map((row) => {
+      // Only reverse if fromItemId is different from requested fromItemId
+      if (keyFields.fromItemId && row.fromItemId !== keyFields.fromItemId) {
+        return {
+          ...row,
+          fromItemId: row.toItemId,
+          toItemId: row.fromItemId,
+          fromUnit: row.toUnit,
+          toUnit: row.fromUnit,
+          fromQuantity: row.toQuantity,
+          toQuantity: row.fromQuantity,
+        };
+      }
+      return row;
+    });
+
+    return normalized;
   } catch (e) {
     throw e;
   }

@@ -41,10 +41,7 @@ import { formatPeso } from "@/utils/formatPeso";
 import AddItemToProductModal, {
   AddItemToProductStoreInterface,
 } from "../../components/AddItemToProductModal";
-import {
-  CreateProductDtos,
-  CreateProductVariantDto,
-} from "@/dtos/products.dto";
+import { CreateProductVariantDto } from "@/dtos/products.dto";
 
 import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemInfo } from "@/dtos/items.dto";
@@ -367,21 +364,20 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
+        throw new Error(res.message);
       }
       toast.success("Inventory added successfully!");
       mutate();
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add Inventory.");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to add items!");
       return false;
     }
   };
   const handleAddItemsToProduct = async (
     data: AddItemToProductStoreInterface
   ) => {
+    setIsAddingProduct(true);
     try {
       let productVariants: CreateProductVariantDto[] = [];
       if (data.isAddAsVariant && data.prodId) {
@@ -424,6 +420,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
+    } finally {
+      setIsAddingProduct(false);
     }
   };
   const handleAddItemsToSupplier = async (
@@ -1041,6 +1039,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           }}
           onSubmit={handleAddItemsToProduct}
           user={user}
+          isLoading={isAddingProduct}
         />
       </Modal>
       <Modal

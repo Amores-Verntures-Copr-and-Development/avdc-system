@@ -13,7 +13,7 @@ interface ProductVariantProps {
 }
 
 const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
-  const productVariants = data?.productVariants ?? [];
+  // const productVariants = data?.productVariants ?? [];
 
   // Reorder variants
   const reorderedVariants = (data?.productVariants ?? [])

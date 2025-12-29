@@ -19,6 +19,7 @@ interface AddItemToProductModalProps {
   onSubmit: (prodcuts: AddItemToProductStoreInterface) => Promise<boolean>;
   user: UserAuth | null;
   storeId: number;
+  isLoading: boolean;
 }
 export interface AddItemToProductStoreInterface {
   isAddAsVariant: boolean;
@@ -32,6 +33,7 @@ const AddItemToProductModal = ({
   onSubmit,
   storeId,
   user,
+  isLoading,
 }: AddItemToProductModalProps) => {
   const [addProductForm, setAddProductForm] =
     useState<AddItemToProductStoreInterface>({
@@ -184,6 +186,7 @@ const AddItemToProductModal = ({
             size="sm"
             onClick={onCancel}
             className="font-semibold"
+            disabled={isLoading}
           />
         </div>
         <div>
@@ -192,6 +195,7 @@ const AddItemToProductModal = ({
             size="sm"
             onClick={handleSubmit}
             className="font-semibold"
+            loading={isLoading}
           />
         </div>
       </div>

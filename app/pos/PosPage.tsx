@@ -30,7 +30,6 @@ import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
-import { DropdownSearch } from "@/components/shared/DropDownSearch";
 
 export interface OrderList {
   prodVarId: number;
@@ -324,7 +323,7 @@ const PosPage = ({ storeId }: PosPageProps) => {
           </div>
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
             <h1 className="font-semibold text-sm">Customer:</h1>
-            <div className="flex-1">
+            {/* <div className="flex-1">
               <DropdownSearch
                 sizes="xs"
                 placeholder="Search customer"
@@ -341,7 +340,7 @@ const PosPage = ({ storeId }: PosPageProps) => {
                   throw new Error("Function not implemented.");
                 }}
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="flex-1 p-2 overflow-auto">
