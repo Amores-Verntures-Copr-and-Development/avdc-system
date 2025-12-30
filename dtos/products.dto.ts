@@ -24,7 +24,6 @@ export type CreateProductVariantDto = Pick<
   | "prodVarName"
   | "prodVarPrice"
   | "variantComponents"
-  | "inventoryItemId"
   | "prodVarUnit"
 >;
 
@@ -45,7 +44,4 @@ export interface DisplayProductsDtos
     StoreInterface,
     ProductCategories {}
 
-export interface DisplaProductVariantsDtos
-  extends ProductVariants{}
-
-
+export interface DisplaProductVariantsDtos extends ProductVariants {}

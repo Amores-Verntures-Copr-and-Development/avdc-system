@@ -38,13 +38,15 @@ const ProductVariantCard = ({
     const prodVarName = alreadyIncluded
       ? variantName
       : `${productName} ${variantName}`;
-
-    addProductOrder({
-      prodVarId: data.prodVarId,
-      prodVarName: prodVarName,
-      quantity: 1,
-      prodVarPrice: data.prodVarPrice,
-    });
+    if (data.variantComponents && data.variantComponents.length === 1) {
+      addProductOrder({
+        prodVarId: data.prodVarId,
+        prodVarName: prodVarName,
+        quantity: 1,
+        prodVarPrice: data.prodVarPrice,
+        inventoryItemId: data.variantComponents[0].inventoryItemId,
+      });
+    }
   };
 
   const hasOneVariant = data?.variantComponents?.length === 1;

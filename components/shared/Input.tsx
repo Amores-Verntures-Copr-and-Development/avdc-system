@@ -6,6 +6,7 @@ interface DynamicInputProps
   error?: string;
   sizes?: "xs" | "sm" | "md" | "lg";
   allow?: boolean;
+  leadingIcon?: React.ReactNode; // ✅ dynamic leading icon
 }
 
 const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
@@ -21,12 +22,14 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       sizes = "md",
       allow,
       defaultValue,
+      leadingIcon,
       ...rest
     },
     ref
   ) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
+
     const effectiveType = isPassword
       ? showPassword
         ? "text"
@@ -34,18 +37,23 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       : type;
 
     const showLabel = !placeholder;
+
     const labelClass = {
       xs: "text-[10px] xl:text-xs",
       sm: "text-md xl:text-sm",
       md: "text-md md:text-base",
       lg: "text-md md:text-lg",
     }[sizes];
+
     const sizeClass = {
       xs: "h-6 xl:h-8 text-xs px-2",
-      sm: "h-6 xl:h-8 text-xs xl:text-sm  px-2",
+      sm: "h-6 xl:h-8 text-xs xl:text-sm px-2",
       md: "h-10 text-base px-3",
       lg: "h-12 text-md md:text-lg px-4",
     }[sizes];
+
+    const leftPaddingWithIcon = leadingIcon ? "pl-9" : "";
+    const rightPaddingWithToggle = isPassword ? "pr-9" : "";
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (
@@ -70,7 +78,15 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             {label}
           </label>
         )}
+
         <div className="relative">
+          {/* ✅ Leading Icon */}
+          {leadingIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+              {leadingIcon}
+            </div>
+          )}
+
           <input
             id={name}
             name={name}
@@ -81,23 +97,28 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             readOnly={readOnly}
             defaultValue={defaultValue}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black  rounded-md py-0.5 xl:py-2 xl:pl-3 xl:pr-1 focus:outline-none focus:ring-2 ${
-              readOnly
-                ? "bg-gray-100 cursor-not-allowed"
-                : "focus:ring-blue-400"
-            } ${sizeClass} placeholder:${labelClass}`} // extra right padding for toggle
+            className={`w-full border border-gray-300 text-black rounded-md
+              focus:outline-none focus:ring-2
+              ${
+                readOnly
+                  ? "bg-gray-100 cursor-not-allowed"
+                  : "focus:ring-blue-400"
+              }
+              ${sizeClass}
+              ${leftPaddingWithIcon}
+              ${rightPaddingWithToggle}`}
             {...rest}
           />
+
+          {/* 👁 Password Toggle */}
           {isPassword && (
             <button
               type="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-              tabIndex={0}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              tabIndex={-1}
             >
               {showPassword ? (
-                // eye-off icon (simple)
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -109,11 +130,8 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
                 >
                   <path d="M3 3l18 18" />
                   <path d="M10.58 10.58a3 3 0 0 0 4.24 4.24" />
-                  <path d="M9.88 5.25C11.36 4.8 12.89 4.5 14.5 4.5c4.97 0 9 3.58 9 8s-4.03 8-9 8c-1.61 0-3.14-.3-4.62-.75" />
-                  <path d="M6.13 8.11C4.85 9.45 4 11.15 4 12.5c0 4.42 4.03 8 9 8 1.61 0 3.14-.3 4.62-.75" />
                 </svg>
               ) : (
-                // eye icon
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   width="16"
@@ -130,7 +148,8 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             </button>
           )}
         </div>
-        {error && <span className="text-sm text-red-500">{error}</span>}
+
+        {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     );
   }

@@ -20,7 +20,6 @@ export interface ProductVariants {
   prodVarDeletedAt: string;
   prodVarCreatedBy: number;
   prodId: number;
-  inventoryItemId: number | null;
   variantComponents?: VariantComponents[];
 }
 

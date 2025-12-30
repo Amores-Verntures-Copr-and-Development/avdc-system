@@ -14,7 +14,7 @@ export interface Sales {
 export interface SaleItems {
   salesItemId: number;
   salesId: number;
-  inventoryItemId: number;
+  inventoryItemId: number | null;
   saleItemQuantity: number;
   saleItemPrice: number;
   saleItemSubtotal: number;
@@ -22,10 +22,10 @@ export interface SaleItems {
 
 export interface SalePayments {
   salesPaymentId: number;
-  salesPaymentMethod: string;
   salesPaymentAmount: number;
   salesPaymentStatus: string;
   salesId: number;
+  payMetId: number;
   paymentReference: string;
   paymentDate: number;
 }

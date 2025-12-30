@@ -44,15 +44,25 @@ import SalesHistory from "./components/sidebar/SalesHistory";
 import Card from "@/components/shared/Card";
 import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
-import { CreateSaleDto } from "@/dtos/sales.dto";
+import {
+  CreateSaleDto,
+  CreateSaleItemDto,
+  CreateSalePaymentDto,
+} from "@/dtos/sales.dto";
 import Modal from "@/components/shared/Modal";
 import ViewAppliedDiscountModal from "./components/ViewAppliedDiscountModal";
+import toast from "react-hot-toast";
+import { reportWebVitals } from "next/dist/build/templates/pages";
+import CheckOutModal from "./components/CheckOutModal";
+import { SalesDiscounts } from "@/types/sales-discounts";
+import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
 
 export interface OrderList {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
   quantity: number;
+  inventoryItemId: number | null;
 }
 
 interface PosPageProps {
@@ -73,9 +83,16 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     salesNo: "",
     salesTotalAmount: 0,
   });
+  const [isCheckOut, setIsCheckOut] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
   const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
+  const [paymentMethod, setPaymentMethod] = useState<
+    CreateSalePaymentDto[] | null
+  >([]);
+  const [selectedDiscount, setSelectedDiscount] = useState<
+    SalesDiscounts[] | null
+  >(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayProductsDtos[];
@@ -107,7 +124,27 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       value: payMet.payMetId,
     })) ?? []),
   ];
+  const hasSufficientInventory = (
+    prodVarId: number,
+    quantityToAdd = 1
+  ): boolean => {
+    for (const product of productList) {
+      const variant = product.productVariants?.find(
+        (v) => v.prodVarId === prodVarId
+      );
 
+      if (!variant) continue;
+
+      for (const vc of variant.variantComponents ?? []) {
+        const required = vc.quantityRequired * quantityToAdd;
+        if ((vc.left ?? 0) < required) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
   const getDiscount = (id: number) => {
     const discount = discountResponse?.data?.find(
       (dis) => dis.discountId === id
@@ -117,37 +154,85 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       : `${formatPeso(Number(discount?.discountValue))}`;
   };
   const addProductOrder = (newProduct: OrderList) => {
-    console.log({ newProduct });
-    const exists = selectedOrder?.find(
-      (p) => p.prodVarId === newProduct.prodVarId
-    );
-    console.log({ exists });
-    if (exists) {
-      // ✅ Deduct 1 from inventory first
-      // removeQuantityProductList(exists);
-
-      // ✅ Then update selected products
-      setSelectedOrder((prev) =>
-        prev
-          ? prev.map((p) =>
-              p.prodVarId === newProduct.prodVarId
-                ? { ...p, quantity: (p.quantity || 0) + 1 }
-                : p
-            )
-          : null
-      );
-    } else {
-      // ✅ Deduct inventory for a new product
-      removeQuantityProductList(newProduct);
-
-      setSelectedOrder((prev) => [
-        ...(prev ?? []), // <-- if null, use empty array
-        { ...newProduct, quantity: 1 },
-      ]);
+    // ✅ Always deduct inventory
+    const isAvailable = hasSufficientInventory(newProduct.prodVarId);
+    if (!isAvailable) {
+      toast.error("Insufficient inventory");
+      return;
     }
-  };
+    deductVariantComponents(newProduct.prodVarId, 1);
 
+    setSelectedOrder((prev) => {
+      if (!prev) {
+        return [{ ...newProduct, quantity: 1 }];
+      }
+
+      const exists = prev.find((p) => p.prodVarId === newProduct.prodVarId);
+
+      if (exists) {
+        return prev.map((p) =>
+          p.prodVarId === newProduct.prodVarId
+            ? { ...p, quantity: p.quantity + 1 }
+            : p
+        );
+      }
+
+      return [...prev, { ...newProduct, quantity: 1 }];
+    });
+  };
+  useEffect(() => {
+    if (!selectedProduct) return;
+
+    const updatedProduct = productList.find(
+      (p) => p.prodId === selectedProduct.prodId
+    );
+
+    if (updatedProduct) {
+      setSelectedProduct(updatedProduct);
+    }
+  }, [productList, selectedProduct?.prodId]);
+
+  const deductVariantComponents = (prodVarId: number, quantityToAdd = 1) => {
+    setProductList((prev) =>
+      prev.map((product) => ({
+        ...product,
+        productVariants: product.productVariants?.map((variant) => {
+          if (variant.prodVarId !== prodVarId) return variant;
+
+          return {
+            ...variant,
+            variantComponents: variant.variantComponents?.map((vc) => ({
+              ...vc,
+              left: (vc.left ?? 0) - vc.quantityRequired * quantityToAdd,
+            })),
+          };
+        }),
+      }))
+    );
+  };
+  const restoreVariantComponents = (
+    prodVarId: number,
+    quantityToRestore = 1
+  ) => {
+    setProductList((prev) =>
+      prev.map((product) => ({
+        ...product,
+        productVariants: product.productVariants?.map((variant) => {
+          if (variant.prodVarId !== prodVarId) return variant;
+
+          return {
+            ...variant,
+            variantComponents: variant.variantComponents?.map((vc) => ({
+              ...vc,
+              left: (vc.left ?? 0) + vc.quantityRequired * quantityToRestore,
+            })),
+          };
+        }),
+      }))
+    );
+  };
   const removeQuantityProductList = (product: OrderList) => {
+    restoreVariantComponents(product.prodVarId, 1);
     setSelectedOrder((prev) => {
       if (!prev) return null;
 
@@ -164,6 +249,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     });
   };
   const addQuantity = (product: OrderList) => {
+    const isAvailable = hasSufficientInventory(product.prodVarId);
+    console.log({});
+    if (!isAvailable) {
+      toast.error("Insufficient inventory");
+      return;
+    }
     setSelectedOrder((prev) => {
       if (!prev) {
         // if empty, add product with quantity 1
@@ -215,59 +306,54 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
     setSelectedOrder(newSelectedOrder ?? []);
   };
-  // const handleSubmitOrder = async () => {
-  //   const modifyProduct: CreateSaleItemDto[] = selectedProduct.map((prod) => ({
-  //     inventoryItemId: prod.inventoryItemId,
-  //     saleItemPrice: prod.productPrice,
-  //     saleItemQuantity: prod.quantity,
-  //     saleItemSubtotal: prod.productPrice * prod.quantity,
-  //     salesId: 0,
-  //   }));
-  //   const modifyPayments: CreateSalePaymentDto[] = [
-  //     {
-  //       salesId: 0,
-  //       paymentReference: "TEST",
-  //       salesPaymentAmount: getTotalAmount(),
-  //       salesPaymentMethod: "cash",
-  //     },
-  //   ];
-  //   // ✅ Build the new order object first
-  //   const newOrderForm = {
-  //     customerId: null,
-  //     salesCreatedBy: user?.userId ?? 0,
-  //     storeId: user?.storeId ?? 0,
-  //     salesTotalAmount: getTotalAmount(),
-  //     salePayments: modifyPayments,
-  //     salesItems: modifyProduct,
-  //     receiptNo: "",
-  //   };
+  const handleConfirmOrder = async () => {
+    if (!selectedOrder || selectedOrder.length === 0) {
+      toast.error("No selected order!");
+      return;
+    }
+    const saleItems: CreateSaleItemDto[] =
+      selectedOrder?.map((items) => ({
+        inventoryItemId: items.inventoryItemId || null,
+        saleItemPrice: items.prodVarPrice,
+        saleItemQuantity: items.quantity,
+        salesId: 0,
+        saleItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
+      })) ?? [];
+    const salesData: CreateSaleDto = {
+      customerId: 0,
+      salesInvoice: "",
+      salesCreatedBy: 0,
+      salesNo: "",
+      salesTotalAmount: getTotalAmount(),
+      storeId: 0,
+      saleDiscounts: [],
+      salesItems: saleItems,
+      salesPayments: [],
+    };
+    console.log({ salesData });
+  };
 
-  //   try {
-  //     const res = await fetch(`api/sales/pos/${newOrderForm.storeId}`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(newOrderForm),
-  //     });
+  const addPayment = (payment: CreateSalePaymentDto) => {
+    console.log({ payment });
+    setPaymentMethod((prev) => {
+      const existing = prev?.some((p) => p.payMetId === payment.payMetId);
+      if (existing) {
+        // Payment already added → do nothing
+        return prev;
+      }
 
-  //     const result = await res.json();
-
-  //     if (!result.success) {
-  //       console.log(result.error);
-  //       throw new Error(result.message || "Failed to process order");
-  //     }
-
-  //     mutate();
-  //     setSelectedProduct([]);
-  //     toast.success(
-  //       `Order ${result.data.receiptNo} is successfully processed!`
-  //     );
-  //   } catch (e) {
-  //     console.error(e);
-  //     toast.error("Failed to process order!");
-  //   }
-  // };
+      // Add new payment
+      return [
+        ...(prev ?? []),
+        {
+          paymentReference: payment.paymentReference,
+          payMetId: payment.payMetId,
+          salesPaymentAmount: payment.salesPaymentAmount,
+          salesId: 0,
+        },
+      ];
+    });
+  };
   return (
     <PageLayout>
       <div className="flex flex-1 overflow-visible h-full">
@@ -461,14 +547,14 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 {formatPeso(getTotalAmount())}
               </span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span className="text-sm  text-gray-400">
                 Discount({getDiscount(1)})
               </span>
               <span className="text-sm  text-gray-400">
                 {formatPeso(getTotalAmount() * 0.1)}
               </span>
-            </div>
+            </div> */}
             <div className="flex justify-between border-t border-gray-200 py-2">
               <span className="text-sm font-semibold">Total</span>
               <span className="text-sm font-semibold">
@@ -482,11 +568,18 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           <div className="p-2 border-t border-gray-200">
             <Button
               size="sm"
-              label="Make Order"
+              label="Check Out"
               className="w-full"
-              // onClick={() => {
-              //   handleSubmitOrder();
-              // }}
+              onClick={() => {
+                const hasNoOrder =
+                  !selectedOrder || selectedOrder?.length === 0;
+                console.log({ hasNoOrder, selectedOrder });
+                if (hasNoOrder) {
+                  toast.error("No order selected!");
+                  return;
+                }
+                setIsCheckOut(true);
+              }}
             />
           </div>
         </div>
@@ -530,6 +623,36 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         }}
       >
         <ViewAppliedDiscountModal discountData={discountResponse.data ?? []} />
+      </Modal>
+      <Modal
+        leftTitleContent={
+          <span className="font-semibold">
+            Total: {formatPeso(getTotalAmount())}
+          </span>
+        }
+        className="h-[95%]"
+        isOpen={isCheckOut}
+        onClose={function (): void {
+          setIsCheckOut(false);
+        }}
+        size="lg"
+        modalDetails={
+          <div className="flex justify-between w-full">
+            <span className="text-lg font-semibold"> Confirm Order</span>
+            <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
+              Total: {formatPeso(getTotalAmount())}
+            </span>
+          </div>
+        }
+      >
+        <CheckOutModal
+          addPayment={addPayment}
+          order={selectedOrder}
+          discounts={selectedDiscount}
+          paymentMethods={paymentMethodResponse.data ?? []}
+          selectedPaymentMethod={paymentMethod}
+          setSelectedPaymentMethod={setPaymentMethod}
+        />
       </Modal>
     </PageLayout>
   );

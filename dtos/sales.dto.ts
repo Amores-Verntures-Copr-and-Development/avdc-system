@@ -26,7 +26,7 @@ export type CreateSaleItemDto = Pick<
 
 export type CreateSalePaymentDto = Pick<
   SalePayments,
-  "paymentReference" | "salesId" | "salesPaymentAmount" | "salesPaymentMethod"
+  "paymentReference" | "salesId" | "salesPaymentAmount" | "payMetId"
 >;
 
 export type CreateSalesDiscount = Pick<

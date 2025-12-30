@@ -8,6 +8,7 @@ interface ModalProps {
   title?: string;
   subtitle?: string;
   children: React.ReactNode;
+  leftTitleContent?: React.ReactNode;
   header?: React.ReactNode;
   footer?: React.ReactNode;
   size?: "sm" | "md" | "lg" | "xl" | "full";
@@ -34,6 +35,7 @@ const Modal: React.FC<ModalProps> = ({
   modalDetails,
   leadingIcon: Icon,
   hasPadding = true,
+  leftTitleContent,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
@@ -182,8 +184,14 @@ const Modal: React.FC<ModalProps> = ({
       >
         {/* Modal Header */}
         {(title || showCloseButton) && (
-          <div className="flex flex-col justify-between p-2 2xl:p-4 border-b bg-white border-gray-200 shrink-0">
-            <div className="flex justify-between items-center">
+          <div
+            className={`flex flex-col  p-2 2xl:p-4 border-b bg-white border-gray-200 shrink-0`}
+          >
+            <div
+              className={`flex justify-between items-center  ${
+                title && showCloseButton ? "justify-between" : "justify-end"
+              }`}
+            >
               {title && (
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1 xl:gap-2">
@@ -197,6 +205,7 @@ const Modal: React.FC<ModalProps> = ({
                   </div>
                 </div>
               )}
+              {!showCloseButton && leftTitleContent}
               {showCloseButton && (
                 <button
                   onClick={onClose}
