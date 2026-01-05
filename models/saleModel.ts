@@ -4,7 +4,45 @@ import {
   CreateSaleItemDto,
 } from "@/dtos/sales.dto";
 import { getDBConnection } from "@/lib/db";
-import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { Sales } from "@/types/sales";
+import {
+  Connection,
+  PoolConnection,
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2/promise";
+
+export const selectSales = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields: Partial<Sales>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `SELECT 
+  s.*,
+  st.storeName,
+  CONCAT_WS(' ', u.userName, u.userLname) AS salesCreatedByName,
+  c.customerName
+FROM Sales s
+LEFT JOIN Customers c ON c.customerId = s.customerId
+LEFT JOIN Users u ON u.userId = s.salesCreatedBy
+LEFT JOIN Stores st ON st.storeId = s.storeId
+WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND s.${key} IS NULL`;
+    } else {
+      sql += ` AND s.${key} = ?`;
+      params.push(value);
+    }
+  }
+  sql += ` ORDER BY s.salesCreatedAt DESC `;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as Sales[];
+};
 
 export const insertSales = async ({
   connection,
@@ -14,29 +52,60 @@ export const insertSales = async ({
   data: CreateSaleDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Sales(customerId,receiptNo,salesCreatedBy,salesTotalAmount,storeId) VALUES(?,?,?,?,?)`;
+  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId) VALUES(?,?,?,?,?,?,?,?)`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
-    data.customerId ?? null,
-    data.receiptNo,
-    data.salesCreatedBy,
+    data.salesNo,
+    data.salesInvoice,
     data.salesTotalAmount,
+    data.salesSubTotal,
+    data.salesTotalPaid,
+    data.salesCreatedBy,
     data.storeId,
+    data.customerId || null,
   ]);
   return results.insertId;
 };
 
 export const selectCountSales = async ({
+  keyFields = {},
   connection,
-  storeId,
 }: {
-  connection?: PoolConnection;
-  storeId: number;
-}) => {
+  keyFields?: Partial<Sales>;
+  connection?: Connection;
+}): Promise<number> => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `SELECT COUNT(*) as total FROM Sales WHERE storeId = ?`;
-  const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
-  return rows[0];
+
+  let sql = `SELECT COUNT(*) as total FROM Sales s WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND s.${key} IS NULL`;
+    } else {
+      sql += ` AND s.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute(sql, params);
+
+  const total = (rows as any)[0]?.total ?? 0;
+
+  return Number(total);
 };
+
+// export const selectCountSales = async ({
+//   connection,
+//   storeId,
+// }: {
+//   connection?: PoolConnection;
+//   storeId: number;
+// }) => {
+//   const pool = connection ? connection : await getDBConnection();
+//   const sql = `SELECT COUNT(*) as total FROM Sales WHERE storeId = ?`;
+//   const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
+//   return rows[0];
+// };
 
 export const insertSaleItems = async ({
   connection,
@@ -49,14 +118,15 @@ export const insertSaleItems = async ({
     throw new Error("No data provided for bulk insert");
   }
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SaleItems(salesId,inventoryItemId,saleItemQuantity,saleItemPrice,saleItemSubtotal) 
-            VALUES ${data.map(() => "(?, ?, ?,?,?)").join(", ")}`;
+  const sql = `INSERT INTO SalesItems(salesItemQuantity,salesItemPrice,salesItemSubtotal,salesId,inventoryItemId,prodVarId) 
+            VALUES ${data.map(() => "(?, ?, ?,?,?,?)").join(", ")}`;
   const values = data.flatMap((item) => [
+    item.salesItemQuantity,
+    item.salesItemPrice,
+    item.salesItemSubtotal,
     item.salesId,
     item.inventoryItemId,
-    item.saleItemQuantity,
-    item.saleItemPrice,
-    item.saleItemQuantity * item.saleItemPrice,
+    item.prodVarId,
   ]);
   const [results] = await pool.execute(sql, values);
   return results;
@@ -73,13 +143,14 @@ export const insertSalePayments = async ({
     throw new Error("No data provided for bulk insert");
   }
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SalePayments(salesPaymentMethod,salesPaymentAmount,paymentReference,salesId) 
-            VALUES ${data.map(() => "(?, ?, ?,?)").join(", ")}`;
+  const sql = `INSERT INTO SalesPayments(salesPaymentAmount,salesPaymentStatus,salesId,payMetId,paymentReference)
+            VALUES ${data.map(() => "(?, ?,?, ?,?)").join(", ")}`;
   const values = data.flatMap((item) => [
-    item.salesPaymentMethod,
     item.salesPaymentAmount,
-    item.paymentReference,
+    item.salesPaymentStatus,
     item.salesId,
+    item.payMetId,
+    item.paymentReference ?? "",
   ]);
   const [results] = await pool.execute(sql, values);
   return results;

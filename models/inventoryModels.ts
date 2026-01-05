@@ -85,10 +85,12 @@ WHERE 1=1`;
 
 export const selectInventoryByStoreFields = async ({
   keyFields = {},
+  connection,
 }: {
-  keyFields?: Partial<StoreInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<StoreInterface>;
+  connection?: PoolConnection; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
   let sql = `SELECT i.* FROM Inventories i
 LEFT JOIN Stores s ON s.storeId = i.inventoryReferenceId AND i.inventoryReference = 'store'
@@ -102,7 +104,7 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows;
+  return rows as InventoryInterface[];
 };
 
 export const selectInventoryByRequestId = async ({

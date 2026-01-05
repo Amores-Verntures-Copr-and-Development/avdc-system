@@ -5,6 +5,8 @@ export type CreateSaleDto = Pick<
   Sales,
   | "customerId"
   | "salesCreatedBy"
+  | "salesSubTotal"
+  | "salesTotalPaid"
   | "salesInvoice"
   | "salesNo"
   | "salesTotalAmount"
@@ -15,18 +17,29 @@ export type CreateSaleDto = Pick<
   saleDiscounts?: CreateSalesDiscount[];
 };
 
+export interface DisplaySalesDto extends Sales {
+  customerName: string;
+  salesCreatedByName: string;
+  storeName: string;
+}
+
 export type CreateSaleItemDto = Pick<
   SaleItems,
   | "inventoryItemId"
-  | "saleItemPrice"
-  | "saleItemQuantity"
-  | "saleItemSubtotal"
+  | "salesItemQuantity"
   | "salesId"
+  | "salesItemPrice"
+  | "salesItemSubtotal"
+  | "prodVarId"
 >;
 
 export type CreateSalePaymentDto = Pick<
   SalePayments,
-  "paymentReference" | "salesId" | "salesPaymentAmount" | "payMetId"
+  | "paymentReference"
+  | "salesId"
+  | "salesPaymentAmount"
+  | "payMetId"
+  | "salesPaymentStatus"
 >;
 
 export type CreateSalesDiscount = Pick<

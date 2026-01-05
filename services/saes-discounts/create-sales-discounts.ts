@@ -1,4 +1,4 @@
-import { CreateSalesDiscountDto } from "@/dtos/discounts.dto";
+import { CreateDiscountDto } from "@/dtos/discounts.dto";
 import { insertSalesDiscount } from "@/models/discountModel";
 import { PoolConnection } from "mysql2/promise";
 
@@ -7,7 +7,7 @@ export const createSalesDiscountServices = {
     data,
     connection,
   }: {
-    data: CreateSalesDiscountDto;
+    data: CreateDiscountDto;
     connection?: PoolConnection;
   }) => {
     try {

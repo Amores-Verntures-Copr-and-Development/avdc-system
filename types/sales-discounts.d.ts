@@ -3,4 +3,5 @@ export interface SalesDiscounts {
   saleId: number;
   discountId: number;
   discountAmount: number;
+  salesDiscountType: DiscountType;
 }

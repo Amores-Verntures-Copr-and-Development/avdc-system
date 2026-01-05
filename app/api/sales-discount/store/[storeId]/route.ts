@@ -2,8 +2,8 @@ import {
   createSalesDiscounts,
   getSalesDiscountByStore,
 } from "@/controllers/SalesDiscountController";
+import { CreateDiscountDto } from "@/dtos/discounts.dto";
 
-import { CreateSalesDiscountDto } from "@/dtos/discounts.dto";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -16,7 +16,7 @@ export async function POST(
     if (!storeId || storeId === 0) {
       throw new Error("No store found");
     }
-    const data = (await _request.json()) as CreateSalesDiscountDto;
+    const data = (await _request.json()) as CreateDiscountDto;
     const res = await createSalesDiscounts(data);
     if (!res.success) {
       throw new Error(`${res.message}`);

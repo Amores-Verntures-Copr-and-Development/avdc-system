@@ -117,8 +117,8 @@ export const selectProducts = async ({
                   'inventoryItemId', vc.inventoryItemId,
                   'left', ii.inventoryItemQuantity,
                   'sold', (
-                      SELECT COALESCE(SUM(si.saleItemQuantity), 0)
-                      FROM SaleItems si
+                      SELECT COALESCE(SUM(si.salesItemQuantity), 0)
+                      FROM SalesItems si
                       WHERE si.prodVarId = vc.prodVarId
                     )
                 )

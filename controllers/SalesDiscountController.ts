@@ -1,8 +1,9 @@
-import { CreateSalesDiscountDto } from "@/dtos/discounts.dto";
+
+import { CreateDiscountDto } from "@/dtos/discounts.dto";
 import { createSalesDiscountServices } from "@/services/saes-discounts/create-sales-discounts";
 import { getSalesDiscountServices } from "@/services/saes-discounts/get-sales-discounts";
 
-export const createSalesDiscounts = async (data: CreateSalesDiscountDto) => {
+export const createSalesDiscounts = async (data: CreateDiscountDto) => {
   try {
     const result = await createSalesDiscountServices.createSalesDiscount({
       data,

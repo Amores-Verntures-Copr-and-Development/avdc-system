@@ -24,12 +24,6 @@ import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import ProductContent from "./components/layout/ProductContent";
 
-import DropdownSelect from "@/components/shared/DropdownSelect";
-import {
-  paymentDiscount,
-  paymentMethodOptions,
-} from "@/constants/dropdown-options";
-
 import ProductVariant from "./components/layout/ProductVariant";
 import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
@@ -56,6 +50,9 @@ import { reportWebVitals } from "next/dist/build/templates/pages";
 import CheckOutModal from "./components/CheckOutModal";
 import { SalesDiscounts } from "@/types/sales-discounts";
 import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
+import PaymentSuccessModa from "./components/PaymentSuccessModal";
+import PaymentSuccessModal from "./components/PaymentSuccessModal";
+import { Sales } from "@/types/sales";
 
 export interface OrderList {
   prodVarId: number;
@@ -71,18 +68,26 @@ interface PosPageProps {
 }
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
+  const defaultSaleData = {
+    storeId: 0,
+    customerId: null,
+    salesCreatedBy: 0,
+    salesSubTotal: 0,
+    salesTotalPaid: 0,
+    salesInvoice: "",
+    salesNo: "",
+    salesTotalAmount: 0,
+    saleDiscounts: [],
+    salesItems: [],
+    salesPayments: [],
+  };
+  const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
+  const [recentSales, setRecentSales] = useState<Sales | null>(null);
   const [isShowIcons, setIsShowIcons] = useState<
     "discount" | "methods" | "product" | "history" | null
   >(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
-  const [saleForm, setSalesForm] = useState<CreateSaleDto>({
-    storeId: 0,
-    customerId: null,
-    salesCreatedBy: 0,
-    salesInvoice: "",
-    salesNo: "",
-    salesTotalAmount: 0,
-  });
+  const [saleForm, setSalesForm] = useState<CreateSaleDto>(defaultSaleData);
   const [isCheckOut, setIsCheckOut] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
@@ -94,7 +99,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     SalesDiscounts[] | null
   >(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
-  const { data: itemResponse = { data: [] } } = useSWR<{
+  const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
     data: DisplayProductsDtos[];
   }>(storeId ? `/api/products/${storeId}` : null, fetcher);
   const {
@@ -124,6 +129,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       value: payMet.payMetId,
     })) ?? []),
   ];
+  const subtotal =
+    selectedOrder?.reduce(
+      (total, o) => total + o.prodVarPrice * o.quantity,
+      0
+    ) ?? 0;
+  const totalPaid = paymentMethod?.reduce(
+    (sum, p) => sum + p.salesPaymentAmount,
+    0
+  );
+  const remaining = Math.max(0, subtotal - (totalPaid || 0));
+  const change = Math.max(0, (totalPaid || 0) - subtotal);
+
+  const canComplete = (totalPaid || 0) >= subtotal;
   const hasSufficientInventory = (
     prodVarId: number,
     quantityToAdd = 1
@@ -306,53 +324,117 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
     setSelectedOrder(newSelectedOrder ?? []);
   };
+  function getCookie(name: string): string | null {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()!.split(";").shift() || null;
+    return null;
+  }
   const handleConfirmOrder = async () => {
+    console.log({ user });
+    const token = getCookie("avdc_accessToken");
+    console.log({ token });
     if (!selectedOrder || selectedOrder.length === 0) {
       toast.error("No selected order!");
+      return;
+    }
+    if (!storeId || storeId === 0) {
+      toast.error("No store found!");
       return;
     }
     const saleItems: CreateSaleItemDto[] =
       selectedOrder?.map((items) => ({
         inventoryItemId: items.inventoryItemId || null,
-        saleItemPrice: items.prodVarPrice,
-        saleItemQuantity: items.quantity,
+        salesItemPrice: items.prodVarPrice,
+        salesItemQuantity: items.quantity,
         salesId: 0,
-        saleItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
+        salesItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
+        prodVarId: items.prodVarId,
+      })) ?? [];
+    const paymentMethodData: CreateSalePaymentDto[] =
+      paymentMethod?.map((pm) => ({
+        paymentReference: pm.paymentReference,
+        salesId: 0,
+        salesPaymentAmount: pm.salesPaymentAmount,
+        payMetId: pm.payMetId,
+        salesPaymentStatus: "completed",
       })) ?? [];
     const salesData: CreateSaleDto = {
       customerId: 0,
       salesInvoice: "",
-      salesCreatedBy: 0,
+      salesCreatedBy: user?.userId ?? 0,
       salesNo: "",
       salesTotalAmount: getTotalAmount(),
-      storeId: 0,
+      storeId: user?.storeId ?? 0,
+      salesSubTotal: subtotal,
+      salesTotalPaid: totalPaid ?? 0,
       saleDiscounts: [],
       salesItems: saleItems,
-      salesPayments: [],
+      salesPayments: paymentMethodData,
     };
-    console.log({ salesData });
+    try {
+      const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(salesData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      const sales = res.data as Sales[];
+      console.log({ sales });
+      setRecentSales(sales[0]);
+      toast.success("Request created successfully!");
+      mutateProducts();
+      setIsPaymentSuccess(true);
+      setPaymentMethod([]);
+      setSelectedOrder([]);
+      setSelectedDiscount([]);
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add Inventory.");
+      return false;
+    }
   };
 
-  const addPayment = (payment: CreateSalePaymentDto) => {
-    console.log({ payment });
-    setPaymentMethod((prev) => {
-      const existing = prev?.some((p) => p.payMetId === payment.payMetId);
-      if (existing) {
-        // Payment already added → do nothing
-        return prev;
-      }
+  // const addPayment = (payment: CreateSalePaymentDto) => {
+  //   console.log({ payment });
+  //   setPaymentMethod((prev) => {
+  //     const existing = prev?.some((p) => p.payMetId === payment.payMetId);
+  //     if (existing) {
+  //       // Payment already added → do nothing
+  //       return prev;
+  //     }
 
-      // Add new payment
-      return [
-        ...(prev ?? []),
-        {
-          paymentReference: payment.paymentReference,
-          payMetId: payment.payMetId,
-          salesPaymentAmount: payment.salesPaymentAmount,
-          salesId: 0,
-        },
-      ];
-    });
+  //     // Add new payment
+  //     return [
+  //       ...(prev ?? []),
+  //       {
+  //         paymentReference: payment.paymentReference,
+  //         payMetId: payment.payMetId,
+  //         salesPaymentAmount: payment.salesPaymentAmount,
+  //         salesId: 0,
+  //       },
+  //     ];
+  //   });
+  // };
+  const addPayment = (payment: CreateSalePaymentDto) => {
+    setPaymentMethod((prev) => [
+      ...(prev ?? []),
+      {
+        paymentReference: payment.paymentReference,
+        payMetId: payment.payMetId,
+        salesPaymentAmount: payment.salesPaymentAmount,
+        salesId: 0,
+        salesPaymentStatus: "completed",
+      },
+    ]);
   };
   return (
     <PageLayout>
@@ -626,33 +708,70 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       </Modal>
       <Modal
         leftTitleContent={
-          <span className="font-semibold">
-            Total: {formatPeso(getTotalAmount())}
-          </span>
+          isPaymentSuccess ? (
+            <div></div>
+          ) : (
+            <span className="font-semibold">
+              Total: {formatPeso(getTotalAmount())}
+            </span>
+          )
         }
-        className="h-[95%]"
+        className={isPaymentSuccess ? `` : `h-[95%]`}
         isOpen={isCheckOut}
         onClose={function (): void {
           setIsCheckOut(false);
+          if (isPaymentSuccess) {
+            setIsPaymentSuccess(false);
+            setRecentSales(null);
+          }
         }}
         size="lg"
         modalDetails={
-          <div className="flex justify-between w-full">
-            <span className="text-lg font-semibold"> Confirm Order</span>
-            <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
-              Total: {formatPeso(getTotalAmount())}
-            </span>
-          </div>
+          isPaymentSuccess ? (
+            <div></div>
+          ) : (
+            <div className="flex justify-between w-full">
+              <span className="text-lg font-semibold"> Confirm Order</span>
+              <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
+                Total: {formatPeso(getTotalAmount())}
+              </span>
+            </div>
+          )
         }
       >
-        <CheckOutModal
-          addPayment={addPayment}
-          order={selectedOrder}
-          discounts={selectedDiscount}
-          paymentMethods={paymentMethodResponse.data ?? []}
-          selectedPaymentMethod={paymentMethod}
-          setSelectedPaymentMethod={setPaymentMethod}
-        />
+        {!isPaymentSuccess ? (
+          <CheckOutModal
+            addPayment={addPayment}
+            order={selectedOrder}
+            discounts={selectedDiscount}
+            paymentMethods={paymentMethodResponse.data ?? []}
+            selectedPaymentMethod={paymentMethod}
+            setSelectedPaymentMethod={setPaymentMethod}
+            handleCompleteSale={handleConfirmOrder}
+            totalPaid={totalPaid ?? 0}
+            subtotal={subtotal}
+            remaining={remaining}
+            change={change}
+            canComplete={canComplete}
+          />
+        ) : (
+          <PaymentSuccessModal
+            totalPaid={recentSales?.salesTotalPaid ?? 0}
+            change={
+              (Number(recentSales?.salesTotalPaid) ?? 0) -
+              (Number(recentSales?.salesTotalAmount) ?? 0)
+            }
+            onNewSale={() => {
+              setIsPaymentSuccess(false);
+              setRecentSales(null);
+              setIsCheckOut(false);
+            }}
+            onPrintReceipt={() => {
+              console.log("Print Sales");
+            }}
+            salesData={recentSales}
+          />
+        )}
       </Modal>
     </PageLayout>
   );

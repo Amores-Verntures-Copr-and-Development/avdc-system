@@ -89,6 +89,7 @@ export const getProduct = async ({
       success: true,
     };
   } catch (e) {
+    console.error(e);
     return {
       error: e,
       message: "Failed to fetched product!",

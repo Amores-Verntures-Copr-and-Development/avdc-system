@@ -8,7 +8,7 @@ import {
 import { InventoryInterface } from "@/types/inventory";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
-import { PoolConnection } from "mysql2/promise";
+import { Pool, PoolConnection } from "mysql2/promise";
 
 export async function findInventoryByFields({
   keyFields = {},
@@ -38,11 +38,13 @@ export async function findInventoryByStockPurchaserFields({
 
 export async function findInventoryByStoreFields({
   keyFields = {},
+  connection,
 }: {
-  keyFields?: Partial<StoreInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<StoreInterface>;
+  connection?: PoolConnection; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
-    const data = await selectInventoryByStoreFields({ keyFields });
+    const data = await selectInventoryByStoreFields({ keyFields, connection });
     return data;
   } catch (e) {
     throw e;

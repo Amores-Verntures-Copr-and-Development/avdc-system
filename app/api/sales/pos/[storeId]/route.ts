@@ -9,8 +9,6 @@ export async function POST(
   try {
     const slug = (await params).storeId;
     const data = (await _request.json()) as CreateSaleDto;
-    const authorization = _request.headers.get(`authorization`);
-    console.log("[authorization]: ", authorization);
     if (!slug) {
       throw new Error("No storeId found!");
     }
