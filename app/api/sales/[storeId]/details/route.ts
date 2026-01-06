@@ -1,4 +1,7 @@
-import { getSales } from "@/controllers/SaleController";
+import {
+  getSalesItemBySalesId,
+  getTotalSalesDetails,
+} from "@/controllers/SaleController";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -12,12 +15,8 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store found");
     }
-    const { searchParams } = new URL(_request.url);
-    const search = searchParams.get("search") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "";
-    console.log({ search, limit, page });
-    const res = await getSales({ storeId });
+
+    const res = await getTotalSalesDetails(storeId);
 
     if (!res.success) {
       throw new Error(`${res.error}`);

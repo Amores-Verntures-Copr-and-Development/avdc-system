@@ -1,5 +1,15 @@
-export type SalesPaymentStatus = "pending" | "completed" | "failed";
-
+export type SalesPaymentStatus =
+  | "pending"
+  | "completed"
+  | "failed"
+  | "refunded"
+  | "cancelled";
+export type SalesStatus =
+  | "pending"
+  | "in_progress"
+  | "completed"
+  | "refunded"
+  | "cancelled";
 export interface Sales {
   salesId: number;
   salesNo: string;
@@ -7,6 +17,7 @@ export interface Sales {
   salesTotalAmount: number;
   salesTotalPaid: number;
   salesSubTotal: number;
+  salesStatus: SalesStatus;
   salesCreatedAt: string;
   salesUpdatedAt: string;
   salesDeletedAt: string;

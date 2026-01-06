@@ -2,6 +2,7 @@ import {
   CreateSalePaymentDto,
   CreateSaleDto,
   CreateSaleItemDto,
+  DisplaySalesItems,
 } from "@/dtos/sales.dto";
 import { getDBConnection } from "@/lib/db";
 import { Sales } from "@/types/sales";
@@ -15,9 +16,11 @@ import {
 export const selectSales = async ({
   keyFields = {},
   connection,
+  search,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
+  search?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -25,7 +28,26 @@ export const selectSales = async ({
   s.*,
   st.storeName,
   CONCAT_WS(' ', u.userName, u.userLname) AS salesCreatedByName,
-  c.customerName
+  c.customerName,
+  (
+    SELECT COUNT(*)
+    FROM SalesItems si
+    WHERE si.salesId = s.salesId
+  ) AS totalItem,
+  (
+  SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'salesPaymentId',sp.salesPaymentId,
+        'salesPaymentAmount',sp.salesPaymentAmount,
+        'paymentReference',sp.paymentReference,
+        'payMetName', pm.payMetName,
+        'payMetId',pm.payMetId
+      )
+    )
+    FROM SalesPayments sp
+    LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
+	 WHERE sp.salesId = s.salesId
+	 ) AS paymentMethods
 FROM Sales s
 LEFT JOIN Customers c ON c.customerId = s.customerId
 LEFT JOIN Users u ON u.userId = s.salesCreatedBy
@@ -39,7 +61,14 @@ WHERE 1=1`;
       params.push(value);
     }
   }
+
+  // if (search) {
+  //   const wildcard = `%${search}%`;
+  //   sql += ` AND s.itemName LIKE ? `;
+  //   params.push(wildcard);
+  // }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Sales[];
 };
@@ -52,7 +81,7 @@ export const insertSales = async ({
   data: CreateSaleDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId) VALUES(?,?,?,?,?,?,?,?)`;
+  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus) VALUES(?,?,?,?,?,?,?,?,?)`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.salesNo,
     data.salesInvoice,
@@ -62,6 +91,7 @@ export const insertSales = async ({
     data.salesCreatedBy,
     data.storeId,
     data.customerId || null,
+    data.salesStatus,
   ]);
   return results.insertId;
 };
@@ -93,19 +123,6 @@ export const selectCountSales = async ({
 
   return Number(total);
 };
-
-// export const selectCountSales = async ({
-//   connection,
-//   storeId,
-// }: {
-//   connection?: PoolConnection;
-//   storeId: number;
-// }) => {
-//   const pool = connection ? connection : await getDBConnection();
-//   const sql = `SELECT COUNT(*) as total FROM Sales WHERE storeId = ?`;
-//   const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
-//   return rows[0];
-// };
 
 export const insertSaleItems = async ({
   connection,
@@ -168,5 +185,50 @@ LEFT JOIN Sales ss
   ON ss.storeId = st.storeId
 GROUP BY st.storeId, st.storeName;`;
   const [rows] = await pool.execute(sql);
+  return rows;
+};
+
+export const selectSalesItems = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields: Partial<Sales>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `SELECT * FROM SalesItems si
+  LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+  LEFT JOIN Products p ON p.prodId = pv.prodId
+  WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND si.${key} IS NULL`;
+    } else {
+      sql += ` AND si.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as DisplaySalesItems[];
+};
+
+export const selectSalesTotalDetails = async (storeId: number) => {
+  const pool = await getDBConnection();
+  let sql = `SELECT 
+(SELECT SUM(s.salesTotalAmount) FROM Sales s WHERE s.storeId = ?) AS totalSales,
+(SELECT COUNT(DISTINCT(c.customerId)) FROM Customers c LEFT JOIN Sales s ON s.customerId = c.customerId AND s.storeId = ?) AS totalCustomer, 
+  (SELECT SUM(s.salesTotalAmount)
+   FROM Sales s
+   WHERE s.storeId = ?
+     AND s.salesCreatedAt >= CURDATE()
+     AND s.salesCreatedAt < CURDATE() + INTERVAL 1 DAY
+  ) AS todaySales,
+    (SELECT COUNT(*)
+   FROM Sales s
+   WHERE s.storeId = ?
+  ) AS totalCountSales;`;
+
+  const [rows] = await pool.execute(sql, [storeId, storeId, storeId, storeId]);
   return rows;
 };

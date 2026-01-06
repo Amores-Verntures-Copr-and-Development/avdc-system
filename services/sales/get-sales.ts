@@ -1,4 +1,8 @@
-import { selectDailyStoreSales, selectSales } from "@/models/saleModel";
+import {
+  selectDailyStoreSales,
+  selectSales,
+  selectSalesTotalDetails,
+} from "@/models/saleModel";
 import { Sales } from "@/types/sales";
 import { PoolConnection } from "mysql2/promise";
 
@@ -15,9 +19,11 @@ export const getSalesServices = {
   getSales: async ({
     keyFields = {},
     connection,
+    search,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
+    search?: string;
   }) => {
     try {
       const data = await selectSales({ connection, keyFields });
@@ -40,6 +46,14 @@ export const getSalesServices = {
           salesId,
         },
       });
+      return data;
+    } catch (e) {
+      throw e;
+    }
+  },
+  findSalesTotalsByStoreId: async ({ storeId }: { storeId: number }) => {
+    try {
+      const data = await selectSalesTotalDetails(storeId);
       return data;
     } catch (e) {
       throw e;

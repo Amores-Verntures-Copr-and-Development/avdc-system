@@ -21,6 +21,7 @@ const ProductVariantCard = ({
   addProductOrder,
 }: ProductVariantCardProps) => {
   const handleClick = () => {
+    console.log({ data, product });
     if (!data || !product || !hasStock) return;
 
     const variantName = data.prodVarName?.trim() || "";
@@ -45,6 +46,14 @@ const ProductVariantCard = ({
         quantity: 1,
         prodVarPrice: data.prodVarPrice,
         inventoryItemId: data.variantComponents[0].inventoryItemId,
+      });
+    } else {
+      addProductOrder({
+        prodVarId: data.prodVarId,
+        prodVarName: prodVarName,
+        quantity: 1,
+        prodVarPrice: data.prodVarPrice,
+        inventoryItemId: 0,
       });
     }
   };

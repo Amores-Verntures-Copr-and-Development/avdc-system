@@ -12,7 +12,8 @@ type ButtonColor =
   | "notselected"
   | "secondary"
   | "warning"
-  | "neutral";
+  | "neutral"
+  | "outline";
 
 interface ButtonProps {
   isRounded?: boolean;
@@ -120,6 +121,14 @@ const colorClasses: Record<
     focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
     text: "text-slate-700",
     disabled: "text-slate-400 shadow-none border-b-gray-300",
+  },
+  outline: {
+    base: "bg-white border border-gray-300",
+    border: "border-b-2 border-b-gray-400",
+    hover: "hover:bg-gray-50 transition-colors",
+    focus: "focus:ring-2 focus:ring-[#c51d71]/25 focus:ring-offset-2",
+    text: "text-gray-700",
+    disabled: "text-gray-400 shadow-none border-b-gray-300",
   },
 };
 

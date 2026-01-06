@@ -195,7 +195,7 @@ const CheckOutModal = ({
             className="font-bold"
             style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
           >
-            ${remaining > 0 ? formatPeso(remaining) : formatPeso(change)}
+            {remaining > 0 ? formatPeso(remaining) : formatPeso(change)}
           </p>
         </div>
       </div>

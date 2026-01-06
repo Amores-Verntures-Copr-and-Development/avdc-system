@@ -5,11 +5,13 @@ import React, {
   useImperativeHandle,
   useState,
   useRef,
+  useCallback,
 } from "react";
 import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropDown";
 import Input from "./Input";
+import DateRange from "./DateRange";
 export interface SelectOption {
   label: string;
   value: any;
@@ -87,6 +89,8 @@ interface TableProps<T> {
   defaultLimit?: number;
   fetchMode?: boolean;
   localSearch?: boolean;
+  showDateRange?: boolean;
+  onDateRangeChange?: (range: { from: string; to: string }) => void;
 }
 
 export interface TableHandle {
@@ -95,7 +99,9 @@ export interface TableHandle {
 
 const TableInner = <T extends Record<string, any>>(
   {
+    onDateRangeChange,
     showFilter,
+    showDateRange = false,
     columns,
     data,
     loading = false,
@@ -129,6 +135,9 @@ const TableInner = <T extends Record<string, any>>(
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
+  const [range, setRange] = useState<{ from: string; to: string } | undefined>(
+    undefined
+  );
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
@@ -439,6 +448,11 @@ const TableInner = <T extends Record<string, any>>(
                     onChange={(e) => setLocalSearchQuery(e.target.value)}
                     className="w-full pr-2 pl-2 py-1 border border-gray-300 rounded-md text-xs xl:text-sm"
                   /> */}
+                </div>
+              )}
+              {showDateRange && (
+                <div className="flex  items-center gap-2">
+                  <DateRange onDateRangeChange={onDateRangeChange} />
                 </div>
               )}
               {showFilter && onSave && (

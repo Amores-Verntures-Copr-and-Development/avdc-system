@@ -36,6 +36,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       storeId: data.storeId,
     });
     const salesData: CreateSaleDto = {
+      salesStatus: data.salesStatus,
       salesInvoice: salesInvoice,
       salesNo: salesNo,
       salesSubTotal: data.salesSubTotal,
@@ -73,9 +74,10 @@ export async function processCreateSales(data: CreateSaleDto) {
     //insert into salePayments
     await createSalePayments({ connection, data: salesPaymentData });
     const needDeductInventory = saleItemData.some(
-      (item) => item.inventoryItemId !== 0 || !item.inventoryItemId
+      (item) => item.inventoryItemId
     );
-
+    console.log({ saleItemData });
+    console.log({ needDeductInventory });
     if (needDeductInventory) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },

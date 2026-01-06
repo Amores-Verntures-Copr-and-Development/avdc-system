@@ -68,10 +68,11 @@ interface PosPageProps {
 }
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
-  const defaultSaleData = {
+  const defaultSaleData: CreateSaleDto = {
     storeId: 0,
     customerId: null,
     salesCreatedBy: 0,
+    salesStatus: "pending",
     salesSubTotal: 0,
     salesTotalPaid: 0,
     salesInvoice: "",
@@ -364,6 +365,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesInvoice: "",
       salesCreatedBy: user?.userId ?? 0,
       salesNo: "",
+      salesStatus: "completed",
       salesTotalAmount: getTotalAmount(),
       storeId: user?.storeId ?? 0,
       salesSubTotal: subtotal,

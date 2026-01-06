@@ -15,6 +15,7 @@ const PaymentSuccessModal = ({
   change,
   onNewSale,
   onPrintReceipt,
+  salesData,
 }: PaymentSuccessModalProps) => {
   return (
     <div className="flex flex-col justify-center items-center">
@@ -32,6 +33,12 @@ const PaymentSuccessModal = ({
           <span className="text-slate-500">Total Paid</span>
           <span className="text-2xl font-bold text-slate-800">
             {formatPeso(totalPaid)}
+          </span>
+        </div>
+        <div className="flex justify-between items-center mb-4">
+          <span className="text-slate-500">Total Amount</span>
+          <span className="text-2xl font-bold text-slate-800">
+            {formatPeso(salesData?.salesTotalAmount)}
           </span>
         </div>
 
