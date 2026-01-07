@@ -28,7 +28,14 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const from = params.get("from");
+    const to = params.get("to");
 
+    if (from) setFromDate(from);
+    if (to) setToDate(to);
+  }, []);
   // Handle date range changes
   useEffect(() => {
     if (fromDate && toDate && onDateRangeChange) {

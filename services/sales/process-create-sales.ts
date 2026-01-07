@@ -2,6 +2,7 @@ import {
   CreateSaleDto,
   CreateSaleItemDto,
   CreateSalePaymentDto,
+  CreateSalesDiscount,
 } from "@/dtos/sales.dto";
 
 import { getDBConnection } from "@/lib/db";
@@ -22,6 +23,7 @@ import {
 } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { getSalesServices } from "./get-sales";
+import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -61,7 +63,9 @@ export async function processCreateSales(data: CreateSaleDto) {
       })) ?? [];
 
     //insert into saleItems table
-    await createSaleItems({ connection, data: saleItemData });
+    if (saleItemData.length > 0) {
+      await createSaleItems({ connection, data: saleItemData });
+    }
     const salesPaymentData: CreateSalePaymentDto[] =
       data.salesPayments?.map((payment) => ({
         salesId: salesId,
@@ -72,12 +76,20 @@ export async function processCreateSales(data: CreateSaleDto) {
       })) ?? [];
 
     //insert into salePayments
-    await createSalePayments({ connection, data: salesPaymentData });
+    if (salesPaymentData.length > 0) {
+      await createSalePayments({ connection, data: salesPaymentData });
+    }
     const needDeductInventory = saleItemData.some(
       (item) => item.inventoryItemId
     );
-    console.log({ saleItemData });
-    console.log({ needDeductInventory });
+    const salesDiscounts: CreateSalesDiscount[] =
+      data.saleDiscounts?.map((dis) => ({
+        ...dis,
+        saleId: salesId,
+      })) ?? [];
+    if (salesDiscounts.length > 0) {
+      await createSalesDiscounts({ connection, data: salesDiscounts });
+    }
     if (needDeductInventory) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },

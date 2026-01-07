@@ -20,13 +20,26 @@ export const getSalesServices = {
     keyFields = {},
     connection,
     search,
+    storeName,
+    from,
+    to,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
     search?: string;
+    storeName?: string;
+    from?: string;
+    to?: string;
   }) => {
     try {
-      const data = await selectSales({ connection, keyFields });
+      const data = await selectSales({
+        connection,
+        keyFields,
+        storeName,
+        from,
+        to,
+        search,
+      });
       return data;
     } catch (e) {
       throw e;

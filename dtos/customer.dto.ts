@@ -9,3 +9,11 @@ export type CreateCustomerDto = Pick<
   | "customerCreatedBy"
   | "customerType"
 >;
+
+export interface DisplayCustomerDto extends Customer {
+  storeName: string;
+  storeId: number;
+  totalSpent: number;
+  firstVisit: string;
+  lastVisit: string;
+}

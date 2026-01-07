@@ -33,12 +33,36 @@ export const selectCustomers = async ({
   const pool = connection ? connection : await getDBConnection();
 
   const params: any[] = [];
-  let sql = `SELECT * FROM Customers WHERE 1=1`;
+  let sql = ` SELECT 
+    c.*,
+    s.storeName,
+    s.storeId,
+    -- total spent per customer
+    (SELECT SUM(s.salesTotalAmount) 
+     FROM Sales s 
+     WHERE s.customerId = c.customerId) AS totalSpent,
+     
+    -- last visit
+    (SELECT s.salesCreatedAt 
+     FROM Sales s 
+     WHERE s.customerId = c.customerId 
+     ORDER BY s.salesCreatedAt DESC 
+     LIMIT 1) AS lastVisit,
+     
+    -- first visit
+    (SELECT s.salesCreatedAt 
+     FROM Sales s 
+     WHERE s.customerId = c.customerId 
+     ORDER BY s.salesCreatedAt ASC 
+     LIMIT 1) AS firstVisit
+FROM Customers c
+LEFT JOIN Stores s ON s.storeId = c.storeId 
+WHERE 1=1`;
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
-      sql += ` AND ${key} IS NULL`;
+      sql += ` AND c.${key} IS NULL`;
     } else {
-      sql += ` AND ${key} = ?`;
+      sql += ` AND c.${key} = ?`;
       params.push(value);
     }
   }

@@ -9,25 +9,44 @@ import { Check, Plus, PlusIcon } from "lucide-react";
 import React, { useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
 import { useSession } from "@/hooks/useSession";
-import { CreateCustomerDto } from "@/dtos/customer.dto";
+import { CreateCustomerDto, DisplayCustomerDto } from "@/dtos/customer.dto";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
 import { CategoryInterface } from "@/types/categories";
 import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
+import { formatPeso } from "@/utils/formatPeso";
+import { formatDate } from "date-fns";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
-const columns: Column<Customer>[] = [
+const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
   { key: "customerName", name: "Name" },
   { key: "customerEmail", name: "Email" },
   { key: "customerPhone", name: "Phone" },
   { key: "customerType", name: "Type" },
-  { key: "totalSpent", name: "Total Spent" },
+  {
+    key: "totalSpent",
+    name: "Total Spent",
+    selector: (row) => (
+      <span className="font-semibold">{formatPeso(row.totalSpent)}</span>
+    ),
+  },
+  {
+    key: "lastVisit",
+    name: "Last Visit",
+    selector: (row) => formatDateToWords(row.lastVisit),
+  },
+  {
+    key: "firstVisit",
+    name: "First Visit",
+    selector: (row) => formatDateToWords(row.firstVisit),
+  },
 ];
 const CustomerPage = () => {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user } = useSession();
-  const { data: response, mutate } = useSWR<ApiResponse<Customer[]>>(
+  const { data: response, mutate } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
     user ? `api/customers/store/${user?.storeId}` : null,
     fetcher
   );

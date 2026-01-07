@@ -2,14 +2,32 @@ import { ApiResponse } from "@/types/api";
 import { StockRoom } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import useSWR from "swr";
+import { UserAuth } from "./useSession";
 
-export function useStores(userId: number | null) {
-  const localStorageKey = `user_${userId}_stores`;
-
+export function useStores({
+  user,
+  hasStore,
+  isAdmin,
+}: {
+  user: UserAuth | null;
+  hasStore: boolean;
+  isAdmin: boolean;
+}) {
+  if (!user) {
+    return {
+      stores: null,
+      error: null,
+      isLoading: false,
+      mutate: async () => {},
+    };
+  }
+  const localStorageKey = `user_${user.userId}_stores`;
+  const apiUrl =
+    !hasStore || isAdmin ? `/api/stores` : `/api/stores/userId/${user.userId}`;
   const { data, error, isLoading, mutate } = useSWR<
     ApiResponse<StoreInterface[]>
   >(
-    userId ? `/api/stores/userId/${userId}` : null,
+    user ? apiUrl : null,
     async (url) => {
       // Check localStorage first
       const stored = localStorage.getItem(localStorageKey);
@@ -50,7 +68,7 @@ export function useStores(userId: number | null) {
   );
 
   return {
-    stores: data?.data[0],
+    stores: !hasStore || isAdmin ? data?.data : data?.data[0],
     error,
     isLoading,
     mutate,

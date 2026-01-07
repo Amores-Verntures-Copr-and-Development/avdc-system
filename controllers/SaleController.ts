@@ -5,6 +5,7 @@ import {
 } from "@/services/sales/get-sales";
 import { processCreateSales } from "@/services/sales/process-create-sales";
 import { getSalesItemServices } from "@/services/sales/sale-items/get-sale-items";
+import { Sales } from "@/types/sales";
 
 export const createSale = async (data: CreateSaleDto) => {
   try {
@@ -23,7 +24,7 @@ export const createSale = async (data: CreateSaleDto) => {
   }
 };
 
-export const getSales = async ({
+export const getSalesByStoreId = async ({
   storeId,
   search,
 }: {
@@ -34,6 +35,41 @@ export const getSales = async ({
     const data = await getSalesServices.getSales({
       keyFields: { storeId: storeId },
       search,
+    });
+    return {
+      success: true,
+      message: "Sales fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetched sales!",
+      error: e,
+    };
+  }
+};
+
+export const getSales = async ({
+  keyFields = {},
+  search,
+  storeName,
+  from,
+  to,
+}: {
+  keyFields?: Partial<Sales>;
+  search?: string;
+  storeName?: string;
+  from?: string;
+  to?: string;
+}) => {
+  try {
+    const data = await getSalesServices.getSales({
+      keyFields,
+      search,
+      storeName,
+      from,
+      to,
     });
     return {
       success: true,

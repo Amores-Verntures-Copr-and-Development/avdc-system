@@ -42,6 +42,7 @@ import {
   CreateSaleDto,
   CreateSaleItemDto,
   CreateSalePaymentDto,
+  CreateSalesDiscount,
 } from "@/dtos/sales.dto";
 import Modal from "@/components/shared/Modal";
 import ViewAppliedDiscountModal from "./components/ViewAppliedDiscountModal";
@@ -53,6 +54,8 @@ import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
 import PaymentSuccessModa from "./components/PaymentSuccessModal";
 import PaymentSuccessModal from "./components/PaymentSuccessModal";
 import { Sales } from "@/types/sales";
+import { DropdownSearch } from "@/components/shared/DropDownSearch";
+import { Customer } from "@/types/customer";
 
 export interface OrderList {
   prodVarId: number;
@@ -68,6 +71,7 @@ interface PosPageProps {
 }
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
+  const [clearSignal, setClearSignal] = useState(0);
   const defaultSaleData: CreateSaleDto = {
     storeId: 0,
     customerId: null,
@@ -82,13 +86,17 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     salesItems: [],
     salesPayments: [],
   };
+  const handleClearCustomerComponent = () => {
+    setClearSignal((prev) => prev + 1);
+    setCustomer(null);
+  };
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
   const [isShowIcons, setIsShowIcons] = useState<
     "discount" | "methods" | "product" | "history" | null
   >(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
-  const [saleForm, setSalesForm] = useState<CreateSaleDto>(defaultSaleData);
   const [isCheckOut, setIsCheckOut] = useState(false);
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
@@ -97,7 +105,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     CreateSalePaymentDto[] | null
   >([]);
   const [selectedDiscount, setSelectedDiscount] = useState<
-    SalesDiscounts[] | null
+    CreateSalesDiscount[] | null
   >(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
   const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
@@ -139,10 +147,20 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     (sum, p) => sum + p.salesPaymentAmount,
     0
   );
-  const remaining = Math.max(0, subtotal - (totalPaid || 0));
-  const change = Math.max(0, (totalPaid || 0) - subtotal);
+  const getTotalAmount = (): number => {
+    if (!selectedDiscount || selectedDiscount.length === 0) return subtotal;
 
-  const canComplete = (totalPaid || 0) >= subtotal;
+    const totalDiscount = selectedDiscount.reduce(
+      (acc, disc) => acc + disc.discountAmount,
+      0
+    );
+
+    return Math.max(subtotal - totalDiscount, 0); // prevent negative
+  };
+  const remaining = Math.max(0, getTotalAmount() - (totalPaid || 0));
+  const change = Math.max(0, (totalPaid || 0) - getTotalAmount());
+
+  const canComplete = (totalPaid || 0) >= getTotalAmount();
   const hasSufficientInventory = (
     prodVarId: number,
     quantityToAdd = 1
@@ -267,6 +285,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         .filter((p) => p.quantity > 0); // ✅ remove items with 0 quantity
     });
   };
+  useEffect(() => {
+    setSelectedDiscount(
+      (prev) =>
+        prev?.map((d) => {
+          const disc = getDiscountMeta(d.discountId);
+          return {
+            ...d,
+            discountAmount:
+              disc?.discountType === "fixed"
+                ? disc.discountValue
+                : Math.max(0, subtotal * (Number(disc?.discountValue) / 100)), // or the field you want to reset
+          };
+        }) || []
+    );
+  }, [subtotal]);
   const addQuantity = (product: OrderList) => {
     const isAvailable = hasSufficientInventory(product.prodVarId);
     console.log({});
@@ -310,15 +343,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     });
   };
   // const removeQuantity = (product: DisplayProductsDtos) => {};
-  const getTotalAmount = (): number => {
-    return (
-      selectedOrder?.reduce((total, prod) => {
-        const price = Number(prod.prodVarPrice) || 0;
-        const qty = Number(prod.quantity) || 0;
-        return total + price * qty;
-      }, 0) ?? 0
-    );
-  };
+
   const removeProduct = (product: OrderList) => {
     const newSelectedOrder = selectedOrder?.filter(
       (prod) => prod.prodVarId !== product.prodVarId
@@ -361,7 +386,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         salesPaymentStatus: "completed",
       })) ?? [];
     const salesData: CreateSaleDto = {
-      customerId: 0,
+      customerId: customer?.customerId ? customer?.customerId : 0,
       salesInvoice: "",
       salesCreatedBy: user?.userId ?? 0,
       salesNo: "",
@@ -370,7 +395,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       storeId: user?.storeId ?? 0,
       salesSubTotal: subtotal,
       salesTotalPaid: totalPaid ?? 0,
-      saleDiscounts: [],
+      saleDiscounts: selectedDiscount ?? [],
       salesItems: saleItems,
       salesPayments: paymentMethodData,
     };
@@ -397,6 +422,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setPaymentMethod([]);
       setSelectedOrder([]);
       setSelectedDiscount([]);
+      handleClearCustomerComponent();
       return true;
     } catch (e) {
       console.log(e);
@@ -426,6 +452,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   //     ];
   //   });
   // };
+  const searchCustomers = async (query: string): Promise<Customer[]> => {
+    const res = await fetch(
+      `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`
+    );
+    const json = await res.json();
+    return json.data || [];
+  };
   const addPayment = (payment: CreateSalePaymentDto) => {
     setPaymentMethod((prev) => [
       ...(prev ?? []),
@@ -438,6 +471,42 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       },
     ]);
   };
+  const addDiscount = (newDisc: Discounts) => {
+    setSelectedDiscount((prev) => {
+      const existing = prev?.some((d) => d.discountId === newDisc.discountId);
+      if (existing) {
+        return prev;
+      }
+      console.log({ newDisc });
+      const discount =
+        newDisc.discountType === "fixed"
+          ? newDisc.discountValue
+          : subtotal * (Number(newDisc.discountValue) / 100);
+      console.log({ discount });
+      return [
+        ...(prev ?? []),
+        {
+          discountId: newDisc.discountId,
+          salesDiscountId: 0,
+          saleId: 0,
+          discountAmount:
+            newDisc.discountType === "fixed"
+              ? Number(newDisc.discountValue)
+              : Math.max(0, subtotal * (Number(newDisc.discountValue) / 100)),
+          salesDiscStatus: "applied",
+        },
+      ];
+    });
+  };
+  const getDiscountMeta = (discountId: number) =>
+    discountResponse.data.find((d) => d.discountId === discountId);
+  const removeDiscount = (newDisc: Discounts) => {
+    const filter = selectedDiscount?.filter(
+      (disc) => disc.discountId !== newDisc.discountId
+    );
+    setSelectedDiscount(filter ?? []);
+  };
+
   return (
     <PageLayout>
       <div className="flex flex-1 overflow-visible h-full">
@@ -574,24 +643,25 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           </div>
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
             <h1 className="font-semibold text-sm">Customer:</h1>
-            {/* <div className="flex-1">
-              <DropdownSearch
+            <div className="flex-1">
+              <DropdownSearch<Customer>
                 sizes="xs"
                 placeholder="Search customer"
-                searchFn={function (query: string): Promise<unknown[]> {
-                  throw new Error("Function not implemented.");
+                searchFn={searchCustomers}
+                onSelect={function (row: Customer): void {
+                  if (row) {
+                    setCustomer(row);
+                  } else {
+                    setCustomer(null);
+                  }
                 }}
-                onSelect={function (item: unknown): void {
-                  throw new Error("Function not implemented.");
-                }}
-                renderItem={function (item: unknown): React.ReactNode {
-                  throw new Error("Function not implemented.");
-                }}
-                displayValue={function (item: unknown): string {
-                  throw new Error("Function not implemented.");
-                }}
+                renderItem={(customer: Customer) => (
+                  <span>{customer.customerName}</span>
+                )}
+                displayValue={(customer: Customer) => customer.customerName}
+                clearSignal={clearSignal}
               />
-            </div> */}
+            </div>
           </div>
 
           <div className="flex-1 p-2 overflow-auto">
@@ -625,26 +695,40 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </div>
             </div>
 
-            <div className="flex justify-between">
-              <span className="text-sm  text-gray-400">Subtotal</span>
-              <span className="text-sm  text-gray-400">
-                {formatPeso(getTotalAmount())}
-              </span>
+            <div className="flex justify-between text-gray-500 text-sm">
+              <span>Subtotal</span>
+              <span>{formatPeso(subtotal)}</span>
             </div>
-            {/* <div className="flex justify-between">
-              <span className="text-sm  text-gray-400">
-                Discount({getDiscount(1)})
-              </span>
-              <span className="text-sm  text-gray-400">
-                {formatPeso(getTotalAmount() * 0.1)}
-              </span>
-            </div> */}
-            <div className="flex justify-between border-t border-gray-200 py-2">
+
+            {/* Discounts */}
+            {selectedDiscount && selectedDiscount.length > 0 && (
+              <>
+                {selectedDiscount.map((disc, index) => {
+                  const discount = getDiscountMeta(disc.discountId);
+                  return (
+                    <div
+                      key={index}
+                      className="flex justify-between text-gray-500 text-sm"
+                    >
+                      <span>
+                        {discount?.discountName} (
+                        {discount?.discountType === "percent"
+                          ? `${discount?.discountValue}%`
+                          : `₱${discount?.discountValue}`}
+                        )
+                      </span>
+                      <span>- {formatPeso(disc.discountAmount)}</span>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Total */}
+            <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
               <span className="text-sm font-semibold">Total</span>
               <span className="text-sm font-semibold">
-                <span className="text-sm font-semibold">
-                  {formatPeso(getTotalAmount())}
-                </span>
+                {formatPeso(getTotalAmount())}
               </span>
             </div>
           </div>
@@ -699,6 +783,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         )}
       </Popup>
       <Modal
+        className="h-[50%]"
         leadingIcon={Tag}
         title="Apply Discount"
         isOpen={showDiscountModal}
@@ -706,7 +791,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           setShowDiscountModal(false);
         }}
       >
-        <ViewAppliedDiscountModal discountData={discountResponse.data ?? []} />
+        <ViewAppliedDiscountModal
+          discountData={discountResponse.data ?? []}
+          addDiscount={addDiscount}
+          selectedDiscounts={selectedDiscount}
+          removeDiscount={removeDiscount}
+        />
       </Modal>
       <Modal
         leftTitleContent={

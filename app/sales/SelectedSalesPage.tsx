@@ -162,68 +162,123 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
               </tbody>
             </table>
           </div>
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="flex justify-end mb-2">
+          <div className="mt-6 pt-4 border-t border-gray-200 w-full">
+            {/* Subtotal */}
+            <div className="flex justify-between mb-2">
               <div className="text-sm text-gray-600 w-32">Subtotal</div>
               <div className="text-sm text-gray-900 w-24 text-right">
-                {formatPeso(salesData?.salesSubTotal)}
+                {formatPeso(salesData?.salesSubTotal ?? 0)}
               </div>
             </div>
-            <div className="flex justify-end mb-3">
-              <div className="text-sm text-gray-600 w-32">Tax & Fees</div>
-              <div className="text-sm text-gray-900 w-24 text-right">
-                {formatPeso(
-                  (salesData?.salesTotalAmount ?? 0) -
-                    (salesData?.salesSubTotal ?? 0)
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end pt-3 border-t border-gray-200">
+
+            {/* Discounts */}
+            {salesData?.salesDiscounts &&
+              salesData.salesDiscounts.length > 0 && (
+                <div className="flex justify-between mb-3">
+                  <div className="text-sm text-gray-600 w-32">Discounts</div>
+
+                  <div className="flex flex-col  items-end gap-1">
+                    {salesData.salesDiscounts.map((disc) => (
+                      <div
+                        key={disc.salesDiscountId}
+                        className="flex justify-between w-full text-sm text-gray-500"
+                      >
+                        <span className="truncate text-right">
+                          {disc.discountName}{" "}
+                          {disc.discountType === "percent"
+                            ? `(${disc.discountValue}%)`
+                            : `₱${disc.discountValue.toFixed(2)}`}
+                        </span>
+                        <span className="text-red-600 font-semibold ml-2">
+                          - {formatPeso(disc.discountAmount)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            {/* Total */}
+            <div className="flex justify-between pt-3 border-t border-gray-200">
               <div className="text-base font-semibold text-gray-900 w-32">
                 Total
               </div>
               <div className="text-base font-semibold text-gray-900 w-24 text-right">
-                {formatPeso(salesData?.salesTotalAmount)}
+                {formatPeso(salesData?.salesTotalAmount ?? 0)}
               </div>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4 w-full">
           <h2 className="font-semibold text-gray-900 mb-4">Payment Methods</h2>
 
+          {/* Summary Section */}
           <div className="pt-4 mt-4 border-t border-gray-200 space-y-2">
             <div className="flex justify-between items-center">
               <div className="text-sm font-medium text-gray-900">
                 Amount Due
               </div>
               <div className="text-base font-semibold text-gray-900">
-                {formatPeso(salesData?.salesTotalAmount)}
+                {formatPeso(salesData?.salesTotalAmount ?? 0)}
               </div>
             </div>
             <div className="flex justify-between items-center">
               <div className="text-sm text-gray-600">Total Paid</div>
               <div className="text-sm text-gray-900">
-                {formatPeso(salesData?.salesTotalPaid)}
+                {formatPeso(salesData?.salesTotalPaid ?? 0)}
               </div>
             </div>
+
             {Number(salesData?.salesTotalPaid) >
               Number(salesData?.salesTotalAmount) && (
               <div className="flex justify-between items-center pt-2 border-t border-gray-100">
                 <div className="text-sm text-gray-600">Change</div>
                 <div className="text-sm font-medium text-green-600">
                   {formatPeso(
-                    Number(salesData?.salesTotalPaid) -
-                      Number(salesData?.salesTotalAmount)
+                    Number(salesData?.salesTotalPaid ?? 0) -
+                      Number(salesData?.salesTotalAmount ?? 0)
                   )}
                 </div>
               </div>
             )}
           </div>
 
+          {/* Payment Methods Details */}
+          {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-2">
+                Payment Details
+              </h3>
+              {salesData.paymentMethods.map((pay) => {
+                return (
+                  <div
+                    key={pay.salesPaymentId}
+                    className="flex justify-between items-center text-sm text-gray-700 px-1 py-1 bg-gray-50 rounded"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium">
+                        {pay?.payMetName ?? "Unknown"}
+                      </span>
+                      {pay?.paymentReference && (
+                        <span className="text-gray-500 text-xs truncate">
+                          Ref: {pay.paymentReference || "-"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-semibold text-gray-900">
+                      {formatPeso(pay.salesPaymentAmount)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Final Total Paid */}
           <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-200">
             <div className="text-sm font-medium text-gray-900">Total Paid</div>
             <div className="text-base font-semibold text-gray-900">
-              {formatPeso(salesData?.salesTotalPaid)}
+              {formatPeso(salesData?.salesTotalPaid ?? 0)}
             </div>
           </div>
         </div>

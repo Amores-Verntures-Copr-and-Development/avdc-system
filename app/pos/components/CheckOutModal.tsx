@@ -17,7 +17,7 @@ import {
   Wallet,
   X,
 } from "lucide-react";
-import { CreateSalePaymentDto } from "@/dtos/sales.dto";
+import { CreateSalePaymentDto, CreateSalesDiscount } from "@/dtos/sales.dto";
 import Input from "@/components/shared/Input";
 import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
 import { createSalePayments } from "@/services/sales/sale-payments/create-sale-payments";
@@ -25,7 +25,7 @@ import { handleChange } from "@/utils/handle-change";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;
-  discounts: SalesDiscounts[] | null;
+  discounts: CreateSalesDiscount[] | null;
   paymentMethods: PaymentMethods[] | null;
   selectedPaymentMethod: CreateSalePaymentDto[] | null;
   addPayment: (payment: CreateSalePaymentDto) => void;
@@ -166,13 +166,24 @@ const CheckOutModal = ({
       };
     });
   };
+  const getTotalAmount = (): number => {
+    if (!discounts || discounts.length === 0) return subtotal;
 
+    const totalDiscount = discounts.reduce(
+      (acc, disc) => acc + disc.discountAmount,
+      0
+    );
+
+    return Math.max(subtotal - totalDiscount, 0); // prevent negative
+  };
   return (
     <div className="flex flex-col h-full gap-5">
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-slate-50 rounded-xl p-4 text-center">
           <p className="text-xs text-slate-500 mb-1">Total</p>
-          <p className="font-bold text-slate-800">{formatPeso(subtotal)}</p>
+          <p className="font-bold text-slate-800">
+            {formatPeso(getTotalAmount())}
+          </p>
         </div>
         <div className="bg-emerald-50 rounded-xl p-4 text-center">
           <p className="text-xs text-emerald-600 mb-1">Paid</p>

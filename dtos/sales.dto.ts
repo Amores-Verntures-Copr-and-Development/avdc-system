@@ -1,3 +1,4 @@
+import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import { ProductPrices, Products, ProductVariants } from "@/types/products";
 import { SaleItems, SalePayments, Sales } from "@/types/sales";
@@ -26,10 +27,11 @@ export interface DisplaySalesDto extends Sales {
   storeName: string;
   paymentMethods: SalePaymentMethods[];
   totalItem: number;
+  salesDiscounts: SaleDiscountExtends[];
 }
 
 interface SalePaymentMethods extends SalePayments, PaymentMethods {}
-
+interface SaleDiscountExtends extends SalesDiscounts, Discounts {}
 export interface DisplaySalesItems
   extends SaleItems,
     Products,

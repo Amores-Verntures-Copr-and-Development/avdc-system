@@ -1,23 +1,22 @@
-import { getSalesByStoreId } from "@/controllers/SaleController";
+import { getSales } from "@/controllers/SaleController";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
-) {
+export async function GET(_request: Request) {
   try {
-    const slug = (await params).storeId;
-    const storeId = Number(slug);
-
-    if (!storeId) {
-      throw new Error("No store found");
-    }
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
-    console.log({ search, limit, page });
-    const res = await getSalesByStoreId({ storeId });
+    const store = searchParams.get("store") || "";
+    const from = searchParams.get("from") || "";
+    const to = searchParams.get("to") || "";
+    const res = await getSales({
+      search,
+      keyFields: {},
+      storeName: store,
+      from,
+      to,
+    });
 
     if (!res.success) {
       throw new Error(`${res.error}`);

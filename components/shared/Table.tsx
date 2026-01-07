@@ -79,6 +79,7 @@ interface TableProps<T> {
     value: any,
     row: T
   ) => void;
+  addContentLeftTitle?: React.ReactNode;
   searchUrl?: string;
   maxHeight?: string;
   debounceTime?: number;
@@ -132,6 +133,7 @@ const TableInner = <T extends Record<string, any>>(
     onSelectedData,
     defaultLimit = 100,
     localSearch,
+    addContentLeftTitle,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
@@ -410,7 +412,8 @@ const TableInner = <T extends Record<string, any>>(
           renderTopActions ||
           subtitle ||
           title ||
-          localSearch) && (
+          localSearch ||
+          addContentLeftTitle) && (
           <div className="bg-white flex p-1 lg:p-2 gap-2 xl:gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (
               <div className="flex flex-col">
@@ -462,6 +465,7 @@ const TableInner = <T extends Record<string, any>>(
                   onSave={onSave}
                 />
               )}
+              {addContentLeftTitle && addContentLeftTitle}
             </div>
             <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
           </div>

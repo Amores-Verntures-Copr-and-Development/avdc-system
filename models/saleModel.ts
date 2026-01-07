@@ -3,6 +3,7 @@ import {
   CreateSaleDto,
   CreateSaleItemDto,
   DisplaySalesItems,
+  CreateSalesDiscount,
 } from "@/dtos/sales.dto";
 import { getDBConnection } from "@/lib/db";
 import { Sales } from "@/types/sales";
@@ -17,10 +18,16 @@ export const selectSales = async ({
   keyFields = {},
   connection,
   search,
+  storeName,
+  from,
+  to,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
   search?: string;
+  storeName?: string;
+  from?: string;
+  to?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -47,7 +54,22 @@ export const selectSales = async ({
     FROM SalesPayments sp
     LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
 	 WHERE sp.salesId = s.salesId
-	 ) AS paymentMethods
+	 ) AS paymentMethods,
+	  (SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'salesDiscountId',sd.salesDiscountId,
+        'saleId',sd.saleId,
+        'discountId',sd.discountId,
+        'discountAmount', sd.discountAmount,
+        'discountName',d.discountName,
+        'discountType',d.discountType,
+        'discountValue',d.discountValue
+      )
+    )
+    FROM SalesDiscounts sd
+    LEFT JOIN Discounts d ON d.discountId = sd.discountId
+	 WHERE sd.saleId = s.salesId
+	 ) AS salesDiscounts
 FROM Sales s
 LEFT JOIN Customers c ON c.customerId = s.customerId
 LEFT JOIN Users u ON u.userId = s.salesCreatedBy
@@ -61,14 +83,23 @@ WHERE 1=1`;
       params.push(value);
     }
   }
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
 
-  // if (search) {
-  //   const wildcard = `%${search}%`;
-  //   sql += ` AND s.itemName LIKE ? `;
-  //   params.push(wildcard);
-  // }
+  if (from && to) {
+    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from);
+    params.push(to);
+  }
+  if (search) {
+    const wildcard = `%${search}%`;
+    sql += ` AND s.salesNo LIKE ? OR c.customerName LIKE ? `;
+    params.push(wildcard);
+    params.push(wildcard);
+  }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
-
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Sales[];
 };
@@ -231,4 +262,26 @@ export const selectSalesTotalDetails = async (storeId: number) => {
 
   const [rows] = await pool.execute(sql, [storeId, storeId, storeId, storeId]);
   return rows;
+};
+
+export const insertSaleDiscounts = async ({
+  connection,
+  data,
+}: {
+  connection: PoolConnection;
+  data: CreateSalesDiscount[];
+}) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO SalesDiscounts(saleId,discountId,discountAmount) 
+            VALUES ${data.map(() => "(?, ?, ?)").join(", ")}`;
+  const values = data.flatMap((item) => [
+    item.saleId,
+    item.discountId,
+    item.discountAmount,
+  ]);
+  const [results] = await pool.execute(sql, values);
+  return results;
 };

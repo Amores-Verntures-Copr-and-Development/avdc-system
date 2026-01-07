@@ -45,34 +45,34 @@ const AddItemToProductModal = ({
   const [products, setProducts] = useState<CreateProductVariantDto[]>([]);
   const [isAddAsVariant, setIsAddAsVariant] = useState(false);
   const columns: Column<CreateProductVariantDto>[] = [
-    { name: "#", key: "#", selector: (_row, index) => index + 1 },
-    {
-      name: "Item Name",
-      key: "itemName",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemName,
-    },
-    {
-      name: "Unit",
-      key: "itemUnit",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemUnit,
-    },
-    {
-      name: "Category",
-      key: "categoryName",
-      selector: (row) =>
-        data.find((i) => i.inventoryItemId === row.inventoryItemId)
-          ?.categoryName,
-    },
-    {
-      name: "Cost  Price",
-      key: "itemPrice",
-      selector: (row) =>
-        formatPeso(
-          data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemPrice
-        ),
-    },
+    // { name: "#", key: "#", selector: (_row, index) => index + 1 },
+    // {
+    //   name: "Item Name",
+    //   key: "itemName",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemName,
+    // },
+    // {
+    //   name: "Unit",
+    //   key: "itemUnit",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemUnit,
+    // },
+    // {
+    //   name: "Category",
+    //   key: "categoryName",
+    //   selector: (row) =>
+    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)
+    //       ?.categoryName,
+    // },
+    // {
+    //   name: "Cost  Price",
+    //   key: "itemPrice",
+    //   selector: (row) =>
+    //     formatPeso(
+    //       data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemPrice
+    //     ),
+    // },
     {
       name: "Selling  Price",
       key: "prodVarPrice",
@@ -175,7 +175,7 @@ const AddItemToProductModal = ({
           columns={columns}
           data={products}
           updateData={setProducts}
-          uniqueIdKey="inventoryItemId"
+          uniqueIdKey="prodId"
         />
       </div>
       <div className="flex justify-end gap-2">

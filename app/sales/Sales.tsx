@@ -9,13 +9,11 @@ import SalesMainPage from "./SalesMainPage";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 
 const Sales = () => {
-  const { user, hasStore, loading } = useSession();
+  const { user, hasStore, loading, isAdmin } = useSession();
 
   if (loading) return <LoaderComponent />;
-  return hasStore ? (
-    <SalesPage storeId={user?.storeId ?? 0} user={user} />
-  ) : (
-    <SalesMainPage />
+  return (
+    <SalesPage storeId={user?.storeId ?? 0} user={user} hasStore isAdmin />
   );
 };
 
