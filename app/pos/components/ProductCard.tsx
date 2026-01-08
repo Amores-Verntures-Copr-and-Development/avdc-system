@@ -32,12 +32,23 @@ const ProductCard = ({
             ? variant.prodVarName
             : `${productName} ${variant.prodVarName}`;
 
-          addProductOrder({
-            prodVarId: variant.prodVarId,
-            prodVarName: prodVarName,
-            quantity: 1,
-            prodVarPrice: variant.prodVarPrice,
-          });
+          if (variant.variantComponents?.length === 1) {
+            addProductOrder({
+              prodVarId: variant.prodVarId,
+              prodVarName: prodVarName,
+              quantity: 1,
+              prodVarPrice: variant.prodVarPrice,
+              inventoryItemId: variant.variantComponents?.[0].inventoryItemId,
+            });
+          } else {
+            addProductOrder({
+              prodVarId: variant.prodVarId,
+              prodVarName: prodVarName,
+              quantity: 1,
+              prodVarPrice: variant.prodVarPrice,
+              inventoryItemId: null,
+            });
+          }
         }
         if (variantCount > 1 && selectProduct) {
           selectProduct(data);

@@ -17,25 +17,25 @@ const SupervisorPage = () => {
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard
             title="Total Revenues"
-            value={10}
+            value={`10`}
             icon={Calendar}
             bgColor="bg-primary-1"
           />
           <DashboardCard
             title="Total Products"
-            value={10}
+            value={`10`}
             icon={Calendar}
             bgColor="bg-purple-600"
           />
           <DashboardCard
             title="Total Request"
-            value={10}
+            value={`10`}
             icon={Calendar}
             bgColor="bg-amber-500"
           />
           <DashboardCard
             title="Total Customer"
-            value={10}
+            value={`10`}
             icon={Calendar}
             bgColor="bg-rose-600"
           />

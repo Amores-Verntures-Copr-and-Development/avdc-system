@@ -4,8 +4,9 @@ import React from "react";
 interface DashboardCardProps {
   title: string;
   icon: LucideIcon;
-  value: number;
+  value: string;
   bgColor?: string;
+  onClick?: () => void;
 }
 
 const DashboardCard = ({
@@ -13,6 +14,7 @@ const DashboardCard = ({
   icon: Icon,
   value,
   bgColor = "bg-emerald-600",
+  onClick,
 }: DashboardCardProps) => {
   return (
     <div className="flex flex-col justify-between p-3 xs:p-4 xl:p-5 border rounded-xl xl:rounded-2xl shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
@@ -37,7 +39,10 @@ const DashboardCard = ({
       <div className="border-t border-gray-200 my-2 xs:my-3 xl:my-4"></div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-gray-600 hover:text-gray-900 cursor-pointer group">
+      <div
+        className="flex items-center justify-between text-gray-600 hover:text-gray-900 cursor-pointer group"
+        onClick={onClick}
+      >
         <span className="text-[10px] xs:text-sm xl:text-xs md:text-sm lg:text-sm font-medium truncate">
           View details
         </span>

@@ -1,3 +1,4 @@
+import { getOwnerDashboardServices } from "@/services/dashboard/owner/get-owner-dashboard";
 import {
   findPendingRequestByUserId,
   getDashboardStats,
@@ -43,6 +44,76 @@ export const getPendingRequest = async (
       success: true,
       data: data,
       message: message,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to fetched",
+    };
+  }
+};
+
+export const getOwnerDashboardStats = async () => {
+  try {
+    const data = await getOwnerDashboardServices.getTotalMetrics();
+    return {
+      success: true,
+      data: data,
+      message: "Owner Dashboard Stats Fetched!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to fetched",
+    };
+  }
+};
+
+export const getOwnerRecentStoreSales = async () => {
+  try {
+    const data = await getOwnerDashboardServices.getRecentStoreSales();
+    return {
+      success: true,
+      data: data,
+      message: "Owner Recent Store Sales Fetched!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to fetched",
+    };
+  }
+};
+
+export const getOwnerSalesChartData = async (year: string) => {
+  try {
+    const data = await getOwnerDashboardServices.getSalesChartData(year);
+    return {
+      success: true,
+      data: data,
+      message: "Owner Sales Chart Data Fetched!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to fetched",
+    };
+  }
+};
+
+export const getOwnerPurchaseOrderChartData = async (year: string) => {
+  try {
+    const data = await getOwnerDashboardServices.getPurchaseOrderChartData(
+      year
+    );
+    return {
+      success: true,
+      data: data,
+      message: "Owner Purchase Order Chart Data Fetched!",
     };
   } catch (e) {
     return {

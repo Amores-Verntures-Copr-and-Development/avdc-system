@@ -6,7 +6,7 @@ import { getUserInfoByUserId } from "@/services/user/get-user";
 export const createUser = async (data: CreateUserDto) => {
   try {
     const result = await handleCreateUser(data);
-    console.log("result", { result });
+
     return {
       success: true,
       message: "User created succesfully!",

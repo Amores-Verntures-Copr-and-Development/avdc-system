@@ -4,19 +4,18 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Customer } from "@/types/customer";
-import { Check, Plus, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import React, { useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
 import { useSession } from "@/hooks/useSession";
 import { CreateCustomerDto, DisplayCustomerDto } from "@/dtos/customer.dto";
 import toast from "react-hot-toast";
 import { ApiResponse } from "@/types/api";
-import { CategoryInterface } from "@/types/categories";
+
 import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { formatPeso } from "@/utils/formatPeso";
-import { formatDate } from "date-fns";
+
 import { formatDateToWords } from "@/utils/formatDateToWords";
 
 const columns: Column<DisplayCustomerDto>[] = [
@@ -46,7 +45,7 @@ const columns: Column<DisplayCustomerDto>[] = [
 const CustomerPage = () => {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user } = useSession();
-  const { data: response, mutate } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
+  const { data: response } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
     user ? `api/customers/store/${user?.storeId}` : null,
     fetcher
   );
@@ -71,12 +70,13 @@ const CustomerPage = () => {
       const res = await data.json();
 
       if (!res.success) {
-        throw new Error(res.err);
+        throw new Error(res.message || "Failed to add customer.");
       }
       toast.success(res.message);
       setShowAddCustomer(false);
       return true;
-    } catch (e) {
+    } catch (e: any) {
+      toast.error(e);
       return false;
     } finally {
       setIsSubmitting(false);

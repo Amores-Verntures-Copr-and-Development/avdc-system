@@ -54,7 +54,7 @@ const sideMenu = [
         name: "Point of Sale",
         href: "/pos",
         icon: ShoppingCart,
-        roles: ["admin", "supervisor", "owner", "staff"],
+        roles: ["supervisor", "staff"],
       },
     ],
   },

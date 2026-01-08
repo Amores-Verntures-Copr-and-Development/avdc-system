@@ -14,10 +14,9 @@ export async function GET(
     }
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "";
-    console.log({ search, limit, page });
-    const res = await getSalesByStoreId({ storeId });
+    // const limit = searchParams.get("limit") || "";
+    // const page = searchParams.get("page") || "";
+    const res = await getSalesByStoreId({ storeId, search });
 
     if (!res.success) {
       throw new Error(`${res.error}`);

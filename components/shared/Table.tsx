@@ -5,7 +5,6 @@ import React, {
   useImperativeHandle,
   useState,
   useRef,
-  useCallback,
 } from "react";
 import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
@@ -137,9 +136,6 @@ const TableInner = <T extends Record<string, any>>(
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>
 ) => {
-  const [range, setRange] = useState<{ from: string; to: string } | undefined>(
-    undefined
-  );
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
   const [errors, setErrors] = useState<Map<string, string>>(new Map());

@@ -17,7 +17,6 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
 import { CategoryInterface } from "@/types/categories";
 import { useStockRoom } from "@/hooks/useStockRoom";
-import { useStores } from "@/hooks/userStore";
 import { ApiResponse } from "@/types/api";
 
 const categoriesColumn: Column<CategoryInterface>[] = [
@@ -39,13 +38,13 @@ const CategoryPage = () => {
       ? user?.userId
       : null
   );
-  const { stores } = useStores(hasStore && user?.userId ? user?.userId : null);
+  // const { stores } = useStores({ user, hasStore, isAdmin });
   const categoriesUrl =
     user?.userRole === "employee" &&
     (user?.empPosition === "admin" || user?.empPosition === "purchaser")
       ? `api/categories/stock-room/${stockRoom?.stockRoomId}`
       : hasStore
-      ? `api/categories/stores/${stores?.storeId}`
+      ? `api/categories/stores/${user?.storeId}`
       : `api/categories/`;
   const { data: response, mutate } = useSWR<ApiResponse<CategoryInterface[]>>(
     user ? categoriesUrl : null,
@@ -58,7 +57,7 @@ const CategoryPage = () => {
       categoryReferenceType: stockRoom ? "stock-room" : "stores",
       categoryReferenceId: stockRoom
         ? stockRoom.stockRoomId
-        : stores?.storeId ?? 0,
+        : user?.storeId ?? 0,
     };
 
     try {

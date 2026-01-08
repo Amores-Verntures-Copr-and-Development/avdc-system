@@ -96,7 +96,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
-  const { user, loading: userLoading, hasStore } = useSession();
+  const { user, loading: userLoading, hasStore, isAdmin } = useSession();
   const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
   const [showAddItemModal, setShowAddItemModal] = useState(false);
@@ -962,6 +962,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           }}
           onSubmit={handleAddInventoryItem}
           loading={isAddingItem}
+          isAdmin={isAdmin}
+          hasStore={hasStore}
         />
       </Modal>
 

@@ -51,8 +51,8 @@ export async function GET(
     }
 
     const { searchParams } = new URL(_request.url);
-    const search = searchParams.get("search") || "";
-    console.log({ search });
+    // const search = searchParams.get("search") || "";
+    // console.log({ search });
     const res = await getCustomer({
       keyFields: { storeId: Number(storeId) },
     });

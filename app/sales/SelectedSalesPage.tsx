@@ -1,7 +1,6 @@
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
-import PageHeader from "@/components/shared/PageHeader";
-import PageLayout from "@/components/shared/PageLayout";
+
 import { DisplaySalesDto, DisplaySalesItems } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
@@ -17,7 +16,7 @@ interface SelectedSalesPageProps {
 const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
   const {
     data: response,
-    mutate,
+
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesItems[]>>(
     salesData?.salesId

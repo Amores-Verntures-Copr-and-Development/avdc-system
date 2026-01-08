@@ -6,7 +6,7 @@ import {
   InsertItemsRequestDto,
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
-import { set } from "date-fns";
+
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 interface CreateRequestModalProps {
@@ -116,6 +116,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             size="sm"
             onClick={onCancel}
             className="font-semibold"
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -124,6 +125,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
             size="sm"
             onClick={handleSubmit}
             className="font-semibold"
+            loading={isSubmitting}
           />
         </div>
       </div>

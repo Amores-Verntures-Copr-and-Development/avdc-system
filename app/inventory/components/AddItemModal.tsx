@@ -16,6 +16,8 @@ interface AddItemModalProps {
   onSubmit: (data: CreateFirstItem) => Promise<boolean>;
   user?: UserAuth | null;
   loading?: boolean;
+  isAdmin: boolean;
+  hasStore: boolean;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({
@@ -23,9 +25,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   onSubmit,
   user,
   loading,
+  // isAdmin,
+  // hasStore,
 }) => {
   const { stockRoom } = useStockRoom(user?.userId ?? null);
-  const { stores } = useStores(user?.storeId ? user?.storeId : null);
+
   const isUserStores = user?.storeId !== null;
   const [selection, setSelection] = useState<"create" | "warehouse">("create");
   const [inventoryForm, setInventoryForm] = useState<CreateFirstItem>({
@@ -85,9 +89,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             />
             <DropDownSelectCategory
               referenceType={isUserStores ? "stores" : "stock-room"}
-              id={
-                (isUserStores ? stores?.storeId : stockRoom?.stockRoomId) ?? 0
-              }
+              id={(isUserStores ? user?.storeId : stockRoom?.stockRoomId) ?? 0}
               categoryType="item"
               name={"categoryId"}
               sizes="xs"

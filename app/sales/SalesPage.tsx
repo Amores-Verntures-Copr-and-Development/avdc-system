@@ -5,24 +5,20 @@ import Table, { Column } from "@/components/shared/Table";
 import { DisplaySalesDto } from "@/dtos/sales.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
-import { Sales } from "@/types/sales";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import {
   Calendar,
   CalendarCheck,
-  Clipboard,
-  DollarSign,
   Download,
   Eye,
   FileText,
   PhilippinePeso,
   Store,
-  TrendingUp,
   Users,
 } from "lucide-react";
-import React, { useCallback, useDebugValue, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import SalesCard from "./components/SalesCard";
 import BigCard from "@/components/shared/BigCard";
@@ -31,8 +27,6 @@ import SelectedSalesPage from "./SelectedSalesPage";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import { useSearchParams, useRouter } from "next/navigation";
-import DropDownSearchStore from "@/components/shared/DropDownSearchStore";
-import DropdownSelect from "@/components/shared/DropdownSelect";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -344,7 +338,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
   const [isViewSales, setIsViewSales] = useState(false);
-  const { stores, isLoading: isLoadingStore } = useStores({
+  const { stores } = useStores({
     user,
     hasStore,
     isAdmin,
@@ -381,15 +375,14 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     return `${url}?${params.toString()}`;
   }, [storeId, searchParams]);
   const debounceApi = useDebounce(apiUrl, 600);
-  const {
-    data: responseDetails,
+  const { data: responseDetails } = useSWR(
+    user && storeId ? `/api/sales/${storeId}/details` : null,
+    fetcher
+  );
 
-    isLoading: isLoadingDetails,
-  } = useSWR(user && storeId ? `/api/sales/${storeId}/details` : null, fetcher);
-  console.log({ responseDetails });
   const {
     data: response,
-    mutate,
+
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     user ? debounceApi : null,
@@ -398,9 +391,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
       const { from, to } = rangeData;
-
-      console.log("From:", from);
-      console.log("To:", to);
 
       // Example: include them in the URL as query params
       const url = new URL(window.location.href);
@@ -606,10 +596,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         onClose={function (): void {
           setShowModal(null);
         }}
-        children={undefined}
         size="xl"
         className="h-[95%]"
-      ></Modal>
+      >
+        <div></div>
+      </Modal>
     </PageLayout>
   );
 };

@@ -19,7 +19,6 @@ const AddVariantModal = ({
     prodVarCreatedBy: 0,
     prodVarName: "",
     prodVarPrice: 0,
-    inventoryItemId: null,
   });
   const handleDataChange = handleChange(formData, setFormData);
   const handleAddProduct = async () => {
@@ -32,7 +31,6 @@ const AddVariantModal = ({
           prodVarCreatedBy: 0,
           prodVarName: "",
           prodVarPrice: 0,
-          inventoryItemId: null,
         });
       }
     }

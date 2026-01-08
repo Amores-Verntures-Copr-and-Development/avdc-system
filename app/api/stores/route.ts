@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const res = await getStore({});
-    console.log("Agi here");
+  
     if (!res.success) {
       // propagate the actual message if available
       console.log(res.error);

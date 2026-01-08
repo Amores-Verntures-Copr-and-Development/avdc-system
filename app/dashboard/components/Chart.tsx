@@ -1,3 +1,4 @@
+import { formatPeso } from "@/utils/formatPeso";
 import React from "react";
 import {
   Area,
@@ -9,23 +10,21 @@ import {
   YAxis,
 } from "recharts";
 
+interface ChartData {
+  name: string;
+  value: number;
+}
 // ✅ Example mock monthly sales data
-const data = [
-  { name: "Jan", sales: 12500 },
-  { name: "Feb", sales: 9800 },
-  { name: "Mar", sales: 14200 },
-  { name: "Apr", sales: 15800 },
-  { name: "May", sales: 17600 },
-  { name: "Jun", sales: 16400 },
-  { name: "Jul", sales: 18900 },
-  { name: "Aug", sales: 17200 },
-  { name: "Sep", sales: 15100 },
-  { name: "Oct", sales: 19400 },
-  { name: "Nov", sales: 21200 },
-  { name: "Dec", sales: 23800 },
-];
 
-const Chart = () => {
+interface ChartProps {
+  data?: ChartData[];
+  tooltipLabel?: string;
+}
+const formaToPeso = (value: number) => {
+  if (value >= 1000) return `₱${(value / 1000).toFixed(1)}k`;
+  return `₱${value.toFixed(0)}`;
+};
+const Chart = ({ data, tooltipLabel }: ChartProps) => {
   return (
     <div className="w-full h-full flex flex-col">
       <ResponsiveContainer width="100%" height="100%">
@@ -40,14 +39,11 @@ const Chart = () => {
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis
-            tickFormatter={(value) => `₱${(value / 1000).toFixed(0)}k`}
-            tick={{ fontSize: 12 }}
-          />
+          <YAxis tickFormatter={formaToPeso} tick={{ fontSize: 12 }} />
           <Tooltip
             formatter={(value: number) => [
-              `₱${value.toLocaleString()}`,
-              "Sales",
+              `${formatPeso(value)}`,
+              tooltipLabel || "Sales",
             ]}
             contentStyle={{
               backgroundColor: "white",
@@ -57,7 +53,7 @@ const Chart = () => {
           />
           <Area
             type="monotone"
-            dataKey="sales"
+            dataKey="value"
             stroke="#e63389" // Tailwind green-500
             fill="#e081c5" // Tailwind green-100
             strokeWidth={2}

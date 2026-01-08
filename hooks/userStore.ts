@@ -9,7 +9,7 @@ export function useStores({
   hasStore,
   isAdmin,
 }: {
-  user: UserAuth | null;
+  user?: UserAuth | null;
   hasStore: boolean;
   isAdmin: boolean;
 }) {
@@ -33,7 +33,7 @@ export function useStores({
       const stored = localStorage.getItem(localStorageKey);
       if (stored) {
         const storedData = JSON.parse(stored);
-        console.log("Using cached stock room data");
+  
         return storedData;
       }
 

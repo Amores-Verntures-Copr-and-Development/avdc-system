@@ -4,15 +4,14 @@ import { UserAuth } from "@/hooks/useSession";
 import React, { useEffect, useState } from "react";
 import Button from "@/components/shared/Button";
 import {
-  CreateProductDtos,
+
   CreateProductVariantDto,
 } from "@/dtos/products.dto";
 import Toggle from "@/components/shared/Toggle";
-import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
-import { ItemInterface } from "@/types/items";
+
 import { Products } from "@/types/products";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
-import { formatPeso } from "@/utils/formatPeso";
+
 interface AddItemToProductModalProps {
   data: DisplayInventoryItems[];
   onCancel: () => void;
@@ -43,7 +42,7 @@ const AddItemToProductModal = ({
       storeId: undefined,
     });
   const [products, setProducts] = useState<CreateProductVariantDto[]>([]);
-  const [isAddAsVariant, setIsAddAsVariant] = useState(false);
+  // const [isAddAsVariant, setIsAddAsVariant] = useState(false);
   const columns: Column<CreateProductVariantDto>[] = [
     // { name: "#", key: "#", selector: (_row, index) => index + 1 },
     // {

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { OrderList } from "../PosPage";
-import { SalesDiscounts } from "@/types/sales-discounts";
 import { formatPeso } from "@/utils/formatPeso";
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
@@ -12,15 +11,11 @@ import {
   CreditCard,
   PhilippinePeso,
   Plus,
-  Tag,
-  Trash,
   Wallet,
   X,
 } from "lucide-react";
 import { CreateSalePaymentDto, CreateSalesDiscount } from "@/dtos/sales.dto";
 import Input from "@/components/shared/Input";
-import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
-import { createSalePayments } from "@/services/sales/sale-payments/create-sale-payments";
 import { handleChange } from "@/utils/handle-change";
 
 interface CheckOutModalProps {
@@ -41,7 +36,6 @@ interface CheckOutModalProps {
 }
 
 const CheckOutModal = ({
-  order,
   discounts,
   paymentMethods,
   selectedPaymentMethod,
@@ -94,18 +88,6 @@ const CheckOutModal = ({
   }, []);
 
   console.log({ totalPaid, remaining, change, canComplete });
-  const updatePayment = (
-    payMetId: number,
-    field: "salesPaymentAmount" | "paymentReference",
-    value: string | number
-  ) => {
-    setSelectedPaymentMethod(
-      (prev) =>
-        prev?.map((p) =>
-          p.payMetId === payMetId ? { ...p, [field]: value } : p
-        ) ?? []
-    );
-  };
 
   const quickAmounts = [20, 50, 100, 200, 500, 1000];
 

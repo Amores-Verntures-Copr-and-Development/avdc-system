@@ -48,8 +48,8 @@ export async function handleConvertItem({
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    console.log("Agi diri: ", data);
-    //check if there is data both from item and to item
+
+    
 
     const inventoryItem = await findInventoryItemsByField({
       connection,

@@ -124,7 +124,6 @@ export const insertStoreEmployees = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   try {
-    console.log("Agi diri: ", data);
     const sql = `INSERT INTO StoreEmployees(storeId,empId,storeEmpCreatedBy) VALUES ${
       data?.map(() => "(?, ?,?)").join(", ") || ""
     }`;
@@ -133,8 +132,7 @@ export const insertStoreEmployees = async ({
       item.empId,
       item.storeEmpCreatedBy,
     ]);
-    console.log({ sql });
-    console.log({ values });
+
     const [results] = await pool.execute(sql, values);
     return results;
   } catch (e) {

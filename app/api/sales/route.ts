@@ -5,8 +5,8 @@ export async function GET(_request: Request) {
   try {
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "";
+    // const limit = searchParams.get("limit") || "";
+    // const page = searchParams.get("page") || "";
     const store = searchParams.get("store") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";

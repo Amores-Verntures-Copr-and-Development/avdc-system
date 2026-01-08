@@ -2,7 +2,6 @@ import {
   createPurchaseOrderItemByPOId,
   getPurchaseOrderItemById,
   updatePurchaseOrderItem,
-  updatePurchaseOrderItemByPoId,
 } from "@/controllers/PurchaseOrderController";
 import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
 import { NextRequest, NextResponse } from "next/server";

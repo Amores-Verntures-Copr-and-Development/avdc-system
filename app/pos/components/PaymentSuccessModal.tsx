@@ -1,7 +1,7 @@
 import Button from "@/components/shared/Button";
 import { Sales } from "@/types/sales";
 import { formatPeso } from "@/utils/formatPeso";
-import { CheckCircle, CheckCircle2, Printer, Receipt } from "lucide-react";
+import { CheckCircle2, Printer, Receipt } from "lucide-react";
 import React from "react";
 interface PaymentSuccessModalProps {
   totalPaid: number;
@@ -14,7 +14,6 @@ const PaymentSuccessModal = ({
   totalPaid,
   change,
   onNewSale,
-  onPrintReceipt,
   salesData,
 }: PaymentSuccessModalProps) => {
   return (

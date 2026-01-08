@@ -6,12 +6,10 @@ import React, { useEffect, useState } from "react";
 import Button from "@/components/shared/Button";
 import {
   ArrowLeft,
-  CardSim,
   CreditCard,
   Files,
   History,
   Package,
-  PhilippinePesoIcon,
   Receipt,
   Tag,
   TicketPercent,
@@ -30,12 +28,10 @@ import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/Popup";
 import DiscountList, {
-  formatDiscountValue,
 } from "./components/sidebar/DiscountList";
 import PaymentMethodList from "./components/sidebar/PaymentMethodList";
 import ProductList from "./components/sidebar/ProductList";
 import SalesHistory from "./components/sidebar/SalesHistory";
-import Card from "@/components/shared/Card";
 import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import {
@@ -47,11 +43,8 @@ import {
 import Modal from "@/components/shared/Modal";
 import ViewAppliedDiscountModal from "./components/ViewAppliedDiscountModal";
 import toast from "react-hot-toast";
-import { reportWebVitals } from "next/dist/build/templates/pages";
+
 import CheckOutModal from "./components/CheckOutModal";
-import { SalesDiscounts } from "@/types/sales-discounts";
-import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
-import PaymentSuccessModa from "./components/PaymentSuccessModal";
 import PaymentSuccessModal from "./components/PaymentSuccessModal";
 import { Sales } from "@/types/sales";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
@@ -72,20 +65,6 @@ interface PosPageProps {
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
   const [clearSignal, setClearSignal] = useState(0);
-  const defaultSaleData: CreateSaleDto = {
-    storeId: 0,
-    customerId: null,
-    salesCreatedBy: 0,
-    salesStatus: "pending",
-    salesSubTotal: 0,
-    salesTotalPaid: 0,
-    salesInvoice: "",
-    salesNo: "",
-    salesTotalAmount: 0,
-    saleDiscounts: [],
-    salesItems: [],
-    salesPayments: [],
-  };
   const handleClearCustomerComponent = () => {
     setClearSignal((prev) => prev + 1);
     setCustomer(null);
@@ -111,18 +90,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
     data: DisplayProductsDtos[];
   }>(storeId ? `/api/products/${storeId}` : null, fetcher);
-  const {
-    data: paymentMethodResponse = { data: [] },
-    isLoading: isPaymentloading,
-    mutate: mutatePaymentMethod,
-  } = useSWR<{
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(storeId ? `/api/payment-method/store/${storeId}/` : null, fetcher);
-  const {
-    data: discountResponse = { data: [] },
-    isLoading: loading,
-    mutate,
-  } = useSWR<{
+  const { data: discountResponse = { data: [] } } = useSWR<{
     data: Discounts[];
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
 
@@ -131,13 +102,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setProductList(itemResponse.data);
     }
   }, [itemResponse.data]);
-  const paymentMethodOptions = [
-    { label: "Select Payment Method", value: 0 },
-    ...(paymentMethodResponse?.data?.map((payMet) => ({
-      label: payMet.payMetName,
-      value: payMet.payMetId,
-    })) ?? []),
-  ];
+
   const subtotal =
     selectedOrder?.reduce(
       (total, o) => total + o.prodVarPrice * o.quantity,
@@ -182,14 +147,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
     return true;
   };
-  const getDiscount = (id: number) => {
-    const discount = discountResponse?.data?.find(
-      (dis) => dis.discountId === id
-    );
-    return discount?.discountType === "percent"
-      ? `${formatDiscountValue(Number(discount?.discountValue))}`
-      : `${formatPeso(Number(discount?.discountValue))}`;
-  };
+
   const addProductOrder = (newProduct: OrderList) => {
     // ✅ Always deduct inventory
     const isAvailable = hasSufficientInventory(newProduct.prodVarId);

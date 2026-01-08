@@ -1,21 +1,17 @@
-import { getTotalSalesDetails } from "@/controllers/SaleController";
+import { getOwnerPurchaseOrderChartData } from "@/controllers/DashboardController";
 import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ year: string }> }
 ) {
   try {
-    const slug = (await params).storeId;
-    const storeId = Number(slug);
-
-    if (!storeId) {
-      throw new Error("No store found");
-    }
-
-    const res = await getTotalSalesDetails(storeId);
+    const slug = (await params).year;
+    const res = await getOwnerPurchaseOrderChartData(slug);
 
     if (!res.success) {
+      // propagate the actual message if available
+      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -23,15 +19,16 @@ export async function GET(
       {
         success: true,
         message: res.message,
-        data: res.data,
+        data: res.data, // could sanitize before returning
       },
       { status: 201 }
     );
   } catch (err: any) {
+    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
-        message: err?.message,
+        message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
       { status: 500 }

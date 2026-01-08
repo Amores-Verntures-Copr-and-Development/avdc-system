@@ -1,9 +1,7 @@
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
-import Table, { Column } from "@/components/shared/Table";
-import Textarea from "@/components/shared/TextArea";
-import Toggle from "@/components/shared/Toggle";
+
 import { CreateDiscountDto } from "@/dtos/discounts.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { Discounts } from "@/types/discount";
@@ -19,7 +17,6 @@ interface DiscountListProps {
   user: UserAuth | null;
 }
 
-const column: Column<Discounts>[] = [{ key: "#", name: "#" }];
 const DiscountList = ({ storeId, user }: DiscountListProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [discountForm, setDiscountForm] = useState<CreateDiscountDto>({
@@ -31,7 +28,7 @@ const DiscountList = ({ storeId, user }: DiscountListProps) => {
   });
   const {
     data: itemResponse = { data: [] },
-    isLoading: loading,
+
     mutate,
   } = useSWR<{
     data: Discounts[];

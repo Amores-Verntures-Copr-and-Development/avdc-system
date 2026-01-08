@@ -9,6 +9,7 @@ import { useSession } from "@/hooks/useSession";
 import StoreRequestOrder from "./_components/StoreRequestOrder";
 import { Request } from "@/types/request";
 import { StoreInterface } from "@/types/stores";
+import { formatPeso } from "@/utils/formatPeso";
 
 interface DashboardStats {
   totalPurchase: number;
@@ -52,25 +53,25 @@ const PurchaserDashboard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <DashboardCard
             title="Total Inventory Cost"
-            value={stats.totalPurchase ?? 0}
+            value={formatPeso(stats.totalPurchase ?? 0)}
             icon={ShoppingCart}
             bgColor="bg-primary-1"
           />
           <DashboardCard
-            title="Total Purchase Cost"
-            value={stats.completedRequest ?? 0}
+            title="Completed Requests"
+            value={`${stats.completedRequest}`}
             icon={Calendar}
             bgColor="bg-purple-600"
           />
           <DashboardCard
-            title="Total Purchase Cost"
-            value={stats.lowStock ?? 0}
+            title="Low Stock"
+            value={`${stats.lowStock ?? 0}`}
             icon={AlertTriangle}
             bgColor="bg-amber-500"
           />
           <DashboardCard
             title="Out of Stock"
-            value={stats.outOfStock ?? 0}
+            value={`${stats.outOfStock ?? 0}`}
             icon={Package}
             bgColor="bg-rose-600"
           />
