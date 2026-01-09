@@ -41,6 +41,14 @@ export interface DisplayTotalRequestItem {
   poItemOrder: number;
 }
 
+export interface DisplayProcurementHistory {
+  poId: number;
+  poNumber: string;
+  suppId: number;
+  suppName: string;
+  totalPurchase: number;
+  poCreatedAt: string;
+}
 export type DisplayPurchaseOrderItemsDto = Pick<
   PurchaseOrderItems,
   | "poId"

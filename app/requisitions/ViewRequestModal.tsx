@@ -110,8 +110,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     {
       name: "Request Qty",
       key: "reqItemQuantity",
-      selector: (row) =>
-        formatQuantityByUnit(row.reqItemQuantity, row.itemUnit),
+      selector: (row) => (
+        <span className="font-semibold">
+          {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
+        </span>
+      ),
     },
     { name: "Status", key: "reqItemStatus" },
   ];
@@ -133,7 +136,15 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
-    { name: "Request Qty", key: "reqItemQuantity" },
+    {
+      name: "Request Qty",
+      key: "reqItemQuantity",
+      selector: (row) => (
+        <span className="font-semibold">
+          {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
+        </span>
+      ),
+    },
     { name: "Delivered Qty", key: "reqItemTransfer" },
     { name: "Remarks", key: "reqItemRemarks" },
     {
@@ -482,20 +493,39 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           <Table
             localSearch
             renderTopActions={
-              selectedReq?.requestStatus === "delivered" && (
-                <div>
-                  <Button
-                    icon={<Plus size={15} />}
-                    onClick={() => {
-                      //Perform add item from inventory from deliver
-                    }}
-                    size="sm"
-                    label="Add Item from Deliver"
-                    className="text-xs font-semibold"
-                    color="secondary"
-                  />
-                </div>
-              )
+              <div className="flex gap-2">
+                {selectedReq?.requestStatus === "delivered" && (
+                  <div>
+                    <Button
+                      icon={<Plus size={15} />}
+                      onClick={() => {
+                        //Perform add item from inventory from deliver
+                      }}
+                      size="sm"
+                      label="Add Item from Deliver"
+                      className="text-xs font-semibold"
+                      color="secondary"
+                    />
+                  </div>
+                )}
+                {Boolean(
+                  selectedReq?.requestStatus === "pending" ||
+                    selectedReq?.requestStatus === "in_progress"
+                ) && (
+                  <div>
+                    <Button
+                      icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      onClick={() => {
+                        setShowAddItem(true);
+                      }}
+                      size="sm"
+                      label="Add Item"
+                      className="font-semibold"
+                      color="primary"
+                    />
+                  </div>
+                )}
+              </div>
             }
             maxHeight="h-full"
             uniqueIdKey="reqItemId"

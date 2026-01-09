@@ -66,12 +66,12 @@ const AdminRequisitionPage = () => {
   const [selectedtedRow, setSelectedRow] =
     useState<DisplayRequestOrderDto | null>();
 
-  // const { data: itemResponse = { data: [] }, mutate } = useSWR<{
-  //   data: DisplayRequestOrderDto[];
-  // }>(user ? `/api/requests/request-orders/` : null, fetcher);
   const { data: itemResponse = { data: [] }, mutate } = useSWR<{
     data: DisplayRequestOrderDto[];
-  }>(user ? `/api/requests/stock-room/userId/${user?.userId}` : null, fetcher);
+  }>(user ? `/api/requests/request-orders/` : null, fetcher);
+  // const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+  //   data: DisplayRequestOrderDto[];
+  // }>(user ? `/api/requests/stock-room/userId/${user?.userId}` : null, fetcher);
 
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);

@@ -1,5 +1,6 @@
 import {
   selectPObyPoOrderRequestFields,
+  selectProcurementHistoryByPO,
   selectPurchaserOrderByFields,
 } from "@/models/purchaseOrderModel";
 import { PurchaseOrderRequest } from "@/types/purchaseOrders";
@@ -28,6 +29,15 @@ export async function findPurchaserOrderByPORequestFields({
       connection,
       keyfields,
     });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findProcurementHistory() {
+  try {
+    const data = await selectProcurementHistoryByPO();
     return data;
   } catch (e) {
     throw e;

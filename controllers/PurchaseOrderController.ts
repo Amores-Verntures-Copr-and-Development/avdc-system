@@ -5,6 +5,7 @@ import {
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import {
+  findProcurementHistory,
   findPurchaseOrderByUserId,
   findPurchaserOrderByPORequestFields,
 } from "@/services/purchase/get-purchase-order";
@@ -322,6 +323,24 @@ export const updatePurchaserOrderById = async (
     return {
       success: false,
       message: "Failed to add item",
+      error: e,
+    };
+  }
+};
+
+export const getProcurementHistory = async () => {
+  try {
+    const data = await findProcurementHistory();
+    return {
+      success: true,
+      message: "Procurement history fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch Procurement history",
       error: e,
     };
   }

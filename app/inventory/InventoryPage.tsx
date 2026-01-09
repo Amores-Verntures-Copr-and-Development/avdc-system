@@ -164,6 +164,7 @@ const InventoryPage = () => {
                       : "Store"
                   }`}
                 />
+
                 <div>
                   {" "}
                   <Button
@@ -175,6 +176,59 @@ const InventoryPage = () => {
                       console.log("Clicked");
                     }}
                   />
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <div className="flex  border-gray-300">
+                  <div>
+                    <Button
+                      isRounded={false}
+                      size="sm"
+                      onClick={function (): void {
+                        setSelectionSection("inventory");
+                      }}
+                      color={
+                        selectionSection === "inventory"
+                          ? "primary"
+                          : "secondary"
+                      }
+                      label="Inventory"
+                      icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      isRounded={false}
+                      size="sm"
+                      onClick={function (): void {
+                        setSelectionSection("movement");
+                      }}
+                      color={
+                        selectionSection === "movement"
+                          ? "primary"
+                          : "secondary"
+                      }
+                      label="Stock Movement"
+                      icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      isRounded={false}
+                      size="sm"
+                      onClick={function (): void {
+                        setSelectionSection("report");
+                      }}
+                      color={
+                        selectionSection === "report" ? "primary" : "secondary"
+                      }
+                      label="Report"
+                      icon={
+                        <FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />
+                      }
+                    />
+                  </div>
                 </div>
               </div>
               <InventoryView

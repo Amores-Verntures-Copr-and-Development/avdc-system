@@ -481,3 +481,27 @@ export const selectPObyPoOrderRequestFields = async ({
   const [rows] = await pool.execute(sql, params);
   return rows as PurchaseOrderItems[];
 };
+
+export const selectProcurementHistoryByPO = async () => {
+  const pool = await getDBConnection();
+  const sql = `SELECT 
+  po.poId,
+  po.poNumber,
+  s.suppId,
+  s.suppName,
+  po.poCreatedAt,
+  SUM(poi.unitPrice * poi.poItemOrderedQty) AS totalPurchase
+FROM PurchaseOrders po
+LEFT JOIN PurchaseOrderItems poi 
+  ON poi.poId = po.poId
+LEFT JOIN Suppliers s 
+  ON s.suppId = poi.suppId
+WHERE poi.poItemStatus = 'received' OR poi.poItemStatus = 'completed'
+GROUP BY 
+  po.poId,
+  po.poNumber,
+  s.suppId,
+  s.suppName;`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql);
+  return rows;
+};
