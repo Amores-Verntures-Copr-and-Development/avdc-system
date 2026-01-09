@@ -22,7 +22,7 @@ import VariantComponentPage from "./components/VariantComponentPage";
 
 interface ProductVariantPageProps {
   data: DisplayProductsDtos | null;
-  user: UserAuth | null;
+  user?: UserAuth | null;
   onBack: () => void;
 }
 

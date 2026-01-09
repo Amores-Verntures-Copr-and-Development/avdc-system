@@ -92,10 +92,12 @@ export const selectProducts = async ({
   connection,
   keyFields = {},
   search,
+  storeName,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
   search?: string;
+  storeName?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `SELECT 
@@ -149,6 +151,11 @@ export const selectProducts = async ({
     sql += ` AND p.prodName LIKE ?`;
     params.push(`%${search}%`);
   }
+  if (storeName) {
+    sql += ` AND s.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

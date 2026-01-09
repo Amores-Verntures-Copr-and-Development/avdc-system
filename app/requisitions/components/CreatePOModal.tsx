@@ -86,7 +86,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         if (Number(row.stockItem) >= Number(row.totalQuantity)) {
           return (
             <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
-              Available
+              Available ({row.stockItem - row.totalQuantity})
             </span>
           );
         } else {

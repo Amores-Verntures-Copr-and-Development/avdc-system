@@ -62,7 +62,6 @@ const EditEmployeeModal = ({
       );
     });
 
-    console.log("✅ Available stores:", storeData);
     setStores(storeData);
   }, [response.data, empFormData]);
 

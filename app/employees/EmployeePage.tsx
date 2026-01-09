@@ -14,28 +14,27 @@ const employeColumn = [
 ];
 const EmployeePage = () => {
   return (
-    <PageLayout>
-      <div className="flex flex-col gap-5">
-        <PageHeader title={"Employee"} subtitle="Manage your employees" />
-        <div className="min-h-0 flex-1">
-          <Table
-            showActions
-            columns={employeColumn}
-            data={[]}
-            renderActions={(row: any) => (
-              <div>
-                <IconButton
-                  onClick={function (): void {
-                    console.log(row);
-                  }}
-                  label={"Edit"}
-                  bg={"gray"}
-                  icon={<Pencil />}
-                />
-              </div>
-            )}
-          />
-        </div>
+    <PageLayout className="gap-2 p-2">
+      <PageHeader title={"Employee"} subtitle="Manage your employees" />
+      <div className="min-h-0 flex-1 flex flex-col">
+        <Table
+          showActions
+          columns={employeColumn}
+          data={[]}
+          maxHeight="h-full"
+          renderActions={(row: any) => (
+            <div>
+              <IconButton
+                onClick={function (): void {
+                  console.log(row);
+                }}
+                label={"Edit"}
+                bg={"gray"}
+                icon={<Pencil />}
+              />
+            </div>
+          )}
+        />
       </div>
     </PageLayout>
   );

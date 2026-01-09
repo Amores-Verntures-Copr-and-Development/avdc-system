@@ -11,7 +11,7 @@ import {
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
-import { ProductVariants } from "@/types/products";
+import { Products, ProductVariants } from "@/types/products";
 
 export const createProductController = async (data: CreateProductDtos) => {
   try {
@@ -75,14 +75,21 @@ export const createVariantComponentController = async (
 ) => {};
 
 export const getProduct = async ({
-  storeId,
   search,
+  storeName,
+  keyFields = {},
 }: {
   storeId?: number;
   search?: string;
+  storeName?: string;
+  keyFields?: Partial<Products>;
 }) => {
   try {
-    const data = await getProducts({ keyFields: { storeId }, search });
+    const data = await getProducts({
+      keyFields,
+      search,
+      storeName,
+    });
     return {
       data: data,
       message: "Product fetched successfully!",

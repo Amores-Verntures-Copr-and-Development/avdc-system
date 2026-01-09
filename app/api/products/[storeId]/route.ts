@@ -14,7 +14,7 @@ export async function GET(
     const storeId = Number(slug);
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    const res = await getProduct({ storeId, search });
+    const res = await getProduct({ keyFields: { storeId: storeId }, search });
 
     if (!res.success) {
       console.log(res.message);

@@ -4,7 +4,7 @@ import { CreateProductDtos, DisplayProductsDtos } from "@/dtos/products.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import ProductCardDetails from "./components/ProductCardDetails";
 import {
@@ -13,6 +13,7 @@ import {
   Package2,
   PhilippinePeso,
   Plus,
+  Store,
   Users,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
@@ -23,32 +24,117 @@ import toast from "react-hot-toast";
 import { formatPeso } from "@/utils/formatPeso";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import ProductVariantPage from "./ProductVariantPage";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useStores } from "@/hooks/userStore";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
 }
 
-const ProductStorePage = ({ storeId }: ProductStorePageProps) => {
+const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user: userSession, hasStore, loading, isAdmin } = useSession();
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
     null
   );
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
+  const apiUrl = useMemo(() => {
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "1";
+    const store = searchParams.get("store");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
 
-  const { user } = useSession();
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+    if (unit) params.append("unit", unit);
+    if (limit) params.append("limit", limit);
+    if (store) params.append("store", store);
+    if (to) params.append("to", to);
+    if (from) params.append("from", from);
+    params.append("page", page);
 
+    return `${url}?${params.toString()}`;
+  }, [storeId, searchParams]);
   const {
     data: itemResponse = { data: [] },
     mutate,
     isLoading,
   } = useSWR<{
     data: DisplayProductsDtos[];
-  }>(storeId ? `/api/products/${storeId}` : null, fetcher);
-
+  }>(user ? apiUrl : null, fetcher);
+  const { stores } = useStores({ user, hasStore, isAdmin });
+  const storeOptions = Array.isArray(stores)
+    ? stores.map((store) => ({
+        label: store.storeName, // or whatever you want to show
+        value: store.storeName, // optional leading icon if you have one
+      }))
+    : [];
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
+    {
+      key: "prodCreatedAt",
+      name: "Created",
+      selector: (row) => formatDateToWords(row.prodCreatedAt),
+    },
+    {
+      name: "Variants",
+      key: "productVariants",
+      selector: (row) => {
+        const variants = row.productVariants || [];
+        // Assuming your row has a suppliers array
+        console.log({ variants });
+        return (
+          <div className="group relative">
+            <select
+              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+              disabled
+            >
+              <option value="">
+                {variants.filter((s) => s !== null).length > 0
+                  ? `Variants (${variants.filter((s) => s !== null).length})`
+                  : "No Variannts"}
+              </option>
+            </select>
+
+            {/* Show suppliers on hover */}
+            {variants.filter((s) => s !== null).length > 0 && (
+              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+                {variants
+                  .filter((variants) => variants !== null)
+                  .map((variants, index) => (
+                    <div
+                      key={index}
+                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                    >
+                      {`${variants.prodVarName} (${formatPeso(
+                        variants.prodVarPrice
+                      )})`}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+  ];
+  const adminColumn: Column<DisplayProductsDtos>[] = [
+    { key: "#", name: "#", selector: (_row, index) => index + 1 },
+    { key: "prodName", name: "Product Name" },
+    { key: "storeName", name: "Store" },
     {
       key: "prodCreatedAt",
       name: "Created",
@@ -180,7 +266,7 @@ const ProductStorePage = ({ storeId }: ProductStorePageProps) => {
           </div>
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
             <Table
-              columns={columns}
+              columns={hasStore ? columns : adminColumn}
               data={itemResponse.data}
               totalCount={20}
               maxHeight="h-full"
@@ -219,6 +305,29 @@ const ProductStorePage = ({ storeId }: ProductStorePageProps) => {
                     />
                   </div>
                 </div>
+              }
+              addContentLeftTitle={
+                !hasStore && (
+                  <div>
+                    <DynamicDropdown
+                      options={storeOptions}
+                      onChange={function (value: string | number): void {
+                        if (value) {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("store", String(value));
+                          router.push(url.toString());
+                        } else {
+                          const url = new URL(window.location.href);
+                          url.searchParams.delete("store"); // remove 'store'
+                          router.push(url.toString());
+                        }
+                      }}
+                      placeholder={`Store (${storeOptions.length})`}
+                      icon={<Store className="w-4 h-4" />}
+                      size="sm"
+                    />
+                  </div>
+                )
               }
             />
           </div>

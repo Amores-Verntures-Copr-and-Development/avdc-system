@@ -16,8 +16,9 @@ import useSWR from "swr";
 import { StoreInterface } from "@/types/stores";
 import ViewStoreModal from "./components/ViewStoreModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { useSession } from "@/hooks/useSession";
 const storeColumn: Column<StoreInterface>[] = [
-  { name: "ID", key: "storeId" },
+  { name: "#", key: "#", selector: (_row, index) => index + 1 },
   { name: "Name", key: "storeName" },
   { name: "Location", key: "storeLocation" },
   { name: "Description", key: "storeDescription" },
@@ -28,15 +29,23 @@ const storeColumn: Column<StoreInterface>[] = [
   },
 ];
 const StorePage = () => {
+  const { user, isAdmin, hasStore } = useSession();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInterface | null>(
     null
   );
+  const isSupervisor = user?.empPosition === "supervisor";
+  const url =
+    isAdmin || !hasStore
+      ? "/api/stores/"
+      : isSupervisor
+      ? `/api/stores/userId/${user?.userId}/store-employee`
+      : null;
   const {
     data: response = { data: [] },
     isLoading,
     mutate,
-  } = useSWR<{ data: StoreInterface[] }>("/api/stores/", fetcher);
+  } = useSWR<{ data: StoreInterface[] }>(user ? url : null, fetcher);
   const handleSubmit = async (data: CreateStoreDto) => {
     try {
       const result = await fetch("api/stores", {
@@ -66,17 +75,19 @@ const StorePage = () => {
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table
           renderTopActions={
-            <div>
-              <Button
-                icon={<Plus size={16} />}
-                label="Add Store"
-                className="font-semibold"
-                size="sm"
-                onClick={() => {
-                  setShowAddStoreModal(true);
-                }}
-              />
-            </div>
+            isAdmin && (
+              <div>
+                <Button
+                  icon={<Plus size={16} />}
+                  label="Add Store"
+                  className="font-semibold"
+                  size="sm"
+                  onClick={() => {
+                    setShowAddStoreModal(true);
+                  }}
+                />
+              </div>
+            )
           }
           columns={storeColumn}
           loading={isLoading}

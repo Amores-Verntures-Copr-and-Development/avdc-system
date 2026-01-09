@@ -225,7 +225,7 @@ const AdminRequisitionPage = () => {
       </Modal>
       <Modal
         hasPadding={false}
-        className="bg-white h-[95%]"
+        className="bg-white h-[95%] p-2"
         title={`Request Order (${selectedtedRow?.requestNo})`}
         modalDetails={(() => {
           const { label, bg, color, border } = getRequestStatusOption(
