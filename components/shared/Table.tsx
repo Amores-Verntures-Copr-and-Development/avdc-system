@@ -463,7 +463,14 @@ const TableInner = <T extends Record<string, any>>(
               )}
               {addContentLeftTitle && addContentLeftTitle}
             </div>
-            <div className="flex gap-1 lg:gap-2">{renderTopActions}</div>
+            <div
+              className="flex gap-1 lg:gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              {renderTopActions}
+            </div>
           </div>
         )}
 

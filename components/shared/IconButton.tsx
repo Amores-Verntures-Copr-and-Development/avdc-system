@@ -54,8 +54,8 @@ const IconButton: React.FC<IconButtonProps> = ({
         <button
           ref={btnRef}
           onClick={(e) => {
-            if (!disable) onClick();
             e.stopPropagation();
+            if (!disable) onClick();
           }}
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}

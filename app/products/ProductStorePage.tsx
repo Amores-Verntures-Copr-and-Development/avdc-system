@@ -9,8 +9,11 @@ import useSWR from "swr";
 import ProductCardDetails from "./components/ProductCardDetails";
 import {
   Boxes,
+  Eye,
+  Icon,
   Layers,
   Package2,
+  Pencil,
   PhilippinePeso,
   Plus,
   Store,
@@ -27,6 +30,9 @@ import ProductVariantPage from "./ProductVariantPage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStores } from "@/hooks/userStore";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
+import IconButton from "@/components/shared/IconButton";
+import { se } from "date-fns/locale";
+import EditProduct from "./components/EditProduct";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -35,12 +41,13 @@ interface ProductStorePageProps {
 const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user: userSession, hasStore, loading, isAdmin } = useSession();
+  const { hasStore, isAdmin } = useSession();
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
     null
   );
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
   const apiUrl = useMemo(() => {
@@ -229,6 +236,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           data={selectedRow}
           onBack={() => {
             setSelectedRow(null);
+            setShowProductVariantPage(false);
           }}
           user={user}
         />
@@ -266,6 +274,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           </div>
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
             <Table
+              uniqueIdKey="prodId"
               columns={hasStore ? columns : adminColumn}
               data={itemResponse.data}
               totalCount={20}
@@ -277,6 +286,29 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                 setShowProductVariantPage(true);
               }}
               // filterConfig={[]}
+              showActions
+              renderActions={(row) => (
+                <div className="flex justify-center gap-2">
+                  <IconButton
+                    onClick={function (): void {
+                      setSelectedRow(row);
+                      setShowProductVariantPage(true);
+                    }}
+                    label={"View"}
+                    bg={"gray"}
+                    icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setSelectedRow(row);
+                      setShowEdit(true);
+                    }}
+                    label={"Edit"}
+                    bg={"green"}
+                    icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                </div>
+              )}
               renderTopActions={
                 <div className="flex gap-2">
                   <div>
@@ -346,6 +378,27 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           mutate={mutate}
           onSubmit={handleAddProduct}
           isSubmitting={isAddingProduct}
+        />
+      </Modal>
+      <Modal
+        className="h-[75%]"
+        title={`${selectedRow?.prodName}`}
+        subtitle="Edit products."
+        isOpen={showEdit}
+        onClose={function (): void {
+          setShowEdit(false);
+          setSelectedRow(null);
+        }}
+      >
+        <EditProduct
+          data={selectedRow}
+          onClose={function (): void {
+            setShowEdit(false);
+            setSelectedRow(null);
+          }}
+          onSave={function (updatedData: DisplayProductsDtos): void {
+            throw new Error("Function not implemented.");
+          }}
         />
       </Modal>
     </PageLayout>
