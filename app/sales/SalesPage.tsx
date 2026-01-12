@@ -30,6 +30,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
+import { set } from "date-fns";
+import SalesReportModal from "./components/SalesReportModal";
 
 interface SalesPageProps {
   storeId: number;
@@ -337,6 +339,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     null
   );
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
+  const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
   const [isViewSales, setIsViewSales] = useState(false);
   const { stores } = useStores({
     user,
@@ -476,27 +479,20 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   }}
                   renderTopActions={
                     <div className="flex gap-2">
-                      <div>
-                        <Button
-                          size="sm"
-                          hasBorder={false}
-                          color="outline"
-                          label="Report"
-                          icon={
-                            <FileText className="w-3.5 h-3.5 font-semibold" />
-                          }
-                          onClick={() => {
-                            setShowModal("report");
-                          }}
-                        />
-                      </div>
                       <DynamicDropdown
                         options={[
                           { label: "Sales", value: "Sales" },
+                          { label: "Sale Items", value: "Sale Items" },
                           { label: "Customer", value: "Customer" },
                         ]}
                         onChange={function (value: string | number): void {
-                          console.log(value);
+                          if (value) {
+                            setIsReport(value as "Customer" | "Sales");
+                            setShowModal("report");
+                          } else {
+                            setIsReport(null);
+                            setShowModal(null);
+                          }
                         }}
                         placeholder={"Report"}
                         icon={
@@ -587,7 +583,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       <Modal
         title={
           showModal === "report"
-            ? "Sales Report"
+            ? isReport === "Customer"
+              ? "Customer Report"
+              : isReport === "Sales"
+              ? "Sales Report"
+              : "Report"
             : showModal === "export"
             ? "Export Sales"
             : ""
@@ -599,7 +599,19 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         size="xl"
         className="h-[95%]"
       >
-        <div></div>
+        {showModal === "report" ? (
+          isReport === "Customer" ? (
+            <SalesReportModal apiUrl={apiUrl} />
+          ) : isReport === "Sales" ? (
+            <SalesReportModal apiUrl={apiUrl} />
+          ) : (
+            "Report"
+          )
+        ) : showModal === "export" ? (
+          "Export Sales"
+        ) : (
+          ""
+        )}
       </Modal>
     </PageLayout>
   );

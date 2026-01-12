@@ -76,7 +76,8 @@ const columns: Column<PurchaseOrderItems>[] = [
   {
     name: "Total",
     key: "total",
-    selector: (row: PurchaseOrderItems) => row.poItemOrderedQty * row.unitPrice,
+    selector: (row: PurchaseOrderItems) =>
+      formatPeso(row.poItemOrderedQty * row.unitPrice),
   },
 ];
 const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({

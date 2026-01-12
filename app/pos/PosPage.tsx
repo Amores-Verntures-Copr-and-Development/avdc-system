@@ -27,8 +27,7 @@ import { ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/Popup";
-import DiscountList, {
-} from "./components/sidebar/DiscountList";
+import DiscountList from "./components/sidebar/DiscountList";
 import PaymentMethodList from "./components/sidebar/PaymentMethodList";
 import ProductList from "./components/sidebar/ProductList";
 import SalesHistory from "./components/sidebar/SalesHistory";
@@ -315,6 +314,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return null;
   }
   const handleConfirmOrder = async () => {
+    const totalAmount = getTotalAmount(); // total to pay
+    let remaining = totalAmount;
     console.log({ user });
     const token = getCookie("avdc_accessToken");
     console.log({ token });
@@ -335,14 +336,25 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         salesItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
         prodVarId: items.prodVarId,
       })) ?? [];
-    const paymentMethodData: CreateSalePaymentDto[] =
-      paymentMethod?.map((pm) => ({
-        paymentReference: pm.paymentReference,
-        salesId: 0,
-        salesPaymentAmount: pm.salesPaymentAmount,
-        payMetId: pm.payMetId,
-        salesPaymentStatus: "completed",
-      })) ?? [];
+    const paymentMethodData: CreateSalePaymentDto[] = paymentMethod
+      ?.map((pm) => {
+        if (remaining <= 0) return null; // nothing left to pay
+
+        // apply either the payment amount or the remaining, whichever is smaller
+        const appliedAmount = Math.min(pm.salesPaymentAmount, remaining);
+
+        // reduce remaining
+        remaining -= appliedAmount;
+
+        return {
+          paymentReference: pm.paymentReference,
+          salesId: 0,
+          salesPaymentAmount: appliedAmount,
+          payMetId: pm.payMetId,
+          salesPaymentStatus: "completed",
+        };
+      })
+      .filter(Boolean) as CreateSalePaymentDto[];
     const salesData: CreateSaleDto = {
       customerId: customer?.customerId ? customer?.customerId : 0,
       salesInvoice: "",
@@ -358,6 +370,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesPayments: paymentMethodData,
     };
     try {
+      console.log({ salesData });
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
         method: "POST",
         headers: {
@@ -381,7 +394,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setSelectedOrder([]);
       setSelectedDiscount([]);
       handleClearCustomerComponent();
-      return true;
+      return false;
     } catch (e) {
       console.log(e);
       toast.error("Failed to add Inventory.");

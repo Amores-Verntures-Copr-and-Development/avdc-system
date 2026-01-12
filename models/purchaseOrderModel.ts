@@ -142,18 +142,21 @@ export const selectPurchaseOrderItems = async ({
   poi.*,
   i.itemName,
   i.itemUnit,
-  (
-    SELECT JSON_ARRAYAGG(
-      JSON_OBJECT(
-        'suppId', s.suppId,
-        'suppName', s.suppName,
-        'suppItemPrice', si.suppItemPrice,
-        'suppItemCreatedBy', si.suppItemCreatedBy
+  COALESCE(
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'suppId', s.suppId,
+          'suppItemId', si.suppItemId,
+          'suppName', s.suppName,
+          'suppItemPrice', si.suppItemPrice,
+          'suppItemCreatedBy', si.suppItemCreatedBy
+        )
       )
-    )
-    FROM SupplierItems si
-    LEFT JOIN Suppliers s ON s.suppId = si.suppId
-    WHERE si.itemId = poi.itemId
+      FROM SupplierItems si
+      INNER JOIN Suppliers s ON s.suppId = si.suppId
+      WHERE si.itemId = poi.itemId AND si.suppItemStatus != 'deleted'
+    ), JSON_ARRAY()
   ) AS suppliers
 FROM PurchaseOrderItems poi
 LEFT JOIN Items i ON i.itemId = poi.itemId ${whereSQL} `;
