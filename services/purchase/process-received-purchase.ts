@@ -17,6 +17,8 @@ import {
 import { SupplierItem } from "@/types/supplier";
 import { handleUpdateItemPrice } from "../items/update-items";
 import { ItemInterface } from "@/types/items";
+import { findPOItemsSupplierById } from "../purchaseOrderServices";
+import { findSupplierById } from "../supplier/get-supplier";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
@@ -85,7 +87,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
               inventoryItemReferenceId: item.itemId,
             },
           });
-
+          const findSupplier = await findSupplierById(item.suppId ?? 0);
           return {
             inventoryId: warehouseInv[0].inventoryId,
             inventoryItemId: inventoryItem.data[0]?.inventoryItemId ?? 0, // fallback if not found
@@ -93,7 +95,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
             itemMovementReferenceId: data.poId ?? 0,
             itemMovementReference: "po",
             itemMovementQuantity: Number(item.poItemReceivedQty),
-            itemMovementRemarks: "Received from supplier",
+            itemMovementRemarks: `Received from supplier ${findSupplier[0]?.suppName}`,
           };
         })
       );

@@ -62,7 +62,7 @@ export const selectSupplier = async ({
     params.push(`%${search}%`, `%${search}%`);
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows;
+  return rows as Supplier[];
 };
 
 export const insertSupplierItem = async ({

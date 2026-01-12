@@ -8,3 +8,12 @@ export async function getSupplierBySearch(search: string) {
     throw e;
   }
 }
+
+export async function findSupplierById(id: number) {
+  try {
+    const data = await selectSupplier({ keyFields: { suppId: id } });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
