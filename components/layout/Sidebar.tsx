@@ -129,6 +129,7 @@ const sideMenu = [
           "accounting",
           "staff",
           "owner",
+          "purchaser",
         ],
       },
       {
@@ -142,6 +143,7 @@ const sideMenu = [
           "accounting",
           "staff",
           "owner",
+          "purchaser",
         ],
       },
     ],
