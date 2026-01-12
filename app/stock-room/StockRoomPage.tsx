@@ -78,7 +78,7 @@ const StockRoomPage = () => {
                 <Button
                   color="secondary"
                   size="sm"
-                  icon={<ArrowLeft className="w-4 h-4" />}
+                  icon={ArrowLeft}
                   label="Back"
                   onClick={() => {
                     setSelectedStockRoom(null);
@@ -101,7 +101,7 @@ const StockRoomPage = () => {
                     viewSelection === "inventory" ? "primary" : "secondary"
                   }
                   className="text-xs font-semibold"
-                  icon={<Package size={16} />}
+                  icon={Package}
                 />
               </div>
               <div>
@@ -116,7 +116,7 @@ const StockRoomPage = () => {
                   size="sm"
                   label="Purchaser"
                   className="text-xs font-semibold"
-                  icon={<Package2 size={16} />}
+                  icon={Package2}
                 />
               </div>
               <div>
@@ -129,7 +129,7 @@ const StockRoomPage = () => {
                   size="sm"
                   label="Store"
                   className="text-xs font-semibold"
-                  icon={<FileChartColumn size={16} />}
+                  icon={FileChartColumn}
                 />
               </div>
             </div>
@@ -153,7 +153,7 @@ const StockRoomPage = () => {
                 <Button
                   size="sm"
                   label="Create Stock Room"
-                  icon={<Plus className="w-4 h-4 sm:h-8 sm:w-8" />}
+                  icon={Plus}
                   onClick={() => {
                     setShowAdd(true);
                   }}

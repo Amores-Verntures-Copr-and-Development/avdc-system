@@ -253,7 +253,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       : "secondary"
                                   }
                                   label="All"
-                                  icon={<Edit size={15} />}
+                                  icon={Edit}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
                               </div>
@@ -276,7 +276,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       : "secondary"
                                   }
                                   label="Store"
-                                  icon={<Edit size={15} />}
+                                  icon={Edit}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
                               </div>
@@ -297,7 +297,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   }}
                                   color="secondary"
                                   label="Edit"
-                                  icon={<Edit size={15} />}
+                                  icon={Edit}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
                                 <Button
@@ -310,10 +310,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   color="secondary"
                                   label="PDF"
                                   icon={
-                                    <FileText
-                                      size={15}
-                                      className="text-gray-700"
-                                    />
+                                    FileText
+                                    
                                   }
                                   className="font-semibold text-gray-700 text-xs"
                                 />
@@ -331,7 +329,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     }}
                                     color="success"
                                     label="Sent"
-                                    icon={<Check size={15} />}
+                                    icon={Check}
                                     className="font-semibold"
                                   />
                                 ) : (
@@ -349,10 +347,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     color="secondary"
                                     label="Send"
                                     icon={
-                                      <Send
-                                        size={15}
-                                        className="text-primary-1"
-                                      />
+                                      Send
                                     }
                                     className="font-semibold"
                                   />
@@ -464,7 +459,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     }}
                                     color="secondary"
                                     label="Edit"
-                                    icon={<Edit size={15} />}
+                                    icon={Edit}
                                     className="font-semibold text-gray-700 text-xs"
                                   />
                                 </div>
@@ -480,10 +475,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     color="secondary"
                                     label="PDF"
                                     icon={
-                                      <FileText
-                                        size={15}
-                                        className="text-gray-700"
-                                      />
+                                      FileText
                                     }
                                     className="font-semibold text-gray-700 text-xs"
                                   />
@@ -579,7 +571,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                   setShowROPDF("po");
                 }}
                 label="PDF"
-                icon={<FileText size={15} className="text-gray-700" />}
+                icon={FileText}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
@@ -591,7 +583,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                     handleSendToSupliers(data);
                   }}
                   label="Send to Suppliers"
-                  icon={<Send size={15} />}
+                  icon={Send}
                   className="font-semibold text-xs px-2 py-2"
                 />
               </div>

@@ -7,16 +7,27 @@ import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import React from "react";
+import { Download, File, FileText, Printer } from "lucide-react";
+import React, { useState } from "react";
 import useSWR from "swr";
 
 interface SalesReportModalProps {
   apiUrl: string;
+  showReportType: "Customer" | "Sales" | null;
 }
 
-const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
-  const debounceApi = useDebounce(apiUrl, 500);
-
+const SalesReportModal = ({
+  apiUrl,
+  showReportType,
+}: SalesReportModalProps) => {
+  const parsedUrl = new URL(apiUrl, window.location.origin);
+  const from = parsedUrl.searchParams.get("from") || "";
+  const to = parsedUrl.searchParams.get("to") || "";
+  const [includeSaleItems, setIncludeSaleItems] = useState(true);
+  const debounceApi = useDebounce(
+    includeSaleItems ? `${apiUrl}&includeSaleItems=true` : `${apiUrl}`,
+    500
+  );
   const { data: response, isLoading } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     apiUrl ? debounceApi : null,
     fetcher
@@ -63,11 +74,17 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
     },
     { from: null, to: null }
   );
-
+  console.log({ from, to, dateSummary });
   return (
-    <div className="overflow-auto-y p-4">
+    <div className="min-h-0 overflow-auto-y p-4">
       <div className="max-w-5xl mx-auto space-y-4">
-        {/* Report Header */}
+        {/* Report Header */}{" "}
+        <Toggle
+          initial={includeSaleItems}
+          label="Show sale items"
+          sizes="xs"
+          onToggle={(state) => setIncludeSaleItems(state)}
+        />
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex justify-between items-start mb-6">
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">
@@ -76,10 +93,28 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
             <div className="flex flex-col gap-2 items-end">
               <div className="flex items-center gap-2">
                 <div>
-                  <Button label="Print" color="outline" size="sm" />
+                  <Button
+                    label="Print"
+                    color="outline"
+                    size="sm"
+                    icon={Printer}
+                  />
                 </div>
                 <div>
-                  <Button label="Download PDF" color="outline" size="sm" />
+                  <Button
+                    label="Download PDF"
+                    color="outline"
+                    size="sm"
+                    icon={FileText}
+                  />
+                </div>
+                <div>
+                  <Button
+                    icon={Download}
+                    label="Export"
+                    color="outline"
+                    size="sm"
+                  />
                 </div>
               </div>
               <div className="text-right">
@@ -97,13 +132,17 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
             <div>
               <div className="text-xs text-gray-500 mb-1">From</div>
               <div className="text-sm font-medium text-gray-900">
-                {formatDateToWords(dateSummary.from || "")}
+                {formatDateToWords(
+                  formatDateToWords(from || dateSummary?.from || "")
+                )}
               </div>
             </div>
             <div>
               <div className="text-xs text-gray-500 mb-1">To</div>
               <div className="text-sm font-medium text-gray-900">
-                {formatDateToWords(dateSummary.to || "")}
+                {formatDateToWords(
+                  formatDateToWords(to || dateSummary?.to || "")
+                )}
               </div>
             </div>
             <div>
@@ -114,7 +153,6 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
             </div>
           </div>
         </div>
-
         {/* Sales Table */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h2 className="font-semibold text-gray-900 mb-4">
@@ -130,6 +168,11 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
                   <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
                     Customer
                   </th>
+                  {includeSaleItems && (
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+                      Items
+                    </th>
+                  )}
                   <th className="text-right text-xs font-medium text-gray-500 uppercase pb-3">
                     Subtotal
                   </th>
@@ -161,7 +204,22 @@ const SalesReportModal = ({ apiUrl }: SalesReportModalProps) => {
                     <td className="py-2 text-sm text-gray-700">
                       {sale.customerName || "Walk-in"}
                     </td>
-                    <td className="py-2 text-right text-sm text-gray-700">
+                    {includeSaleItems && (
+                      <td className="py-2 text-xs text-gray-700">
+                        {sale.saleItems && sale.saleItems.length > 0 ? (
+                          <>
+                            {sale.saleItems.map((item, i) => (
+                              <div key={i} className="truncate">
+                                {item.salesItemQuantity} x {item.saleItemName}
+                              </div>
+                            ))}
+                          </>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    )}
+                    <td className="py-2 text-right text-xs text-gray-700">
                       {formatPeso(sale.salesSubTotal)}
                     </td>
                     <td className="py-2 text-center text-sm text-gray-700">

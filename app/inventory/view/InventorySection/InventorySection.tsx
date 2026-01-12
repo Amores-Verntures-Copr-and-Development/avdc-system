@@ -745,7 +745,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               <div>
                 <Button
                   isRounded={false}
-                  icon={<Clipboard className="w-3 h-3 xl:w-5 xl:h-5" />}
+                  icon={Clipboard}
                   label="Inventory Report"
                   onClick={() => {
                     setShowCreateInventoryReport(true);
@@ -758,7 +758,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               <div>
                 <Button
                   isRounded={false}
-                  icon={<Import className="w-3 h-3 sm:w-5 xl:h-5" />}
+                  icon={Import}
                   label="Import Item"
                   onClick={() => {
                     setShowImportModal(true);
@@ -778,7 +778,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div>
                   <Button
                     isRounded={false}
-                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Store}
                     label="Request Stock"
                     onClick={() => {
                       setShowCreateRequestModal(true);
@@ -795,7 +795,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     <Button
                       isRounded={false}
                       icon={
-                        <CheckCircleIcon className="w-3 h-3 xl:w-5 xl:h-5" />
+                        CheckCircleIcon
                       }
                       label="In Stock"
                       onClick={() => {
@@ -809,7 +809,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   <div>
                     <Button
                       isRounded={false}
-                      icon={<PackageX className="w-3 h-3 xl:w-5 xl:h-5" />}
+                      icon={PackageX}
                       label="Out Stock"
                       onClick={() => {
                         // Check if ANY selected item has NO stock (quantity = 0)
@@ -840,7 +840,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div className="">
                   <Button
                     isRounded={false}
-                    icon={<Package className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Package}
                     label="Add Item to supplier"
                     onClick={() => {
                       setShowAddItemSupplierModal(true);
@@ -858,7 +858,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div className="">
                   <Button
                     isRounded={false}
-                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Store}
                     label="Add Item to store"
                     onClick={() => {
                       setShowAddItemModal(true);
@@ -876,7 +876,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div className="">
                   <Button
                     isRounded={false}
-                    icon={<Store className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Store}
                     label="Add Item to product"
                     onClick={() => {
                       setShowAddProductModal(true);
@@ -892,7 +892,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div>
                   <Button
                     isRounded={false}
-                    icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Plus}
                     label="Add Item"
                     onClick={() => {
                       //add for stock room
@@ -906,7 +906,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <div>
                   <Button
                     isRounded={false}
-                    icon={<Plus className="w-3 h-3 xl:w-5 xl:h-5" />}
+                    icon={Plus}
                     // add for store item
                     label="Add Item"
                     onClick={() => {

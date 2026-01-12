@@ -207,7 +207,7 @@ const StoreRequisitionPage = () => {
                   {selectedtedRows && selectedtedRows.length > 0 ? (
                     <Button
                       size="sm"
-                      icon={<Trash className="w-4 h-4 xl:w-4 xl:h-4" />}
+                      icon={Trash}
                       onClick={function (): void {
                         throw new Error("Function not implemented.");
                       }}
@@ -219,7 +219,7 @@ const StoreRequisitionPage = () => {
                     <>
                       <Button
                         size="sm"
-                        icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={Plus}
                         onClick={function (): void {
                           setIsShowCreateRequest(true);
                         }}

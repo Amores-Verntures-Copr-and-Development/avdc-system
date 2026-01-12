@@ -138,7 +138,7 @@ const ViewAppliedDiscountModal = ({
       <div className="flex mt-auto">
         <Button
           label="Add Discount"
-          icon={<Plus className="w-4 h-4" />}
+          icon={Plus}
           size="sm"
           onClick={handleAdd}
           disabled={!selected}

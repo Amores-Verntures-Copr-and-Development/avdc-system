@@ -56,12 +56,14 @@ export const getSales = async ({
   storeName,
   from,
   to,
+  includeSaleItems,
 }: {
   keyFields?: Partial<Sales>;
   search?: string;
   storeName?: string;
   from?: string;
   to?: string;
+  includeSaleItems?: boolean;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -70,6 +72,7 @@ export const getSales = async ({
       storeName,
       from,
       to,
+      includeSaleItems,
     });
     return {
       success: true,

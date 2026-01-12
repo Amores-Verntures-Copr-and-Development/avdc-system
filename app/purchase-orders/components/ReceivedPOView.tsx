@@ -427,7 +427,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 size="xs"
                                 color="secondary"
                                 label="Edit"
-                                icon={<Edit size={15} />}
+                                icon={Edit}
                                 className="font-semibold text-gray-700 text-xs"
                                 onClick={function (): void {
                                   throw new Error("Function not implemented.");
@@ -441,10 +441,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 color="secondary"
                                 label="PDF"
                                 icon={
-                                  <Download
-                                    size={15}
-                                    className="text-gray-700"
-                                  />
+                                  Download
                                 }
                                 className="font-semibold text-gray-700 text-xs"
                                 onClick={function (): void {
@@ -486,7 +483,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       }}
                                       color="primary"
                                       label="Receive PO"
-                                      icon={<Package size={15} />}
+                                      icon={Package}
                                       className="font-semibold"
                                     />
                                   </div>
@@ -507,7 +504,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       disabled={true}
                                       color="success"
                                       label="Delivered"
-                                      icon={<Check size={15} />}
+                                      icon={Check}
                                       className="font-semibold"
                                     />
                                   </div>
@@ -528,10 +525,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   label="Received"
                                   disabled={true}
                                   icon={
-                                    <PackageCheck
-                                      size={15}
-                                      className="text-black "
-                                    />
+                                    PackageCheck
                                   }
                                   className="font-semibold"
                                 />
@@ -576,7 +570,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     : "secondary"
                                 }
                                 label="All"
-                                icon={<Edit size={15} />}
+                                icon={Edit}
                                 className="font-semibold text-gray-700 text-xs"
                               />
                             </div>
@@ -597,7 +591,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                     : "secondary"
                                 }
                                 label="Store"
-                                icon={<Store size={15} />}
+                                icon={Store}
                                 className="font-semibold text-gray-700 text-xs"
                               />
                             </div>
@@ -628,7 +622,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           size="xs"
                                           onClick={() => setShowAddItem(true)}
                                           label="Add Item"
-                                          icon={<Package size={15} />}
+                                          icon={Package}
                                         />
                                       </div>
                                       {!isAllItemsDelivered && (
@@ -641,7 +635,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                               handleAutoFillAll(supplier.suppId)
                                             }
                                             label="Auto-Fill All"
-                                            icon={<PackageCheck size={15} />}
+                                            icon={PackageCheck}
                                             className="font-semibold text-white text-xs"
                                           />
                                         </div>
@@ -702,7 +696,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       }}
                                       color="success"
                                       label="Deliver to Store"
-                                      icon={<Package size={15} />}
+                                      icon={Package}
                                       className="font-semibold"
                                     />
                                   </div>
@@ -735,7 +729,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   throw new Error("Function not implemented.");
                 }}
                 label="Print"
-                icon={<PrinterIcon size={15} />}
+                icon={PrinterIcon}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
@@ -744,7 +738,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                 color="secondary"
                 size="sm"
                 label={"Download PDF"}
-                icon={<Edit size={15} className="text-gray-700" />}
+                icon={Edit}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>

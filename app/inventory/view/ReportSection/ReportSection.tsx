@@ -70,7 +70,7 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
             <div className="flex gap-4">
               <div>
                 <Button
-                  icon={<Clipboard size={17} />}
+                  icon={Clipboard}
                   label="Inventory Report"
                   onClick={() => {
                     setShowCreateInventoryReport(true);
@@ -82,7 +82,7 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
               </div>
               <div>
                 <Button
-                  icon={<CalendarDays size={17} />}
+                  icon={CalendarDays}
                   label="Daily Report"
                   onClick={() => {
                     setShowCreateDailyReport(true);

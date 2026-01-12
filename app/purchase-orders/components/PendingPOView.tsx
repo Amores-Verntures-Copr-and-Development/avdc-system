@@ -273,7 +273,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
         </span>
         <div>
           <Button
-            icon={<Check size={15} />}
+            icon={Check}
             onClick={handleApprovedPo}
             size="sm"
             label="Approved"

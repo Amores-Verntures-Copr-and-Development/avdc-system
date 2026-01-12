@@ -179,7 +179,7 @@ const columns: Column<DisplaySalesDto>[] = [
   { key: "salesCreatedByName", name: "Created By" },
   {
     key: "salesCreatedAt",
-    name: "Created At",
+    name: "Date",
     selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
   },
 ];
@@ -328,7 +328,7 @@ const adminColumns: Column<DisplaySalesDto>[] = [
   { key: "salesCreatedByName", name: "Created By" },
   {
     key: "salesCreatedAt",
-    name: "Created At",
+    name: "Date",
     selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
   },
 ];
@@ -506,9 +506,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           hasBorder={false}
                           color="outline"
                           label="Export"
-                          icon={
-                            <Download className="w-3.5 h-3.5 font-semibold" />
-                          }
+                          icon={Download}
                           onClick={() => {
                             setShowModal("export");
                           }}
@@ -601,9 +599,9 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       >
         {showModal === "report" ? (
           isReport === "Customer" ? (
-            <SalesReportModal apiUrl={apiUrl} />
+            <SalesReportModal apiUrl={apiUrl} showReportType={isReport} />
           ) : isReport === "Sales" ? (
-            <SalesReportModal apiUrl={apiUrl} />
+            <SalesReportModal apiUrl={apiUrl} showReportType={isReport} />
           ) : (
             "Report"
           )

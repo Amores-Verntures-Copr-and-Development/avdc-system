@@ -108,7 +108,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                 setShowAllItems("status");
               }}
               color="neutral"
-              icon={<PrinterIcon className="w-3 h-3" />}
+              icon={PrinterIcon}
             />
           </div>
           <div>
@@ -120,7 +120,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                 setShowAllItems("status");
               }}
               color="neutral"
-              icon={<Download className="w-3 h-3" />}
+              icon={Download}
             />
           </div>
           <div>
@@ -132,7 +132,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                 setShowAllItems("status");
               }}
               color="neutral"
-              icon={<LogOut className="w-3 h-3" />}
+              icon={LogOut}
             />
           </div>
         </div>
@@ -234,7 +234,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                           console.log("Print request:", reqData.requestNo);
                         }}
                         label="Print"
-                        icon={<PrinterIcon size={14} />}
+                        icon={PrinterIcon}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -246,7 +246,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                           console.log("Download PDF:", reqData.requestNo);
                         }}
                         label="Download PDF"
-                        icon={<FileText size={14} className="text-gray-700" />}
+                        icon={FileText}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>

@@ -104,7 +104,7 @@ const ViewSupplierItemModal = ({
           size="xs"
           isRounded={false}
           color="secondary"
-          icon={<Edit className="w-3 h-3" />}
+          icon={Edit}
           onClick={() => {
             setShowUpdatePrice(true);
           }}
@@ -117,7 +117,7 @@ const ViewSupplierItemModal = ({
             setShowDeleteModal(true);
           }}
           color="danger"
-          icon={<Delete className="w-3 h-3" />}
+          icon={Delete}
         />
       </div>
 

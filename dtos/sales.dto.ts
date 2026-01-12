@@ -25,6 +25,7 @@ export interface DisplaySalesDto extends Sales {
   customerName: string;
   salesCreatedByName: string;
   storeName: string;
+  saleItems: DisplaySalesItems[];
   paymentMethods: SalePaymentMethods[];
   totalItem: number;
   salesDiscounts: SaleDiscountExtends[];
@@ -35,7 +36,9 @@ interface SaleDiscountExtends extends SalesDiscounts, Discounts {}
 export interface DisplaySalesItems
   extends SaleItems,
     Products,
-    ProductVariants {}
+    ProductVariants {
+  saleItemName?: string;
+}
 
 export type CreateSaleItemDto = Pick<
   SaleItems,

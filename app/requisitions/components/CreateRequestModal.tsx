@@ -186,7 +186,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
                     <div>
                       {" "}
                       <Button
-                        icon={<Plus size={18} />}
+                        icon={Plus}
                         size="xs"
                         label="Add Item"
                         className=" text-white font-medium shadow-sm"

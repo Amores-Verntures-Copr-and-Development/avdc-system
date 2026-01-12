@@ -21,6 +21,7 @@ export const selectSales = async ({
   storeName,
   from,
   to,
+  includeSaleItems,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -28,6 +29,7 @@ export const selectSales = async ({
   storeName?: string;
   from?: string;
   to?: string;
+  includeSaleItems?: boolean;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -41,6 +43,31 @@ export const selectSales = async ({
     FROM SalesItems si
     WHERE si.salesId = s.salesId
   ) AS totalItem,
+${
+  includeSaleItems
+    ? `  (SELECT JSON_ARRAYAGG(
+  JSON_OBJECT(
+    'salesItemId', si.salesItemId,
+    'salesItemQuantity', si.salesItemQuantity,
+    'salesItemPrice', si.salesItemPrice,
+    'salesItemSubtotal', si.salesItemSubtotal,
+    'prodVarName', pv.prodVarName,
+    'saleItemName',
+      CASE
+        WHEN pv.prodVarName IS NULL THEN p.prodName
+        WHEN pv.prodVarName LIKE CONCAT('%', p.prodName, '%')
+          THEN pv.prodVarName
+        ELSE CONCAT(p.prodName, ' ', pv.prodVarName)
+      END
+  )
+)
+FROM SalesItems si
+LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+LEFT JOIN Products p ON p.prodId = pv.prodId
+WHERE si.salesId = s.salesId
+) AS saleItems,`
+    : ``
+}
   (
   SELECT JSON_ARRAYAGG(
       JSON_OBJECT(

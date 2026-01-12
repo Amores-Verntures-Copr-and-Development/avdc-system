@@ -104,7 +104,7 @@ const InventoryPage = () => {
                       selectionSection === "inventory" ? "primary" : "secondary"
                     }
                     label="Inventory"
-                    icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
+                    icon={Package }
                   />
                 </div>
                 <div>
@@ -118,7 +118,7 @@ const InventoryPage = () => {
                       selectionSection === "movement" ? "primary" : "secondary"
                     }
                     label="Stock Movement"
-                    icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
+                    icon={Package2}
                   />
                 </div>
                 <div>
@@ -132,7 +132,7 @@ const InventoryPage = () => {
                       selectionSection === "report" ? "primary" : "secondary"
                     }
                     label="Report"
-                    icon={<FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />}
+                    icon={FileChartColumn}
                   />
                 </div>
               </div>
@@ -170,7 +170,7 @@ const InventoryPage = () => {
                   <Button
                     label="Back"
                     size="sm"
-                    icon={<ArrowLeft size={20} />}
+                    icon={ArrowLeft}
                     onClick={() => {
                       setSelectedInventory(null);
                       console.log("Clicked");
@@ -194,7 +194,7 @@ const InventoryPage = () => {
                           : "secondary"
                       }
                       label="Inventory"
-                      icon={<Package className="h-3 w-3 md:w-5 md:h-5" />}
+                      icon={Package}
                     />
                   </div>
                   <div>
@@ -210,7 +210,7 @@ const InventoryPage = () => {
                           : "secondary"
                       }
                       label="Stock Movement"
-                      icon={<Package2 className="h-3 w-3 md:w-5 md:h-5" />}
+                      icon={Package2}
                     />
                   </div>
                   <div>
@@ -225,7 +225,7 @@ const InventoryPage = () => {
                       }
                       label="Report"
                       icon={
-                        <FileChartColumn className="h-3 w-3 md:w-5 md:h-5" />
+                        FileChartColumn
                       }
                     />
                   </div>

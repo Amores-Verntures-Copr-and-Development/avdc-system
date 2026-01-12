@@ -136,7 +136,24 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
             itemId: item.itemId,
             suppItemCreatedBy: data.updatedBy,
           })) ?? [];
-
+      const updatePoItemUnitPrice: Partial<PurchaseOrderItems>[] =
+        data.poItems
+          ?.filter(
+            (item) =>
+              item.supplierPrice !== undefined &&
+              Number(item.supplierPrice) !== 0
+          )
+          .map((item) => ({
+            poItemId: item.poItemId,
+            unitPrice: item.supplierPrice,
+          })) ?? [];
+      if (updatePoItemUnitPrice && updatePoItemUnitPrice.length > 0) {
+        await updatePurchaseOrderItems({
+          connection,
+          keyFields: ["poItemId"],
+          updates: updatePoItemUnitPrice,
+        });
+      }
       if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
         await handleUpdateSupplierItemPrice({
           connection,

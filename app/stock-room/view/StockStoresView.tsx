@@ -73,7 +73,7 @@ const StockStoresView = ({ data, user }: StockStoresViewProps) => {
           <div>
             <div>
               <Button
-                icon={<Plus size={20} />}
+                icon={Plus}
                 size="xs"
                 label="Add Store"
                 onClick={() => {

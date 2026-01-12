@@ -59,13 +59,13 @@ const PaymentSuccessModal = ({
             onNewSale();
           }}
           label="New Sale"
-          icon={<Receipt className="w-4 h-4 mr-2" />}
+          icon={Receipt}
         />
         <Button
           className="flex-1 h-12"
           onClick={() => {}}
           label="   Print Receipt"
-          icon={<Printer className="w-4 h-4 mr-2" />}
+          icon={Printer}
         />
       </div>
     </div>

@@ -448,7 +448,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           <Button
             label="Back"
             size="xs"
-            icon={<ChevronLeft className="w-3 h-3 xl:w-5 xl:h-5" />}
+            icon={ChevronLeft}
             onClick={() => {
               if (onBack) {
                 onBack();
@@ -497,7 +497,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 {selectedReq?.requestStatus === "delivered" && (
                   <div>
                     <Button
-                      icon={<Plus size={15} />}
+                      icon={Plus}
                       onClick={() => {
                         //Perform add item from inventory from deliver
                       }}
@@ -514,7 +514,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 ) && (
                   <div>
                     <Button
-                      icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      icon={Plus}
                       onClick={() => {
                         setShowAddItem(true);
                       }}
@@ -561,7 +561,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
               <>
                 <div>
                   <Button
-                    icon={<FileText className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    icon={FileText}
                     onClick={() => {
                       handleDownloadPDF();
                       setShowROPDF(true);
@@ -585,7 +585,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   <>
                     <div>
                       <Button
-                        icon={<X className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={X}
                         onClick={() => {
                           setIsSelectingAddItemPO(false);
                         }}
@@ -597,7 +597,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     </div>
                     <div>
                       <Button
-                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={Pencil}
                         onClick={() => {
                           setShowAddPOItem(true);
                         }}
@@ -612,7 +612,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   <>
                     <div>
                       <Button
-                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={Pencil}
                         onClick={handleReceivedRO}
                         size="sm"
                         label="Edit"
@@ -626,7 +626,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     ) && (
                       <div>
                         <Button
-                          icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                          icon={Plus}
                           onClick={() => {
                             setShowAddItem(true);
                           }}
@@ -645,7 +645,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   ) && (
                     <div>
                       <Button
-                        icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={Pencil}
                         onClick={() => {
                           setIsSelectingAddItemPO(true);
                         }}
@@ -662,7 +662,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 {selectedReq?.requestStatus === "received" && (
                   <div>
                     <Button
-                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      icon={CheckLine}
                       onClick={handleCompleteRO}
                       size="sm"
                       label="Complete Request"
@@ -673,7 +673,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 {selectedReq?.requestStatus === "delivered" && (
                   <div>
                     <Button
-                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      icon={CheckLine}
                       onClick={handleFillUpAll}
                       size="sm"
                       label="Fill up received"
@@ -685,7 +685,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 {selectedReq?.requestStatus === "delivered" && (
                   <div>
                     <Button
-                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      icon={CheckLine}
                       onClick={() => {
                         const hasNoQuantityReceived = requestItemData.some(
                           (item) =>

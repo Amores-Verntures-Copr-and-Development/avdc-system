@@ -96,7 +96,7 @@ const CategoryPage = () => {
             <>
               <div>
                 <Button
-                  icon={<Plus size={17} />}
+                  icon={Plus}
                   label="Add Category"
                   onClick={() => {
                     setShowAddCategoryModal(true);

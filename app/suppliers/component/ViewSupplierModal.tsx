@@ -133,7 +133,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               <div>
                 <Button
                   size="sm"
-                  icon={<Trash2 size={20} />}
+                  icon={Trash2}
                   label="Remove Item"
                   onClick={function (): void {
                     setShowDeleteModal(true);
@@ -145,7 +145,7 @@ const ViewSupplierModal: React.FC<ViewSupplierModalProps> = ({
               <div>
                 <Button
                   size="sm"
-                  icon={<PackagePlusIcon size={20} />}
+                  icon={PackagePlusIcon}
                   label="Add Item"
                   onClick={function (): void {
                     setShowAddItem(true);

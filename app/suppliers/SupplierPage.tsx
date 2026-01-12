@@ -94,7 +94,7 @@ const SupplierPage = () => {
                 <div>
                   <div>
                     <Button
-                      icon={<Package size={17} />}
+                      icon={Package}
                       label="Create Supplier"
                       onClick={() => {
                         setShowCreateSupplier(true);

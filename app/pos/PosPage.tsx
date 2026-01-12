@@ -507,7 +507,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                   <Button
                     label="Back"
                     size="sm"
-                    icon={<ArrowLeft className="w-3 h-3" />}
+                    icon={ArrowLeft}
                     onClick={() => setSelectedProduct(null)}
                   />
                 </div>
@@ -655,7 +655,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </div>
               <div>
                 <Button
-                  icon={<Tag className="w-3 h-3 xl:h-4 xl:w-4" />}
+                  icon={Tag }
                   size="xs"
                   label="Discount"
                   onClick={() => {

@@ -252,7 +252,7 @@ const ShowAllIItems = ({
         </h3>
         <div>
           <Button
-            icon={<LogOut className="w-3 h-3 2xl:w-3 2xl:h-3" />}
+            icon={LogOut}
             color="neutral"
             size="xs"
             label="Back"
@@ -387,7 +387,7 @@ const ShowAllIItems = ({
         {data?.poStatus === "pending" && (
           <div>
             <Button
-              icon={<Check size={15} />}
+              icon={Check}
               onClick={handleApprovedPo}
               size="sm"
               label="Approved"

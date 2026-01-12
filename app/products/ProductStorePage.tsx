@@ -317,7 +317,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                       className="text-sm"
                       label="Create Category"
                       size="xs"
-                      icon={<Layers size={20} />}
+                      icon={Layers}
                       onClick={() => {
                         setShowAddProductModal(true);
                       }}
@@ -330,7 +330,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                       className="text-sm"
                       label="Add Product"
                       size="xs"
-                      icon={<Plus size={20} />}
+                      icon={Plus}
                       onClick={() => {
                         setShowAddProductModal(true);
                       }}

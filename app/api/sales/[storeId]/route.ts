@@ -16,6 +16,8 @@ export async function GET(
     const search = searchParams.get("search") || "";
     // const limit = searchParams.get("limit") || "";
     // const page = searchParams.get("page") || "";
+    const includeSaleItems = searchParams.get("includeSaleItems") || "";
+    console.log("includeSaleItems ", includeSaleItems);
     const res = await getSalesByStoreId({ storeId, search });
 
     if (!res.success) {

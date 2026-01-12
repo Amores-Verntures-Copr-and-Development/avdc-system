@@ -94,7 +94,7 @@ const CustomerPage = () => {
                 <Button
                   label="Add Customer"
                   size={"sm"}
-                  icon={<PlusIcon className="w-4 h-4" />}
+                  icon={PlusIcon}
                   onClick={() => {
                     setShowAddCustomer(true);
                   }}

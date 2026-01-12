@@ -53,7 +53,7 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
           <div>
             {" "}
             <Button
-              icon={<Plus className="w-4 h-4 lg:h-6 lg:w-6" />}
+              icon={Plus}
               size="xs"
               label="Add Store"
             />

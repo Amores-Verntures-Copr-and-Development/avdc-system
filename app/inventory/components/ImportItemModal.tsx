@@ -82,7 +82,7 @@ const ImportItemModal = ({
         <div className="flex">
           <div>
             <Button
-              icon={<FileText className="w-3 h-3 sm:w-4 sm:h-4" />}
+              icon={FileText}
               label="Download Template"
               onClick={handleDownloadTemplate}
               size="xs"
@@ -104,7 +104,7 @@ const ImportItemModal = ({
           </div>
           <div>
             <Button
-              icon={<Import className="w-3 h-3 sm:w-4 sm:h-4" />}
+              icon={Import}
               label="Select file"
               onClick={triggerFileInput}
               size="xs"

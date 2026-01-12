@@ -530,7 +530,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           console.log("Print request:", reqData.requestNo);
                         }}
                         label="Print"
-                        icon={<PrinterIcon size={14} />}
+                        icon={PrinterIcon}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -542,7 +542,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           console.log("Download PDF:", reqData.requestNo);
                         }}
                         label="Download PDF"
-                        icon={<FileText size={14} className="text-gray-700" />}
+                        icon={FileText}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -556,7 +556,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           setSelectedRequestNo(reqData);
                         }}
                         label="Add Item in Request"
-                        icon={<Package size={14} className="text-white-700" />}
+                        icon={Package}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -569,7 +569,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           setSelectedRequestNo(reqData);
                         }}
                         label="Add Item from PO"
-                        icon={<Package size={14} className="text-white-700" />}
+                        icon={Package}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -584,7 +584,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                             ? "Processing..."
                             : `Fulfill ${reqData.requestNo}`
                         }
-                        icon={<CheckCircle size={14} />}
+                        icon={CheckCircle}
                         className="font-semibold text-xs px-2 py-2"
                         disabled={
                           isProcessing === reqData.requestNo ||
@@ -619,7 +619,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                             ? "Processing..."
                             : `Mark as Delivered`
                         }
-                        icon={<Truck size={14} />}
+                        icon={Truck}
                         className="font-semibold text-xs px-2 py-2"
                         disabled={
                           isProcessing === reqData.requestNo ||
@@ -653,7 +653,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 throw new Error("Function not implemented.");
               }}
               label="PDF"
-              icon={<Edit size={15} className="text-gray-700" />}
+              icon={Edit}
               className="font-semibold text-gray-700 text-xs px-2 py-2"
             />
           </div>
@@ -668,7 +668,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 disabled={data.every(
                   (req) => req.requestStatus !== "completed"
                 )}
-                icon={<PackageCheckIcon size={15} />}
+                icon={PackageCheckIcon}
                 className="font-semibold  text-xs px-2 py-2"
               />
             </div>

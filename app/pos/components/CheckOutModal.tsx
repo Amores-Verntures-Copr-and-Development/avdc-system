@@ -337,7 +337,7 @@ const CheckOutModal = ({
                   size={"md"}
                   className="w-full"
                   onClick={handleAddPayment}
-                  icon={<Plus className="w-4 h-4" />}
+                  icon={Plus}
                   disabled={
                     selectedMethod?.payMetId === null ||
                     selectedMethod?.payMetId === 0
@@ -412,7 +412,7 @@ const CheckOutModal = ({
               size={"md"}
               className="w-full"
               onClick={handleCompleteSale}
-              icon={<Check className="w-4 h-4" />}
+              icon={Check}
               disabled={!canComplete}
             />
           </div>

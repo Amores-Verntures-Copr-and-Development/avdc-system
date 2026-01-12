@@ -177,7 +177,7 @@ const SelectedSupplierPage = ({
         <div>
           <Button
             size="xs"
-            icon={<LogOut />}
+            icon={LogOut}
             label="Back"
             color="secondary"
             onClick={onBack}
@@ -223,7 +223,7 @@ const SelectedSupplierPage = ({
                 <div>
                   <Button
                     size="xs"
-                    icon={<Trash2 size={20} />}
+                    icon={Trash2}
                     label="Remove Item"
                     onClick={function (): void {
                       setShowDeleteModal("rows");
@@ -235,7 +235,7 @@ const SelectedSupplierPage = ({
                 <div>
                   <Button
                     size="xs"
-                    icon={<PackagePlusIcon size={20} />}
+                    icon={PackagePlusIcon}
                     label="Add Item"
                     onClick={function (): void {
                       setShowAddItem(true);

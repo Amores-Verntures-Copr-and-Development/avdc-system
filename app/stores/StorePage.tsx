@@ -78,7 +78,7 @@ const StorePage = () => {
             isAdmin && (
               <div>
                 <Button
-                  icon={<Plus size={16} />}
+                  icon={Plus}
                   label="Add Store"
                   className="font-semibold"
                   size="sm"

@@ -110,7 +110,7 @@ const ProductVariantPage = ({
         <div>
           <Button
             label="Back"
-            icon={<ArrowLeft className="w-5 h-5" />}
+            icon={ArrowLeft}
             size="sm"
             color="secondary"
             onClick={onBack}
@@ -154,7 +154,7 @@ const ProductVariantPage = ({
                 <Button
                   size="sm"
                   label="Add Variants"
-                  icon={<Plus className="w-5 h-5" />}
+                  icon={Plus}
                   onClick={() => {
                     setShowAddModal(true);
                   }}

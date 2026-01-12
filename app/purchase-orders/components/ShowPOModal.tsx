@@ -315,7 +315,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             size="sm"
             onClick={onClose}
             label="Back"
-            icon={<ArrowLeft className="w-4 h-4" />}
+            icon={ArrowLeft}
             color="neutral"
             isRounded={false}
             hasBorder={true}

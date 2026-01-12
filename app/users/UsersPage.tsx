@@ -90,7 +90,7 @@ const UserPage = () => {
           renderTopActions={
             <div>
               <Button
-                icon={<Plus size={16} />}
+                icon={Plus}
                 label="Add User"
                 className="font-semibold"
                 size="sm"

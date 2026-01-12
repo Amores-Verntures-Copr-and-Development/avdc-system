@@ -134,7 +134,7 @@ const AdminRequisitionPage = () => {
                   <div>
                     {" "}
                     <Button
-                      icon={<FileText size={18} />}
+                      icon={FileText}
                       label="View Request"
                       onClick={() => {
                         // setShowCreatePO(true);
@@ -148,7 +148,7 @@ const AdminRequisitionPage = () => {
                   ) && (
                     <div>
                       <Button
-                        icon={<FileText size={18} />}
+                        icon={FileText}
                         label="Convert to PO"
                         onClick={() => {
                           setShowCreatePO(true);

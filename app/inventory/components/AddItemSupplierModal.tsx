@@ -119,7 +119,7 @@ const AddItemSupplierModal = ({
       <div className="flex justify-end gap-2 border-t p-3 border-gray-300">
         <div>
           <Button
-            icon={<X size={20} />}
+            icon={X}
             label="Cancel"
             color="secondary"
             size="xs"
@@ -130,7 +130,7 @@ const AddItemSupplierModal = ({
         <div>
           {" "}
           <Button
-            icon={<Plus size={20} />}
+            icon={Plus}
             label="Assign Item"
             size="xs"
             className="font-semibold"

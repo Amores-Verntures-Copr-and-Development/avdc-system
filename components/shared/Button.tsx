@@ -1,5 +1,5 @@
 import React from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, LucideIcon } from "lucide-react";
 
 // Define types for better type safety
 type ButtonSize = "xs" | "sm" | "md" | "lg";
@@ -21,7 +21,7 @@ interface ButtonProps {
   onClick?: () => void;
   loading?: boolean;
   disabled?: boolean;
-  icon?: React.ReactNode;
+  icon?: LucideIcon;
   className?: string;
   size?: ButtonSize;
   color?: ButtonColor;
@@ -34,6 +34,12 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: "text-[9px] md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 xl:px-3 xl:py-1.5 ",
   md: "text-base px-4 py-2",
   lg: "text-lg px-5 py-2.5",
+};
+const iconSizes: Record<ButtonSize, number> = {
+  xs: 12,
+  sm: 14,
+  md: 18,
+  lg: 22,
 };
 
 const colorClasses: Record<
@@ -140,14 +146,14 @@ const Button: React.FC<ButtonProps> = ({
   className = "",
   size = "md",
   color = "primary",
-  icon,
+  icon: Icon,
   isFocus = false,
   isRounded = true,
   hasBorder = false,
 }) => {
   const isDisabled = loading || disabled;
   const colors = colorClasses[color];
-
+  const iconSize = iconSizes[size];
   return (
     <button
       onClick={(e) => {
@@ -188,13 +194,13 @@ const Button: React.FC<ButtonProps> = ({
             <Loader2 size={18} className="animate-spin" />
           </span>
           <span className="invisible flex items-center gap-2">
-            {icon && <span>{icon}</span>}
+            {Icon && <Icon size={iconSize} />}
             <span className="hidden sm:inline">{label}</span>
           </span>
         </>
       ) : (
         <>
-          {icon && <span>{icon}</span>}
+          {Icon && <Icon size={iconSize} />}
           <span className="inline">{label}</span>
         </>
       )}

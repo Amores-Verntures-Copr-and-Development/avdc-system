@@ -10,12 +10,15 @@ export async function GET(_request: Request) {
     const store = searchParams.get("store") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
+    const includeSaleItems = searchParams.get("includeSaleItems") || "";
+    console.log("includeSaleItems ", includeSaleItems);
     const res = await getSales({
       search,
       keyFields: {},
       storeName: store,
       from,
       to,
+      includeSaleItems: includeSaleItems === "true",
     });
 
     if (!res.success) {

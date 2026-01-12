@@ -185,7 +185,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               onClick={onCancel}
               color="secondary"
               size="sm"
-              icon={<XCircle className="w-4 h-4" />}
+              icon={XCircle}
             />
           </div>
 
@@ -195,7 +195,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               onClick={handleFillUpAll}
               color="success"
               size="sm"
-              icon={<ClipboardCheck className="w-4 h-4" />}
+              icon={ClipboardCheck}
             />
           </div>
 
@@ -204,7 +204,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               label="Submit"
               onClick={handleSubmit}
               size="sm"
-              icon={<Send className="w-4 h-4" />}
+              icon={Send}
             />
           </div>
         </div>
