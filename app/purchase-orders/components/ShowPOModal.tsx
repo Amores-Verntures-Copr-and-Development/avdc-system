@@ -15,11 +15,12 @@ import CompletePOView from "./CompletePOView";
 import { Request } from "@/types/request";
 
 import { UserAuth } from "@/hooks/useSession";
-import ShowAllIItems from "./ShowAllIItems";
+
 import ShowPOByRequest from "./ShowPOByRequest";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/shared/Button";
 import { ArrowLeft } from "lucide-react";
+import ShowAllIItems from "./ShowAllIItems";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -306,6 +307,43 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
+  const handleRemoveItem = async (
+    dataItem: Partial<PurchaseOrderItems>,
+    poId: number
+  ) => {
+    if (!dataItem.poItemId || !poId) return false;
+    const removePOItem: Partial<PurchaseOrderItems>[] = [
+      {
+        poItemId: dataItem.poItemId,
+        poItemStatus: "removed",
+      },
+    ];
+    try {
+      const result = await fetch(
+        `/api/purchase-order/po-items/${poId}/${dataItem.poItemId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(removePOItem),
+        }
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      mutateInventory();
+      mutate();
+      toast.success(res.message);
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to remove PO Item.");
+      return false;
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center">
@@ -426,6 +464,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           user={user}
           onAddItem={handleAddItemPo}
           onUpdateItem={handleUpdatePOItem}
+          onRemoveItem={handleRemoveItem}
         />
       ) : (
         <ShowPOByRequest setShowAllItems={setShowPage} data={data} />

@@ -16,6 +16,7 @@ import { processDeliverItemToStore } from "@/services/purchase/process-deliver-p
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
 import { createPurchaseOrderItem } from "@/services/purchase/purchase-items/create-purchase-items";
+import { deletePurchaseOrderItems } from "@/services/purchase/purchase-items/delete-purchase-items";
 import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
 import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
@@ -338,6 +339,38 @@ export const getProcurementHistory = async () => {
     };
   } catch (e) {
     console.log("E: ", e);
+    return {
+      success: false,
+      message: "Failed to fetch Procurement history",
+      error: e,
+    };
+  }
+};
+
+export const updatePurchaseOrderItemByPOId = async (
+  poId: number,
+  poItemData: Partial<PurchaseOrderItems>[],
+  controller: "delete" | "update"
+) => {
+  try {
+    console.log({ poItemData, poId });
+    if (controller === "update") {
+      await updatePurchaseOrderItems({
+        updates: [{ ...poItemData, poId }],
+        keyFields: ["poItemId"],
+      });
+    }
+    if (controller === "delete") {
+      await deletePurchaseOrderItems({
+        data: poItemData,
+      });
+    }
+    return {
+      success: true,
+      message: "Procurement history fetched successfully",
+      data: null,
+    };
+  } catch (e) {
     return {
       success: false,
       message: "Failed to fetch Procurement history",

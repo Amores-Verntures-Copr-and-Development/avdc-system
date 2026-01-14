@@ -11,13 +11,14 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { Check, Clock, Edit, LogOut, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Clock, Edit, LogOut, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";
 import IconButton from "@/components/shared/IconButton";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -37,6 +38,10 @@ interface ShowAllIItemsProps {
     data: Partial<PurchaseOrderItems>,
     poId: number
   ) => Promise<boolean>;
+  onRemoveItem?: (
+    data: Partial<PurchaseOrderItems>,
+    poId: number
+  ) => Promise<boolean>;
 }
 
 const ShowAllIItems = ({
@@ -48,6 +53,7 @@ const ShowAllIItems = ({
   isLoading,
   onAddItem,
   onUpdateItem,
+  onRemoveItem,
 }: ShowAllIItemsProps) => {
   const [showAddItem, setShowAddItem] = useState(false);
   const {
@@ -59,6 +65,9 @@ const ShowAllIItems = ({
   }>(`/api/purchase-order/po-items/${data?.poId}`, fetcher);
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>([]);
   const [isEditId, setIsEditId] = useState<number | null>(null);
+  const [showDeleteItem, setShowDeleteItem] = useState(false);
+  const [selectedItemId, setSelectedItem] =
+    useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [isUpdatingId, setIsUpdatingId] = useState<number | null>(null);
   const [originalPoItems, setOriginalPoItems] = useState<
     DisplayPurchaseOrderItemsDto[]
@@ -243,6 +252,20 @@ const ShowAllIItems = ({
       setIsUpdatingId(null);
     }
   };
+  const handleRemoveItem = async () => {
+    if (!selectedItemId?.poItemId || !data?.poId) return;
+    try {
+      if (onRemoveItem === undefined) return;
+      const success = await onRemoveItem(selectedItemId, data.poId);
+      if (success) {
+        mutate();
+        setShowDeleteItem(false);
+        setSelectedItem(null);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  };
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden p-4">
       <div className="flex justify-between items-center ">
@@ -252,7 +275,7 @@ const ShowAllIItems = ({
         </h3>
         <div>
           <Button
-            icon={LogOut}
+            icon={ArrowLeft}
             color="neutral"
             size="xs"
             label="Back"
@@ -296,11 +319,8 @@ const ShowAllIItems = ({
                     />
                     <IconButton
                       onClick={() => {
-                        // // setIsEditId(row.poItemId);
-                        // // // handleUpdatePoItemSuppId({
-                        // // //   poItemId: row.poItemId,
-                        // // //   suppId: row.suppId,
-                        // // // });
+                        setShowDeleteItem(true);
+                        setSelectedItem(row);
                       }}
                       label="Remove"
                       icon={<Trash2 size={14} />}
@@ -414,15 +434,33 @@ const ShowAllIItems = ({
           currentItemId={poItems.map((item) => item.itemId)}
         />
       </Modal>
-      <Modal
-        isOpen={false}
+      {/* <Modal
+        isOpen={showDeleteItem}
         onClose={function (): void {
-          throw new Error("Function not implemented.");
+          setShowDeleteItem(false);
         }}
-        title="Update PO Item supplier"
+        title="Remove from PO"
       >
         <div></div>
-      </Modal>
+      </Modal> */}
+      <ConfirmationModal
+        onConfirm={handleRemoveItem}
+        confirmationInfo={
+          "Are you sure you want to remove : " +
+          selectedItemId?.itemName +
+          " with " +
+          formatQuantityByUnit(
+            selectedItemId?.poItemOrderedQty ?? 0,
+            selectedItemId?.itemUnit ?? ""
+          ) +
+          " ordered quantity?"
+        }
+        onClose={function (): void {
+          setSelectedItem(null);
+          setShowDeleteItem(false);
+        }}
+        isShow={showDeleteItem}
+      />
     </div>
   );
 };

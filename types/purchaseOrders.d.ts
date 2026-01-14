@@ -14,7 +14,8 @@ export type PurchaseOrderItemStatus =
   | "received"
   | "completed"
   | "delivered"
-  | "not_ordered";
+  | "not_ordered"
+  | "removed";
 
 export interface PurchaseOrders {
   poId: number;

@@ -137,7 +137,9 @@ export const selectPurchaseOrderItems = async ({
     values.push(poId);
   }
   const whereSQL =
-    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
+    whereClauses.length > 0
+      ? `WHERE poi.poItemStatus != 'removed' AND ${whereClauses.join(" AND ")}`
+      : "";
   const sql = `SELECT 
   poi.*,
   i.itemName,
@@ -296,7 +298,7 @@ export const updatePOItems = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-
+  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
   return result;
 };
