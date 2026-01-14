@@ -24,6 +24,7 @@ export const getSalesServices = {
     from,
     to,
     includeSaleItems,
+    customer,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -32,6 +33,7 @@ export const getSalesServices = {
     from?: string;
     to?: string;
     includeSaleItems?: boolean;
+    customer?: boolean;
   }) => {
     try {
       const data = await selectSales({
@@ -42,6 +44,7 @@ export const getSalesServices = {
         to,
         search,
         includeSaleItems,
+        customer,
       });
       return data;
     } catch (e) {

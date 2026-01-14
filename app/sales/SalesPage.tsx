@@ -335,6 +335,7 @@ const adminColumns: Column<DisplaySalesDto>[] = [
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  console.log({ hasStore, isAdmin });
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
     null
   );
@@ -482,7 +483,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                       <DynamicDropdown
                         options={[
                           { label: "Sales", value: "Sales" },
-                          { label: "Sale Items", value: "Sale Items" },
                           { label: "Customer", value: "Customer" },
                         ]}
                         onChange={function (value: string | number): void {

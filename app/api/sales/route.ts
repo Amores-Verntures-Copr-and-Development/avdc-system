@@ -11,7 +11,8 @@ export async function GET(_request: Request) {
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
-    console.log("includeSaleItems ", includeSaleItems);
+    const customer = searchParams.get("customer") || "";
+
     const res = await getSales({
       search,
       keyFields: {},
@@ -19,6 +20,7 @@ export async function GET(_request: Request) {
       from,
       to,
       includeSaleItems: includeSaleItems === "true",
+      customer: customer === "true",
     });
 
     if (!res.success) {

@@ -46,7 +46,8 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
       });
     }
     const validReceivedData = data.poItems?.filter(
-      (item) => item.poItemStatus !== "not_ordered"
+      (item) =>
+        item.poItemStatus !== "not_ordered" && item.poItemStatus === "sent"
     );
     console.log({ validReceivedData });
     if (validReceivedData && validReceivedData.length > 0) {

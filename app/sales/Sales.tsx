@@ -7,11 +7,16 @@ import SalesPage from "./SalesPage";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 
 const Sales = () => {
-  const { user, loading } = useSession();
+  const { user, loading, isAdmin, hasStore } = useSession();
 
   if (loading) return <LoaderComponent />;
   return (
-    <SalesPage storeId={user?.storeId ?? 0} user={user} hasStore isAdmin />
+    <SalesPage
+      storeId={user?.storeId ?? 0}
+      user={user}
+      hasStore={hasStore}
+      isAdmin={isAdmin}
+    />
   );
 };
 

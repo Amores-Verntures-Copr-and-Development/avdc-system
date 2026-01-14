@@ -22,6 +22,7 @@ export const selectSales = async ({
   from,
   to,
   includeSaleItems,
+  customer,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -30,6 +31,7 @@ export const selectSales = async ({
   from?: string;
   to?: string;
   includeSaleItems?: boolean;
+  customer?: boolean;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -125,6 +127,9 @@ WHERE 1=1`;
     sql += ` AND s.salesNo LIKE ? OR c.customerName LIKE ? `;
     params.push(wildcard);
     params.push(wildcard);
+  }
+  if (customer) {
+    sql += ` AND s.customerId IS NOT NULL`;
   }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);

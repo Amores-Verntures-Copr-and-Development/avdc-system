@@ -27,14 +27,20 @@ export const createSale = async (data: CreateSaleDto) => {
 export const getSalesByStoreId = async ({
   storeId,
   search,
+  includeSaleItems,
+  customer,
 }: {
   storeId: number;
   search?: string;
+  includeSaleItems?: boolean;
+  customer?: boolean;
 }) => {
   try {
     const data = await getSalesServices.getSales({
       keyFields: { storeId: storeId },
       search,
+      includeSaleItems,
+      customer,
     });
     return {
       success: true,
@@ -57,6 +63,7 @@ export const getSales = async ({
   from,
   to,
   includeSaleItems,
+  customer,
 }: {
   keyFields?: Partial<Sales>;
   search?: string;
@@ -64,6 +71,7 @@ export const getSales = async ({
   from?: string;
   to?: string;
   includeSaleItems?: boolean;
+  customer?: boolean;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -73,6 +81,7 @@ export const getSales = async ({
       from,
       to,
       includeSaleItems,
+      customer,
     });
     return {
       success: true,

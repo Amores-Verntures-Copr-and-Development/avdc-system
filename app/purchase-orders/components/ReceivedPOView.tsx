@@ -670,6 +670,47 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           />
                                         </div>
                                       )}
+                                      {isSupplierItemsSent && (
+                                        <div>
+                                          {" "}
+                                          <Button
+                                            isRounded={false}
+                                            size="xs"
+                                            onClick={() => {
+                                              // handleReceivePO([supplier]);
+                                              const hasNoQuantityDelivered =
+                                                supplier.items.some(
+                                                  (item) =>
+                                                    item.poItemStatus !==
+                                                      "not_ordered" &&
+                                                    Number(
+                                                      item.poItemReceivedQty
+                                                    ) === 0
+                                                );
+                                              console.log({
+                                                hasNoQuantityDelivered,
+                                              });
+                                              if (hasNoQuantityDelivered) {
+                                                toast.error(
+                                                  "There are items to be received with no quantity!"
+                                                );
+                                                return;
+                                              }
+
+                                              if (supplier) {
+                                                setIsShowReceivedConfirm(true);
+                                                setSupplierReceivedData([
+                                                  supplier,
+                                                ]);
+                                              }
+                                            }}
+                                            color="primary"
+                                            label="Receive PO"
+                                            icon={Package}
+                                            className="font-semibold"
+                                          />
+                                        </div>
+                                      )}
                                     </div>
                                   }
                                   renderActions={(row) =>

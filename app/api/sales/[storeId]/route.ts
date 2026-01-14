@@ -17,8 +17,14 @@ export async function GET(
     // const limit = searchParams.get("limit") || "";
     // const page = searchParams.get("page") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
-    console.log("includeSaleItems ", includeSaleItems);
-    const res = await getSalesByStoreId({ storeId, search });
+    const customer = searchParams.get("customer") || "";
+
+    const res = await getSalesByStoreId({
+      storeId,
+      search,
+      includeSaleItems: includeSaleItems === "true",
+      customer: customer === "true",
+    });
 
     if (!res.success) {
       throw new Error(`${res.error}`);
