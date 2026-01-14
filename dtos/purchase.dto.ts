@@ -21,7 +21,13 @@ export type CreatePurchaseOrderRequestDto = Pick<
 
 export type CreatePurchaseOrderItemDto = Pick<
   PurchaseOrderItems,
-  "itemId" | "poId" | "poItemOrderedQty" | "poItemReceivedQty" | "unitPrice"
+  | "itemId"
+  | "poId"
+  | "poItemOrderedQty"
+  | "poItemReceivedQty"
+  | "unitPrice"
+  | "poItemStatus"
+  | "suppId"
 >;
 
 export interface CreatePurchaseOrderFormDto extends CreatePurchaseOrderDto {

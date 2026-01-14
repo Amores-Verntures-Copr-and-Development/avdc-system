@@ -60,13 +60,15 @@ export const insertPurchaseOrderItems = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   if (!data.length) return 0;
-  const sql = `INSERT INTO PurchaseOrderItems(poId,itemId,unitPrice,poItemOrderedQty)
-                VALUES ${data.map(() => "(?, ?,?,?)").join(",")}`;
+  const sql = `INSERT INTO PurchaseOrderItems(poId,itemId,unitPrice,poItemOrderedQty,poItemStatus,suppId)
+                VALUES ${data.map(() => "(?, ?,?,?,?,?)").join(",")}`;
   const values = data.flatMap((item) => [
     item.poId,
     item.itemId,
     item.unitPrice,
     item.poItemOrderedQty,
+    item.poItemStatus || "pending",
+    item.suppId || null,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
@@ -298,7 +300,6 @@ export const updatePOItems = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
   return result;
 };
@@ -313,7 +314,7 @@ export const selectPurchaseOrderItemsSupplier = async (poId: number) => {
                 i.itemUnit
               FROM PurchaseOrderItems poi
               LEFT JOIN Suppliers s ON s.suppId = poi.suppId
-              LEFT JOIN Items i ON i.itemId = poi.itemId WHERE poi.poId = ?`;
+              LEFT JOIN Items i ON i.itemId = poi.itemId WHERE poi.poId = ? AND poi.poItemStatus != 'removed'`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [poId]);
   return rows;
 };

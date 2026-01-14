@@ -352,6 +352,7 @@ export const updatePurchaseOrderItemByPOId = async (
   poItemData: Partial<PurchaseOrderItems>[],
   controller: "delete" | "update"
 ) => {
+  let message = "";
   try {
     console.log({ poItemData, poId });
     if (controller === "update") {
@@ -364,10 +365,11 @@ export const updatePurchaseOrderItemByPOId = async (
       await deletePurchaseOrderItems({
         data: poItemData,
       });
+      message = `Item(s) remove from PO`;
     }
     return {
       success: true,
-      message: "Procurement history fetched successfully",
+      message: message,
       data: null,
     };
   } catch (e) {

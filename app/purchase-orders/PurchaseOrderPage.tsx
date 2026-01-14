@@ -28,7 +28,6 @@ const PurchaseOrderPage = () => {
       (po) => po.poId === selectedPo?.poId
     );
     if (findSelectedPo) {
-      console.log("Selected PO: ", findSelectedPo);
       setSelectedPo(findSelectedPo);
     }
   };

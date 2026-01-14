@@ -101,7 +101,6 @@ const StoreRequisitionPage = () => {
       (ro) => ro.requestId === selectedRow?.requestId
     );
     if (findSelectedRo) {
-      console.log("Selected PO: ", findSelectedRo);
       setSelectedRow(findSelectedRo);
     }
   };

@@ -499,7 +499,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       (inv) => inv.inventoryItemId === selectedRow?.inventoryItemId
     );
     if (findSelectedInvItem) {
-      console.log("Selected PO: ", findSelectedInvItem);
       setSelectedRow(findSelectedInvItem);
     }
   };

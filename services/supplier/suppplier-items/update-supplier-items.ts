@@ -2,8 +2,12 @@ import { updateSupplierItemsByFields } from "@/models/supplierModels";
 import { SupplierItem } from "@/types/supplier";
 import { PoolConnection } from "mysql2/promise";
 import { createSupplierItemPrices } from "./supplier-item-price/create-supplier-item-price";
-import { CreateSupplierItemPriceDto } from "@/dtos/supplier.dto";
+import {
+  CreateSupplierItemDto,
+  CreateSupplierItemPriceDto,
+} from "@/dtos/supplier.dto";
 import { getSupplierItem } from "./get-supplier-item";
+import { createSupplierItems } from "./create-supplier-items";
 
 export async function handleDeleteSupplierItems(data: Partial<SupplierItem>[]) {
   const deletedData: Partial<SupplierItem>[] = data.map((item) => ({
@@ -79,10 +83,26 @@ export async function handleUpdateSupplierItemPrice({
       await createSupplierItemPrices({ connection, data: itemPrices });
     } else {
       const itemPricesPromises = updates.map(async (item) => {
-        const suppItem = await getSupplierItem({
+        console.log({ item });
+        let suppItem = await getSupplierItem({
           connection,
           keyfields: { suppId: item.suppId, itemId: item.itemId },
         });
+
+        if (!suppItem || suppItem.length === 0) {
+          const createSuppItem: CreateSupplierItemDto = {
+            itemId: item.itemId!,
+            suppItemPrice: item.suppItemPrice ?? 0,
+            suppItemCreatedBy: item.suppItemCreatedBy!,
+            suppId: item.suppId!,
+          };
+          await createSupplierItems({ connection, data: [createSuppItem] });
+          suppItem = await getSupplierItem({
+            connection,
+            keyfields: { suppId: item.suppId, itemId: item.itemId },
+          });
+        }
+
         return {
           suppItemId: suppItem[0].suppItemId,
           sipAmount: item.suppItemPrice!,
@@ -101,6 +121,7 @@ export async function handleUpdateSupplierItemPrice({
 
     return result;
   } catch (e) {
+    console.log({ e });
     throw e;
   }
 }

@@ -46,7 +46,7 @@ export interface PurchaseOrderItems {
   unitPrice: number;
   poItemOrderedQty: number;
   poItemReceivedQty: number;
-  suppId: number | null;
+  suppId?: number | null;
   itemName?: string;
   itemUnit?: string;
   isSent?: number;

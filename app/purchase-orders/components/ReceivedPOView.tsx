@@ -3,6 +3,7 @@ import IconButton from "@/components/shared/IconButton";
 
 import Table, { Column } from "@/components/shared/Table";
 import {
+  CreatePurchaseOrderItemDto,
   DeliverItemsToStore,
   DisplayPOItemsSupplier,
 } from "@/dtos/purchase.dto";
@@ -80,6 +81,10 @@ interface ReceivedPOViewProps {
   setShowAllItems: React.Dispatch<
     React.SetStateAction<"status" | "all" | "request">
   >;
+  onAddItem: (
+    data: CreatePurchaseOrderItemDto[],
+    poId: number
+  ) => Promise<boolean>;
 }
 
 interface StoreInSupplierDetails {
@@ -92,12 +97,14 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   isLoading,
   poId,
   poData,
-
+  onAddItem,
   mutateInventory,
   setShowAllItems,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [selectedSupplierToAdd, setSelectedSupplierToAdd] =
+    useState<DisplayPOItemsSupplier | null>(null);
   const [originalData, setOriginalData] = useState<
     DisplayPOItemsSupplier[] | null
   >(null);
@@ -306,6 +313,30 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const isAllItemsDelivered = data.every((po) =>
     po.items.every((item) => item.poItemStatus === "delivered")
   );
+  const handleSubmitAddItemToSupplierPO = async (
+    dataItem: CreatePurchaseOrderItemDto
+  ) => {
+    const existingSupplier = supplierData.find((supp) =>
+      supp.items.some((item) => item.itemId === dataItem.itemId)
+    );
+    console.log({ existingSupplier });
+    if (existingSupplier) {
+      toast.error(
+        `Item already in ${existingSupplier.suppName}, change the supplier in View All Item!`
+      );
+      return false;
+    }
+    try {
+      const success = await onAddItem([dataItem], poId);
+      if (success) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    }
+  };
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-1  flex-col h-full w-full overflow-hidden">
@@ -329,7 +360,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   color="neutral"
                   isRounded={false}
                   size="sm"
-                  label="View All PO"
+                  label="View All PO Item"
                   onClick={() => {
                     setShowAllItems("all");
                     setSelectedStoreSupplier(null);
@@ -440,9 +471,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 size="xs"
                                 color="secondary"
                                 label="PDF"
-                                icon={
-                                  Download
-                                }
+                                icon={Download}
                                 className="font-semibold text-gray-700 text-xs"
                                 onClick={function (): void {
                                   throw new Error("Function not implemented.");
@@ -524,9 +553,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   color="success"
                                   label="Received"
                                   disabled={true}
-                                  icon={
-                                    PackageCheck
-                                  }
+                                  icon={PackageCheck}
                                   className="font-semibold"
                                 />
                               </div>
@@ -620,7 +647,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         <Button
                                           color="neutral"
                                           size="xs"
-                                          onClick={() => setShowAddItem(true)}
+                                          onClick={() => {
+                                            setShowAddItem(true);
+                                            setSelectedSupplierToAdd(supplier);
+                                          }}
                                           label="Add Item"
                                           icon={Package}
                                         />
@@ -813,14 +843,19 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         </div>
       </Modal>
       <Popup
-        title="Add Item to PO Supplier"
+        title={`Add Item to ${selectedSupplierToAdd?.suppName} for PO`}
         background="bg-white/20"
         isOpen={showAddItem}
         onClose={function (): void {
           setShowAddItem(false);
+          setSelectedSupplierToAdd(null);
         }}
       >
-        <AddItemToPoSupplier />
+        <AddItemToPoSupplier
+          poId={poId}
+          supplier={selectedSupplierToAdd}
+          onSubmit={handleSubmitAddItemToSupplierPO}
+        />
       </Popup>
       <ConfirmationModal
         onConfirm={() => {

@@ -69,6 +69,7 @@ const ShowAllIItems = ({
   const [selectedItemId, setSelectedItem] =
     useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [isUpdatingId, setIsUpdatingId] = useState<number | null>(null);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [originalPoItems, setOriginalPoItems] = useState<
     DisplayPurchaseOrderItemsDto[]
   >([]);
@@ -254,6 +255,7 @@ const ShowAllIItems = ({
   };
   const handleRemoveItem = async () => {
     if (!selectedItemId?.poItemId || !data?.poId) return;
+    setIsRemoving(true);
     try {
       if (onRemoveItem === undefined) return;
       const success = await onRemoveItem(selectedItemId, data.poId);
@@ -264,6 +266,8 @@ const ShowAllIItems = ({
       }
     } catch (e) {
       console.log(e);
+    } finally {
+      setIsRemoving(false);
     }
   };
   return (
@@ -459,7 +463,9 @@ const ShowAllIItems = ({
           setSelectedItem(null);
           setShowDeleteItem(false);
         }}
+        isLoading={isRemoving}
         isShow={showDeleteItem}
+        confirmLabel="Remove Item"
       />
     </div>
   );

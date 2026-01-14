@@ -420,6 +420,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
               mutate();
               mutateInventory();
             }}
+            onAddItem={handleAddItemPo}
             setShowAllItems={setShowPage}
             onClose={onClose}
             poData={data}

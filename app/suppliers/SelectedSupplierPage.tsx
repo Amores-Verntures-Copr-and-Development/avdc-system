@@ -165,7 +165,6 @@ const SelectedSupplierPage = ({
       (item) => item.suppItemId === selectedRow?.suppItemId
     );
     if (findSelectedRow) {
-      console.log("Selected PO: ", findSelectedRow);
       setSelectedRow(findSelectedRow);
     }
   };
