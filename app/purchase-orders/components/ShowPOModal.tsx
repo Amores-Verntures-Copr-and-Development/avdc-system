@@ -255,6 +255,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     poId: number
   ) => {
     // console.log("Data: ", dataReq[0].requestItemsData);
+    console.log({ data });
     try {
       const result = await fetch(`api/purchase-order/po-items/${poId}`, {
         method: "POST",

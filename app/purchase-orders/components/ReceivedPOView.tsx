@@ -70,6 +70,10 @@ const storeColumns: Column<RequestItems>[] = [
     key: "reqItemRemarks",
   },
 ];
+type RequestItemDraft = Pick<
+  PurchaseOrderItems,
+  "poItemId" | "poItemReceivedQty" | "supplierPrice"
+>;
 
 interface ReceivedPOViewProps {
   data: DisplayPOItemsSupplier[];
@@ -199,7 +203,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         const origStatus = origData?.find(
           (item) => item.poItemId === row.poItemId
         )?.poItemStatus;
-        return origStatus !== "not_ordered";
+        return origStatus !== "not_ordered" && origStatus !== "received";
       },
       selector: (row) => {
         const { bg, color, label } = getPurchaseStatusOption(
@@ -261,7 +265,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       )
     );
   };
-
+  useEffect(() => {
+    console.log("asd");
+  }, [supplierData]);
   useEffect(() => {
     if (data && data.length > 0) {
       setOriginalData(data);

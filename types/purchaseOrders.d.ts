@@ -5,7 +5,8 @@ export type PurchaseOrderStatus =
   | "approved"
   | "sent"
   | "received"
-  | "completed";
+  | "completed"
+  | "not_ordered";
 
 export type PurchaseOrderItemStatus =
   | "pending"

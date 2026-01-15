@@ -42,6 +42,7 @@ export async function handleUpdateItemPrice({
       updates: updateItemPrice,
       keyFields,
     });
+    console.log("[UPDATE PRICE]: ", { updateItemPrice });
     const itemPricesPromises = updates.map(async (item) => {
       // Your async logic here
 

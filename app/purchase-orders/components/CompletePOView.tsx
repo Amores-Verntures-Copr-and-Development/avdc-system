@@ -418,7 +418,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           </div>
         </div>
         <div className="flex flex-col p-4 gap-4 overflow-y-auto">
-          {requestItems.map((reqData) => {
+          {requestItems?.map((reqData) => {
             const { label, bg, color, border } = getRequestStatusOption(
               reqData.requestStatus
             );

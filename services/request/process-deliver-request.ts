@@ -68,11 +68,13 @@ export async function processDeliveredPO(data: Request[], userId: number) {
     });
     const decerementInv: Partial<InventoryItemInterface>[] = data.flatMap(
       (req) =>
-        req.requestItems.flatMap((item) => ({
-          inventoryId: warehouseInv[0].inventoryId,
-          inventoryItemReferenceId: item.itemId,
-          inventoryItemQuantity: item.reqItemTransfer,
-        }))
+        req.requestItems
+          .filter((item) => item.reqItemStatus !== "not_ordered")
+          .flatMap((item) => ({
+            inventoryId: warehouseInv[0].inventoryId,
+            inventoryItemReferenceId: item.itemId,
+            inventoryItemQuantity: item.reqItemTransfer,
+          }))
     );
     await updateInventoryItem({
       connection,
@@ -83,23 +85,25 @@ export async function processDeliveredPO(data: Request[], userId: number) {
     const storeInventoryMovement: CreateInventoryMovementDto[] =
       await Promise.all(
         data.flatMap((data) =>
-          data.requestItems.flatMap(async (req) => {
-            const inventoryItem = await findInventoryItemsByField({
-              keyFields: {
-                inventoryId: warehouseInv[0].inventoryId ?? 0,
-                inventoryItemReferenceId: req.itemId,
-              },
-            });
-            return {
-              inventoryId: warehouseInv[0].inventoryId,
-              inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
-              itemMovementType: "out",
-              itemMovementReferenceId: req.requestId ?? 0,
-              itemMovementReference: "ro",
-              itemMovementQuantity: Number(req.reqItemTransfer),
-              itemMovementRemarks: "Deliver item to store",
-            };
-          })
+          data.requestItems
+            .filter((reqItem) => reqItem.reqItemStatus !== "not_ordered")
+            .flatMap(async (req) => {
+              const inventoryItem = await findInventoryItemsByField({
+                keyFields: {
+                  inventoryId: warehouseInv[0].inventoryId ?? 0,
+                  inventoryItemReferenceId: req.itemId,
+                },
+              });
+              return {
+                inventoryId: warehouseInv[0].inventoryId,
+                inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
+                itemMovementType: "out",
+                itemMovementReferenceId: req.requestId ?? 0,
+                itemMovementReference: "ro",
+                itemMovementQuantity: Number(req.reqItemTransfer),
+                itemMovementRemarks: "Deliver item to store",
+              };
+            })
         )
       );
     console.log("[createInventoryMovementDeliver]");

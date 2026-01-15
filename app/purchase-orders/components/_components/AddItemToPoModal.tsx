@@ -56,6 +56,7 @@ const AddItemToPoModal = ({
           poItemOrderedQty: 0,
           poItemReceivedQty: 0,
           unitPrice: 0,
+          poItemStatus: "sent",
         });
         mutate();
       }
