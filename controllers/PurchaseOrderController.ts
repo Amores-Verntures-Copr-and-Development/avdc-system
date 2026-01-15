@@ -19,6 +19,7 @@ import { createPurchaseOrderItem } from "@/services/purchase/purchase-items/crea
 import { deletePurchaseOrderItems } from "@/services/purchase/purchase-items/delete-purchase-items";
 import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
 import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
+import { processNotOrderedItems } from "@/services/purchase/purchase-items/process-not-ordered-items";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
 import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 import {
@@ -204,6 +205,7 @@ export const updatePurchaseOrder = async (
       await processCompletePO(data);
       message = `Purchase Order ${data.poNumber} successfully completed!`;
     }
+
     return {
       success: true,
       message: message,
@@ -232,6 +234,10 @@ export const updatePurchaseOrderItem = async (
     if (controller === "sent") {
       await processSentPOItems(data);
       message = "Items sent successfully!";
+    }
+    if (controller === "not_ordered") {
+      await processNotOrderedItems(data);
+      message = `Items mark as not ordered successfully!`;
     }
     return {
       success: true,

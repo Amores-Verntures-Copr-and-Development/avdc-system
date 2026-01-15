@@ -22,6 +22,7 @@ import {
   Truck,
   Store,
   Loader2,
+  PackageMinus,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -85,6 +86,7 @@ interface ReceivedPOViewProps {
     data: CreatePurchaseOrderItemDto[],
     poId: number
   ) => Promise<boolean>;
+  onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
 }
 
 interface StoreInSupplierDetails {
@@ -100,9 +102,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   onAddItem,
   mutateInventory,
   setShowAllItems,
+  onMaskAsDeliverdSupplier,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [isSubmittingNotOrder, setIsSubmittingNotOrder] = useState(false);
   const [selectedSupplierToAdd, setSelectedSupplierToAdd] =
     useState<DisplayPOItemsSupplier | null>(null);
   const [originalData, setOriginalData] = useState<
@@ -112,6 +116,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const [supplierReceivedData, setSupplierReceivedData] = useState<
     DisplayPOItemsSupplier[] | null
   >(null);
+  const [selectSupplierNotOrder, setSelectSupplierNotOrder] =
+    useState<DisplayPOItemsSupplier | null>(null);
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier[]>(data);
   const [isView, setIsView] = useState<"all" | "store">("all");
@@ -186,7 +192,25 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     {
       name: "Status",
       key: "poItemStatus",
-      editable: true,
+      editable: (row) => {
+        const origData = originalData?.find(
+          (item) => item.suppId === row.suppId
+        )?.items;
+        const origStatus = origData?.find(
+          (item) => item.poItemId === row.poItemId
+        )?.poItemStatus;
+        return origStatus !== "not_ordered";
+      },
+      selector: (row) => {
+        const { bg, color, label } = getPurchaseStatusOption(
+          row.poItemStatus ?? ""
+        );
+        return (
+          <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
+            <span>{label}</span>
+          </div>
+        );
+      },
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
       options: (row) => {
@@ -264,7 +288,20 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       })
     );
   };
-
+  const handleNotOrderedSupplier = async (data: DisplayPOItemsSupplier) => {
+    setIsSubmittingNotOrder(true);
+    try {
+      const success = await onMaskAsDeliverdSupplier(data);
+      if (success) {
+        mutateInventory();
+        setSelectSupplierNotOrder(null);
+      }
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setIsSubmittingNotOrder(false);
+    }
+  };
   // ✅ Auto-fill all rows for one supplier
   const handleAutoFillAll = (suppId: number) => {
     setSupplierData((prev) =>
@@ -285,9 +322,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     );
   };
 
-  // const handleSendBySupplier = async (items: PurchaseOrderItems[]) => {
-  //   console.log("Send to supplier:", items);
-  // };
+
   const handleDeliverItemStore = async (data: DeliverItemsToStore) => {
     try {
       const result = await fetch(`api/purchase-order/deliver/${data.storeId}`, {
@@ -297,10 +332,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         },
         body: JSON.stringify(data),
       });
-      console.log(`asdasd`, { data });
+
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
+      
         throw new Error(res.err);
       }
       toast.success(res.message);
@@ -324,7 +359,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     const existingSupplier = supplierData.find((supp) =>
       supp.items.some((item) => item.itemId === dataItem.itemId)
     );
-    console.log({ existingSupplier });
+
     if (existingSupplier) {
       toast.error(
         `Item already in ${existingSupplier.suppName}, change the supplier in View All Item!`
@@ -396,8 +431,19 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               <div className="space-y-2">
                 {supplierData.map((supplier) => {
                   const isSupplierItemsSent = supplier.items.some(
-                    (item) => item.poItemStatus === "sent"
+                    (item) =>
+                      item.poItemStatus === "sent" ||
+                      (poData?.poStatus === "sent" &&
+                        item.poItemStatus !== "not_ordered")
                   );
+                  const origData = originalData?.find(
+                    (d) => d.suppId === supplier.suppId
+                  )?.items;
+              
+                  const isNotOrderedAll = origData?.every(
+                    (item) => item.poItemStatus === "not_ordered"
+                  );
+                
                   const isSupplierItemsDelivered = supplier.items.every(
                     (item) => item.poItemStatus === "delivered"
                   );
@@ -515,7 +561,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                               Number(item.poItemReceivedQty) ===
                                                 0
                                           );
-                                        console.log({ hasNoQuantityDelivered });
+                                      
                                         if (hasNoQuantityDelivered) {
                                           toast.error(
                                             "There are items to be received with no quantity!"
@@ -557,6 +603,24 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   </div>
                                 </div>
                               </>
+                            ) : isNotOrderedAll ? (
+                              <div>
+                                {" "}
+                                <Button
+                                  isRounded={false}
+                                  size="xs"
+                                  onClick={() => {
+                                    // handleSendBySupplier(supplier.items);
+                                    // setIsShowDeliverConfirmation(true);
+                                    // setSupplierReceivedData(supplier.items);
+                                  }}
+                                  color="danger"
+                                  label="Not Ordered"
+                                  disabled={true}
+                                  icon={PackageCheck}
+                                  className="font-semibold"
+                                />
+                              </div>
                             ) : (
                               <div>
                                 {" "}
@@ -661,29 +725,55 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   loading={isLoading}
                                   renderTopActions={
                                     <div className="flex gap-2">
-                                      <div>
-                                        <Button
-                                          color="neutral"
-                                          size="xs"
-                                          onClick={() => {
-                                            setShowAddItem(true);
-                                            setSelectedSupplierToAdd(supplier);
-                                          }}
-                                          label="Add Item"
-                                          icon={Package}
-                                        />
-                                      </div>
-                                      {!isAllItemsDelivered && (
+                                      {!isNotOrderedAll && (
                                         <div>
                                           <Button
-                                            color="success"
+                                            hasBorder
+                                            color="neutral"
+                                            size="xs"
+                                            onClick={() => {
+                                              setShowAddItem(true);
+                                              setSelectedSupplierToAdd(
+                                                supplier
+                                              );
+                                            }}
+                                            label="Add Item"
+                                            icon={Package}
+                                          />
+                                        </div>
+                                      )}
+                                      {!isAllItemsDelivered ||
+                                        (!isNotOrderedAll && (
+                                          <div>
+                                            <Button
+                                              color="success"
+                                              hasBorder
+                                              size="xs"
+                                              onClick={() =>
+                                                handleAutoFillAll(
+                                                  supplier.suppId
+                                                )
+                                              }
+                                              label="Auto-Fill All"
+                                              icon={PackageCheck}
+                                              className="font-semibold text-white text-xs"
+                                            />
+                                          </div>
+                                        ))}
+                                      {isSupplierItemsSent && (
+                                        <div>
+                                          <Button
+                                            color="danger"
                                             hasBorder
                                             size="xs"
                                             onClick={() =>
-                                              handleAutoFillAll(supplier.suppId)
+                                              // handleNotOrderedSupplier(supplier)
+                                              setSelectSupplierNotOrder(
+                                                supplier
+                                              )
                                             }
-                                            label="Auto-Fill All"
-                                            icon={PackageCheck}
+                                            label="Mark as Unordered"
+                                            icon={PackageMinus}
                                             className="font-semibold text-white text-xs"
                                           />
                                         </div>
@@ -692,8 +782,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         <div>
                                           {" "}
                                           <Button
-                                            isRounded={false}
                                             size="xs"
+                                            hasBorder
                                             onClick={() => {
                                               // handleReceivePO([supplier]);
                                               const hasNoQuantityDelivered =
@@ -705,9 +795,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                                       item.poItemReceivedQty
                                                     ) === 0
                                                 );
-                                              console.log({
-                                                hasNoQuantityDelivered,
-                                              });
+                                  
                                               if (hasNoQuantityDelivered) {
                                                 toast.error(
                                                   "There are items to be received with no quantity!"
@@ -759,7 +847,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       data={data}
                                       key={data.storeId}
                                       onClick={(row: StoreSupplierDetails) => {
-                                        console.log(row);
+                                   
                                         setSelectedStoreSupplier({
                                           data: row,
                                           supplier: supplier,
@@ -774,21 +862,23 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 title={selectedStoreSupplier.data.storeName}
                                 subtitle={`${selectedStoreSupplier.data.items.length} items`}
                                 renderTopActions={
-                                  <div>
-                                    {" "}
-                                    <Button
-                                      hasBorder={true}
-                                      size="xs"
-                                      onClick={() => {
-                                        // setShowDeliverToStore(supplier);
-                                        setIsShowDeliverConfirmation(true);
-                                      }}
-                                      color="success"
-                                      label="Deliver to Store"
-                                      icon={Package}
-                                      className="font-semibold"
-                                    />
-                                  </div>
+                                  !isNotOrderedAll && (
+                                    <div>
+                                      {" "}
+                                      <Button
+                                        hasBorder={true}
+                                        size="xs"
+                                        onClick={() => {
+                                          // setShowDeliverToStore(supplier);
+                                          setIsShowDeliverConfirmation(true);
+                                        }}
+                                        color="success"
+                                        label="Deliver to Store"
+                                        icon={Package}
+                                        className="font-semibold"
+                                      />
+                                    </div>
+                                  )
                                 }
                                 columns={storeColumns}
                                 data={selectedStoreSupplier.data.items}
@@ -929,6 +1019,19 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         }}
         isShow={isShowReceivedConfirm}
         isLoading={isSubmitting}
+      />
+      <ConfirmationModal
+        onConfirm={() => {
+          if (selectSupplierNotOrder) {
+            handleNotOrderedSupplier(selectSupplierNotOrder);
+          }
+        }}
+        confirmationInfo={`Are you sure you want to mark as not ordered items from ${selectSupplierNotOrder?.suppName}`}
+        onClose={() => {
+          setSelectSupplierNotOrder(null);
+        }}
+        isShow={selectSupplierNotOrder !== null}
+        isLoading={isSubmittingNotOrder}
       />
     </div>
   );

@@ -83,12 +83,11 @@ const colorClasses: Record<
 
   danger: {
     base: "bg-rose-500 border border-rose-500 ",
-    border: " border-b-2 border-b-rose-600",
+    border: " border-b-2 border-b-rose-800",
     hover: "hover:bg-rose-600 hover:border-rose-600",
     focus: "focus:ring-2 focus:ring-rose-500/40 focus:ring-offset-2",
     text: "text-white",
-    disabled:
-      "bg-rose-300 border-rose-300 text-white/60 shadow-none border-b-rose-400",
+    disabled: "bg-rose-300 border-rose-300 border text-white/60 shadow-none",
   },
 
   success: {

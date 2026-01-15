@@ -345,6 +345,40 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
+  const handleNotOrderedSupplierItem = async (
+    dataSupp: DisplayPOItemsSupplier
+  ) => {
+    try {
+      const newData = {
+        data: dataSupp.items.map((item) => ({
+          ...item,
+        })),
+        controller: "not_ordered",
+      };
+
+      const result = await fetch(`/api/purchase-order/po-items/${data?.poId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(
+        `PO Items from ${dataSupp.suppName} successfully mark as not ordered!`
+      );
+      mutateInventory();
+      mutate();
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add Inventory.");
+      return false;
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center">
@@ -423,6 +457,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
               mutate();
               mutateInventory();
             }}
+            onMaskAsDeliverdSupplier={handleNotOrderedSupplierItem}
             onAddItem={handleAddItemPo}
             setShowAllItems={setShowPage}
             onClose={onClose}
