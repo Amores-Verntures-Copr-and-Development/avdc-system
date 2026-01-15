@@ -439,7 +439,12 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               <p className="font-bold text-primary-1 text-sm xl:text-lg">
                                 {formatPeso(
                                   supplier.items
-                                    .filter((i) => i.poItemStatus === "sent")
+                                    .filter(
+                                      (i) =>
+                                        i.poItemStatus === "sent" ||
+                                        i.poItemStatus === "received" ||
+                                        i.poItemStatus === "delivered"
+                                    )
                                     .reduce((total, item) => {
                                       const price =
                                         Number(
