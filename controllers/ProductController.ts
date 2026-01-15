@@ -1,4 +1,5 @@
 import {
+  CreateProductCategoryDto,
   CreateProductDtos,
   CreateProductVariantDto,
   CreateVarianComponentDto,
@@ -6,6 +7,7 @@ import {
 import { createProducts } from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
+import { createProductCategory } from "@/services/products/product-category/create-product-category";
 import {
   createProductVariant,
   createProductVariants,
@@ -121,6 +123,26 @@ export const getProductVariantController = async ({
     return {
       error: e,
       message: "Failed to fetched product variants!",
+      success: false,
+    };
+  }
+};
+
+export const createProductCategories = async (
+  data: CreateProductCategoryDto[]
+) => {
+  try {
+    const result = await createProductCategory({ data });
+    return {
+      data: result,
+      message: "Product Category added successfully!",
+      success: true,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      error: e,
+      message: "Failed to add product category!",
       success: false,
     };
   }

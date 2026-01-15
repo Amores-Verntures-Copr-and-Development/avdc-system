@@ -171,7 +171,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       key: "total",
       selector: (row) =>
         formatPeso(
-          (row.supplierPrice || row.unitPrice) * row.poItemReceivedQty
+          (row.supplierPrice || row.unitPrice) *
+            (row.poItemReceivedQty > 0
+              ? row.poItemReceivedQty
+              : row.poItemOrderedQty)
         ),
       compute: (row) => {
         return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);

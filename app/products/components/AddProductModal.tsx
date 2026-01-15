@@ -8,6 +8,7 @@ import { UserAuth } from "@/hooks/useSession";
 
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 interface AddProductModalProps {
   user?: UserAuth | null;
@@ -15,6 +16,7 @@ interface AddProductModalProps {
   mutate?: () => void;
   onSubmit: (data: CreateProductDtos) => Promise<boolean>;
   isSubmitting?: boolean;
+  onCancel: () => void;
 }
 
 const AddProductModal = ({
@@ -23,6 +25,7 @@ const AddProductModal = ({
   mutate,
   onSubmit,
   isSubmitting,
+  onCancel,
 }: AddProductModalProps) => {
   const [formData, setFormData] = useState<CreateProductDtos>({
     prodCatId: null,
@@ -32,7 +35,12 @@ const AddProductModal = ({
   });
   const handleDataChange = handleChange(formData, setFormData);
   const handleAddProduct = async () => {
+    if (formData.prodName === "") {
+      toast.error("No product name is found!");
+      return;
+    }
     const success = await onSubmit(formData);
+
     if (success) {
       if (mutate) {
         mutate();
@@ -75,6 +83,7 @@ const AddProductModal = ({
           size="sm"
           className="font-semibold"
           disabled={isSubmitting}
+          onClick={onCancel}
         />
         <Button
           label="Add Product"

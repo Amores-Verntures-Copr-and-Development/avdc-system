@@ -45,3 +45,8 @@ export interface DisplayProductsDtos
     ProductCategories {}
 
 export interface DisplaProductVariantsDtos extends ProductVariants {}
+
+export type CreateProductCategoryDto = Pick<
+  ProductCategories,
+  "prodCatCreatedBy" | "prodCatName" | "storeId"
+>;

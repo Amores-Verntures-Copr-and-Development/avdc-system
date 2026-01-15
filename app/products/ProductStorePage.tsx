@@ -1,6 +1,10 @@
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
-import { CreateProductDtos, DisplayProductsDtos } from "@/dtos/products.dto";
+import {
+  CreateProductCategoryDto,
+  CreateProductDtos,
+  DisplayProductsDtos,
+} from "@/dtos/products.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
@@ -33,6 +37,7 @@ import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import IconButton from "@/components/shared/IconButton";
 import { se } from "date-fns/locale";
 import EditProduct from "./components/EditProduct";
+import AddProductCategory from "./components/AddProductCategory";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -43,6 +48,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const router = useRouter();
   const { hasStore, isAdmin } = useSession();
   const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showAddProductCat, setShowAddProductCat] = useState(false);
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
     null
   );
@@ -189,6 +195,36 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       },
     },
   ];
+  const handleAddCategory = async (data: CreateProductCategoryDto) => {
+    try {
+      const result = await fetch(
+        `/api/products/${storeId}/product-categories`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([data]),
+          credentials: "include",
+        }
+      );
+
+      const res = await result.json();
+
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      if (mutate) {
+        mutate();
+      }
+      return true;
+    } catch (e: any) {
+      console.log({ e });
+      toast.error(e.message || "Failed to add category.");
+      return false;
+    }
+  };
   const handleAddProduct = async (data: CreateProductDtos) => {
     console.log({ data, storeId });
     setIsAddingProduct(true);
@@ -315,11 +351,11 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     <Button
                       isRounded={false}
                       className="text-sm"
-                      label="Create Category"
+                      label="Add Category"
                       size="xs"
                       icon={Layers}
                       onClick={() => {
-                        setShowAddProductModal(true);
+                        setShowAddProductCat(true);
                       }}
                       color="neutral"
                     />
@@ -378,6 +414,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           mutate={mutate}
           onSubmit={handleAddProduct}
           isSubmitting={isAddingProduct}
+          onCancel={() => {
+            setShowAddProductModal(false);
+          }}
         />
       </Modal>
       <Modal
@@ -398,6 +437,22 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           }}
           onSave={function (updatedData: DisplayProductsDtos): void {
             throw new Error("Function not implemented.");
+          }}
+        />
+      </Modal>
+      <Modal
+        title="Add Category Product"
+        isOpen={showAddProductCat}
+        onClose={function (): void {
+          setShowAddProductCat(false);
+        }}
+      >
+        <AddProductCategory
+          onSubmit={handleAddCategory}
+          storeId={storeId ?? 0}
+          user={user}
+          onCancel={function (): void {
+            setShowAddProductCat(false);
           }}
         />
       </Modal>

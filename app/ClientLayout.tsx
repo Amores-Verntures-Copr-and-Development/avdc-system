@@ -81,10 +81,10 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="h-screen w-screen flex overflow-hidden">
       <Toaster
-        position="bottom-right"
+        position="top-right"
         toastOptions={{
-          duration: 5000,
-          className: "font-semibold",
+          duration: 3000,
+          className: "font-semibold text-sm",
         }}
       />
       <div className="flex-1 min-h-0 min-w-0 flex flex-row">

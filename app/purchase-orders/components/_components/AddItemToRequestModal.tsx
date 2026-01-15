@@ -2,15 +2,26 @@ import Button from "@/components/shared/Button";
 import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
 import Input from "@/components/shared/Input";
 import { DisplayRequisitionWithItems } from "@/dtos/purchase.dto";
+import { CreateRequestItemDto } from "@/dtos/request.dto";
 import { ItemInterface } from "@/types/items";
-import React from "react";
+import React, { useState } from "react";
 
 interface AddItemToRequestModalProps {
   data: DisplayRequisitionWithItems | null;
   onCancel: () => void;
 }
-const AddItemToRequestModal = ({ onCancel }: AddItemToRequestModalProps) => {
-  const handleAddItemInRequest = async () => {};
+const AddItemToRequestModal = ({
+  onCancel,
+  data,
+}: AddItemToRequestModalProps) => {
+  const [itemForm, seItemForm] = useState<CreateRequestItemDto>({
+    requestId: data?.requestId ?? 0,
+    reqItemQuantity: 0,
+    invItem: 0,
+  });
+  const handleAddItemInRequest = async () => {
+    console.log({ data });
+  };
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs xl:text-sm font-semibold">
@@ -43,7 +54,12 @@ const AddItemToRequestModal = ({ onCancel }: AddItemToRequestModalProps) => {
           />
         </div>
         <div>
-          <Button label="Add Item" size="sm" hasBorder />
+          <Button
+            label="Add Item"
+            size="sm"
+            hasBorder
+            onClick={handleAddItemInRequest}
+          />
         </div>
       </div>
     </div>

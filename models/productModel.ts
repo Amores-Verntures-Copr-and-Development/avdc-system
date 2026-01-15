@@ -1,4 +1,5 @@
 import {
+  CreateProductCategoryDto,
   CreateProductDtos,
   CreateProductVariantDto,
   CreateVarianComponentDto,
@@ -184,4 +185,25 @@ LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
+};
+
+export const insertProductCategories = async ({
+  data,
+  connection,
+}: {
+  data: CreateProductCategoryDto[];
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  if (!data.length) return 0;
+  console.log({ data });
+  const sql = `INSERT INTO ProductCategories(prodCatName,prodCatCreatedBy,storeId)
+                VALUES ${data.map(() => "(?,?,?)").join(",")}`;
+  const values = data.flatMap((item) => [
+    item.prodCatName,
+    item.prodCatCreatedBy,
+    item.storeId,
+  ]);
+  const [results] = await pool.execute<ResultSetHeader>(sql, values);
+  return results;
 };
