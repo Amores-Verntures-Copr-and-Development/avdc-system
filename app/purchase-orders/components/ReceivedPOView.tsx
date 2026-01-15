@@ -170,12 +170,14 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       name: "Total",
       key: "total",
       selector: (row) =>
-        formatPeso(
-          (row.supplierPrice || row.unitPrice) *
-            (row.poItemReceivedQty > 0
-              ? row.poItemReceivedQty
-              : row.poItemOrderedQty)
-        ),
+        row.poItemStatus === "not_ordered"
+          ? 0
+          : formatPeso(
+              (row.supplierPrice || row.unitPrice) *
+                (row.poItemReceivedQty > 0
+                  ? row.poItemReceivedQty
+                  : row.poItemOrderedQty)
+            ),
       compute: (row) => {
         return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);
       },
@@ -436,18 +438,20 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               </span>
                               <p className="font-bold text-primary-1 text-sm xl:text-lg">
                                 {formatPeso(
-                                  supplier.items.reduce((total, item) => {
-                                    const price =
-                                      Number(
-                                        item.supplierPrice || item.unitPrice
-                                      ) || 0;
-                                    const qty = Number(
-                                      item.poItemReceivedQty > 0
-                                        ? item.poItemReceivedQty
-                                        : item.poItemOrderedQty
-                                    );
-                                    return total + price * qty;
-                                  }, 0)
+                                  supplier.items
+                                    .filter((i) => i.poItemStatus === "sent")
+                                    .reduce((total, item) => {
+                                      const price =
+                                        Number(
+                                          item.supplierPrice || item.unitPrice
+                                        ) || 0;
+                                      const qty = Number(
+                                        item.poItemReceivedQty > 0
+                                          ? item.poItemReceivedQty
+                                          : item.poItemOrderedQty
+                                      );
+                                      return total + price * qty;
+                                    }, 0)
                                 )}
                               </p>
                               <span className="text-[9px] xl:text-xs">
