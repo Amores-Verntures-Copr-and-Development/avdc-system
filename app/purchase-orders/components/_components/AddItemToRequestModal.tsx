@@ -7,8 +7,10 @@ import React from "react";
 
 interface AddItemToRequestModalProps {
   data: DisplayRequisitionWithItems | null;
+  onCancel: () => void;
 }
-const AddItemToRequestModal = ({}: AddItemToRequestModalProps) => {
+const AddItemToRequestModal = ({ onCancel }: AddItemToRequestModalProps) => {
+  const handleAddItemInRequest = async () => {};
   return (
     <div className="flex flex-col gap-2">
       <span className="text-xs xl:text-sm font-semibold">
@@ -32,7 +34,13 @@ const AddItemToRequestModal = ({}: AddItemToRequestModalProps) => {
       </div>
       <div className="flex justify-end gap-2">
         <div>
-          <Button label="Cancel" size="sm" color="secondary" hasBorder />
+          <Button
+            label="Cancel"
+            size="sm"
+            color="secondary"
+            hasBorder
+            onClick={onCancel}
+          />
         </div>
         <div>
           <Button label="Add Item" size="sm" hasBorder />

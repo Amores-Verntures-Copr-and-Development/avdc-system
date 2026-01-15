@@ -703,7 +703,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           setIsShowAddItemRequest(false);
         }}
       >
-        <AddItemToRequestModal data={selectedRequestNo} />
+        <AddItemToRequestModal
+          data={selectedRequestNo}
+          onCancel={() => {
+            setIsShowAddItemRequest(false);
+          }}
+        />
       </Popup>
       <ConfirmationModal
         onConfirm={() => {

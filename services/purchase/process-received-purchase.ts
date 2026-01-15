@@ -49,7 +49,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
       (item) =>
         item.poItemStatus !== "not_ordered" && item.poItemStatus === "sent"
     );
-    console.log({ validReceivedData });
+
     if (validReceivedData && validReceivedData.length > 0) {
       const poItemsData: Partial<PurchaseOrderItems>[] =
         validReceivedData.map((item) => ({
@@ -63,7 +63,6 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         updates: poItemsData,
       });
       //add to warehouse inventory
-      console.log(`data.poCreatedBy: `, data.poCreatedBy);
       const warehouseInv = await findInventoryByStockPurchaserFields({
         keyFields: { userId: data.updatedBy },
       });
@@ -107,8 +106,11 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         keyfields: { poId: data.poId, suppId: 0 },
       });
       const filterDelivered = poItems.filter(
-        (item) => item.poItemStatus !== "not_ordered"
+        (item) =>
+          item.poItemStatus !== "not_ordered" && item.poItemStatus !== "removed"
       );
+      console.log({ poItems });
+      console.log({ filterDelivered });
       const isAllDeliverd = filterDelivered.every(
         (item) => item.poItemStatus === "received"
       );

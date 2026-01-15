@@ -21,6 +21,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/shared/Button";
 import { ArrowLeft } from "lucide-react";
 import ShowAllIItems from "./ShowAllIItems";
+import LoaderComponent from "@/components/shared/LoaderComponent";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -391,7 +392,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       </div>
       {/* <PendingPOView data={itemResponse.data} /> */}
       {/* Step instruction */}
-      {showPage === "status" ? (
+      {isLoading ? (
+        <LoaderComponent />
+      ) : showPage === "status" ? (
         data?.poStatus === "pending" ? (
           <PendingPOView
             setShowAllItems={setShowPage}
