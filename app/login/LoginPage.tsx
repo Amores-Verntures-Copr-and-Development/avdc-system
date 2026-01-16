@@ -39,7 +39,7 @@ const LoginPage = () => {
 
       if (res.ok && data.success) {
         // ⚠️ CRITICAL: Save user data to localStorage IMMEDIATELY
-        localStorage.setItem("userData", JSON.stringify(data.user));
+
         const needsStoreSelection =
           (data.user.empPosition === "supervisor" ||
             data.user.empPosition === "staff") &&

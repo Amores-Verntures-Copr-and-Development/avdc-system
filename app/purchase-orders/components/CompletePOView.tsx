@@ -368,9 +368,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       (item) => item.requestNo === requestNo
     )?.requestItemsData;
     const transfers = findUpdatedItems?.reduce((acc, item) => {
-      acc[item.reqItemId] = item.reqItemTransfer;
+      acc[item.reqItemId] = {
+        reqItemTransfer: item.reqItemTransfer,
+        reqItemStatus: item.reqItemStatus,
+      };
       return acc;
-    }, {} as Record<string, number>);
+    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
     localStorage.setItem(
       `reqItemTransfer_${requestNo}`,
       JSON.stringify(transfers)
