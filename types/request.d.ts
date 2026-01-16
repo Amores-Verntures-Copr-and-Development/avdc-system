@@ -25,6 +25,7 @@ export interface Request {
   requestUpdatedAt: string;
   requestDeletedAt: string;
   requestItems: RequestItems[];
+  requestItemsData?: RequestItems[];
 }
 
 export interface RequestItems {

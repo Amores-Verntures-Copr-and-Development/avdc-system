@@ -34,6 +34,7 @@ import AddItemToRequestFromPOModal, {
   POAddToRequestItemForm,
 } from "./_components/AddItemToRequestFromPOModal";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
 interface StatusOption {
   label: string;
   value: string;
@@ -59,11 +60,18 @@ export const statusOptions: StatusOption[] = [
     bg: "bg-yellow-100",
     color: "text-yellow-700",
   },
+
   {
     label: "Received",
     value: "received",
     bg: "bg-emerald-100",
     color: "text-emerald-700",
+  },
+  {
+    label: "Partial",
+    value: "partial",
+    bg: "bg-blue-100",
+    color: "text-blue-700",
   },
 ];
 export function getStatusOption(value: string): StatusOption {
@@ -111,7 +119,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     useState<DisplayRequisitionWithItems | null>(null);
   const [requestItems, setRequestItems] =
     useState<DisplayRequisitionWithItems[]>(data);
-
+  const [selectedStatus, setSelectedStatus] = useState<
+    Record<string, string | null>
+  >({});
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [isShowAddItemRequest, setIsShowAddItemRequest] =
     useState<boolean>(false);
@@ -150,12 +160,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       name: "Fulfill Qty",
       key: "reqItemTransfer",
       editable: (row) => {
-        const status = data.find(
-          (req) => req.requestId === row.requestId
-        )?.requestStatus;
         return (
           !["delivered", "completed", "received", "not_ordered"].includes(
-            status ?? ""
+            row.reqItemStatus ?? ""
           ) && row.reqItemStatus !== "not_ordered"
         );
       },
@@ -202,10 +209,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         );
       },
       editable: (row) => {
-        const status = data.find(
-          (req) => req.requestId === row.requestId
-        )?.requestStatus;
-        return !["delivered", "completed", "received"].includes(status ?? "");
+        return ["pending", "partial"].includes(row.reqItemStatus ?? "");
       },
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
@@ -216,6 +220,12 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           bg: "bg-red-100",
           color: "text-red-600",
         },
+        // {
+        //   label: "Delivered",
+        //   value: "delivered",
+        //   bg: "bg-yellow-100",
+        //   color: "text-yellow-700",
+        // },
         {
           label: "Partial",
           value: "partial",
@@ -386,7 +396,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           requestItems: newRequestItems,
         },
       ];
-
+      console.log({ newRequest });
       if (onMarkDelivered) {
         const success = await onMarkDelivered(newRequest);
         if (success) {
@@ -491,6 +501,21 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 const price = Number(item.itemPrice || 0);
                 return total + quantity * price;
               }, 0);
+            const statusOption = Array.from(
+              new Map(
+                reqData.requestItemsData.map((i) => {
+                  const { value, label } = getRequestStatusOption(
+                    i.reqItemStatus
+                  );
+
+                  const count = reqData.requestItemsData.filter(
+                    (item) => item.reqItemStatus === i.reqItemStatus
+                  ).length;
+
+                  return [value, { label: `${label} (${count})`, value }];
+                })
+              ).values()
+            );
             return (
               <div
                 className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer"
@@ -550,6 +575,23 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 {isRequestExpanded === reqData.requestNo && (
                   <div className="overflow-visible">
                     <Table
+                      addContentLeftTitle={
+                        <div>
+                          <DynamicDropdown
+                            options={statusOption}
+                            onChange={(value) => {
+                              setSelectedStatus((prev) => ({
+                                ...prev,
+                                [reqData.requestNo]:
+                                  value === "all" ? null : String(value),
+                              }));
+                            }}
+                            placeholder={"Status"}
+                            size="sm"
+                            icon={undefined}
+                          />
+                        </div>
+                      }
                       localSearch
                       uniqueIdKey="reqItemId"
                       columns={columns}
@@ -558,19 +600,31 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           reqData.requestStatus ?? ""
                         )
                       }
-                      renderActions={(row) => (
-                        <div>
-                          <IconButton
-                            onClick={function (): void {
-                              // setIsProcessing(reqData.requestNo);
-                            }}
-                            label={`Fulfill ${row.itemName}`}
-                            icon={<Check size={18} />}
-                            bg={""}
-                          />
-                        </div>
-                      )}
-                      data={reqData.requestItemsData}
+                      renderActions={(row) =>
+                        !["delivered", "completed", "received"].includes(
+                          row.reqItemStatus ?? ""
+                        ) && (
+                          <div>
+                            <IconButton
+                              onClick={function (): void {
+                                // setIsProcessing(reqData.requestNo);
+                              }}
+                              label={`Fulfill ${row.itemName}`}
+                              icon={<Check size={18} />}
+                              bg={""}
+                            />
+                          </div>
+                        )
+                      }
+                      data={
+                        selectedStatus[reqData.requestNo]
+                          ? reqData.requestItemsData.filter(
+                              (item) =>
+                                item.reqItemStatus ===
+                                selectedStatus[reqData.requestNo]
+                            )
+                          : reqData.requestItemsData
+                      }
                       isRounded={false}
                       updateData={(updatedItems) =>
                         handleDataChange(reqData.requestNo, updatedItems)
@@ -666,8 +720,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           <Button
                             size="xs"
                             onClick={() => {
-                              const hasNoFulFillQty =
-                                reqData.requestItemsData.some(
+                              const hasNoFulFillQty = reqData.requestItemsData
+                                .filter((i) => i.reqItemStatus !== "delivered")
+                                .some(
                                   (item) =>
                                     item.reqItemStatus !== "not_ordered" &&
                                     Number(item.reqItemTransfer) === 0
@@ -781,7 +836,14 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       <ConfirmationModal
         onConfirm={() => {
           if (deliverRequestData) {
-            handleMarkPaid(deliverRequestData);
+            const filter = {
+              ...deliverRequestData,
+              requestItemsData: deliverRequestData.requestItemsData.filter(
+                (i) => i.reqItemStatus !== "delivered"
+              ),
+            };
+            console.log({ filter });
+            handleMarkPaid(filter);
           }
         }}
         confirmationInfo={`Are you sure you want to deliver items to ${deliverRequestData?.storeName}?`}

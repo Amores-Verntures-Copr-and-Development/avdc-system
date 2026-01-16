@@ -10,106 +10,183 @@ import { findInventoryItemsByField } from "../inventory/inventory-items/get-inve
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { findStockRoomBySPFields } from "../stock-room/get-stock-room";
 import { findInventoryByFields } from "../inventory/get-inventory";
+import { getRequestItems } from "../requestServices";
+import { getRequestOrderItems } from "./request-items/get-request-items";
 
 export async function processDeliveredPO(data: Request[], userId: number) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-
-    const request: Partial<Request>[] = data.map((req) => ({
-      requestId: req.requestId,
-      requestStatus: "delivered",
-    }));
-    await updateRequests({
-      connection,
-      keyFields: ["requestId"],
-      updates: request,
-    });
-    const requestNotOrderItemData: Partial<RequestItems>[] = data.flatMap(
+    const requestPartial: RequestItems[] = data.flatMap(
       (req) =>
-        req.requestItems
-          .filter((item) => item.reqItemStatus === "not_ordered")
-          .flatMap((item) => ({
-            reqItemId: item.reqItemId,
-            reqItemStatus: item.reqItemStatus,
-            reqItemRemarks: item.reqItemRemarks ?? "",
-          }))
+        req.requestItemsData?.filter(
+          (item) => item.reqItemStatus === "partial"
+        ) ?? []
     );
-    if (requestNotOrderItemData) {
+    const requestDelivered: RequestItems[] = data.flatMap(
+      (req) =>
+        req.requestItemsData?.filter(
+          (item) => item.reqItemStatus === "pending"
+        ) ?? []
+    );
+    const requestItemToDeduct: RequestItems[] = [
+      ...requestPartial,
+      ...requestDelivered,
+    ];
+    const requestNotOrdered: RequestItems[] = data.flatMap(
+      (req) =>
+        req.requestItemsData?.filter(
+          (item) => item.reqItemStatus === "not_ordered"
+        ) ?? []
+    );
+
+    if (requestPartial && requestPartial.length > 0) {
+      const updatePartial: Partial<RequestItems>[] = requestPartial.map(
+        (i) => ({
+          reqItemId: i.reqItemId,
+          reqItemTransfer: Number(i.reqItemTransfer),
+          reqItemStatus: "partial",
+        })
+      );
+
       await updateRequestItems({
         connection,
-        updates: requestNotOrderItemData,
+        updates: updatePartial,
         keyFields: ["reqItemId"],
       });
+      //Perform update request
+      //Insert to inventory
+      //
     }
-    const requestItemData: Partial<RequestItems>[] = data.flatMap((req) =>
-      req.requestItems
-        .filter((reqItem) => reqItem.reqItemStatus !== "not_ordered")
-        .flatMap((item) => ({
-          reqItemId: item.reqItemId,
-          reqItemTransfer: item.reqItemTransfer,
-          reqItemStatus: "delivered",
-        }))
-    );
-    await updateRequestItems({
-      connection,
-      updates: requestItemData,
-      keyFields: ["reqItemId"],
-    });
-    const stockRoom = await findStockRoomBySPFields({
-      keyFields: { userId: userId },
-    });
-    const warehouseInv = await findInventoryByFields({
-      keyFields: {
-        inventoryReference: "stock-room",
-        inventoryReferenceId: stockRoom[0].stockRoomId,
-      },
-    });
-    const decerementInv: Partial<InventoryItemInterface>[] = data.flatMap(
-      (req) =>
-        req.requestItems
-          .filter((item) => item.reqItemStatus !== "not_ordered")
-          .flatMap((item) => ({
-            inventoryId: warehouseInv[0].inventoryId,
-            inventoryItemReferenceId: item.itemId,
-            inventoryItemQuantity: item.reqItemTransfer,
-          }))
-    );
-    await updateInventoryItem({
-      connection,
-      fieldModes: { inventoryItemQuantity: "decrement" },
-      updates: decerementInv,
-      keyFields: ["inventoryItemReferenceId", "inventoryId"],
-    });
-    const storeInventoryMovement: CreateInventoryMovementDto[] =
-      await Promise.all(
-        data.flatMap((data) =>
-          data.requestItems
-            .filter((reqItem) => reqItem.reqItemStatus !== "not_ordered")
-            .flatMap(async (req) => {
-              const inventoryItem = await findInventoryItemsByField({
-                keyFields: {
-                  inventoryId: warehouseInv[0].inventoryId ?? 0,
-                  inventoryItemReferenceId: req.itemId,
-                },
-              });
-              return {
-                inventoryId: warehouseInv[0].inventoryId,
-                inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
-                itemMovementType: "out",
-                itemMovementReferenceId: req.requestId ?? 0,
-                itemMovementReference: "ro",
-                itemMovementQuantity: Number(req.reqItemTransfer),
-                itemMovementRemarks: "Deliver item to store",
-              };
-            })
-        )
-      );
-    console.log("[createInventoryMovementDeliver]");
-    await createInventoryMovement({ connection, data: storeInventoryMovement });
-    //check if all requestItems is delivered to make the purchaserOrderItems delivered too.
 
+    if (requestDelivered && requestDelivered.length > 0) {
+      const updateDelivered: Partial<RequestItems>[] = requestDelivered.map(
+        (i) => ({
+          reqItemId: i.reqItemId,
+          reqItemTransfer: Number(i.reqItemTransfer),
+          reqItemStatus: "delivered",
+        })
+      );
+      console.log({ updateDelivered });
+      await updateRequestItems({
+        connection,
+        updates: updateDelivered,
+        keyFields: ["reqItemId"],
+      });
+      //Perform update request
+      //Insert to inventory
+      //
+    }
+    if (requestNotOrdered && requestNotOrdered.length > 0) {
+      const updateDelivered: Partial<RequestItems>[] = requestNotOrdered.map(
+        (i) => ({
+          reqItemId: i.reqItemId,
+          reqItemStatus: "not_ordered",
+        })
+      );
+      await updateRequestItems({
+        connection,
+        updates: updateDelivered,
+        keyFields: ["reqItemId"],
+      });
+      //Perform update request
+      //Insert to inventory
+      //
+    }
+    if (requestDelivered && requestDelivered.length > 0) {
+      const updateDelivered: Partial<RequestItems>[] = requestDelivered.map(
+        (i) => ({
+          reqItemId: i.reqItemId,
+          reqItemTransfer: Number(i.reqItemTransfer),
+          reqItemStatus: "delivered",
+        })
+      );
+      await updateRequestItems({
+        connection,
+        updates: updateDelivered,
+        keyFields: ["reqItemId"],
+      });
+      //Perform update request
+      //Insert to inventory
+      //
+    }
+    // console.log({ requestDelivered, requestPartial, requestNotOrdered });
+    if (requestItemToDeduct && requestItemToDeduct.length > 0) {
+      const stockRoom = await findStockRoomBySPFields({
+        keyFields: { userId: userId },
+      });
+      const warehouseInv = await findInventoryByFields({
+        keyFields: {
+          inventoryReference: "stock-room",
+          inventoryReferenceId: stockRoom[0].stockRoomId,
+        },
+      });
+      const decerementInv: Partial<InventoryItemInterface>[] =
+        requestItemToDeduct.map((item) => ({
+          inventoryId: warehouseInv[0].inventoryId,
+          inventoryItemReferenceId: item.itemId,
+          inventoryItemQuantity: item.reqItemTransfer,
+        }));
+      await updateInventoryItem({
+        connection,
+        fieldModes: { inventoryItemQuantity: "decrement" },
+        updates: decerementInv,
+        keyFields: ["inventoryItemReferenceId", "inventoryId"],
+      });
+      const storeInventoryMovement: CreateInventoryMovementDto[] =
+        await Promise.all(
+          requestItemToDeduct.map(async (i) => {
+            const inventoryItem = await findInventoryItemsByField({
+              keyFields: {
+                inventoryId: warehouseInv[0].inventoryId ?? 0,
+                inventoryItemReferenceId: i.itemId,
+              },
+            });
+            return {
+              inventoryId: warehouseInv[0].inventoryId,
+              inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
+              itemMovementType: "out",
+              itemMovementReferenceId: i.requestId ?? 0,
+              itemMovementReference: "ro",
+              itemMovementQuantity: Number(i.reqItemTransfer),
+              itemMovementRemarks: "Deliver item to store",
+            };
+          })
+        );
+      await createInventoryMovement({
+        connection,
+        data: storeInventoryMovement,
+      });
+    }
+    //Check if all the request
+    const requestUpdate: Partial<Request>[] = (
+      await Promise.all(
+        data.map(async (req) => {
+          const reqItems = await getRequestOrderItems({
+            requestId: req.requestId,
+            connection,
+          });
+
+          // Check if all valid items are delivered
+          const validItemsDelivered = reqItems
+            .filter((i) => i.reqItemStatus !== "not_ordered")
+            .every((i) => i.reqItemStatus === "delivered");
+
+          // Only return object if all delivered
+          return validItemsDelivered
+            ? { requestId: req.requestId, requestStatus: "delivered" }
+            : [];
+        })
+      )
+    ).flat() as Partial<Request>[];
+    if (requestUpdate && requestUpdate.length > 0) {
+      await updateRequests({
+        connection,
+        keyFields: ["requestId"],
+        updates: requestUpdate,
+      });
+    }
     await connection.commit();
   } catch (e) {
     await connection.rollback();

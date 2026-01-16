@@ -22,7 +22,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-
+    console.log({ data });
     const requestItemData: Partial<RequestItems>[] = data.items.map((item) => ({
       reqItemId: item.reqItemId,
       reqItemStatus: "delivered",

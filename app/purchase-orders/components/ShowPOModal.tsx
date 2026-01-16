@@ -471,7 +471,10 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         ) : data?.poStatus === "received" ? (
           <CompletePOView
             setShowAllItems={setShowPage}
-            mutate={mutateInventory}
+            mutate={() => {
+              mutateInventory();
+              mutate();
+            }}
             poData={data}
             data={itemResponse.data}
             onMarkDelivered={handleDeliveredRO}
@@ -483,7 +486,10 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         ) : (
           <CompletePOView
             setShowAllItems={setShowPage}
-            mutate={mutateInventory}
+            mutate={() => {
+              mutateInventory();
+              mutate();
+            }}
             poData={data}
             onClose={onClose}
             onCompleteRequest={handleCompleteRO}

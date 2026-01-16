@@ -64,6 +64,14 @@ export const requestStatusOptions: RequestStatusOption[] = [
     dot: "bg-gray-500",
   },
   {
+    label: "Partial",
+    value: "partial",
+    bg: "bg-blue-100",
+    color: "text-blue-700",
+    border: "border-blue-200",
+    dot: "bg-blue-500",
+  },
+  {
     label: "Completed",
     value: "completed",
     bg: "bg-primary-1/20",

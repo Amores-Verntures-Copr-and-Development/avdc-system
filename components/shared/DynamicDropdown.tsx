@@ -50,7 +50,7 @@ const DynamicDropdown = ({
   }, [selectedOption]);
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full" onClick={(e) => e.stopPropagation()}>
       {/* Trigger */}
       <button
         type="button"

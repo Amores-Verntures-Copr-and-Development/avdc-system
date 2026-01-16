@@ -7,8 +7,9 @@ import {
 } from "@/dtos/purchase.dto";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
-import { Plus } from "lucide-react";
+import { Plus, Trash } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 interface AddItemToRequestFromPOModaProps {
   reqData: DisplayRequisitionWithItems | null;
@@ -21,7 +22,6 @@ interface AddItemToRequestFromPOModaProps {
 export interface POAddToRequestItem {
   poItemId: number;
   itemId: number;
-  reqItemTransfer: number;
 }
 
 export interface POAddToRequestItemForm {
@@ -134,12 +134,6 @@ const AddItemToRequestFromPOModal = ({
         );
       },
     },
-    {
-      name: "Deliver Qty",
-      key: "reqItemTransfer",
-      inputType: "number",
-      editable: true,
-    },
   ];
   const itemAddcolumns: Column<POAddToRequestItem>[] = [
     {
@@ -163,10 +157,6 @@ const AddItemToRequestFromPOModal = ({
         return poItem ? poItem.itemName : "Item not found";
       },
     },
-    {
-      name: "Deliver Qty",
-      key: "reqItemTransfer",
-    },
   ];
 
   const submitAddItemsToRequest = async () => {
@@ -181,10 +171,14 @@ const AddItemToRequestFromPOModal = ({
 
     const success = await onAddItem(formData);
     if (success) {
-      mutateRequest;
+      mutateRequest();
       setSelectedPoItems([]);
       onClose();
     }
+  };
+  const onRemoveItem = (poItemId: number) => {
+    const filterItem = selectedPoItems.filter((i) => i.poItemId !== poItemId);
+    setSelectedPoItems(filterItem);
   };
   return (
     <div className="flex h-full flex-col gap-2">
@@ -200,6 +194,8 @@ const AddItemToRequestFromPOModal = ({
       <div className="flex flex-col min-h-0 h-full">
         <Table<DisplayPurchaseOrderItemsDtoExtended>
           columns={columns}
+          localSearch
+          uniqueIdKey="poItemId"
           data={poItems}
           maxHeight="h-full"
           showActions
@@ -207,14 +203,12 @@ const AddItemToRequestFromPOModal = ({
             <div>
               <IconButton
                 onClick={() => {
-                  console.log(row.reqItemTransfer);
                   setSelectedPoItems((prev) => {
                     return [
                       ...prev,
                       {
                         poItemId: row.poItemId,
                         itemId: row.itemId,
-                        reqItemTransfer: Number(row.reqItemTransfer) || 0,
                       },
                     ];
                   });
@@ -238,18 +232,18 @@ const AddItemToRequestFromPOModal = ({
           data={selectedPoItems}
           maxHeight="h-full"
           showActions
-          // renderActions={(row) => (
-          //   <div>
-          //     <IconButton
-          //       onClick={() => {
-          //         console.log(row.reqItemOrderedQty);
-          //       }}
-          //       label={"Add to Request"}
-          //       bg={"green"}
-          //       icon={<Plus size={16} />}
-          //     />
-          //   </div>
-          // )}
+          renderActions={(row) => (
+            <div>
+              <IconButton
+                onClick={() => {
+                  onRemoveItem(row.poItemId);
+                }}
+                label={"Remove"}
+                bg={"red"}
+                icon={<Trash size={16} />}
+              />
+            </div>
+          )}
         />
       </div>
       <div className="flex mt-auto justify-end gap-3">

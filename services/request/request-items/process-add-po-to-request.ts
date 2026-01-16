@@ -49,8 +49,7 @@ export const processAddItemFromPOtoRequest = async (
         updateItems.push({
           invItem: inventoryItem.data[0].inventoryItemId,
           requestId: data.requestId,
-          reqItemStatus: "delivered",
-          reqItemTransfer: poItem.reqItemTransfer || 0,
+          reqItemStatus: "pending",
         });
         return {
           requestId: data.requestId,
