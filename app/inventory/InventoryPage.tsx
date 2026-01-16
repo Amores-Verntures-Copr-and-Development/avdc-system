@@ -33,7 +33,7 @@ const InventoryPage = () => {
   } = useSWR<{
     data: StockRoom[];
   }>(user ? `/api/stock-room/userId/${user?.userId}` : null, fetcher);
-  console.log({ stockRoomResponse });
+
   const stockRoomId = stockRoomResponse.data[0]?.stockRoomId
     ? stockRoomResponse.data[0]?.stockRoomId
     : null;
@@ -48,11 +48,7 @@ const InventoryPage = () => {
     data: DisplayAllInventory[];
   }>(user ? inventoryBaseUrl : null, fetcher);
   useEffect(() => {
-    console.log("useEffect triggered with:", {
-      userPosition: user?.empPosition,
-      inventoryResponse,
-      inventoryId,
-    });
+
 
     if (
       user?.empPosition === "supervisor" ||
@@ -73,12 +69,7 @@ const InventoryPage = () => {
   }, [inventoryResponse, user?.empPosition]);
 
   // Also add this to see when inventoryId changes
-  useEffect(() => {
-    console.log("inventoryId changed to:", inventoryId);
-    if (inventoryId) {
-      // This might be triggering more API calls
-    }
-  }, [inventoryId]);
+
   return (
     <PageLayout className="gap-2 p-2 ">
       {user?.empPosition === "purchaser" ||

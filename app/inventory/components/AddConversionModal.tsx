@@ -36,7 +36,7 @@ const AddConversionModal = ({
       ...convertForm,
       itemConCreatedBy: user?.userId ?? 0,
     };
-    console.log("Create Conversion: ", newForm);
+
     try {
       const result = await fetch(`api/items/${newForm.fromItemId}/conversion`, {
         method: "POST",
@@ -119,8 +119,7 @@ const AddConversionModal = ({
                     toUnit: row.itemUnit,
                     toItemId: row.itemId,
                   }));
-                  console.log({ row });
-                  console.log({ convertForm });
+
                 }
               }}
             />

@@ -91,7 +91,7 @@ const ConvertSection = ({
           fromForm.inventoryItemQuantity * findConvert.toQuantity,
       }));
     }
-    console.log({ toForm });
+
   }, [toForm.itemId, response.data, fromForm.inventoryItemQuantity]);
 
   // Handle initial data setup separately
@@ -138,7 +138,7 @@ const ConvertSection = ({
       toast.error("Cannot convert 0 quantity!");
       return;
     }
-    console.log(convertFormData);
+
     try {
       const result = await fetch(
         `api/items/${convertFormData.from.itemId}/conversion`,

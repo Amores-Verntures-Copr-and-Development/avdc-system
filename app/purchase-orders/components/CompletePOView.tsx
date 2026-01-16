@@ -316,10 +316,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     }
   }, [data]);
 
-  useEffect(() => {
-    console.log({ requestItems });
-  }, [requestItems]);
-
   const handleAutoFillAll = (requestNo: string) => {
     let insufficientCount = 0;
 
@@ -369,7 +365,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     )?.requestItemsData;
     const transfers = findUpdatedItems?.reduce((acc, item) => {
       acc[item.reqItemId] = {
-        reqItemTransfer: item.reqItemTransfer,
+        reqItemTransfer: Number(item.reqItemTransfer),
         reqItemStatus: item.reqItemStatus,
       };
       return acc;
@@ -391,14 +387,13 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         ...items,
       })
     );
-    console.log({ newRequestItems });
 
     const hasNoFulFillQty = newRequestItems.some(
       (item) =>
         item.reqItemStatus !== "not_ordered" &&
         Number(item.reqItemTransfer) === 0
     );
-    console.log({ hasNoFulFillQty });
+
     if (hasNoFulFillQty) {
       toast.error("Failed to deliver. Cannot deliver 0 quantity");
       return;
@@ -440,7 +435,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
 
   const handleAddItemPOToRequest = async (data: POAddToRequestItemForm) => {
     try {
-      console.log({ data });
       const res = await fetch(
         `/api/purchase-order/po-request-order/requestId/${data.poId}`,
         {
@@ -698,7 +692,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                                     item.reqItemStatus !== "not_ordered" &&
                                     Number(item.reqItemTransfer) === 0
                                 );
-                              console.log({ hasNoFulFillQty });
+
                               if (hasNoFulFillQty) {
                                 toast.error(
                                   "Failed to deliver. Cannot deliver 0 quantity"

@@ -48,7 +48,7 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
     }
   }, [data]);
   const handleSubmit = async () => {
-    console.log({ addItemStoreForm });
+
     const success = await onSubmit(addItemStoreForm);
     if (success) {
       onCancel();
@@ -58,7 +58,7 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
     const newData = inventoryItems?.filter(
       (item) => item.itemId !== row.itemId
     );
-    console.log({ newData });
+ 
     if (newData) {
       setInventoryItems(newData);
       toast.custom((t) => (

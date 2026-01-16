@@ -87,13 +87,13 @@ const OwnerDashboard = () => {
     name: item.month,
     value: Number(item.totalSales),
   }));
-  console.log("Sales Data:", salesData);
+
   const totals = dashboardStats?.data[0];
   const totalSales = Number(totals?.totalSales) || 0;
   const totalStores = Number(totals?.totalStores) || 0;
   const totalInventoryCost = Number(totals?.totalInventoryCost) || 0;
   const totalPurchaseOrders = Number(totals?.totalPurchase) || 0;
-  console.log({ salesData });
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-full overflow-y-auto p-2">
       {/* Main Content - 3/4 on desktop, full on mobile */}

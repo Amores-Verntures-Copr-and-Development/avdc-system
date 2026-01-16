@@ -122,7 +122,7 @@ const CreateInventoryReport = ({
 
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
-      console.log("Selected range:", rangeData);
+
       setRange(rangeData);
     },
     []
@@ -153,7 +153,7 @@ const CreateInventoryReport = ({
       inventoryReport: inventoryReportData,
       invReportCreatedBy: user?.userId ?? 0,
     };
-    console.log({ reportData });
+
     try {
       const result = await fetch(`api/report/${inventoryId}/`, {
         method: "POST",
