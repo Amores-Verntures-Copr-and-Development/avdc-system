@@ -162,10 +162,27 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       inputType: "number",
     },
     {
+      name: "Received Qty",
+      key: "reqItemReceived",
+    },
+
+    {
       name: "Total",
       key: "total",
 
-      selector: (row) => formatPeso(row.reqItemQuantity * row.itemPrice),
+      selector: (row) =>
+        row.reqItemStatus === "not_ordered"
+          ? 0
+          : formatPeso(
+              Number(
+                row.reqItemStatus === "delivered"
+                  ? row.reqItemTransfer
+                  : row.reqItemStatus === "received" ||
+                    row.reqItemStatus === "completed"
+                  ? row.reqItemReceived
+                  : row.reqItemQuantity
+              ) * row.itemPrice
+            ),
     },
     {
       name: "Status",
@@ -246,12 +263,62 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           : items
       )
     );
+    const transfersAndStatus = updatedItems.reduce((acc, item) => {
+      acc[item.reqItemId] = {
+        reqItemTransfer: item.reqItemTransfer,
+        reqItemStatus: item.reqItemStatus,
+      };
+      return acc;
+    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
+    localStorage.setItem(
+      `reqItemTransfer_${requestNo}`,
+      JSON.stringify(transfersAndStatus)
+    );
   };
   useEffect(() => {
     if (data && data.length > 0) {
-      setRequestItems(data);
+      const hydratedData = data.map((req) => {
+        const savedRaw = localStorage.getItem(
+          `reqItemTransfer_${req.requestNo}`
+        );
+        let saved:
+          | Record<string, { reqItemTransfer?: number; reqItemStatus?: string }>
+          | undefined;
+
+        try {
+          if (savedRaw) {
+            saved = JSON.parse(savedRaw);
+          }
+        } catch (e) {
+          console.warn(`Failed to parse localStorage for ${req.requestNo}`, e);
+        }
+
+        if (saved) {
+          const newItems: RequestItemsCombine[] = req.requestItemsData.map(
+            (item) => ({
+              ...item,
+              // Force type to RequestItemStatus
+              reqItemTransfer:
+                saved![item.reqItemId]?.reqItemTransfer ?? item.reqItemTransfer,
+              reqItemStatus:
+                (saved![item.reqItemId]
+                  ?.reqItemStatus as RequestItemsCombine["reqItemStatus"]) ??
+                item.reqItemStatus,
+            })
+          );
+          return { ...req, requestItemsData: newItems };
+        }
+
+        return req;
+      });
+
+      setRequestItems(hydratedData);
     }
   }, [data]);
+
+  useEffect(() => {
+    console.log({ requestItems });
+  }, [requestItems]);
 
   const handleAutoFillAll = (requestNo: string) => {
     let insufficientCount = 0;
@@ -297,7 +364,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           : items
       )
     );
-
+    const findUpdatedItems = requestItems.find(
+      (item) => item.requestNo === requestNo
+    )?.requestItemsData;
+    const transfers = findUpdatedItems?.reduce((acc, item) => {
+      acc[item.reqItemId] = item.reqItemTransfer;
+      return acc;
+    }, {} as Record<string, number>);
+    localStorage.setItem(
+      `reqItemTransfer_${requestNo}`,
+      JSON.stringify(transfers)
+    );
     if (insufficientCount > 0) {
       toast.error(
         `${insufficientCount} items are not fulfilled due to out of stock!`
@@ -335,6 +412,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       if (onMarkDelivered) {
         const success = await onMarkDelivered(newRequest);
         if (success) {
+          localStorage.removeItem(`reqItemTransfer_${data.requestNo}`);
           mutate();
           setIsShowDeliverConfirm(false);
           setDeliverRequestData(null);
@@ -422,14 +500,20 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             const { label, bg, color, border } = getRequestStatusOption(
               reqData.requestStatus
             );
-            const totalRequestItemPrice = reqData.requestItemsData.reduce(
-              (total, item) => {
-                const quantity = Number(item.reqItemQuantity || 1);
+            const totalRequestItemPrice = reqData.requestItemsData
+              .filter((item) => item.reqItemStatus !== "not_ordered")
+              .reduce((total, item) => {
+                const quantity = Number(
+                  item.reqItemStatus === "delivered"
+                    ? item.reqItemTransfer
+                    : item.reqItemStatus === "received" ||
+                      item.reqItemStatus === "completed"
+                    ? item.reqItemReceived
+                    : item.reqItemQuantity
+                );
                 const price = Number(item.itemPrice || 0);
                 return total + quantity * price;
-              },
-              0
-            );
+              }, 0);
             return (
               <div
                 className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer"
@@ -547,88 +631,97 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       />
                     </div>
 
-                    <div>
-                      <Button
-                        color="tertiary"
-                        size="xs"
-                        onClick={() => {
-                          setIsShowAddItemRequest(true);
-                          setSelectedRequestNo(reqData);
-                        }}
-                        label="Add Item in Request"
-                        icon={Package}
-                        className="font-semibold text-gray-700 text-xs px-2 py-2"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        color="warning"
-                        size="xs"
-                        onClick={() => {
-                          setIsShowAddItemFromPO(true);
-                          setSelectedRequestNo(reqData);
-                        }}
-                        label="Add Item from PO"
-                        icon={Package}
-                        className="font-semibold text-gray-700 text-xs px-2 py-2"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        size="xs"
-                        onClick={() => {
-                          handleAutoFillAll(reqData.requestNo);
-                        }}
-                        label={
-                          isProcessing === reqData.requestNo
-                            ? "Processing..."
-                            : `Fulfill ${reqData.requestNo}`
-                        }
-                        icon={CheckCircle}
-                        className="font-semibold text-xs px-2 py-2"
-                        disabled={
-                          isProcessing === reqData.requestNo ||
-                          reqData.requestStatus === "delivered" ||
-                          reqData.requestStatus === "received" ||
-                          reqData.requestStatus === "completed"
-                        }
-                        color="success"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        size="xs"
-                        onClick={() => {
-                          const hasNoFulFillQty = reqData.requestItemsData.some(
-                            (item) =>
-                              item.reqItemStatus !== "not_ordered" &&
-                              Number(item.reqItemTransfer) === 0
-                          );
-                          console.log({ hasNoFulFillQty });
-                          if (hasNoFulFillQty) {
-                            toast.error(
-                              "Failed to deliver. Cannot deliver 0 quantity"
-                            );
-                            return;
-                          }
-                          setIsShowDeliverConfirm(true);
-                          setDeliverRequestData(reqData);
-                        }}
-                        label={
-                          isProcessing === reqData.requestNo
-                            ? "Processing..."
-                            : `Mark as Delivered`
-                        }
-                        icon={Truck}
-                        className="font-semibold text-xs px-2 py-2"
-                        disabled={
-                          isProcessing === reqData.requestNo ||
-                          reqData.requestStatus === "delivered" ||
-                          reqData.requestStatus === "received" ||
-                          reqData.requestStatus === "completed"
-                        }
-                      />
-                    </div>
+                    {Boolean(
+                      !["completed", "delivered", "received"].includes(
+                        reqData.requestStatus
+                      )
+                    ) && (
+                      <>
+                        <div>
+                          <Button
+                            color="tertiary"
+                            size="xs"
+                            onClick={() => {
+                              setIsShowAddItemRequest(true);
+                              setSelectedRequestNo(reqData);
+                            }}
+                            label="Add Item in Request"
+                            icon={Package}
+                            className="font-semibold text-gray-700 text-xs px-2 py-2"
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            color="warning"
+                            size="xs"
+                            onClick={() => {
+                              setIsShowAddItemFromPO(true);
+                              setSelectedRequestNo(reqData);
+                            }}
+                            label="Add Item from PO"
+                            icon={Package}
+                            className="font-semibold text-gray-700 text-xs px-2 py-2"
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            size="xs"
+                            onClick={() => {
+                              handleAutoFillAll(reqData.requestNo);
+                            }}
+                            label={
+                              isProcessing === reqData.requestNo
+                                ? "Processing..."
+                                : `Fulfill ${reqData.requestNo}`
+                            }
+                            icon={CheckCircle}
+                            className="font-semibold text-xs px-2 py-2"
+                            disabled={
+                              isProcessing === reqData.requestNo ||
+                              reqData.requestStatus === "delivered" ||
+                              reqData.requestStatus === "received" ||
+                              reqData.requestStatus === "completed"
+                            }
+                            color="success"
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            size="xs"
+                            onClick={() => {
+                              const hasNoFulFillQty =
+                                reqData.requestItemsData.some(
+                                  (item) =>
+                                    item.reqItemStatus !== "not_ordered" &&
+                                    Number(item.reqItemTransfer) === 0
+                                );
+                              console.log({ hasNoFulFillQty });
+                              if (hasNoFulFillQty) {
+                                toast.error(
+                                  "Failed to deliver. Cannot deliver 0 quantity"
+                                );
+                                return;
+                              }
+                              setIsShowDeliverConfirm(true);
+                              setDeliverRequestData(reqData);
+                            }}
+                            label={
+                              isProcessing === reqData.requestNo
+                                ? "Processing..."
+                                : `Mark as Delivered`
+                            }
+                            icon={Truck}
+                            className="font-semibold text-xs px-2 py-2"
+                            disabled={
+                              isProcessing === reqData.requestNo ||
+                              reqData.requestStatus === "delivered" ||
+                              reqData.requestStatus === "received" ||
+                              reqData.requestStatus === "completed"
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -665,9 +758,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   handleCompletePO();
                 }}
                 label="Complete PO"
-                disabled={data.every(
-                  (req) => req.requestStatus !== "completed"
-                )}
+                disabled={data.every((req) => req.requestStatus === "received")}
                 icon={PackageCheckIcon}
                 className="font-semibold  text-xs px-2 py-2"
               />

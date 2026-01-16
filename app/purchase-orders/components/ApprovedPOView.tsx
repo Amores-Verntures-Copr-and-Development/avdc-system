@@ -309,10 +309,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   }}
                                   color="secondary"
                                   label="PDF"
-                                  icon={
-                                    FileText
-                                    
-                                  }
+                                  icon={FileText}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
                                 {data.items.every(
@@ -346,9 +343,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     }
                                     color="secondary"
                                     label="Send"
-                                    icon={
-                                      Send
-                                    }
+                                    icon={Send}
                                     className="font-semibold"
                                   />
                                 )}
@@ -474,9 +469,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     }}
                                     color="secondary"
                                     label="PDF"
-                                    icon={
-                                      FileText
-                                    }
+                                    icon={FileText}
                                     className="font-semibold text-gray-700 text-xs"
                                   />
                                 </div>

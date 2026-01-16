@@ -359,6 +359,11 @@ const TableInner = <T extends Record<string, any>>(
               onClick={(e) => e.stopPropagation()}
               type={column.inputType ?? "text"}
               name={column.name}
+              onWheel={
+                column.inputType === "number"
+                  ? (e) => e.currentTarget.blur()
+                  : undefined
+              }
               value={
                 column.value
                   ? column.value(row)

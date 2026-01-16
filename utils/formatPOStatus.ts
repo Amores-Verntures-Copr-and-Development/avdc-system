@@ -3,7 +3,8 @@ export type POStatus =
   | "approved"
   | "sent"
   | "received"
-  | "completed";
+  | "completed"
+  | "not_ordered";
 
 interface POStatusInfo {
   status: POStatus;
@@ -48,6 +49,13 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-green-200",
         textClass: "text-green-700",
         borderClass: "border border-green-300",
+      };
+    case "not_ordered":
+      return {
+        status,
+        bgClass: "bg-red-200",
+        textClass: "text-red-700",
+        borderClass: "border border-red-300",
       };
     default:
       return {
