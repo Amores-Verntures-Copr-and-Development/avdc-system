@@ -217,22 +217,16 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           color: "text-red-600",
         },
         {
+          label: "Partial",
+          value: "partial",
+          bg: "bg-blue-100",
+          color: "text-blue-700",
+        },
+        {
           label: "Pending",
           value: "pending",
           bg: "bg-gray-100",
           color: "text-gray-700",
-        },
-        {
-          label: "Delivered",
-          value: "delivered",
-          bg: "bg-yellow-100",
-          color: "text-yellow-700",
-        },
-        {
-          label: "Received",
-          value: "received",
-          bg: "bg-emerald-100",
-          color: "text-emerald-700",
         },
       ],
       value: (row) => row.reqItemStatus,
@@ -265,7 +259,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     );
     const transfersAndStatus = updatedItems.reduce((acc, item) => {
       acc[item.reqItemId] = {
-        reqItemTransfer: item.reqItemTransfer,
+        reqItemTransfer: Number(item.reqItemTransfer),
         reqItemStatus: item.reqItemStatus,
       };
       return acc;
@@ -323,57 +317,43 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     const currentItems = requestItems.find(
       (items) => items.requestNo === requestNo
     );
+    if (!currentItems) return;
 
-    currentItems?.requestItemsData?.forEach((item) => {
-      // Only count items that are not "not_ordered"
-      if (
-        item.reqItemStatus !== "not_ordered" &&
-        item.reqItemQuantity > (item.stockRoomQty || 0)
-      ) {
+    // Compute updated items
+    const updatedItems = currentItems.requestItemsData.map((item) => {
+      if (item.reqItemStatus === "not_ordered") return item;
+
+      if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
         insufficientCount++;
+        return { ...item };
       }
+
+      return { ...item, reqItemTransfer: Number(item.reqItemQuantity) };
     });
+
+    // Save to localStorage immediately
+    const transfers = updatedItems.reduce((acc, item) => {
+      acc[item.reqItemId] = {
+        reqItemTransfer: item.reqItemTransfer,
+        reqItemStatus: item.reqItemStatus,
+      };
+      return acc;
+    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
+
+    localStorage.setItem(
+      `reqItemTransfer_${requestNo}`,
+      JSON.stringify(transfers)
+    );
 
     // Update state
     setRequestItems((prev) =>
       prev.map((items) =>
         items.requestNo === requestNo
-          ? {
-              ...items,
-              requestItemsData: items.requestItemsData?.map((item) => {
-                // Skip "not_ordered" items
-                if (item.reqItemStatus === "not_ordered") return item;
-
-                // If quantity exceeds stock, don't fulfill
-                if (item.reqItemQuantity > (item.stockRoomQty || 0)) {
-                  return {
-                    ...item,
-                  };
-                } else {
-                  return {
-                    ...item,
-                    reqItemTransfer: item.reqItemQuantity,
-                  };
-                }
-              }),
-            }
+          ? { ...items, requestItemsData: updatedItems }
           : items
       )
     );
-    const findUpdatedItems = requestItems.find(
-      (item) => item.requestNo === requestNo
-    )?.requestItemsData;
-    const transfers = findUpdatedItems?.reduce((acc, item) => {
-      acc[item.reqItemId] = {
-        reqItemTransfer: Number(item.reqItemTransfer),
-        reqItemStatus: item.reqItemStatus,
-      };
-      return acc;
-    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
-    localStorage.setItem(
-      `reqItemTransfer_${requestNo}`,
-      JSON.stringify(transfers)
-    );
+
     if (insufficientCount > 0) {
       toast.error(
         `${insufficientCount} items are not fulfilled due to out of stock!`

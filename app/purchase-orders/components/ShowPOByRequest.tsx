@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
+import { getStatusOption } from "./CompletePOView";
 
 interface ShowPOByRequestProps {
   setShowAllItems: React.Dispatch<
@@ -55,34 +56,30 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
       key: "reqItemQuantity",
     },
     {
-      name: "Stock Room Qty",
-      key: "stockRoomQty",
-    },
-    {
-      name: "Fulfill Qty",
-      key: "reqItemTransfer",
-      editable: (row) => {
-        const status = itemResponse.data.find(
-          (req) => req.requestId === row.requestId
-        )?.requestStatus;
-        return !["delivered", "completed", "received"].includes(status ?? "");
-      },
-      inputType: "number",
-    },
-    {
       name: "Total",
       key: "total",
     },
     {
       name: "Remarks",
       key: "reqItemRemarks",
-      editable: (row) => {
-        const status = itemResponse.data.find(
-          (req) => req.requestId === row.requestId
-        )?.requestStatus;
-        return !["delivered", "completed", "received"].includes(status ?? "");
+    },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
       },
-      inputType: "text",
     },
   ];
   const totalAllRequestItemPrice = itemResponse.data

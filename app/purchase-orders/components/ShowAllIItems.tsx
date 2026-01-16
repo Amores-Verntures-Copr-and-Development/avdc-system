@@ -19,6 +19,7 @@ import IconButton from "@/components/shared/IconButton";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import { formatPeso } from "@/utils/formatPeso";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -270,6 +271,18 @@ const ShowAllIItems = ({
       setIsRemoving(false);
     }
   };
+  const totalItems = poItems.length;
+  const totalAmount = poItems
+    .filter((item) => item.poItemStatus !== "not_ordered")
+    .reduce((total, item) => {
+      const totalPrice =
+        Number(
+          ["received", "completed"].includes(item.poItemStatus ?? "")
+            ? item.poItemReceivedQty
+            : item.poItemOrderedQty
+        ) * Number(item.unitPrice);
+      return total + Number(totalPrice);
+    }, 0);
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden p-4">
       <div className="flex justify-between items-center ">
@@ -399,6 +412,18 @@ const ShowAllIItems = ({
             }
           }}
         />
+      </div>
+      <div className="flex justify-end pr-2 pl-2">
+        <div className="flex flex-col">
+          <span className="text-gray-400 text-sm">
+            Items:
+            <span className="font-semibold"> {totalItems}</span>
+          </span>
+          <span className="text-gray-400 text-sm">
+            Total:
+            <span className="font-semibold"> {formatPeso(totalAmount)}</span>
+          </span>
+        </div>
       </div>
       <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
         <span className="flex items-center">
