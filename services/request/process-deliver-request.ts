@@ -21,7 +21,10 @@ export async function processDeliveredPO(data: Request[], userId: number) {
     const requestPartial: RequestItems[] = data.flatMap(
       (req) =>
         req.requestItemsData?.filter(
-          (item) => item.reqItemStatus === "partial"
+          (item) =>
+            item.reqItemStatus === "partial" &&
+            Number(item.reqItemTransfer) !== 0 &&
+            Number(item.reqItemToFollow) === 0
         ) ?? []
     );
     const requestDelivered: RequestItems[] = data.flatMap(
@@ -30,10 +33,22 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           (item) => item.reqItemStatus === "pending"
         ) ?? []
     );
+    const isToFollowItems = data.flatMap(
+      (req) =>
+        req.requestItemsData?.filter(
+          (item) =>
+            item.reqItemStatus === "partial" &&
+            Number(item.reqItemToFollow) !== 0 &&
+            Number(item.reqItemToFollow) !== 0
+        ) ?? []
+    );
     const requestItemToDeduct: RequestItems[] = [
       ...requestPartial,
       ...requestDelivered,
+      ...isToFollowItems,
     ];
+
+    console.log({ requestPartial, isToFollowItems });
     const requestNotOrdered: RequestItems[] = data.flatMap(
       (req) =>
         req.requestItemsData?.filter(
@@ -110,6 +125,21 @@ export async function processDeliveredPO(data: Request[], userId: number) {
       //Perform update request
       //Insert to inventory
       //
+    }
+
+    if (isToFollowItems) {
+      const updateToFollow: Partial<RequestItems>[] = isToFollowItems.map(
+        (i) => ({
+          reqItemId: i.reqItemId,
+          reqItemToFollow: Number(i.reqItemToFollow),
+          reqItemStatus: "delivered",
+        })
+      );
+      await updateRequestItems({
+        connection,
+        updates: updateToFollow,
+        keyFields: ["reqItemId"],
+      });
     }
     // console.log({ requestDelivered, requestPartial, requestNotOrdered });
     if (requestItemToDeduct && requestItemToDeduct.length > 0) {

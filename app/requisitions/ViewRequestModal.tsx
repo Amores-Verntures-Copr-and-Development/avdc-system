@@ -35,6 +35,7 @@ import AddItemPOModal from "./components/AddItemPOModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import { Rowdies } from "next/font/google";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -53,8 +54,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingItemPo, setIsAddingItemPo] = useState(false);
   const [requestItemData, setRequestItemData] = useState<DisplayRequestItems[]>(
-    []
+    [],
   );
+  const [originalData, setOriginalData] = useState<DisplayRequestItems[]>([]);
   const [showReceivedConfirmation, setShowReceivedConfirmation] =
     useState(false);
   const [showROPDF, setShowROPDF] = useState(false);
@@ -71,14 +73,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     selectedReq
       ? `/api/requests/request-items/${selectedReq?.requestId}`
       : null,
-    fetcher
+    fetcher,
   );
   useEffect(() => {
     if (!itemResponse.data || itemResponse.data.length === 0) return;
 
     const saved: DisplayRequestItems[] | null = JSON.parse(
       localStorage.getItem(`${selectedReq?.requestNo}-request-item-draft`) ||
-        "null"
+        "null",
     );
 
     const mergedData = itemResponse.data.map((item) => {
@@ -89,6 +91,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     });
 
     setRequestItemData(mergedData);
+    setOriginalData(itemResponse.data);
   }, [itemResponse.data, selectedReq?.requestNo]);
 
   // Save draft on every change
@@ -97,7 +100,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
     localStorage.setItem(
       `${selectedReq?.requestNo}-request-item-draft`,
-      JSON.stringify(requestItemData)
+      JSON.stringify(requestItemData),
     );
   }, [requestItemData, selectedReq?.requestNo]);
 
@@ -131,7 +134,10 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       key: "reqItemReceived",
     },
   ];
-
+  const findOriginalData = (reqItemId: number) => {
+    const find = originalData.find((i) => i.reqItemId === reqItemId);
+    return find;
+  };
   const column: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
@@ -145,7 +151,44 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </span>
       ),
     },
-    { name: "Delivered Qty", key: "reqItemTransfer" },
+    {
+      name: "Delivered Qty",
+      key: "reqItemTransfer",
+      selector: (row) =>
+        Number(row.reqItemTransfer) === 0 ? "" : row.reqItemTransfer,
+    },
+    {
+      name: "To Follow Qty",
+      key: "reqItemToFollow",
+      selector: (row) =>
+        Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
+    },
+    {
+      name: "Received",
+      key: "reqItemReceived",
+      editable: (row) => {
+        const original = findOriginalData(row.reqItemId);
+        return (
+          original?.reqItemStatus !== "received" &&
+          original?.reqItemStatus !== "not_ordered" &&
+          original?.reqItemStatus !== "partial" &&
+          Number(row.receivedToFollow) === 0
+          // (row.reqItemStatus === "delivered" ||
+          //   selectedReq?.requestStatus === "delivered" ||
+          //   row.reqItemStatus === "partial") &&
+          // row.reqItemStatus !== "not_ordered"
+        );
+      },
+      inputType: "number",
+      selector: (row) => {
+        return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
+      },
+      value: (row) => {
+        return row.reqItemStatus === "not_ordered"
+          ? 0
+          : Number(row.reqItemReceived) || "";
+      },
+    },
     { name: "Remarks", key: "reqItemRemarks" },
     {
       name: "Status",
@@ -164,9 +207,15 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           </div>
         );
       },
-      editable: (row) =>
-        row.reqItemStatus === "delivered" ||
-        selectedReq?.requestStatus === "delivered",
+      editable: (row) => {
+        const original = findOriginalData(row.reqItemId);
+        return (
+          (row.reqItemStatus === "delivered" ||
+            (selectedReq?.requestStatus === "delivered" &&
+              original?.reqItemStatus !== "not_ordered")) &&
+          original?.reqItemStatus !== "received"
+        );
+      },
 
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
@@ -176,6 +225,12 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           value: "not_ordered",
           bg: "bg-red-100",
           color: "text-red-600",
+        },
+        {
+          label: "Partial",
+          value: "partial",
+          bg: "bg-blue-100",
+          color: "text-blue-700",
         },
         {
           label: "Pending",
@@ -199,44 +254,50 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
       value: (row) => row.reqItemStatus,
     },
-    // {
-    //   name: "Received",
-    //   key: "reqItemReceived",
-    //   editable: (row) =>
-    //     (row.reqItemStatus === "delivered" ||
-    //       selectedReq?.requestStatus === "delivered") &&
-    //     row.reqItemStatus !== "not_ordered",
-    //   inputType: "number",
-    //   selector: (row) => {
-    //     console.log(
-    //       "selector called:",
-    //       row.reqItemId,
-    //       row.reqItemReceived,
-    //       row.reqItemStatus
-    //     );
-    //     return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
-    //   },
-    //   value: (row) => {
-    //     return row.reqItemStatus === "not_ordered"
-    //       ? 0
-    //       : Number(row.reqItemReceived) || "";
-    //   },
-    // },
+  ];
+  const columnToFollow: Column<DisplayRequestItems>[] = [
+    { key: "#", name: "#", selector: (_row, index) => index + 1 },
+    { name: "Name", key: "itemName" },
+    { name: "Unit", key: "itemUnit" },
+    {
+      name: "Request Qty",
+      key: "reqItemQuantity",
+      selector: (row) => (
+        <span className="font-semibold">
+          {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
+        </span>
+      ),
+    },
+    {
+      name: "Delivered Qty",
+      key: "reqItemTransfer",
+      selector: (row) =>
+        Number(row.reqItemTransfer) === 0 ? "" : row.reqItemTransfer,
+    },
+    {
+      name: "To Follow Qty",
+      key: "reqItemToFollow",
+      selector: (row) =>
+        Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
+    },
     {
       name: "Received",
       key: "reqItemReceived",
-      editable: (row) =>
-        (row.reqItemStatus === "delivered" ||
-          selectedReq?.requestStatus === "delivered") &&
-        row.reqItemStatus !== "not_ordered",
+      editable: (row) => {
+        const original = findOriginalData(row.reqItemId);
+        return (
+          original?.reqItemStatus !== "received" &&
+          original?.reqItemStatus !== "not_ordered" &&
+          original?.reqItemStatus !== "partial" &&
+          Number(row.receivedToFollow) === 0
+          // (row.reqItemStatus === "delivered" ||
+          //   selectedReq?.requestStatus === "delivered" ||
+          //   row.reqItemStatus === "partial") &&
+          // row.reqItemStatus !== "not_ordered"
+        );
+      },
       inputType: "number",
       selector: (row) => {
-        console.log(
-          "selector called:",
-          row.reqItemId,
-          row.reqItemReceived,
-          row.reqItemStatus
-        );
         return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
       },
       value: (row) => {
@@ -245,17 +306,95 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           : Number(row.reqItemReceived) || "";
       },
     },
+    {
+      name: "Recived To Follow",
+      key: "receivedToFollow",
+      inputType: "number",
+      editable: (row) =>
+        row.reqItemStatus === "delivered" && Number(row.reqItemToFollow) !== 0,
+    },
+    { name: "Remarks", key: "reqItemRemarks" },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+      editable: (row) => {
+        const original = findOriginalData(row.reqItemId);
+        return (
+          (row.reqItemStatus === "delivered" ||
+            (selectedReq?.requestStatus === "delivered" &&
+              original?.reqItemStatus !== "not_ordered")) &&
+          original?.reqItemStatus !== "received"
+        );
+      },
+
+      inputType: "select",
+      selectOptionVariant: "custom", // ✅ matches interface
+      options: [
+        {
+          label: "Not Ordered",
+          value: "not_ordered",
+          bg: "bg-red-100",
+          color: "text-red-600",
+        },
+        {
+          label: "Partial",
+          value: "partial",
+          bg: "bg-blue-100",
+          color: "text-blue-700",
+        },
+        {
+          label: "Pending",
+          value: "pending",
+          bg: "bg-gray-100",
+          color: "text-gray-700",
+        },
+        {
+          label: "Delivered",
+          value: "delivered",
+          bg: "bg-yellow-100",
+          color: "text-yellow-700",
+        },
+        {
+          label: "Received",
+          value: "received",
+          bg: "bg-emerald-100",
+          color: "text-emerald-700",
+        },
+      ],
+
+      value: (row) => row.reqItemStatus,
+    },
   ];
   const handleReceivedRO = async () => {
-    const requestData: Partial<Request>[] = [
-      {
-        ...selectedReq,
-        requestItems: requestItemData,
-      },
-    ];
+    const validReceivedROI: Partial<Request> = {
+      ...selectedReq,
+      requestItems: requestItemData.filter(
+        (i) => i.reqItemStatus === "delivered" || i.reqItemStatus === "partial",
+      ),
+    };
+    // const requestData: Partial<Request>[] = [
+    //   {
+    //     ...selectedReq,
+    //     requestItems: requestItemData,
+    //   },
+    // ];
     const sendData = {
       controller: "received",
-      data: requestData,
+      data: [validReceivedROI],
     };
     console.log({ sendData });
     try {
@@ -317,12 +456,12 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     }
   };
   const getOverAllInventoryId = itemResponse.data.every(
-    (item) => item.inventoryId
+    (item) => item.inventoryId,
   )
     ? itemResponse.data[0]?.inventoryId
     : null;
   const getAllInventoryItemIdInRequest = itemResponse.data.map(
-    (item) => item.invItem
+    (item) => item.invItem,
   );
 
   const handleDownloadPDF = () => {
@@ -354,7 +493,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(arrayData),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -376,7 +515,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
   const handleAddItemPurchaser = async (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => {
     setIsAddingItemPo(true);
 
@@ -419,14 +558,21 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setRequestItemData((prev) =>
         prev.map((item) => ({
           ...item,
-          reqItemReceived: item.reqItemQuantity, // or any value you want
-        }))
+          reqItemReceived: Number(item.reqItemTransfer), // or any value you want
+        })),
       );
     }
   };
   const { label, bg, color } = getRequestStatusOption(
-    selectedReq?.requestStatus || ""
+    selectedReq?.requestStatus || "",
   );
+  const hasPartialDelivered = requestItemData.some(
+    (i) => i.reqItemStatus === "partial",
+  );
+  const hasToFollowDelivered = requestItemData.some(
+    (i) => i.reqItemStatus === "delivered" && Number(i.reqItemToFollow) !== 0,
+  );
+
   return (
     <>
       <div className="flex justify-between">
@@ -510,7 +656,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 )}
                 {Boolean(
                   selectedReq?.requestStatus === "pending" ||
-                    selectedReq?.requestStatus === "in_progress"
+                  selectedReq?.requestStatus === "in_progress",
                 ) && (
                   <div>
                     <Button
@@ -533,14 +679,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             isRounded={false}
             updateData={setRequestItemData}
             columns={
-              isRequestor
-                ? selectedReq?.requestStatus === "pending" ||
-                  selectedReq?.requestStatus === "in_progress"
-                  ? columnPending
-                  : selectedReq?.requestStatus === "delivered"
+              hasToFollowDelivered
+                ? columnToFollow
+                : hasPartialDelivered
                   ? column
-                  : column
-                : adminColumn
+                  : isRequestor
+                    ? selectedReq?.requestStatus === "pending" ||
+                      selectedReq?.requestStatus === "in_progress"
+                      ? columnPending
+                      : selectedReq?.requestStatus === "delivered"
+                        ? column
+                        : column
+                    : adminColumn
             }
             data={requestItemData}
             loading={loading}
@@ -621,8 +771,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       />
                     </div>
                     {Boolean(
-                      selectedReq?.requestStatus === "approved" ||
-                        selectedReq?.requestStatus === "in_progress"
+                      (selectedReq?.requestStatus === "approved" ||
+                        selectedReq?.requestStatus === "in_progress") &&
+                      !hasPartialDelivered,
                     ) && (
                       <div>
                         <Button
@@ -641,7 +792,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 ) : (
                   Boolean(
                     selectedReq?.requestStatus === "approved" ||
-                      selectedReq?.requestStatus === "in_progress"
+                    selectedReq?.requestStatus === "in_progress",
                   ) && (
                     <div>
                       <Button
@@ -670,7 +821,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
-                {selectedReq?.requestStatus === "delivered" && (
+                {(selectedReq?.requestStatus === "delivered" ||
+                  hasPartialDelivered) && (
                   <div>
                     <Button
                       icon={CheckLine}
@@ -682,7 +834,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
-                {selectedReq?.requestStatus === "delivered" && (
+                {(selectedReq?.requestStatus === "delivered" ||
+                  hasPartialDelivered) && (
                   <div>
                     <Button
                       icon={CheckLine}
@@ -690,12 +843,27 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         const hasNoQuantityReceived = requestItemData.some(
                           (item) =>
                             Number(item.reqItemReceived) === 0 &&
-                            item.reqItemStatus !== "not_ordered"
+                            item.reqItemStatus !== "not_ordered",
                         );
+                        const hasNoQuantityToFollowReceived =
+                          requestItemData.some(
+                            (item) =>
+                              Number(item.reqItemToFollow) !== 0 &&
+                              Number(item.receivedToFollow) === 0 &&
+                              item.reqItemStatus === "delivered",
+                          );
+                        console.log({ hasNoQuantityToFollowReceived });
+                        if (hasNoQuantityToFollowReceived) {
+                          toast.error(
+                            "Cannot received 0 quantity from to follow items.!",
+                          );
+                          return;
+                        }
                         if (hasNoQuantityReceived) {
                           toast.error("Cannot received 0 quantity item!");
                           return;
                         }
+
                         setShowReceivedConfirmation(true);
                       }}
                       size="sm"

@@ -6,7 +6,8 @@ export type RequestStatus =
   | "completed"
   | "cancelled"
   | "delivered"
-  | "received";
+  | "received"
+  | "partial";
 export type RequestItemStatus =
   | "pending"
   | "completed"
@@ -39,4 +40,5 @@ export interface RequestItems {
   reqItemStatus: RequestItemStatus;
   inventoryItemReferenceId: number;
   itemId: number;
+  reqItemToFollow?: number;
 }

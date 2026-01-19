@@ -32,6 +32,7 @@ export type DisplayRequestItems = RequestItems & {
   itemUnit: string;
   itemPrice: number;
   inventoryId: number;
+  receivedToFollow?: number;
 };
 
 export interface DisplayGroupedRequestItem {

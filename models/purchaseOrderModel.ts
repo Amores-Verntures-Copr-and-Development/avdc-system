@@ -508,6 +508,7 @@ GROUP BY
   po.poNumber,
   s.suppId,
   s.suppName;`;
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql);
   return rows;
 };

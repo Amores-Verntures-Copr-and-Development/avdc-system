@@ -24,7 +24,6 @@ export interface Column<T = any> {
   selector?: (row: T, index: number) => React.ReactNode;
   editable?: boolean | ((row: T, rowIndex: number) => boolean);
   inputType?: "text" | "number" | "date" | "email" | "tel" | "url" | "select";
-
   options?: SelectOption[] | ((row: T) => SelectOption[]);
 
   value?: (row: T) => any;
@@ -33,7 +32,6 @@ export interface Column<T = any> {
   format?: (value: any) => string;
   compute?: (row: T) => any;
   dependsOn?: (keyof T | string)[];
-
   selectOptionVariant?: SelectOptionVariant; // ✅ FIXED NAME
 }
 type SelectOptionVariant = "native" | "custom";

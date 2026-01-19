@@ -136,7 +136,7 @@ export const updateRequest = async (
       message = `Request Order deliver successfully!`;
     }
     if (controller === "received") {
-      await processReceivedRequest(requestOrder);
+      await processReceivedRequest(requestOrder[0]);
       message = "Request Order recieved successfully!";
     }
     if (controller === "completed") {

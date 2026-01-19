@@ -25,6 +25,10 @@ import {
   Check,
   Truck,
   Package,
+  X,
+  Printer,
+  Download,
+  Plus,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -41,6 +45,43 @@ interface StatusOption {
   bg: string;
   color: string;
 }
+const statusConfig = {
+  pending: {
+    label: "Pending",
+    bg: "bg-amber-50",
+    color: "text-amber-700",
+    border: "border-amber-200",
+    icon: Clock,
+  },
+  delivered: {
+    label: "Delivered",
+    bg: "bg-blue-50",
+    color: "text-blue-700",
+    border: "border-blue-200",
+    icon: Truck,
+  },
+  received: {
+    label: "Received",
+    bg: "bg-emerald-50",
+    color: "text-emerald-700",
+    border: "border-emerald-200",
+    icon: CheckCircle,
+  },
+  not_ordered: {
+    label: "Not Ordered",
+    bg: "bg-red-50",
+    color: "text-red-700",
+    border: "border-red-200",
+    icon: X,
+  },
+  partial: {
+    label: "Partial",
+    bg: "bg-purple-50",
+    color: "text-purple-700",
+    border: "border-purple-200",
+    icon: Package,
+  },
+};
 export const statusOptions: StatusOption[] = [
   {
     label: "Not Ordered",
@@ -91,7 +132,7 @@ interface CompletePOViewProps {
   isLoading?: boolean;
   onFulfillRequest?: (
     requestId: string,
-    items: RequestItemsCombine[]
+    items: RequestItemsCombine[],
   ) => Promise<boolean>;
   onMarkDelivered: (request: Request[]) => Promise<boolean>;
   onCompleteRequest: (po: PurchaseOrders) => Promise<boolean>;
@@ -112,7 +153,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   setShowAllItems,
 }) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
-    null
+    null,
   );
   const [isShowDeliverConfirm, setIsShowDeliverConfirm] = useState(false);
   const [deliverRequestData, setDeliverRequestData] =
@@ -129,6 +170,10 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     useState<boolean>(false);
   const [selectedRequestNo, setSelectedRequestNo] =
     useState<DisplayRequisitionWithItems | null>(null);
+  const [originalData, setOriginalData] = useState<
+    DisplayRequisitionWithItems[] | null
+  >(null);
+
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "#",
@@ -162,17 +207,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       editable: (row) => {
         return (
           !["delivered", "completed", "received", "not_ordered"].includes(
-            row.reqItemStatus ?? ""
+            row.reqItemStatus ?? "",
           ) && row.reqItemStatus !== "not_ordered"
         );
       },
       inputType: "number",
     },
+
     {
       name: "Received Qty",
       key: "reqItemReceived",
     },
-
     {
       name: "Total",
       key: "total",
@@ -185,10 +230,10 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 row.reqItemStatus === "delivered"
                   ? row.reqItemTransfer
                   : row.reqItemStatus === "received" ||
-                    row.reqItemStatus === "completed"
-                  ? row.reqItemReceived
-                  : row.reqItemQuantity
-              ) * row.itemPrice
+                      row.reqItemStatus === "completed"
+                    ? row.reqItemReceived
+                    : row.reqItemQuantity,
+              ) * row.itemPrice,
             ),
     },
     {
@@ -209,7 +254,15 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         );
       },
       editable: (row) => {
-        return ["pending", "partial"].includes(row.reqItemStatus ?? "");
+        const origStatus: RequestItemsCombine = findOriginalDataRequestItem(
+          row.requestId,
+          row.reqItemId,
+        );
+        return (
+          ["pending", "partial", "not_ordered"].includes(
+            row.reqItemStatus ?? "",
+          ) && origStatus.reqItemStatus !== "not_ordered"
+        );
       },
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
@@ -246,44 +299,229 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       key: "reqItemRemarks",
       editable: (row) => {
         const status = data.find(
-          (req) => req.requestId === row.requestId
+          (req) => req.requestId === row.requestId,
         )?.requestStatus;
+
+        const origStatus: RequestItemsCombine = findOriginalDataRequestItem(
+          row.requestId,
+          row.reqItemId,
+        );
+
+        const isFinalRequestStatus = [
+          "delivered",
+          "completed",
+          "received",
+        ].includes(status ?? "");
+
         return (
-          !["delivered", "completed", "received"].includes(status ?? "") &&
-          row.reqItemStatus === "not_ordered"
+          !isFinalRequestStatus &&
+          row.reqItemStatus === "not_ordered" &&
+          origStatus.reqItemStatus !== "not_ordered"
         );
       },
-      inputType: "text",
+    },
+  ];
+  const hasPartialColumns: Column<RequestItemsCombine>[] = [
+    {
+      name: "#",
+      key: "#",
+      selector: (_row, index) => index + 1,
+    },
+    {
+      name: "Item Name",
+      key: "itemName",
+    },
+    {
+      name: "Price",
+      key: "itemPrice",
+      selector: (row) => formatPeso(row.itemPrice),
+    },
+    {
+      name: "Unit",
+      key: "itemUnit",
+    },
+    {
+      name: "Request Qty",
+      key: "reqItemQuantity",
+      selector: (row) => (row.reqItemQuantity === 0 ? "" : row.reqItemQuantity),
+    },
+    {
+      name: "Stock Room Qty",
+      key: "stockRoomQty",
+    },
+    {
+      name: "Fulfill Qty",
+      key: "reqItemTransfer",
+      editable: (row) => {
+        return (
+          ![
+            "delivered",
+            "completed",
+            "received",
+            "not_ordered",
+            "partial",
+          ].includes(row.reqItemStatus ?? "") &&
+          row.reqItemStatus !== "not_ordered"
+        );
+      },
+      inputType: "number",
+      selector: (row) => (row.reqItemTransfer === 0 ? "" : row.reqItemTransfer),
+    },
+
+    {
+      name: "To Follow",
+      key: "reqItemToFollow",
+      editable: (row) => {
+        const originalItems = findOriginalDataRequestItem(
+          row.requestId,
+          row.reqItemId,
+        );
+
+        return originalItems.reqItemStatus === "partial";
+      },
+      inputType: "number",
+      selector: (row) => (row.reqItemToFollow === 0 ? "" : row.reqItemToFollow),
+    },
+
+    {
+      name: "Received Qty",
+      key: "reqItemReceived",
+      selector: (row) => (row.reqItemReceived === 0 ? "" : row.reqItemReceived),
+    },
+    {
+      name: "Total",
+      key: "total",
+
+      selector: (row) =>
+        row.reqItemStatus === "not_ordered"
+          ? 0
+          : formatPeso(
+              Number(
+                row.reqItemStatus === "delivered"
+                  ? row.reqItemTransfer
+                  : row.reqItemStatus === "received" ||
+                      row.reqItemStatus === "completed"
+                    ? row.reqItemReceived
+                    : row.reqItemQuantity,
+              ) * row.itemPrice,
+            ),
+    },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+      editable: (row) => {
+        const origStatus: RequestItemsCombine = findOriginalDataRequestItem(
+          row.requestId,
+          row.reqItemId,
+        );
+        return (
+          ["pending", "partial", "not_ordered"].includes(
+            row.reqItemStatus ?? "",
+          ) && origStatus.reqItemStatus !== "not_ordered"
+        );
+      },
+      inputType: "select",
+      selectOptionVariant: "custom", // ✅ matches interface
+      options: [
+        {
+          label: "Not Ordered",
+          value: "not_ordered",
+          bg: "bg-red-100",
+          color: "text-red-600",
+        },
+        // {
+        //   label: "Delivered",
+        //   value: "delivered",
+        //   bg: "bg-yellow-100",
+        //   color: "text-yellow-700",
+        // },
+        {
+          label: "Partial",
+          value: "partial",
+          bg: "bg-blue-100",
+          color: "text-blue-700",
+        },
+        {
+          label: "Pending",
+          value: "pending",
+          bg: "bg-gray-100",
+          color: "text-gray-700",
+        },
+      ],
+      value: (row) => row.reqItemStatus,
+    },
+    {
+      name: "Remarks",
+      key: "reqItemRemarks",
+      editable: (row) => {
+        const status = data.find(
+          (req) => req.requestId === row.requestId,
+        )?.requestStatus;
+
+        const origStatus: RequestItemsCombine = findOriginalDataRequestItem(
+          row.requestId,
+          row.reqItemId,
+        );
+
+        const isFinalRequestStatus = [
+          "delivered",
+          "completed",
+          "received",
+        ].includes(status ?? "");
+
+        return (
+          !isFinalRequestStatus &&
+          row.reqItemStatus === "not_ordered" &&
+          origStatus.reqItemStatus !== "not_ordered"
+        );
+      },
     },
   ];
   const handleDataChange = (
     requestNo: string,
-    updatedItems: RequestItemsCombine[]
+    updatedItems: RequestItemsCombine[],
   ) => {
     setRequestItems((prev) =>
       prev.map((items) =>
         items.requestNo === requestNo
           ? { ...items, requestItemsData: updatedItems }
-          : items
-      )
+          : items,
+      ),
     );
-    const transfersAndStatus = updatedItems.reduce((acc, item) => {
-      acc[item.reqItemId] = {
-        reqItemTransfer: Number(item.reqItemTransfer),
-        reqItemStatus: item.reqItemStatus,
-      };
-      return acc;
-    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
+    const transfersAndStatus = updatedItems.reduce(
+      (acc, item) => {
+        acc[item.reqItemId] = {
+          reqItemTransfer: Number(item.reqItemTransfer),
+          reqItemStatus: item.reqItemStatus,
+        };
+        return acc;
+      },
+      {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>,
+    );
     localStorage.setItem(
       `reqItemTransfer_${requestNo}`,
-      JSON.stringify(transfersAndStatus)
+      JSON.stringify(transfersAndStatus),
     );
   };
   useEffect(() => {
     if (data && data.length > 0) {
       const hydratedData = data.map((req) => {
         const savedRaw = localStorage.getItem(
-          `reqItemTransfer_${req.requestNo}`
+          `reqItemTransfer_${req.requestNo}`,
         );
         let saved:
           | Record<string, { reqItemTransfer?: number; reqItemStatus?: string }>
@@ -308,24 +546,32 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 (saved![item.reqItemId]
                   ?.reqItemStatus as RequestItemsCombine["reqItemStatus"]) ??
                 item.reqItemStatus,
-            })
+            }),
           );
           return { ...req, requestItemsData: newItems };
         }
 
         return req;
       });
-
+      setOriginalData(data);
       setRequestItems(hydratedData);
     }
   }, [data]);
-
+  const findOriginalDataRequestItem = (
+    requestId: number,
+    reqItemId: number,
+  ) => {
+    const find = originalData
+      ?.find((req) => req.requestId === requestId)
+      ?.requestItemsData.find((item) => item.reqItemId === reqItemId);
+    return find as RequestItemsCombine;
+  };
   const handleAutoFillAll = (requestNo: string) => {
     let insufficientCount = 0;
 
     // Find current items
     const currentItems = requestItems.find(
-      (items) => items.requestNo === requestNo
+      (items) => items.requestNo === requestNo,
     );
     if (!currentItems) return;
 
@@ -342,17 +588,20 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     });
 
     // Save to localStorage immediately
-    const transfers = updatedItems.reduce((acc, item) => {
-      acc[item.reqItemId] = {
-        reqItemTransfer: item.reqItemTransfer,
-        reqItemStatus: item.reqItemStatus,
-      };
-      return acc;
-    }, {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>);
+    const transfers = updatedItems.reduce(
+      (acc, item) => {
+        acc[item.reqItemId] = {
+          reqItemTransfer: item.reqItemTransfer,
+          reqItemStatus: item.reqItemStatus,
+        };
+        return acc;
+      },
+      {} as Record<string, { reqItemTransfer?: number; reqItemStatus: string }>,
+    );
 
     localStorage.setItem(
       `reqItemTransfer_${requestNo}`,
-      JSON.stringify(transfers)
+      JSON.stringify(transfers),
     );
 
     // Update state
@@ -360,13 +609,13 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       prev.map((items) =>
         items.requestNo === requestNo
           ? { ...items, requestItemsData: updatedItems }
-          : items
-      )
+          : items,
+      ),
     );
 
     if (insufficientCount > 0) {
       toast.error(
-        `${insufficientCount} items are not fulfilled due to out of stock!`
+        `${insufficientCount} items are not fulfilled due to out of stock!`,
       );
     }
   };
@@ -375,15 +624,15 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     const newRequestItems: RequestItems[] = data.requestItemsData.map(
       (items) => ({
         ...items,
-      })
+      }),
     );
 
     const hasNoFulFillQty = newRequestItems.some(
       (item) =>
         item.reqItemStatus !== "not_ordered" &&
-        Number(item.reqItemTransfer) === 0
+        Number(item.reqItemTransfer) === 0,
     );
-
+    console.log({ hasNoFulFillQty });
     if (hasNoFulFillQty) {
       toast.error("Failed to deliver. Cannot deliver 0 quantity");
       return;
@@ -433,7 +682,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       const result = await res.json();
       if (!res.ok) {
@@ -448,9 +697,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   };
 
   return (
-    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
-      <div className="flex p-2  flex-col h-full w-full overflow-y-auto">
-        <div className="p-4 border-b-1 border-gray-200">
+    <div className="gap-5  h-full flex flex-col overflow-hidden">
+      <div className="flex p-2 gap-2  flex-col h-full w-full overflow-y-auto">
+        <div className="p-4 border-b-1 bg-white rounded border-gray-200 ">
           <div className="flex justify-between  items-center">
             <div className="flex flex-col">
               <h1 className="text-xs xl:text-md font-semibold">
@@ -468,6 +717,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   onClick={() => {
                     setShowAllItems("all");
                   }}
+                  color="outline"
                 />
               </div>
               <div className="self-center">
@@ -477,16 +727,18 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   onClick={() => {
                     setShowAllItems("request");
                   }}
+                  color="outline"
                 />
               </div>
             </div>
           </div>
         </div>
-        <div className="flex flex-col p-4 gap-4 overflow-y-auto">
+        <div className="flex flex-col gap-4 overflow-y-auto">
           {requestItems?.map((reqData) => {
             const { label, bg, color, border } = getRequestStatusOption(
-              reqData.requestStatus
+              reqData.requestStatus,
             );
+
             const totalRequestItemPrice = reqData.requestItemsData
               .filter((item) => item.reqItemStatus !== "not_ordered")
               .reduce((total, item) => {
@@ -494,9 +746,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   item.reqItemStatus === "delivered"
                     ? item.reqItemTransfer
                     : item.reqItemStatus === "received" ||
-                      item.reqItemStatus === "completed"
-                    ? item.reqItemReceived
-                    : item.reqItemQuantity
+                        item.reqItemStatus === "completed"
+                      ? item.reqItemReceived
+                      : item.reqItemQuantity,
                 );
                 const price = Number(item.itemPrice || 0);
                 return total + quantity * price;
@@ -505,170 +757,222 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               new Map(
                 reqData.requestItemsData.map((i) => {
                   const { value, label } = getRequestStatusOption(
-                    i.reqItemStatus
+                    i.reqItemStatus,
                   );
 
                   const count = reqData.requestItemsData.filter(
-                    (item) => item.reqItemStatus === i.reqItemStatus
+                    (item) => item.reqItemStatus === i.reqItemStatus,
                   ).length;
 
                   return [value, { label: `${label} (${count})`, value }];
-                })
-              ).values()
+                }),
+              ).values(),
             );
+            const origRequest = originalData?.find(
+              (req) => req.requestId === reqData.requestId,
+            )?.requestItemsData;
+            const hasPartial = origRequest?.some(
+              (item) => item.reqItemStatus === "partial",
+            );
+            const hasToFollowQty = origRequest?.some(
+              (i) => Number(i.reqItemToFollow) !== 0,
+            );
+            console.log({ hasPartial });
             return (
               <div
-                className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer"
+                className="flex flex-col rounded-lg shadow w-full border-1 border-gray-200 cursor-pointer"
                 key={reqData.requestId}
                 onClick={() =>
                   setIsRequestExpanded(
                     isRequestExpanded === reqData.requestNo
                       ? null
-                      : reqData.requestNo
+                      : reqData.requestNo,
                   )
                 }
               >
-                <div className="flex items-center justify-between p-2">
+                <div className="flex items-center justify-between p-2 bg-white rounded-t-lg rounded-r-lg">
                   <div className="flex flex-col border-gray-200">
-                    <h1 className="text-xs xl:text-sm font-semibold">
-                      {reqData.requestNo}
-                    </h1>
-                    <span className="text-[9px] xl:text-xs text-gray-500">
-                      {reqData.storeName}
-                    </span>
-                    <span className="text-[9px] xl:text-xs text-gray-500">
-                      {reqData.requestItemsData.length} item(s)
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {" "}
+                      <h1 className="text-xs xl:text-sm font-semibold">
+                        {reqData.requestNo}
+                      </h1>
+                      <div className="flex items-center gap-2">
+                        {" "}
+                        <span
+                          className={`flex items-center  gap-1 px-2 py-1 rounded-full text-[9px] xl:text-xs font-medium ${bg}  rounded-2xl ${color} ${border}`}
+                        >
+                          <Clock className="w-2.5 h-2.5" /> {label}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center text-[9px] xl:text-xs gap-4  text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <Package size={14} />
+                        {reqData.storeName}
+                      </span>
+                      <span>{reqData.requestItemsData.length} items</span>
+                      <span className="flex items-center gap-1">
+                        <Clock size={14} />
+                        {formatDateToWords(reqData.poCreatedAt)}
+                      </span>
+                    </div>
                   </div>
                   <div
                     onClick={() =>
                       setIsRequestExpanded(
                         isRequestExpanded === reqData.requestNo
                           ? null
-                          : reqData.requestNo
+                          : reqData.requestNo,
                       )
                     }
                     className="cursor-pointer"
                   >
                     <div className="flex gap-2 items-center">
-                      <div className="flex flex-col gap-1">
-                        <span
-                          className={`text-xs font-medium ${bg} py-1 px-1 rounded-2xl ${color} ${border}`}
-                        >
-                          {label}
+                      <div className="flex flex-col gap-1 mr-5">
+                        <span className="text-xs text-gray-500">
+                          Total Amount
                         </span>
-                        <span className="text-xs">
-                          Total:
-                          <span className="font-semibold">
-                            {formatPeso(totalRequestItemPrice)}
-                          </span>
+
+                        <span className="font-semibold">
+                          {formatPeso(totalRequestItemPrice)}
                         </span>
                       </div>
                       {isRequestExpanded === reqData.requestNo ? (
-                        <ChevronUp size={20} />
+                        <ChevronUp size={20} className="text-gray-500" />
                       ) : (
-                        <ChevronDown size={20} />
+                        <ChevronDown size={20} className="text-gray-500" />
                       )}
                     </div>
                   </div>
                 </div>
+
                 {isRequestExpanded === reqData.requestNo && (
-                  <div className="overflow-visible">
-                    <Table
-                      addContentLeftTitle={
-                        <div>
-                          <DynamicDropdown
-                            options={statusOption}
-                            onChange={(value) => {
-                              setSelectedStatus((prev) => ({
-                                ...prev,
-                                [reqData.requestNo]:
-                                  value === "all" ? null : String(value),
-                              }));
-                            }}
-                            placeholder={"Status"}
-                            size="sm"
-                            icon={undefined}
-                          />
-                        </div>
-                      }
-                      localSearch
-                      uniqueIdKey="reqItemId"
-                      columns={columns}
-                      showActions={
-                        !["delivered", "completed", "received"].includes(
-                          reqData.requestStatus ?? ""
-                        )
-                      }
-                      renderActions={(row) =>
-                        !["delivered", "completed", "received"].includes(
-                          row.reqItemStatus ?? ""
+                  <>
+                    <div className="flex p-2 border-t border-gray-200 bg-gray-100 justify-between">
+                      {/* Left side: Fulfill button */}
+                      <div>
+                        {!["delivered", "received", "completed"].includes(
+                          reqData.requestStatus ?? "",
                         ) && (
+                          <Button
+                            size="xs"
+                            onClick={() => handleAutoFillAll(reqData.requestNo)}
+                            label={
+                              isProcessing === reqData.requestNo
+                                ? "Processing..."
+                                : `Fulfill ${reqData.requestNo}`
+                            }
+                            icon={CheckCircle}
+                            disabled={isProcessing === reqData.requestNo}
+                            color="success"
+                          />
+                        )}
+                      </div>
+
+                      {/* Right side: Print & Download always at the end */}
+                      <div className="flex gap-2">
+                        <button className="p-1.5 hover:bg-gray-200 rounded transition-colors">
+                          <Printer size={16} className="text-gray-600" />
+                        </button>
+                        <button className="p-1.5 hover:bg-gray-200 rounded transition-colors">
+                          <Download size={16} className="text-gray-600" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="overflow-visible">
+                      <Table
+                        addContentLeftTitle={
                           <div>
-                            <IconButton
-                              onClick={function (): void {
-                                // setIsProcessing(reqData.requestNo);
+                            <DynamicDropdown
+                              options={statusOption}
+                              onChange={(value) => {
+                                setSelectedStatus((prev) => ({
+                                  ...prev,
+                                  [reqData.requestNo]:
+                                    value === "all" ? null : String(value),
+                                }));
                               }}
-                              label={`Fulfill ${row.itemName}`}
-                              icon={<Check size={18} />}
-                              bg={""}
+                              placeholder={"Status"}
+                              size="sm"
+                              icon={<Clock className="w-3 h-3" />}
                             />
                           </div>
-                        )
-                      }
-                      data={
-                        selectedStatus[reqData.requestNo]
-                          ? reqData.requestItemsData.filter(
-                              (item) =>
-                                item.reqItemStatus ===
-                                selectedStatus[reqData.requestNo]
+                        }
+                        localSearch
+                        uniqueIdKey="reqItemId"
+                        columns={
+                          hasPartial
+                            ? hasPartialColumns
+                            : hasToFollowQty
+                              ? hasPartialColumns
+                              : columns
+                        }
+                        showActions={
+                          !["delivered", "completed", "received"].includes(
+                            reqData.requestStatus ?? "",
+                          )
+                        }
+                        renderActions={(row) => {
+                          const origStatus: RequestItemsCombine =
+                            findOriginalDataRequestItem(
+                              row.requestId,
+                              row.reqItemId,
+                            );
+                          const isFinalRequestStatus = [
+                            "delivered",
+                            "completed",
+                            "received",
+                          ].includes(row.reqItemStatus ?? "");
+                          return (
+                            !isFinalRequestStatus &&
+                            row.reqItemStatus === "pending" &&
+                            origStatus.reqItemStatus !== "not_ordered" && (
+                              <div>
+                                <IconButton
+                                  onClick={function (): void {
+                                    // setIsProcessing(reqData.requestNo);
+                                  }}
+                                  label={`Fulfill ${row.itemName}`}
+                                  icon={<Check size={18} />}
+                                  bg={""}
+                                />
+                              </div>
                             )
-                          : reqData.requestItemsData
-                      }
-                      isRounded={false}
-                      updateData={(updatedItems) =>
-                        handleDataChange(reqData.requestNo, updatedItems)
-                      }
-                    />
-                  </div>
-                )}
-                <div className="flex border-t-1 p-2 justify-between border-gray-200 items-center">
-                  <span className="text-[9px] md:text-xs">
-                    Created: {formatDateToWords(reqData.poCreatedAt)}
-                  </span>
-                  <div className="flex gap-3">
-                    <div>
-                      <Button
-                        color="secondary"
-                        size="xs"
-                        onClick={() => {
-                          console.log("Print request:", reqData.requestNo);
+                          );
                         }}
-                        label="Print"
-                        icon={PrinterIcon}
-                        className="font-semibold text-gray-700 text-xs px-2 py-2"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        color="secondary"
-                        size="xs"
-                        onClick={() => {
-                          console.log("Download PDF:", reqData.requestNo);
-                        }}
-                        label="Download PDF"
-                        icon={FileText}
-                        className="font-semibold text-gray-700 text-xs px-2 py-2"
-                      />
-                    </div>
+                        data={[...reqData.requestItemsData].sort((a, b) => {
+                          const selected = selectedStatus[reqData.requestNo];
+                          if (!selected) return 0; // no reordering if nothing selected
 
-                    {Boolean(
-                      !["completed", "delivered", "received"].includes(
-                        reqData.requestStatus
-                      )
-                    ) && (
-                      <>
-                        <div>
+                          if (
+                            a.reqItemStatus === selected &&
+                            b.reqItemStatus !== selected
+                          )
+                            return -1; // a first
+                          if (
+                            a.reqItemStatus !== selected &&
+                            b.reqItemStatus === selected
+                          )
+                            return 1; // b first
+                          return 0; // keep relative order otherwise
+                        })}
+                        isRounded={false}
+                        updateData={(updatedItems) =>
+                          handleDataChange(reqData.requestNo, updatedItems)
+                        }
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="flex border-t-1 p-2 bg-white rounded-b-lg justify-between border-gray-200 items-center">
+                  {Boolean(
+                    !["completed", "delivered", "received"].includes(
+                      reqData.requestStatus,
+                    ) || hasPartial,
+                  ) && (
+                    <>
+                      {/* <div>
                           <Button
                             color="tertiary"
                             size="xs"
@@ -678,83 +982,68 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                             }}
                             label="Add Item in Request"
                             icon={Package}
-                            className="font-semibold text-gray-700 text-xs px-2 py-2"
                           />
-                        </div>
-                        <div>
-                          <Button
-                            color="warning"
-                            size="xs"
-                            onClick={() => {
-                              setIsShowAddItemFromPO(true);
-                              setSelectedRequestNo(reqData);
-                            }}
-                            label="Add Item from PO"
-                            icon={Package}
-                            className="font-semibold text-gray-700 text-xs px-2 py-2"
-                          />
-                        </div>
-                        <div>
-                          <Button
-                            size="xs"
-                            onClick={() => {
-                              handleAutoFillAll(reqData.requestNo);
-                            }}
-                            label={
-                              isProcessing === reqData.requestNo
-                                ? "Processing..."
-                                : `Fulfill ${reqData.requestNo}`
-                            }
-                            icon={CheckCircle}
-                            className="font-semibold text-xs px-2 py-2"
-                            disabled={
-                              isProcessing === reqData.requestNo ||
-                              reqData.requestStatus === "delivered" ||
-                              reqData.requestStatus === "received" ||
-                              reqData.requestStatus === "completed"
-                            }
-                            color="success"
-                          />
-                        </div>
-                        <div>
-                          <Button
-                            size="xs"
-                            onClick={() => {
-                              const hasNoFulFillQty = reqData.requestItemsData
-                                .filter((i) => i.reqItemStatus !== "delivered")
-                                .some(
-                                  (item) =>
-                                    item.reqItemStatus !== "not_ordered" &&
-                                    Number(item.reqItemTransfer) === 0
-                                );
+                        </div> */}
+                      <div>
+                        <Button
+                          color="outline"
+                          size="xs"
+                          onClick={() => {
+                            setIsShowAddItemFromPO(true);
+                            setSelectedRequestNo(reqData);
+                          }}
+                          label="Add Item from PO"
+                          icon={Plus}
+                        />
+                      </div>
 
-                              if (hasNoFulFillQty) {
-                                toast.error(
-                                  "Failed to deliver. Cannot deliver 0 quantity"
-                                );
-                                return;
-                              }
-                              setIsShowDeliverConfirm(true);
-                              setDeliverRequestData(reqData);
-                            }}
-                            label={
-                              isProcessing === reqData.requestNo
-                                ? "Processing..."
-                                : `Mark as Delivered`
+                      <div>
+                        <Button
+                          size="xs"
+                          onClick={() => {
+                            const hasNoFulFillQty = reqData.requestItemsData
+                              .filter((i) => i.reqItemStatus !== "delivered")
+                              .some(
+                                (item) =>
+                                  item.reqItemStatus !== "not_ordered" &&
+                                  Number(item.reqItemTransfer) === 0,
+                              );
+                            const hasNoToFollowQty = reqData.requestItemsData
+                              .filter((i) => i.reqItemStatus !== "delivered")
+                              .some(
+                                (item) =>
+                                  item.reqItemStatus !== "not_ordered" &&
+                                  item.reqItemStatus === "partial" &&
+                                  Number(item.reqItemToFollow) === 0,
+                              );
+                            console.log({ hasNoToFollowQty, hasPartial });
+                            if (hasNoToFollowQty && hasPartial) {
+                              toast.error(
+                                "Failed to deliver. Cannot deliver 0 to follow quantity",
+                              );
+                              return;
                             }
-                            icon={Truck}
-                            className="font-semibold text-xs px-2 py-2"
-                            disabled={
-                              isProcessing === reqData.requestNo ||
-                              reqData.requestStatus === "delivered" ||
-                              reqData.requestStatus === "received" ||
-                              reqData.requestStatus === "completed"
+                            if (hasNoFulFillQty) {
+                              toast.error(
+                                "Failed to deliver. Cannot deliver 0 quantity",
+                              );
+                              return;
                             }
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
+                            setIsShowDeliverConfirm(true);
+                            setDeliverRequestData(reqData);
+                            console.log({ reqData });
+                          }}
+                          label={
+                            isProcessing === reqData.requestNo
+                              ? "Processing..."
+                              : `Mark as Delivered`
+                          }
+                          icon={Truck}
+                          disabled={isProcessing === reqData.requestNo}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -839,7 +1128,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             const filter = {
               ...deliverRequestData,
               requestItemsData: deliverRequestData.requestItemsData.filter(
-                (i) => i.reqItemStatus !== "delivered"
+                (i) => i.reqItemStatus !== "delivered",
               ),
             };
             console.log({ filter });

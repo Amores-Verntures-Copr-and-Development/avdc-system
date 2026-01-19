@@ -10,14 +10,10 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryItemsByField } from "../inventory/inventory-items/get-inventory-items";
 import { findPurchaserOrder } from "./purchase-items/get-purchase-tems";
-import {
-  handleUpdateSupplierItemPrice,
-  updateSupplierItems,
-} from "../supplier/suppplier-items/update-supplier-items";
+import { handleUpdateSupplierItemPrice } from "../supplier/suppplier-items/update-supplier-items";
 import { SupplierItem } from "@/types/supplier";
 import { handleUpdateItemPrice } from "../items/update-items";
 import { ItemInterface } from "@/types/items";
-import { findPOItemsSupplierById } from "../purchaseOrderServices";
 import { findSupplierById } from "../supplier/get-supplier";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {

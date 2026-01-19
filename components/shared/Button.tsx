@@ -30,13 +30,13 @@ interface ButtonProps {
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
-  xs: "text-[9px] md:text-xs px-2 py-1",
+  xs: "text-[8px] md:text-xs px-2 py-1",
   sm: "text-[9px] md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 xl:px-3 xl:py-1.5 ",
   md: "text-base px-4 py-2",
   lg: "text-lg px-5 py-2.5",
 };
 const iconSizes: Record<ButtonSize, number> = {
-  xs: 12,
+  xs: 13,
   sm: 14,
   md: 18,
   lg: 22,
