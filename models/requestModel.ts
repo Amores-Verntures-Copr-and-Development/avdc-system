@@ -131,7 +131,7 @@ export const selectRequestItemsById = async ({
   }
   if (itemId) {
     whereClauses.push(
-      "ii.inventoryItemReferenceId = ? AND ii.inventoryItemReferenceType = 'item'"
+      "ii.inventoryItemReferenceId = ? AND ii.inventoryItemReferenceType = 'item'",
     );
     values.push(itemId);
   }
@@ -164,7 +164,7 @@ export const selectRequestItemsByIds = async ({
     INNER JOIN Stores s ON s.storeId = ro.storeId
     WHERE ro.requestId IN (${placeholders})
     `,
-    requestIds
+    requestIds,
   );
 
   if (storeRows.length === 0) {
@@ -178,10 +178,10 @@ export const selectRequestItemsByIds = async ({
         SUM(CASE WHEN ro.storeId = ${
           store.storeId
         } THEN ri.reqItemQuantity ELSE 0 END) AS \`${store.storeName.replace(
-        /\s+/g,
-        "_"
-      )}_Qty\`
-      `
+          /\s+/g,
+          "_",
+        )}_Qty\`
+      `,
     )
     .join(", ");
 
@@ -237,7 +237,7 @@ export const updateRequest = async ({
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof Request)
+    (field) => !keyFields.includes(field as keyof Request),
   );
 
   if (updateFields.length === 0)
@@ -266,7 +266,7 @@ export const updateRequest = async ({
   // ✅ WHERE clause (unique combination of all key values)
   const whereConditions: string[] = [];
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
@@ -358,7 +358,7 @@ export const updateRequestItem = async ({
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof RequestItems)
+    (field) => !keyFields.includes(field as keyof RequestItems),
   );
 
   if (updateFields.length === 0)
@@ -387,7 +387,7 @@ export const updateRequestItem = async ({
   // ✅ WHERE clause (unique combination of all key values)
   const whereConditions: string[] = [];
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
@@ -407,6 +407,7 @@ export const updateRequestItem = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
+  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
   return result;
 };

@@ -49,6 +49,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   onBack,
   user,
 }) => {
+  const [isReceiving, setIsReceiving] = useState(false);
   const [isSelectingAddItemPO, setIsSelectingAddItemPO] = useState(false);
   const [showAddPOItem, setShowAddPOItem] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -169,14 +170,15 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       editable: (row) => {
         const original = findOriginalData(row.reqItemId);
         return (
-          original?.reqItemStatus !== "received" &&
-          original?.reqItemStatus !== "not_ordered" &&
-          original?.reqItemStatus !== "partial" &&
-          Number(row.receivedToFollow) === 0
-          // (row.reqItemStatus === "delivered" ||
-          //   selectedReq?.requestStatus === "delivered" ||
-          //   row.reqItemStatus === "partial") &&
-          // row.reqItemStatus !== "not_ordered"
+          // (original?.reqItemStatus === "delivered" ||
+          //   original?.reqItemStatus === "partial") &&
+          // (Number(row.receivedToFollow) === 0 ||
+          //   !Number(row.receivedToFollow)) &&
+          // Number(original.reqItemReceived) === 0
+
+          (original?.reqItemStatus === "delivered" ||
+            original?.reqItemStatus === "partial") &&
+          original.reqItemReceived === 0
         );
       },
       inputType: "number",
@@ -274,28 +276,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       selector: (row) =>
         Number(row.reqItemTransfer) === 0 ? "" : row.reqItemTransfer,
     },
-    {
-      name: "To Follow Qty",
-      key: "reqItemToFollow",
-      selector: (row) =>
-        Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
-    },
+
     {
       name: "Received",
       key: "reqItemReceived",
-      editable: (row) => {
-        const original = findOriginalData(row.reqItemId);
-        return (
-          original?.reqItemStatus !== "received" &&
-          original?.reqItemStatus !== "not_ordered" &&
-          original?.reqItemStatus !== "partial" &&
-          Number(row.receivedToFollow) === 0
-          // (row.reqItemStatus === "delivered" ||
-          //   selectedReq?.requestStatus === "delivered" ||
-          //   row.reqItemStatus === "partial") &&
-          // row.reqItemStatus !== "not_ordered"
-        );
-      },
+
       inputType: "number",
       selector: (row) => {
         return row.reqItemStatus === "not_ordered" ? 0 : row.reqItemReceived;
@@ -307,11 +292,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       },
     },
     {
-      name: "Recived To Follow",
+      name: "To Follow Qty",
+      key: "reqItemToFollow",
+      selector: (row) =>
+        Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
+    },
+    {
+      name: "Received To Follow",
       key: "receivedToFollow",
       inputType: "number",
       editable: (row) =>
         row.reqItemStatus === "delivered" && Number(row.reqItemToFollow) !== 0,
+      value: (row) => row.receivedToFollow ?? "",
     },
     { name: "Remarks", key: "reqItemRemarks" },
     {
@@ -386,17 +378,13 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         (i) => i.reqItemStatus === "delivered" || i.reqItemStatus === "partial",
       ),
     };
-    // const requestData: Partial<Request>[] = [
-    //   {
-    //     ...selectedReq,
-    //     requestItems: requestItemData,
-    //   },
-    // ];
+    console.log({ validReceivedROI });
+    const storageKey = `${selectedReq?.requestNo}-request-item-draft`;
     const sendData = {
       controller: "received",
       data: [validReceivedROI],
     };
-    console.log({ sendData });
+    setIsReceiving(true);
     try {
       const result = await fetch(`api/requests/`, {
         method: "PUT",
@@ -410,15 +398,17 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
+      localStorage.removeItem(storageKey);
       toast.success(res.message);
       mutateRequest();
       mutate();
       setShowReceivedConfirmation(false);
       return true;
-    } catch (e) {
-      console.log(e);
+    } catch (_e) {
       toast.error("Failed to update Inventory.");
       return false;
+    } finally {
+      setIsReceiving(false);
     }
   };
   const handleCompleteRO = async () => {
@@ -556,10 +546,20 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const handleFillUpAll = () => {
     if (requestItemData) {
       setRequestItemData((prev) =>
-        prev.map((item) => ({
-          ...item,
-          reqItemReceived: Number(item.reqItemTransfer), // or any value you want
-        })),
+        prev.map((item) => {
+          if (
+            item.reqItemStatus === "delivered" &&
+            Number(item.reqItemToFollow) === 0
+          ) {
+            return {
+              ...item,
+              reqItemReceived: Number(item.reqItemTransfer),
+            };
+          }
+          return {
+            ...item, // or any value you want
+          };
+        }),
       );
     }
   };
@@ -784,7 +784,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                           size="sm"
                           label="Add Item"
                           className="font-semibold"
-                          color="primary"
+                          color="success"
                         />
                       </div>
                     )}
@@ -835,7 +835,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   </div>
                 )}
                 {(selectedReq?.requestStatus === "delivered" ||
-                  hasPartialDelivered) && (
+                  hasPartialDelivered ||
+                  hasToFollowDelivered) && (
                   <div>
                     <Button
                       icon={CheckLine}
@@ -845,14 +846,21 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                             Number(item.reqItemReceived) === 0 &&
                             item.reqItemStatus !== "not_ordered",
                         );
+                        console.log({ requestItemData });
                         const hasNoQuantityToFollowReceived =
                           requestItemData.some(
                             (item) =>
-                              Number(item.reqItemToFollow) !== 0 &&
-                              Number(item.receivedToFollow) === 0 &&
-                              item.reqItemStatus === "delivered",
+                              (Number(item.receivedToFollow) === 0 ||
+                                item.receivedToFollow === undefined) &&
+                              item.reqItemStatus === "delivered" &&
+                              Number(item.reqItemToFollow) !== 0,
                           );
-                        console.log({ hasNoQuantityToFollowReceived });
+                        const validReceivedData = requestItemData.filter(
+                          (i) =>
+                            i.reqItemStatus === "delivered" ||
+                            i.reqItemStatus === "partial",
+                        );
+                        console.log({ validReceivedData });
                         if (hasNoQuantityToFollowReceived) {
                           toast.error(
                             "Cannot received 0 quantity from to follow items.!",
@@ -948,12 +956,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 }}
                 hasBorder
                 color="secondary"
+                disabled={isReceiving}
               />
             </div>
             <div>
               <Button
                 label="Confirm"
                 size="sm"
+                loading={isReceiving}
                 onClick={() => {
                   handleReceivedRO();
                 }}

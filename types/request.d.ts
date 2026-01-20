@@ -41,4 +41,5 @@ export interface RequestItems {
   inventoryItemReferenceId: number;
   itemId: number;
   reqItemToFollow?: number;
+  receivedToFollow?: number;
 }
