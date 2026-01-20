@@ -89,7 +89,7 @@ const DynamicDropdown = ({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1 w-full rounded-md border bg-white shadow-md max-h-48 overflow-y-auto">
+        <div className="absolute z-50 mt-1 w-full rounded-md border border-gray-300 bg-white shadow-md max-h-48 overflow-y-auto">
           {options.map((opt) => {
             const isSelected = opt.label === selectedStore;
             return (

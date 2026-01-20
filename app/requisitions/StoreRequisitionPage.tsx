@@ -54,7 +54,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     key: "requestStatus",
     selector: (row) => {
       const { label, bg, color, border } = getRequestStatusOption(
-        row.requestStatus
+        row.requestStatus,
       );
       return (
         <span
@@ -72,7 +72,7 @@ const StoreRequisitionPage = () => {
   const [selectedtedRows, setSelectedRows] =
     useState<DisplayRequestOrderDto[]>();
   const [selectedRow, setSelectedRow] = useState<DisplayRequestOrderDto | null>(
-    null
+    null,
   );
   const [isShowCreateRequest, setIsShowCreateRequest] = useState(false);
   const [isShowViewRequest, setIsShowViewRequest] = useState(false);
@@ -83,7 +83,7 @@ const StoreRequisitionPage = () => {
     mutate,
   } = useSWR<{ data: DisplayRequestOrderDto[] }>(
     user ? `/api/requests/request-orders/${user.storeId}` : null,
-    fetcher
+    fetcher,
   );
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
@@ -98,7 +98,7 @@ const StoreRequisitionPage = () => {
     const updatedData = await mutate();
     // The updatedData should contain the fresh data
     const findSelectedRo = updatedData?.data.find(
-      (ro) => ro.requestId === selectedRow?.requestId
+      (ro) => ro.requestId === selectedRow?.requestId,
     );
     if (findSelectedRo) {
       setSelectedRow(findSelectedRo);
@@ -143,7 +143,7 @@ const StoreRequisitionPage = () => {
           mutateRequest={handleUpdateData}
           user={user}
           onBack={() => {
-            setIsShowViewRequest(false), setSelectedRow(null);
+            (setIsShowViewRequest(false), setSelectedRow(null));
           }}
         />
       ) : (
@@ -154,7 +154,7 @@ const StoreRequisitionPage = () => {
           />
           <div className="grid grid-cols-4 gap-4">
             <Card
-              title="Total Request"
+              title="Total Request Cost"
               value={20}
               icon={
                 <ListChecks className="w-3 h-3 xl:w-6 xl:h-6 text-indigo-500" />

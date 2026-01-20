@@ -39,7 +39,7 @@ const StoreSelectionPage = () => {
       const data = await response.json();
       if (response.ok && data.success) {
         // Update localStorage with new user data
-   
+
         localStorage.setItem("storeData", JSON.stringify(store));
         await refreshSession();
         toast.success("Store selected successfully!");

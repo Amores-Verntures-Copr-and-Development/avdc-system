@@ -12,7 +12,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ requestId: string }>;
-  }
+  },
 ) {
   try {
     const slug = (await params).requestId;
@@ -36,7 +36,7 @@ export async function GET(
         message: "Failed to create request",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -47,7 +47,7 @@ export async function POST(
     params,
   }: {
     params: Promise<{ requestId: string }>;
-  }
+  },
 ) {
   try {
     const slug = (await params).requestId;
@@ -75,7 +75,7 @@ export async function POST(
         message: "Failed to create request",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -33,7 +33,7 @@ export function useStores({
       const stored = localStorage.getItem(localStorageKey);
       if (stored) {
         const storedData = JSON.parse(stored);
-  
+
         return storedData;
       }
 
@@ -64,7 +64,7 @@ export function useStores({
       shouldRetryOnError: (err) => {
         return !(err instanceof Error && err.message.includes("401"));
       },
-    }
+    },
   );
 
   return {
