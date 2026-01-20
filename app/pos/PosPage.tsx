@@ -1,7 +1,7 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -95,28 +95,38 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const { data: discountResponse = { data: [] } } = useSWR<{
     data: Discounts[];
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
-
+  console.log({ itemResponse });
   useEffect(() => {
-    if (itemResponse.data && itemResponse.data.length > 0) {
+    if (!itemResponse?.data) {
+      if (productList.length !== 0) setProductList([]);
+      return;
+    }
+
+    // Only update if different
+    const isEqual =
+      itemResponse.data.length === productList.length &&
+      itemResponse.data.every((p, i) => p.prodId === productList[i]?.prodId);
+
+    if (!isEqual) {
       setProductList(itemResponse.data);
     }
   }, [itemResponse.data]);
 
-  const subtotal =
-    selectedOrder?.reduce(
-      (total, o) => total + o.prodVarPrice * o.quantity,
-      0
-    ) ?? 0;
+  const subtotal = useMemo(() => {
+    return (
+      selectedOrder?.reduce((t, o) => t + o.prodVarPrice * o.quantity, 0) ?? 0
+    );
+  }, [selectedOrder]);
   const totalPaid = paymentMethod?.reduce(
     (sum, p) => sum + p.salesPaymentAmount,
-    0
+    0,
   );
   const getTotalAmount = (): number => {
     if (!selectedDiscount || selectedDiscount.length === 0) return subtotal;
 
     const totalDiscount = selectedDiscount.reduce(
       (acc, disc) => acc + disc.discountAmount,
-      0
+      0,
     );
 
     return Math.max(subtotal - totalDiscount, 0); // prevent negative
@@ -127,11 +137,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const canComplete = (totalPaid || 0) >= getTotalAmount();
   const hasSufficientInventory = (
     prodVarId: number,
-    quantityToAdd = 1
+    quantityToAdd = 1,
   ): boolean => {
     for (const product of productList) {
       const variant = product.productVariants?.find(
-        (v) => v.prodVarId === prodVarId
+        (v) => v.prodVarId === prodVarId,
       );
 
       if (!variant) continue;
@@ -167,7 +177,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         return prev.map((p) =>
           p.prodVarId === newProduct.prodVarId
             ? { ...p, quantity: p.quantity + 1 }
-            : p
+            : p,
         );
       }
 
@@ -178,7 +188,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     if (!selectedProduct) return;
 
     const updatedProduct = productList.find(
-      (p) => p.prodId === selectedProduct.prodId
+      (p) => p.prodId === selectedProduct.prodId,
     );
 
     if (updatedProduct) {
@@ -201,12 +211,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             })),
           };
         }),
-      }))
+      })),
     );
   };
   const restoreVariantComponents = (
     prodVarId: number,
-    quantityToRestore = 1
+    quantityToRestore = 1,
   ) => {
     setProductList((prev) =>
       prev.map((product) => ({
@@ -222,7 +232,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             })),
           };
         }),
-      }))
+      })),
     );
   };
   const removeQuantityProductList = (product: OrderList) => {
@@ -237,7 +247,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 ...p,
                 quantity: Math.max((p.quantity || 0) - 1, 0),
               }
-            : p
+            : p,
         )
         .filter((p) => p.quantity > 0); // ✅ remove items with 0 quantity
     });
@@ -254,7 +264,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 ? disc.discountValue
                 : Math.max(0, subtotal * (Number(disc?.discountValue) / 100)), // or the field you want to reset
           };
-        }) || []
+        }) || [],
     );
   }, [subtotal]);
   const addQuantity = (product: OrderList) => {
@@ -295,7 +305,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               ...p,
               quantity: (p.quantity || 0) + 1,
             }
-          : p
+          : p,
       );
     });
   };
@@ -303,7 +313,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
   const removeProduct = (product: OrderList) => {
     const newSelectedOrder = selectedOrder?.filter(
-      (prod) => prod.prodVarId !== product.prodVarId
+      (prod) => prod.prodVarId !== product.prodVarId,
     );
     setSelectedOrder(newSelectedOrder ?? []);
   };
@@ -425,7 +435,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   // };
   const searchCustomers = async (query: string): Promise<Customer[]> => {
     const res = await fetch(
-      `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`
+      `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`,
     );
     const json = await res.json();
     return json.data || [];
@@ -473,7 +483,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     discountResponse.data.find((d) => d.discountId === discountId);
   const removeDiscount = (newDisc: Discounts) => {
     const filter = selectedDiscount?.filter(
-      (disc) => disc.discountId !== newDisc.discountId
+      (disc) => disc.discountId !== newDisc.discountId,
     );
     setSelectedDiscount(filter ?? []);
   };
@@ -655,7 +665,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </div>
               <div>
                 <Button
-                  icon={Tag }
+                  icon={Tag}
                   size="xs"
                   label="Discount"
                   onClick={() => {
@@ -723,119 +733,125 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           </div>
         </div>
       </div>
-      <Popup
-        title={
-          isShowIcons === "discount"
-            ? "Discount List"
-            : isShowIcons === "methods"
-            ? "Payment Method List"
-            : isShowIcons === "product"
-            ? "Product List"
-            : isShowIcons === "history"
-            ? "Sales History"
-            : ""
-        }
-        isOpen={isShowIcons !== null}
-        onClose={function (): void {
-          setIsShowIcons(null);
-        }}
-        background="transparent"
-      >
-        {isShowIcons === "discount" ? (
-          <DiscountList storeId={storeId} user={user} />
-        ) : isShowIcons === "methods" ? (
-          <PaymentMethodList storeId={storeId} user={user} />
-        ) : isShowIcons === "product" ? (
-          <ProductList />
-        ) : isShowIcons === "history" ? (
-          <SalesHistory />
-        ) : (
-          ""
-        )}
-      </Popup>
-      <Modal
-        className="h-[50%]"
-        leadingIcon={Tag}
-        title="Apply Discount"
-        isOpen={showDiscountModal}
-        onClose={function (): void {
-          setShowDiscountModal(false);
-        }}
-      >
-        <ViewAppliedDiscountModal
-          discountData={discountResponse.data ?? []}
-          addDiscount={addDiscount}
-          selectedDiscounts={selectedDiscount}
-          removeDiscount={removeDiscount}
-        />
-      </Modal>
-      <Modal
-        leftTitleContent={
-          isPaymentSuccess ? (
-            <div></div>
-          ) : (
-            <span className="font-semibold">
-              Total: {formatPeso(getTotalAmount())}
-            </span>
-          )
-        }
-        className={isPaymentSuccess ? `` : `h-[95%]`}
-        isOpen={isCheckOut}
-        onClose={function (): void {
-          setIsCheckOut(false);
-          if (isPaymentSuccess) {
-            setIsPaymentSuccess(false);
-            setRecentSales(null);
+      {isShowIcons !== null && (
+        <Popup
+          title={
+            isShowIcons === "discount"
+              ? "Discount List"
+              : isShowIcons === "methods"
+                ? "Payment Method List"
+                : isShowIcons === "product"
+                  ? "Product List"
+                  : isShowIcons === "history"
+                    ? "Sales History"
+                    : ""
           }
-        }}
-        size="lg"
-        modalDetails={
-          isPaymentSuccess ? (
-            <div></div>
+          isOpen={isShowIcons !== null}
+          onClose={function (): void {
+            setIsShowIcons(null);
+          }}
+          background="transparent"
+        >
+          {isShowIcons === "discount" ? (
+            <DiscountList storeId={storeId} user={user} />
+          ) : isShowIcons === "methods" ? (
+            <PaymentMethodList storeId={storeId} user={user} />
+          ) : isShowIcons === "product" ? (
+            <ProductList />
+          ) : isShowIcons === "history" ? (
+            <SalesHistory />
           ) : (
-            <div className="flex justify-between w-full">
-              <span className="text-lg font-semibold"> Confirm Order</span>
-              <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
+            ""
+          )}
+        </Popup>
+      )}
+      {showDiscountModal && (
+        <Modal
+          className="h-[50%]"
+          leadingIcon={Tag}
+          title="Apply Discount"
+          isOpen={showDiscountModal}
+          onClose={function (): void {
+            setShowDiscountModal(false);
+          }}
+        >
+          <ViewAppliedDiscountModal
+            discountData={discountResponse.data ?? []}
+            addDiscount={addDiscount}
+            selectedDiscounts={selectedDiscount}
+            removeDiscount={removeDiscount}
+          />
+        </Modal>
+      )}
+      {isCheckOut && (
+        <Modal
+          leftTitleContent={
+            isPaymentSuccess ? (
+              <div></div>
+            ) : (
+              <span className="font-semibold">
                 Total: {formatPeso(getTotalAmount())}
               </span>
-            </div>
-          )
-        }
-      >
-        {!isPaymentSuccess ? (
-          <CheckOutModal
-            addPayment={addPayment}
-            order={selectedOrder}
-            discounts={selectedDiscount}
-            paymentMethods={paymentMethodResponse.data ?? []}
-            selectedPaymentMethod={paymentMethod}
-            setSelectedPaymentMethod={setPaymentMethod}
-            handleCompleteSale={handleConfirmOrder}
-            totalPaid={totalPaid ?? 0}
-            subtotal={subtotal}
-            remaining={remaining}
-            change={change}
-            canComplete={canComplete}
-          />
-        ) : (
-          <PaymentSuccessModal
-            totalPaid={recentSales?.salesTotalPaid ?? 0}
-            change={
-              (Number(recentSales?.salesTotalPaid) ?? 0) -
-              (Number(recentSales?.salesTotalAmount) ?? 0)
-            }
-            onNewSale={() => {
+            )
+          }
+          className={isPaymentSuccess ? `` : `h-[95%]`}
+          isOpen={isCheckOut}
+          onClose={function (): void {
+            setIsCheckOut(false);
+            if (isPaymentSuccess) {
               setIsPaymentSuccess(false);
               setRecentSales(null);
-              setIsCheckOut(false);
-            }}
-            onPrintReceipt={() => {
-              console.log("Print Sales");
-            }}
-            salesData={recentSales}
-          />
-        )}
-      </Modal>
+            }
+          }}
+          size="lg"
+          modalDetails={
+            isPaymentSuccess ? (
+              <div></div>
+            ) : (
+              <div className="flex justify-between w-full">
+                <span className="text-lg font-semibold"> Confirm Order</span>
+                <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
+                  Total: {formatPeso(getTotalAmount())}
+                </span>
+              </div>
+            )
+          }
+        >
+          {!isPaymentSuccess ? (
+            <CheckOutModal
+              addPayment={addPayment}
+              order={selectedOrder}
+              discounts={selectedDiscount}
+              paymentMethods={paymentMethodResponse.data ?? []}
+              selectedPaymentMethod={paymentMethod}
+              setSelectedPaymentMethod={setPaymentMethod}
+              handleCompleteSale={handleConfirmOrder}
+              totalPaid={totalPaid ?? 0}
+              subtotal={subtotal}
+              remaining={remaining}
+              change={change}
+              canComplete={canComplete}
+            />
+          ) : (
+            <PaymentSuccessModal
+              totalPaid={recentSales?.salesTotalPaid ?? 0}
+              change={
+                (Number(recentSales?.salesTotalPaid) ?? 0) -
+                (Number(recentSales?.salesTotalAmount) ?? 0)
+              }
+              onNewSale={() => {
+                setIsPaymentSuccess(false);
+                setRecentSales(null);
+                setIsCheckOut(false);
+              }}
+              onPrintReceipt={() => {
+                console.log("Print Sales");
+              }}
+              salesData={recentSales}
+            />
+          )}
+        </Modal>
+      )}
     </PageLayout>
   );
 };

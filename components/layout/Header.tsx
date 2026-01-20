@@ -9,6 +9,7 @@ import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import DynamicDropdown from "../shared/DynamicDropdown";
 import toast from "react-hot-toast";
+
 const Header = () => {
   const { user, hasStore, isAdmin, refreshSession } = useSession();
   const { stores } = useStores({ user, hasStore, isAdmin });
@@ -34,8 +35,6 @@ const Header = () => {
       }
     }
   }, [user]);
-
-  console.log({ response, isSuperVisor });
 
   const storeOptions = Array.isArray(response?.data)
     ? response.data?.map((store) => ({

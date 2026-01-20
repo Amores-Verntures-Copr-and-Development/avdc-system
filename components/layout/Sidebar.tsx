@@ -304,7 +304,7 @@ const Sidebar = () => {
       sections: group.sections.filter(
         (s) =>
           !s.roles ||
-          s.roles.includes(user?.userRole !== "employee" ? role : position) // allow if no roles OR matches
+          s.roles.includes(user?.userRole !== "employee" ? role : position), // allow if no roles OR matches
       ),
     }))
     .filter((group) => group.sections.length > 0); // r
@@ -336,8 +336,8 @@ const Sidebar = () => {
               ? "-translate-x-full lg:translate-x-0 lg:w-20"
               : "lg:w-20"
             : isMobile
-            ? "translate-x-0 w-64"
-            : "w-64"
+              ? "translate-x-0 w-64"
+              : "w-64"
         }`}
       >
         {/* Toggle Button */}

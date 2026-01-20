@@ -10,7 +10,6 @@ import PosPage from "./PosPage";
 const PosMainPage = () => {
   const { user, hasStore, loading } = useSession();
   const [storeId, setStoreId] = useState<number | null>(null);
-
   useEffect(() => {
     if (user && hasStore) {
       setStoreId(user?.storeId);
