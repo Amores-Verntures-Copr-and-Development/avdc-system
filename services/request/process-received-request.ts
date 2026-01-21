@@ -22,7 +22,7 @@ export async function processReceivedRequest(data: Request) {
         (it) =>
           it.reqItemStatus !== "not_ordered" &&
           it.reqItemStatus === "delivered" &&
-          !it.reqItemToFollow,
+          (!it.reqItemToFollow || Number(!it.reqItemToFollow) === 0),
       )
       .flatMap((item) => ({
         invItem: item.invItem,
@@ -34,6 +34,8 @@ export async function processReceivedRequest(data: Request) {
           ? { reqItemTransfer: item.reqItemReceived }
           : {}),
       }));
+
+    console.log({ validReceivedRequestItems });
     const validReceivedToFollowRequestItems: Partial<RequestItems>[] =
       data.requestItems
         .filter(

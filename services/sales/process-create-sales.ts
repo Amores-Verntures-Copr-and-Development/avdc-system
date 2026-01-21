@@ -80,7 +80,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       await createSalePayments({ connection, data: salesPaymentData });
     }
     const needDeductInventory = saleItemData.some(
-      (item) => item.inventoryItemId
+      (item) => item.inventoryItemId,
     );
     const salesDiscounts: CreateSalesDiscount[] =
       data.saleDiscounts?.map((dis) => ({
@@ -97,7 +97,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       });
 
       const filterDeductItem = saleItemData.filter(
-        (item) => item.inventoryItemId || item.inventoryItemId !== 0
+        (item) => item.inventoryItemId || item.inventoryItemId !== 0,
       );
       const inventoryItem: Partial<InventoryItemInterface>[] =
         filterDeductItem.map((item) => ({

@@ -407,7 +407,6 @@ export const updateRequestItem = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
   return result;
 };

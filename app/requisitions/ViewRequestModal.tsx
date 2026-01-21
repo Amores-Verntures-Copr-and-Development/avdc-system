@@ -178,7 +178,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
           (original?.reqItemStatus === "delivered" ||
             original?.reqItemStatus === "partial") &&
-          original.reqItemReceived === 0
+          Number(original.reqItemReceived) === 0
         );
       },
       inputType: "number",
