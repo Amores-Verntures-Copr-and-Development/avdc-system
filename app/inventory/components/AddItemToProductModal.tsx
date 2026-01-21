@@ -3,14 +3,12 @@ import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { UserAuth } from "@/hooks/useSession";
 import React, { useEffect, useState } from "react";
 import Button from "@/components/shared/Button";
-import {
-
-  CreateProductVariantDto,
-} from "@/dtos/products.dto";
+import { CreateProductVariantDto } from "@/dtos/products.dto";
 import Toggle from "@/components/shared/Toggle";
 
 import { Products } from "@/types/products";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
+import { formatPeso } from "@/utils/formatPeso";
 
 interface AddItemToProductModalProps {
   data: DisplayInventoryItems[];
@@ -44,34 +42,31 @@ const AddItemToProductModal = ({
   const [products, setProducts] = useState<CreateProductVariantDto[]>([]);
   // const [isAddAsVariant, setIsAddAsVariant] = useState(false);
   const columns: Column<CreateProductVariantDto>[] = [
-    // { name: "#", key: "#", selector: (_row, index) => index + 1 },
-    // {
-    //   name: "Item Name",
-    //   key: "itemName",
-    //   selector: (row) =>
-    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemName,
-    // },
-    // {
-    //   name: "Unit",
-    //   key: "itemUnit",
-    //   selector: (row) =>
-    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemUnit,
-    // },
-    // {
-    //   name: "Category",
-    //   key: "categoryName",
-    //   selector: (row) =>
-    //     data.find((i) => i.inventoryItemId === row.inventoryItemId)
-    //       ?.categoryName,
-    // },
-    // {
-    //   name: "Cost  Price",
-    //   key: "itemPrice",
-    //   selector: (row) =>
-    //     formatPeso(
-    //       data.find((i) => i.inventoryItemId === row.inventoryItemId)?.itemPrice
-    //     ),
-    // },
+    { name: "#", key: "#", selector: (_row, index) => index + 1 },
+    {
+      name: "Item Name",
+      key: "itemName",
+      selector: (row, indexRow) =>
+        data.find((i, index) => index === indexRow)?.itemName,
+    },
+    {
+      name: "Unit",
+      key: "itemUnit",
+      selector: (row, indexRow) =>
+        data.find((i, index) => index === indexRow)?.itemUnit,
+    },
+    {
+      name: "Category",
+      key: "categoryName",
+      selector: (row, indexRow) =>
+        data.find((i, index) => index === indexRow)?.categoryName,
+    },
+    {
+      name: "Cost  Price",
+      key: "itemPrice",
+      selector: (row, indexRow) =>
+        formatPeso(data.find((i, index) => index === indexRow)?.itemPrice),
+    },
     {
       name: "Selling  Price",
       key: "prodVarPrice",
@@ -89,6 +84,7 @@ const AddItemToProductModal = ({
           prodVarName: item.itemName,
           prodVarUnit: item.itemUnit,
           prodVarPrice: 0,
+          isDeductInv: false,
           varianComponents: [
             {
               varComId: 0,
@@ -97,7 +93,7 @@ const AddItemToProductModal = ({
               inventoryItemId: item.inventoryItemId,
             },
           ],
-        }))
+        })),
       );
     }
   }, [data]);
@@ -118,7 +114,7 @@ const AddItemToProductModal = ({
 
   const searchItems = async (query: string): Promise<Products[]> => {
     const res = await fetch(
-      `/api/products/${storeId}?search=${encodeURIComponent(query)}`
+      `/api/products/${storeId}?search=${encodeURIComponent(query)}`,
     );
     const json = await res.json();
     return json.data || [];
@@ -128,7 +124,8 @@ const AddItemToProductModal = ({
       <span className="font-semibold text-sm">
         Notes:{" "}
         <span className="text-sm font-normal">
-          This items will be included to your products.
+          The item(s) will be added to your order, and the quantity reflects
+          current inventory levels
         </span>
       </span>
 
@@ -174,7 +171,7 @@ const AddItemToProductModal = ({
           columns={columns}
           data={products}
           updateData={setProducts}
-          uniqueIdKey="prodId"
+          uniqueIdKey="prodVarName"
         />
       </div>
       <div className="flex justify-end gap-2">

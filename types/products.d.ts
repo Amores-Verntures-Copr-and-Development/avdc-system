@@ -15,12 +15,14 @@ export interface ProductVariants {
   prodVarName: string;
   prodVarPrice: number;
   prodVarUnit?: string | null;
+  isDeductInv: boolean;
   prodVarCreatedAt: string;
   prodVarUpdatedAt: string;
   prodVarDeletedAt: string;
   prodVarCreatedBy: number;
   prodId: number;
   variantComponents?: VariantComponents[];
+  sold?: number;
 }
 
 export interface VariantComponents {

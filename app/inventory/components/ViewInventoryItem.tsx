@@ -36,7 +36,7 @@ interface ViewInventoryItemPros {
   inventoryData?: DisplayInventoryItems | null;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onSubmitStockAdjustment?: (
-    row: CreateInventoryMovementDto
+    row: CreateInventoryMovementDto,
   ) => Promise<boolean>;
   isSubmittingAdjustment?: boolean;
   onClose?: () => void;
@@ -47,6 +47,8 @@ interface ViewInventoryItemPros {
   }) => Promise<boolean>;
   isEditing?: boolean;
   isLoadingInventory?: boolean;
+  showAddComponent?: boolean;
+  setShowAddComponent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
@@ -59,6 +61,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
   onSubmitEditItems,
   isEditing,
   isLoadingInventory,
+  setShowAddComponent,
 }) => {
   const [inventoryItemData, setInventoryItemData] = useState(data);
   const [selectedButton, setSelectedButton] = useState<
@@ -130,9 +133,15 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-3 3xl:p-6">
-          {selectedButton === "" && <ItemInfo data={inventoryItemData} />}
+          {selectedButton === "" && (
+            <ItemInfo
+              data={inventoryItemData}
+              setShowAddComponent={setShowAddComponent}
+            />
+          )}
           {selectedButton === "details" && (
             <EditItemDetails
+              setShowAddComponent={setShowAddComponent}
               data={inventoryItemData}
               selectedButton={selectedButton}
               setSelectedButton={setSelectedButton}
@@ -161,6 +170,7 @@ const ViewInventoryItem: React.FC<ViewInventoryItemPros> = ({
               data={data}
               user={user}
               isLoadingInventory={isLoadingInventory}
+              setShowAddComponent={setShowAddComponent}
               mutateInventory={() => {
                 if (mutate) {
                   mutate();
@@ -181,12 +191,12 @@ const ItemInfo: React.FC<ViewInventoryItemPros> = ({ data }) => {
     ApiResponse<DisplayInventoryMovementDto[]>
   >(
     `/api/inventory/movement/${data?.inventoryId}/${data?.inventoryItemId}`,
-    fetcher
+    fetcher,
   );
 
   const { bgClass, status, textClass } = getInventoryStatusInfo(
     data?.inventoryItemQuantity ?? 0,
-    data?.inventoryItemMin ?? 0
+    data?.inventoryItemMin ?? 0,
   );
 
   return (
@@ -316,7 +326,7 @@ const EditItemDetails: React.FC<
   const setChange = handleChange(editedInventoryItem, setEditedInventoryItem);
   const setAdminChange = handleChange(
     editedAdminInventoryItem,
-    setEditedAdminInventoryItem
+    setEditedAdminInventoryItem,
   );
 
   // Handle supervisor editing (only minimum stock)
@@ -339,7 +349,7 @@ const EditItemDetails: React.FC<
 
   // Handle admin editing (all fields)
   const handleEditInventoryItem = async (
-    updatedData: DisplayInventoryItems
+    updatedData: DisplayInventoryItems,
   ) => {
     if (!onSubmitEditItems || !mutate) return;
 
@@ -644,7 +654,7 @@ const StockAdjustment: React.FC<
               <div className="font-semibold text-sm xl:text-lg">
                 {formatQuantityByUnit(
                   String(data?.inventoryItemQuantity),
-                  data?.itemUnit ?? ""
+                  data?.itemUnit ?? "",
                 )}
               </div>
             </div>
@@ -655,7 +665,7 @@ const StockAdjustment: React.FC<
               <div className="font-medium text-sm xl:text-lg">
                 {formatQuantityByUnit(
                   String(data?.inventoryItemMin),
-                  data?.itemUnit ?? ""
+                  data?.itemUnit ?? "",
                 )}
               </div>
             </div>

@@ -95,7 +95,7 @@ const Popup: React.FC<PopupProps> = ({
       className={clsx(
         "fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300",
         isOpen ? "opacity-100" : "opacity-0",
-        background
+        background,
       )}
     >
       {/* Clickable overlay - alternative approach */}
@@ -113,7 +113,7 @@ const Popup: React.FC<PopupProps> = ({
         ref={popupRef}
         className={clsx(
           "fixed bg-white shadow-lg rounded-lg flex flex-col z-10",
-          positionClasses[position]
+          positionClasses[position],
         )}
         onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
       >

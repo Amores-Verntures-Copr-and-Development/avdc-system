@@ -56,7 +56,7 @@ const ViewSupplierItemModal = ({
     data: SupplierItemPrices[];
   }>(
     `/api/suppliers/supplier-items/${data?.suppId}/${data?.suppItemId}`,
-    fetcher
+    fetcher,
   );
   useEffect(() => {
     if (data) {
@@ -75,7 +75,7 @@ const ViewSupplierItemModal = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(updateForm),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {

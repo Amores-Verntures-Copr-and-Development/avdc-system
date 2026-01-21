@@ -36,14 +36,15 @@ export const insertProductVariant = async ({
   data: CreateProductVariantDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId)
-                VALUES(?,?,?,?)`;
+  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId,isDeductInv)
+                VALUES(?,?,?,?,?)`;
 
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.prodVarName,
     data.prodVarPrice,
     data.prodVarCreatedBy,
     data.prodId,
+    data.isDeductInv,
   ]);
   return results.insertId;
 };
@@ -55,14 +56,15 @@ export const insertProductVariants = async ({
   data: CreateProductVariantDto[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId)
-                VALUES ${data.map(() => "(?,?,?,?)").join(",")}`;
+  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId,isDeductInv)
+                VALUES ${data.map(() => "(?,?,?,?,?)").join(",")}`;
 
   const values = data.flatMap((item) => [
     item.prodVarName,
     item.prodVarPrice,
     item.prodVarCreatedBy,
     item.prodId,
+    item.isDeductInv,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
@@ -110,6 +112,12 @@ export const selectProducts = async ({
           'prodVarId', pv.prodVarId,
           'prodVarName', pv.prodVarName,
           'prodVarPrice', pv.prodVarPrice,
+          'isDeductInv',pv.isDeductInv,
+          'sold', (
+                      SELECT COALESCE(SUM(si.salesItemQuantity), 0)
+                      FROM SalesItems si
+                      WHERE si.prodVarId = pv.prodVarId
+                    ),
           'variantComponents',
             (
               SELECT JSON_ARRAYAGG(
@@ -118,12 +126,8 @@ export const selectProducts = async ({
                   'prodVarId', vc.prodVarId,
                   'quantityRequired', vc.quantityRequired,
                   'inventoryItemId', vc.inventoryItemId,
-                  'left', ii.inventoryItemQuantity,
-                  'sold', (
-                      SELECT COALESCE(SUM(si.salesItemQuantity), 0)
-                      FROM SalesItems si
-                      WHERE si.prodVarId = vc.prodVarId
-                    )
+                  'left', ii.inventoryItemQuantity
+                  
                 )
               )
               FROM VariantComponents vc

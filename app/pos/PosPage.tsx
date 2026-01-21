@@ -48,6 +48,7 @@ import PaymentSuccessModal from "./components/PaymentSuccessModal";
 import { Sales } from "@/types/sales";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import { Customer } from "@/types/customer";
+import { selectProductVariants } from "@/models/productModel";
 
 export interface OrderList {
   prodVarId: number;
@@ -97,12 +98,17 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
   console.log({ itemResponse });
   useEffect(() => {
-    if (!itemResponse?.data) {
-      if (productList.length !== 0) setProductList([]);
+    const noProducts = !itemResponse?.data || itemResponse.data.length === 0;
+
+    if (noProducts) {
+      if (productList.length > 0) {
+        setProductList([]);
+        setSelectedOrder([]);
+        setSelectedProduct(null);
+      }
       return;
     }
 
-    // Only update if different
     const isEqual =
       itemResponse.data.length === productList.length &&
       itemResponse.data.every((p, i) => p.prodId === productList[i]?.prodId);
@@ -110,7 +116,31 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     if (!isEqual) {
       setProductList(itemResponse.data);
     }
-  }, [itemResponse.data]);
+  }, [itemResponse.data, productList]);
+  useEffect(() => {
+    const noPayments =
+      !paymentMethodResponse?.data || paymentMethodResponse.data.length === 0;
+
+    if (noPayments) {
+      // Only reset if paymentMethod is not already empty
+      if (paymentMethod && paymentMethod.length > 0) {
+        console.log("Reset payment methods");
+        setPaymentMethod([]);
+      }
+    }
+  }, [paymentMethodResponse.data, paymentMethod]);
+
+  // Reset selectedDiscount when discountResponse changes
+  useEffect(() => {
+    const noDiscounts =
+      !discountResponse?.data || discountResponse.data.length === 0;
+
+    // Only reset if selectedDiscount is not already null
+    if (noDiscounts && selectedDiscount !== null) {
+      console.log("Reset discounts");
+      setSelectedDiscount(null);
+    }
+  }, [discountResponse.data, selectedDiscount]);
 
   const subtotal = useMemo(() => {
     return (
@@ -397,8 +427,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       const sales = res.data as Sales[];
       console.log({ sales });
       setRecentSales(sales[0]);
-      toast.success("Request created successfully!");
+      toast.success(res.message);
       mutateProducts();
+      setProductList((prev) =>
+        prev.map((product) => ({
+          ...product,
+          productVariants: product.productVariants?.map((variant) => {
+            const soldItem = selectedOrder?.find(
+              (o) => o.prodVarId === variant.prodVarId,
+            );
+            return soldItem
+              ? { ...variant, sold: (variant.sold ?? 0) + soldItem.quantity }
+              : variant;
+          }),
+        })),
+      );
       setIsPaymentSuccess(true);
       setPaymentMethod([]);
       setSelectedOrder([]);
@@ -617,13 +660,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
         <div className="flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
-            <h1 className="font-semibold">Order Details</h1>
-            <span className="text-sm font-semibold">
+            <h1 className="font-semibold text-xs 2xl:text-md">Order Details</h1>
+            <span className="text-[9px] 2xl:text-sm font-semibold">
               {selectedOrder?.length} items
             </span>
           </div>
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
-            <h1 className="font-semibold text-sm">Customer:</h1>
+            <h1 className="font-semibold text-[9px] 2xl:text-sm">Customer:</h1>
             <div className="flex-1">
               <DropdownSearch<Customer>
                 sizes="xs"
@@ -653,13 +696,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               removeProduct={removeProduct}
             />
           </div>
-          <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-4">
+          <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-1 2xl:gap-4">
             <div className="flex items-center gap-3 pb-2 border-b-2 border-gray-200 justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
-                  <Receipt className="w-4 h-4 text-white" />
+                <div className="w-4 h-4 2xl:w-7 2xl:h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
+                  <Receipt className="w-2 h-2 2xl:w-4 2xl:h-4 text-white" />
                 </div>
-                <h1 className="text-md font-bold text-gray-800">
+                <h1 className="font-semibold text-xs 2xl:text-md  text-gray-800">
                   Payment Details
                 </h1>
               </div>
@@ -677,8 +720,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </div>
 
             <div className="flex justify-between text-gray-500 text-sm">
-              <span>Subtotal</span>
-              <span>{formatPeso(subtotal)}</span>
+              <span className="text-[10px] 2xl:text-md">Subtotal</span>
+              <span className="text-[10px] 2xl:text-md">
+                {formatPeso(subtotal)}
+              </span>
             </div>
 
             {/* Discounts */}
@@ -707,8 +752,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
             {/* Total */}
             <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-              <span className="text-sm font-semibold">Total</span>
-              <span className="text-sm font-semibold">
+              <span className=" font-semibold text-[10px] 2xl:text-sm">
+                Total
+              </span>
+              <span className="font-semibold text-[10px] 2xl:text-sm">
                 {formatPeso(getTotalAmount())}
               </span>
             </div>
@@ -794,6 +841,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </span>
             )
           }
+          title={!isPaymentSuccess ? "Confirm Order" : ""}
           className={isPaymentSuccess ? `` : `h-[95%]`}
           isOpen={isCheckOut}
           onClose={function (): void {
@@ -809,8 +857,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               <div></div>
             ) : (
               <div className="flex justify-between w-full">
-                <span className="text-lg font-semibold"> Confirm Order</span>
-                <span className="font-semibold py-2 px-1.5 border border-gray-300 rounded-lg">
+                {/* <span className=" text-xs 2xl:text-lg font-semibold">
+                  {" "}
+                  Confirm Order
+                </span> */}
+                <span className="font-semibold  text-[9px] 2xl:text-lg py-2 px-1.5 border border-gray-300 rounded-lg">
                   Total: {formatPeso(getTotalAmount())}
                 </span>
               </div>

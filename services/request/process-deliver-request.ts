@@ -24,14 +24,14 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           (item) =>
             item.reqItemStatus === "partial" &&
             Number(item.reqItemTransfer) !== 0 &&
-            Number(item.reqItemToFollow) === 0
-        ) ?? []
+            Number(item.reqItemToFollow) === 0,
+        ) ?? [],
     );
     const requestDelivered: RequestItems[] = data.flatMap(
       (req) =>
         req.requestItemsData?.filter(
-          (item) => item.reqItemStatus === "pending"
-        ) ?? []
+          (item) => item.reqItemStatus === "pending",
+        ) ?? [],
     );
     const isToFollowItems = data.flatMap(
       (req) =>
@@ -39,8 +39,8 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           (item) =>
             item.reqItemStatus === "partial" &&
             Number(item.reqItemToFollow) !== 0 &&
-            Number(item.reqItemToFollow) !== 0
-        ) ?? []
+            Number(item.reqItemToFollow) !== 0,
+        ) ?? [],
     );
     const requestItemToDeduct: RequestItems[] = [
       ...requestPartial,
@@ -52,8 +52,8 @@ export async function processDeliveredPO(data: Request[], userId: number) {
     const requestNotOrdered: RequestItems[] = data.flatMap(
       (req) =>
         req.requestItemsData?.filter(
-          (item) => item.reqItemStatus === "not_ordered"
-        ) ?? []
+          (item) => item.reqItemStatus === "not_ordered",
+        ) ?? [],
     );
 
     if (requestPartial && requestPartial.length > 0) {
@@ -62,7 +62,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           reqItemId: i.reqItemId,
           reqItemTransfer: Number(i.reqItemTransfer),
           reqItemStatus: "partial",
-        })
+        }),
       );
 
       await updateRequestItems({
@@ -81,7 +81,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           reqItemId: i.reqItemId,
           reqItemTransfer: Number(i.reqItemTransfer),
           reqItemStatus: "delivered",
-        })
+        }),
       );
       console.log({ updateDelivered });
       await updateRequestItems({
@@ -98,7 +98,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
         (i) => ({
           reqItemId: i.reqItemId,
           reqItemStatus: "not_ordered",
-        })
+        }),
       );
       await updateRequestItems({
         connection,
@@ -115,7 +115,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           reqItemId: i.reqItemId,
           reqItemTransfer: Number(i.reqItemTransfer),
           reqItemStatus: "delivered",
-        })
+        }),
       );
       await updateRequestItems({
         connection,
@@ -133,7 +133,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           reqItemId: i.reqItemId,
           reqItemToFollow: Number(i.reqItemToFollow),
           reqItemStatus: "delivered",
-        })
+        }),
       );
       await updateRequestItems({
         connection,
@@ -173,6 +173,10 @@ export async function processDeliveredPO(data: Request[], userId: number) {
                 inventoryItemReferenceId: i.itemId,
               },
             });
+            if (!inventoryItem.data || inventoryItem.data.length === 0) {
+              // Handle missing inventory item
+              console.error(`Inventory not found for itemId: ${i.itemId}`);
+            }
             return {
               inventoryId: warehouseInv[0].inventoryId,
               inventoryItemId: inventoryItem.data[0].inventoryItemId, // fallback if not found
@@ -182,7 +186,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
               itemMovementQuantity: Number(i.reqItemTransfer),
               itemMovementRemarks: "Deliver item to store",
             };
-          })
+          }),
         );
       await createInventoryMovement({
         connection,
@@ -207,7 +211,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           return validItemsDelivered
             ? { requestId: req.requestId, requestStatus: "delivered" }
             : [];
-        })
+        }),
       )
     ).flat() as Partial<Request>[];
     if (requestUpdate && requestUpdate.length > 0) {

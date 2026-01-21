@@ -34,6 +34,19 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     name: "Price",
     selector: (row) => formatPeso(row.prodVarPrice),
   },
+  {
+    key: "isDeductInv",
+    name: "Deduct Inventory",
+    selector: (row) => {
+      const label = Number(row.isDeductInv) === 1 ? "True" : "False";
+      const bg = Number(row.isDeductInv) === 1 ? "bg-green-300" : "bg-red-300";
+      return (
+        <div className="">
+          <span className={`px-1.5 py-1.5 ${bg} rounded-lg`}>{label}</span>
+        </div>
+      );
+    },
+  },
 ];
 
 const ProductVariantPage = ({
@@ -46,7 +59,7 @@ const ProductVariantPage = ({
   const [selectedRow, setSelectedRow] =
     useState<DisplaProductVariantsDtos | null>(null);
   const [isShowModal, setIsShowModal] = useState<"variant" | "delete" | null>(
-    null
+    null,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
@@ -59,7 +72,7 @@ const ProductVariantPage = ({
     data
       ? `/api/products/${data.storeId}/product-variants/${data.prodId}`
       : null,
-    fetcher
+    fetcher,
   );
   const handleAddVariant = async (prodVariant: CreateProductVariantDto) => {
     console.log({ data });
@@ -79,7 +92,7 @@ const ProductVariantPage = ({
           },
           body: JSON.stringify(newData),
           credentials: "include",
-        }
+        },
       );
 
       const res = await response.json();

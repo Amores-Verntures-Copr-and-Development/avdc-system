@@ -33,7 +33,7 @@ const ProductVariantCard = ({
 
     // If any word from variant is already in product, keep product name
     const alreadyIncluded = variantWords.some((word) =>
-      productLower.includes(word)
+      productLower.includes(word),
     );
 
     const prodVarName = alreadyIncluded
@@ -59,9 +59,10 @@ const ProductVariantCard = ({
   };
 
   const hasOneVariant = data?.variantComponents?.length === 1;
-  const left = hasOneVariant ? data.variantComponents?.[0]?.left ?? 0 : 0;
-  const sold = hasOneVariant ? data.variantComponents?.[0]?.sold ?? 0 : 0;
-  const hasStock = !hasOneVariant || left > 0;
+  const left = hasOneVariant ? (data.variantComponents?.[0]?.left ?? 0) : 0;
+  const hasStock = !hasOneVariant && left > 0;
+  console.log({ hasOneVariant, left });
+  console.log({ hasStock });
 
   // Safety check for missing data
   if (!data || !product) {
@@ -87,7 +88,7 @@ const ProductVariantCard = ({
       aria-label={
         hasStock
           ? `Add ${data.prodVarName} to cart for ${formatPeso(
-              data.prodVarPrice
+              data.prodVarPrice,
             )}`
           : `${data.prodVarName} - Out of stock`
       }
@@ -188,17 +189,23 @@ const ProductVariantCard = ({
         {/* Footer section */}
         {hasStock && (
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 group-hover:border-primary-1/20 transition-colors">
-            <div className="flex items-center gap-1 bg-gray-50 group-hover:bg-primary-1/5 px-2 py-1 rounded transition-colors">
-              <Package className="w-3 h-3 text-green-700 group-hover:text-green-900 transition-colors" />
-              <span className="text-[9px] xl:text-xs text-gray-600 font-semibold">
-                {left} <span className="text-[9px] xl:text-xs">left</span>
-              </span>
+            <div className="flex items-center gap-1">
+              {Number(data.isDeductInv) === 1 ? (
+                <div className="flex items-center gap-1 bg-gray-50 group-hover:bg-primary-1/5 px-2 py-1 rounded transition-colors">
+                  <Package className="w-3 h-3 text-green-700 group-hover:text-green-900 transition-colors" />
+                  <span className="text-[9px] xl:text-xs text-gray-600 font-semibold">
+                    {left} <span className="text-[9px] xl:text-xs">left</span>
+                  </span>
+                </div>
+              ) : (
+                <div className="w-[48px]" />
+              )}
             </div>
 
             <div className="flex items-center gap-1 bg-gray-50 group-hover:bg-primary-1/5 px-2 py-1 rounded transition-colors">
               <TrendingUp className="w-3 h-3 text-orange-500 group-hover:text-orange-600 transition-colors" />
               <span className="text-[9px] xl:text-xs text-gray-600 font-semibold">
-                {sold} <span className="text-[9px] xl:text-xs">sold</span>
+                {data.sold} <span className="text-[9px] xl:text-xs">sold</span>
               </span>
             </div>
           </div>

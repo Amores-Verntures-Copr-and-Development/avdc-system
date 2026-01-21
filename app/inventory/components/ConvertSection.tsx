@@ -24,6 +24,7 @@ interface ConvertSectionProps {
   user?: UserAuth | null;
   mutateInventory: () => void;
   isLoadingInventory?: boolean;
+  setShowAddComponent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const dataCon: ItemConversions[] = [
@@ -44,6 +45,7 @@ const ConvertSection = ({
   user,
   mutateInventory,
   isLoadingInventory,
+  setShowAddComponent,
 }: ConvertSectionProps) => {
   const [showAddConversionModal, setShowAddConversionModal] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
@@ -80,7 +82,7 @@ const ConvertSection = ({
     if (!toForm.itemId || !response.data) return;
 
     const findConvert = response.data.find(
-      (item) => item.toItemId === Number(toForm.itemId)
+      (item) => item.toItemId === Number(toForm.itemId),
     );
 
     // Update toForm quantity if fromForm quantity and conversion exist
@@ -91,7 +93,6 @@ const ConvertSection = ({
           fromForm.inventoryItemQuantity * findConvert.toQuantity,
       }));
     }
-
   }, [toForm.itemId, response.data, fromForm.inventoryItemQuantity]);
 
   // Handle initial data setup separately
@@ -148,7 +149,7 @@ const ConvertSection = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(convertFormData),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -179,7 +180,7 @@ const ConvertSection = ({
               {Boolean(
                 (data?.inventoryItemQuantity &&
                   data?.inventoryItemQuantity > 0) ||
-                  isLoadingInventory
+                isLoadingInventory,
               ) ? (
                 <Button
                   label="Convert"
@@ -269,6 +270,10 @@ const ConvertSection = ({
                 size="xs"
                 onClick={() => {
                   setShowAddConversionModal(true);
+                  if (setShowAddComponent) {
+                    console.log("agi here");
+                    setShowAddComponent(true);
+                  }
                 }}
               />
             </div>
@@ -309,6 +314,9 @@ const ConvertSection = ({
         isOpen={showAddConversionModal}
         onClose={function (): void {
           setShowAddConversionModal(false);
+          if (setShowAddComponent) {
+            setShowAddComponent(false);
+          }
         }}
       >
         <AddConversionModal
@@ -316,6 +324,9 @@ const ConvertSection = ({
           user={user}
           onClose={function (): void {
             setShowAddConversionModal(false);
+            if (setShowAddComponent) {
+              setShowAddComponent(false);
+            }
           }}
         />
       </Modal>

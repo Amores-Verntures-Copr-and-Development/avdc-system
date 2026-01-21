@@ -74,7 +74,7 @@ interface TableProps<T> {
     rowIndex: number,
     columnKey: string,
     value: any,
-    row: T
+    row: T,
   ) => void;
   addContentLeftTitle?: React.ReactNode;
   searchUrl?: string;
@@ -132,7 +132,7 @@ const TableInner = <T extends Record<string, any>>(
     localSearch,
     addContentLeftTitle,
   }: TableProps<T>,
-  ref?: React.Ref<TableHandle>
+  ref?: React.Ref<TableHandle>,
 ) => {
   const [selectedRows, setSelectedRows] = useState<T[]>([]);
   const [editableData, setEditableData] = useState<T[]>(data);
@@ -147,7 +147,7 @@ const TableInner = <T extends Record<string, any>>(
         return String(value)
           .toLowerCase()
           .includes(localSearchQuery.toLowerCase());
-      })
+      }),
     );
   }, [localSearchQuery, editableData, columns]);
   useEffect(() => {
@@ -174,7 +174,7 @@ const TableInner = <T extends Record<string, any>>(
       const key = uniqueIdKey || ("id" as keyof T);
       return row[key];
     },
-    [uniqueIdKey]
+    [uniqueIdKey],
   );
   const getRowById = (row: T) =>
     editableData.find((r) => getUniqueId(r) === getUniqueId(row));
@@ -184,7 +184,7 @@ const TableInner = <T extends Record<string, any>>(
     setSelectedRows((prev) => {
       const uniqueId = getUniqueId(row);
       const isAlreadySelected = prev.some(
-        (item) => getUniqueId(item) === uniqueId
+        (item) => getUniqueId(item) === uniqueId,
       );
 
       let newSelection: T[];
@@ -214,7 +214,8 @@ const TableInner = <T extends Record<string, any>>(
       const selectedRows = editableData.filter((row: T) => {
         // Check if any object in onSelectedData has matching storeId
         return (onSelectedData as any[]).some(
-          (selectedItem) => selectedItem.storeId === row[uniqueIdKey as keyof T]
+          (selectedItem) =>
+            selectedItem.storeId === row[uniqueIdKey as keyof T],
         );
       });
 
@@ -237,7 +238,7 @@ const TableInner = <T extends Record<string, any>>(
 
     // Update editableData
     const newData = editableData.map((r) =>
-      getUniqueId(r) === rowId ? { ...r, [columnKey]: value } : r
+      getUniqueId(r) === rowId ? { ...r, [columnKey]: value } : r,
     );
 
     // Recompute dependent columns if needed
@@ -262,12 +263,12 @@ const TableInner = <T extends Record<string, any>>(
       editableData.findIndex((r) => getUniqueId(r) === rowId),
       columnKey,
       value,
-      updatedRow
+      updatedRow,
     );
 
     // ✅ Set or clear errors here
     const errorKey = `${editableData.findIndex(
-      (r) => getUniqueId(r) === rowId
+      (r) => getUniqueId(r) === rowId,
     )}-${columnKey}`;
     setErrors((prev) => {
       const newErrors = new Map(prev);
@@ -293,7 +294,7 @@ const TableInner = <T extends Record<string, any>>(
   const isFieldEditable = (
     column: Column<T>,
     row: T,
-    rowIndex: number
+    rowIndex: number,
   ): boolean => {
     if (typeof column.editable === "function") {
       return column.editable(row, rowIndex);
@@ -366,10 +367,11 @@ const TableInner = <T extends Record<string, any>>(
                 column.value
                   ? column.value(row)
                   : column.inputType === "number"
-                  ? realRow?.[column.key] === 0 || realRow?.[column.key] === 0.0
-                    ? ""
-                    : realRow?.[column.key] ?? ""
-                  : realRow?.[column.key] || ""
+                    ? realRow?.[column.key] === 0 ||
+                      realRow?.[column.key] === 0.0
+                      ? ""
+                      : (realRow?.[column.key] ?? "")
+                    : realRow?.[column.key] || ""
               }
               onChange={(e) =>
                 handleInputChange(row, column.key, e.target.value)
@@ -392,7 +394,7 @@ const TableInner = <T extends Record<string, any>>(
   };
   const colSpanCount = React.useMemo(
     () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),
-    [columns.length, showActions, showCheckBox]
+    [columns.length, showActions, showCheckBox],
   );
 
   return (
@@ -619,7 +621,7 @@ const TableInner = <T extends Record<string, any>>(
 };
 
 export default forwardRef(TableInner) as <T extends Record<string, any>>(
-  props: TableProps<T> & { ref?: React.Ref<TableHandle> }
+  props: TableProps<T> & { ref?: React.Ref<TableHandle> },
 ) => React.ReactElement;
 
 const CustomSelect = ({

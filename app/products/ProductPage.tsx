@@ -80,7 +80,7 @@ const ProductPage = () => {
                       className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
                     >
                       {`${variants.prodVarName} (${formatPeso(
-                        variants.prodVarPrice
+                        variants.prodVarPrice,
                       )})`}
                     </div>
                   ))}

@@ -16,7 +16,7 @@ const SupervisorPage = () => {
       <div className="flex-1 h-full flex flex-col gap-4  pr-5">
         <div className="grid grid-cols-4 gap-5">
           <DashboardCard
-            title="Total Revenues"
+            title="Total Sales"
             value={`10`}
             icon={Calendar}
             bgColor="bg-primary-1"

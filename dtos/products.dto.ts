@@ -25,6 +25,7 @@ export type CreateProductVariantDto = Pick<
   | "prodVarPrice"
   | "variantComponents"
   | "prodVarUnit"
+  | "isDeductInv"
 >;
 
 export type CreateVarianComponentDto = Pick<
@@ -40,11 +41,11 @@ export interface CreateProductItemDtos {
 }
 
 export interface DisplayProductsDtos
-  extends Products,
-    StoreInterface,
-    ProductCategories {}
+  extends Products, StoreInterface, ProductCategories {}
 
-export interface DisplaProductVariantsDtos extends ProductVariants {}
+export interface DisplaProductVariantsDtos extends ProductVariants {
+  sold: number;
+}
 
 export type CreateProductCategoryDto = Pick<
   ProductCategories,

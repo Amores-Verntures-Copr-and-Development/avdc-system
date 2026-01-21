@@ -31,11 +31,11 @@ const SalesReportModal = ({
           showReportType === "Customer" ? `&customer=true` : ""
         }`
       : `${apiUrl}`,
-    500
+    500,
   );
   const { data: response, isLoading } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     apiUrl ? debounceApi : null,
-    fetcher
+    fetcher,
   );
 
   if (isLoading) return <LoaderComponent />;
@@ -45,12 +45,12 @@ const SalesReportModal = ({
   // Total amount
   const totalAmount = salesData.reduce(
     (sum, sale) => sum + Number(sale.salesTotalAmount),
-    0
+    0,
   );
 
   // Store names
   const storesName = Array.from(
-    new Set(salesData.map((s) => s.storeName))
+    new Set(salesData.map((s) => s.storeName)),
   ).join(", ");
 
   // Payment summary
@@ -62,7 +62,7 @@ const SalesReportModal = ({
       });
       return acc;
     },
-    {}
+    {},
   );
 
   // Date range summary
@@ -77,7 +77,7 @@ const SalesReportModal = ({
       if (!acc.to || saleDate > new Date(acc.to)) acc.to = sale.salesCreatedAt;
       return acc;
     },
-    { from: null, to: null }
+    { from: null, to: null },
   );
   console.log({ from, to, dateSummary });
   const handleExportData = () => {
@@ -164,7 +164,7 @@ const SalesReportModal = ({
               <div className="text-xs text-gray-500 mb-1">From</div>
               <div className="text-sm font-medium text-gray-900">
                 {formatDateToWords(
-                  formatDateToWords(from || dateSummary?.from || "")
+                  formatDateToWords(from || dateSummary?.from || ""),
                 )}
               </div>
             </div>
@@ -172,7 +172,7 @@ const SalesReportModal = ({
               <div className="text-xs text-gray-500 mb-1">To</div>
               <div className="text-sm font-medium text-gray-900">
                 {formatDateToWords(
-                  formatDateToWords(to || dateSummary?.to || "")
+                  formatDateToWords(to || dateSummary?.to || ""),
                 )}
               </div>
             </div>
@@ -247,10 +247,10 @@ const SalesReportModal = ({
                     <td className="py-2 text-xs text-gray-700">
                       {sale.customerName || "Walk-in"}
                     </td>
-                    <td className="py-2 text-center text-xs font-semibold text-gray-700">
+                    <td className="py-2  text-left text-xs font-semibold text-gray-700">
                       {sale.storeName}
                     </td>
-                    <td className="py-2 text-center text-xs font-semibold text-gray-700">
+                    <td className="py-2 text-left text-xs font-semibold text-gray-700">
                       {sale.salesCreatedByName}
                     </td>
                     {includeSaleItems && (

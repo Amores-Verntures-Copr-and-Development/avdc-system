@@ -7,7 +7,13 @@ import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -71,6 +77,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   inventoryId,
   mutate: mutateStats,
 }) => {
+  const [showAddComponent, setShowAddComponent] = useState(false);
   const searchParams = useSearchParams();
   const { categoryOptions } = useCategories({
     inventoryId: inventoryId ?? 0,
@@ -87,7 +94,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [showInventoryItemModal, setShowInventoryItemModal] = useState(false);
   const [showCreateRequestModal, setShowCreateRequestModal] = useState(false);
   const [showInOrOutStock, setShowInOrOutStock] = useState<"in" | "out" | null>(
-    null
+    null,
   );
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
@@ -142,7 +149,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       selector: (row) => {
         const { status, bgClass, textClass } = getInventoryStatusInfo(
           row.inventoryItemQuantity,
-          row.inventoryItemMin
+          row.inventoryItemMin,
         );
 
         return (
@@ -185,8 +192,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             row.inventoryItemQuantity <= 0
               ? "text-red-600"
               : row.inventoryItemQuantity < row.inventoryItemMin
-              ? "text-yellow-600"
-              : "text-green-600"
+                ? "text-yellow-600"
+                : "text-green-600"
           }`}
         >
           {formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit)}
@@ -255,7 +262,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                       className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
                     >
                       {`${supplier.suppName} (${formatPeso(
-                        supplier.suppItemPrice
+                        supplier.suppItemPrice,
                       )})`}
                     </div>
                   ))}
@@ -271,7 +278,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       selector: (row) => {
         const { status, bgClass, textClass } = getInventoryStatusInfo(
           row.inventoryItemQuantity,
-          row.inventoryItemMin
+          row.inventoryItemMin,
         );
 
         return (
@@ -323,7 +330,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     setSelectedRows(selected);
   };
-
+  useEffect(() => {
+    console.log("Updated: ", showAddComponent);
+  }, [showAddComponent]);
   const handleCreateRequest = async (data: CreateRequestFormDto) => {
     try {
       const result = await fetch(`api/requests/`, {
@@ -375,7 +384,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     }
   };
   const handleAddItemsToProduct = async (
-    data: AddItemToProductStoreInterface
+    data: AddItemToProductStoreInterface,
   ) => {
     setIsAddingProduct(true);
     try {
@@ -383,6 +392,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       if (data.isAddAsVariant && data.prodId) {
         productVariants = data.productVariant.map((prod) => ({
           ...prod,
+          isDeductInv: true,
           prodId: data.prodId || 0,
         }));
         const result = await fetch(
@@ -393,7 +403,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify(productVariants),
-          }
+          },
         );
         const res = await result.json();
         if (!res.success) {
@@ -425,7 +435,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     }
   };
   const handleAddItemsToSupplier = async (
-    itemData: CreateSupplierItemDto[]
+    itemData: CreateSupplierItemDto[],
   ) => {
     try {
       if (!user) {
@@ -496,7 +506,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const updatedData = await mutate();
     // The updatedData should contain the fresh data
     const findSelectedInvItem = updatedData?.data.find(
-      (inv) => inv.inventoryItemId === selectedRow?.inventoryItemId
+      (inv) => inv.inventoryItemId === selectedRow?.inventoryItemId,
     );
     if (findSelectedInvItem) {
       setSelectedRow(findSelectedInvItem);
@@ -504,7 +514,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   };
 
   const handleSubmitStockAdjustment = async (
-    data: CreateInventoryMovementDto
+    data: CreateInventoryMovementDto,
   ) => {
     setIsSubmittingAdjustment(true);
     try {
@@ -516,7 +526,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -535,7 +545,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     }
   };
   const handleSubmitBulkStockAdjustment = async (
-    data: CreateInventoryMovementDto[]
+    data: CreateInventoryMovementDto[],
   ) => {
     setIsSubmittingAdjustment(true);
     try {
@@ -619,7 +629,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -664,11 +674,11 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         options: unitOptions ?? [],
       },
     ],
-    [categoryOptions, unitOptions]
+    [categoryOptions, unitOptions],
   );
   const columns = useMemo(
     () => (hasStore ? inventoryItemColumns : adminInventoryItemColumns),
-    [hasStore]
+    [hasStore],
   );
 
   const handleFilterSave = useCallback(
@@ -685,7 +695,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
 
       router.push(`?${currentParams.toString()}`);
     },
-    [router, inventoryConfig]
+    [router, inventoryConfig],
   );
 
   const handleDeleteItem = async (id: number) => {
@@ -698,7 +708,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           headers: {
             "Content-Type": "application/json",
           },
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -770,9 +780,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
 
               {Boolean(
                 selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  (user?.empPosition === "supervisor" ||
-                    user?.empPosition === "staff")
+                selectedRows?.length > 0 &&
+                (user?.empPosition === "supervisor" ||
+                  user?.empPosition === "staff"),
               ) && (
                 <div>
                   <Button
@@ -793,9 +803,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   <div>
                     <Button
                       isRounded={false}
-                      icon={
-                        CheckCircleIcon
-                      }
+                      icon={CheckCircleIcon}
                       label="In Stock"
                       onClick={() => {
                         setShowInOrOutStock("in");
@@ -813,7 +821,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                       onClick={() => {
                         // Check if ANY selected item has NO stock (quantity = 0)
                         const hasItemsWithNoStock = selectedRows?.some(
-                          (item) => Number(item.inventoryItemQuantity) === 0
+                          (item) => Number(item.inventoryItemQuantity) === 0,
                         );
                         console.log({ selectedRows });
                         if (hasItemsWithNoStock) {
@@ -832,9 +840,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               )}
               {Boolean(
                 selectedRows?.length &&
-                  selectedRows?.length > 0 &&
-                  user?.empPosition !== "staff" &&
-                  user?.empPosition !== "supervisor"
+                selectedRows?.length > 0 &&
+                user?.empPosition !== "staff" &&
+                user?.empPosition !== "supervisor",
               ) && (
                 <div className="">
                   <Button
@@ -852,7 +860,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               )}
               {Boolean(
                 user?.empPosition !== "staff" &&
-                  user?.empPosition !== "supervisor"
+                user?.empPosition !== "supervisor",
               ) && (
                 <div className="">
                   <Button
@@ -870,7 +878,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               )}
               {Boolean(
                 user?.empPosition === "staff" ||
-                  user?.empPosition === "supervisor"
+                user?.empPosition === "supervisor",
               ) && (
                 <div className="">
                   <Button
@@ -1067,6 +1075,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         onClose={function (): void {
           setShowInventoryItemModal(false);
         }}
+        closeOnClickOutside={!showAddComponent}
       >
         <ViewInventoryItem
           data={selectedRow ?? null}
@@ -1075,6 +1084,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           onSubmitStockAdjustment={handleSubmitStockAdjustment}
           isSubmittingAdjustment={isSubmittingAdjustment}
           mutate={handleUpdateData}
+          setShowAddComponent={setShowAddComponent}
           onSubmitEditItems={handleEditInventoryItem}
           isEditing={isEditingItem}
         />
@@ -1167,7 +1177,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     return;
                   }
                   const success = await handleDeleteItem(
-                    selectedRow?.inventoryItemId
+                    selectedRow?.inventoryItemId,
                   );
                   if (success) {
                     setShowDeleteModal(false);

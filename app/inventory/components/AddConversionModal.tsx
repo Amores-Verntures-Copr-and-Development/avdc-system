@@ -57,7 +57,10 @@ const AddConversionModal = ({
     }
   };
   return (
-    <div className="flex flex-col gap-6 p-1">
+    <div
+      className="flex flex-col gap-6 p-1"
+      onClick={(e) => e.stopPropagation()}
+    >
       {/* Current Item Info Section */}
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
         <h2 className="text-lg font-semibold text-gray-800 mb-3">
@@ -119,7 +122,6 @@ const AddConversionModal = ({
                     toUnit: row.itemUnit,
                     toItemId: row.itemId,
                   }));
-
                 }
               }}
             />

@@ -50,7 +50,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showAddProductCat, setShowAddProductCat] = useState(false);
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
-    null
+    null,
   );
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -133,7 +133,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                       className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
                     >
                       {`${variants.prodVarName} (${formatPeso(
-                        variants.prodVarPrice
+                        variants.prodVarPrice,
                       )})`}
                     </div>
                   ))}
@@ -184,7 +184,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                       className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
                     >
                       {`${variants.prodVarName} (${formatPeso(
-                        variants.prodVarPrice
+                        variants.prodVarPrice,
                       )})`}
                     </div>
                   ))}
@@ -206,7 +206,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           },
           body: JSON.stringify([data]),
           credentials: "include",
-        }
+        },
       );
 
       const res = await result.json();
@@ -266,7 +266,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     }
   };
   return (
-    <PageLayout className="gap-4 p-2">
+    <PageLayout className=" gap-2 2xl:gap-4 p-2">
       {selectedRow && showProductVariantPage ? (
         <ProductVariantPage
           data={selectedRow}
@@ -286,25 +286,31 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
             <ProductCardDetails
               title={"Total Products"}
               value={20}
-              icon={<Package2 className="w-6 h-6 text-primary-1" />}
+              icon={
+                <Package2 className="w-3 h-3 2xl:w-6 2xl:h-6 text-primary-1" />
+              }
               iconBg="bg-pink-100"
             />
             <ProductCardDetails
               title={"Total Stock"}
               value={20}
-              icon={<Boxes className="w-6 h-6 text-blue-500" />}
+              icon={<Boxes className="w-3 h-3 2xl:w-6 2xl:h-6 text-blue-500" />}
               iconBg="bg-blue-100"
             />
             <ProductCardDetails
               title={"Total Sales"}
               value={20}
-              icon={<PhilippinePeso className="w-6 h-6 text-green-500" />}
+              icon={
+                <PhilippinePeso className="w-3 h-3 2xl:w-6 2xl:h-6 text-green-500" />
+              }
               iconBg="bg-green-100"
             />
             <ProductCardDetails
               title={"Total Customers"}
               value={20}
-              icon={<Users className="w-6 h-6 text-yellow-500" />}
+              icon={
+                <Users className="w-3 h-3 2xl:w-6 2xl:h-6 text-yellow-500" />
+              }
               iconBg="bg-yellow-100"
             />
           </div>
