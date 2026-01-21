@@ -44,7 +44,7 @@ export interface DisplayProductsDtos
   extends Products, StoreInterface, ProductCategories {}
 
 export interface DisplaProductVariantsDtos extends ProductVariants {
-  sold: number;
+  sold?: number;
 }
 
 export type CreateProductCategoryDto = Pick<
