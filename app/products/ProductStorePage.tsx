@@ -38,6 +38,7 @@ import IconButton from "@/components/shared/IconButton";
 import { se } from "date-fns/locale";
 import EditProduct from "./components/EditProduct";
 import AddProductCategory from "./components/AddProductCategory";
+import ViewProductCategory from "./components/ViewProductCategory";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -52,6 +53,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
     null,
   );
+  const [showCategory, setShowCategory] = useState(false);
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -357,13 +359,26 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     <Button
                       isRounded={false}
                       className="text-sm"
+                      label="View Category"
+                      size="xs"
+                      icon={Layers}
+                      onClick={() => {
+                        setShowCategory(true);
+                      }}
+                      color="neutral"
+                    />
+                  </div>
+                  <div>
+                    <Button
+                      isRounded={false}
+                      className="text-sm"
                       label="Add Category"
                       size="xs"
                       icon={Layers}
                       onClick={() => {
                         setShowAddProductCat(true);
                       }}
-                      color="neutral"
+                      color="tertiary"
                     />
                   </div>
                   <div>
@@ -407,6 +422,21 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           </div>
         </>
       )}
+      <Modal
+        title="View Product Category"
+        size="lg"
+        isOpen={showCategory}
+        onClose={function (): void {
+          setShowCategory(false);
+        }}
+      >
+        <ViewProductCategory
+          storeId={storeId ?? 0}
+          onClose={() => {
+            setShowCategory(false);
+          }}
+        />
+      </Modal>
       <Modal
         title="Create Product"
         size="lg"

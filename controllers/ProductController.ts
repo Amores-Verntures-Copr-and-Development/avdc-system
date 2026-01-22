@@ -8,12 +8,13 @@ import { createProducts } from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 import { createProductCategory } from "@/services/products/product-category/create-product-category";
+import { getProductCategoryServices } from "@/services/products/product-category/get-product-category";
 import {
   createProductVariant,
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
-import { Products, ProductVariants } from "@/types/products";
+import { ProductCategories, Products, ProductVariants } from "@/types/products";
 
 export const createProductController = async (data: CreateProductDtos) => {
   try {
@@ -34,7 +35,7 @@ export const createProductController = async (data: CreateProductDtos) => {
 };
 
 export const createProductVariantController = async (
-  data: CreateProductVariantDto
+  data: CreateProductVariantDto,
 ) => {
   try {
     const res = await createProductVariant({ data });
@@ -54,7 +55,7 @@ export const createProductVariantController = async (
 };
 
 export const createProductVariantBulkController = async (
-  data: CreateProductVariantDto[]
+  data: CreateProductVariantDto[],
 ) => {
   try {
     const res = await createProductVariants({ data });
@@ -73,7 +74,7 @@ export const createProductVariantBulkController = async (
   }
 };
 export const createVariantComponentController = async (
-  data: CreateVarianComponentDto
+  data: CreateVarianComponentDto,
 ) => {};
 
 export const getProduct = async ({
@@ -129,7 +130,7 @@ export const getProductVariantController = async ({
 };
 
 export const createProductCategories = async (
-  data: CreateProductCategoryDto[]
+  data: CreateProductCategoryDto[],
 ) => {
   try {
     const result = await createProductCategory({ data });
@@ -143,6 +144,30 @@ export const createProductCategories = async (
     return {
       error: e,
       message: "Failed to add product category!",
+      success: false,
+    };
+  }
+};
+
+export const getProductCategories = async ({
+  keyFields = {},
+}: {
+  keyFields?: Partial<ProductCategories>;
+}) => {
+  try {
+    const data = await getProductCategoryServices.findProductCategoriesByFields(
+      { keyFields },
+    );
+    return {
+      data: data,
+      message: "Product variants fetched successfully!",
+      success: true,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      error: e,
+      message: "Failed to fetched product variants!",
       success: false,
     };
   }

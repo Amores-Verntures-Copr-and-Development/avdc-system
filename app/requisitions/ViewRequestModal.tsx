@@ -829,6 +829,21 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                           </div>
                         </>
                       )}
+                    {!showEditMode &&
+                      selectedReq?.requestStatus === "pending" && (
+                        <div>
+                          <Button
+                            icon={Pencil}
+                            onClick={() => {
+                              setShowEditMode(true);
+                            }}
+                            size="sm"
+                            label="Edit"
+                            className="font-semibold"
+                            color="secondary"
+                          />
+                        </div>
+                      )}
                     {Boolean(
                       (selectedReq?.requestStatus === "approved" ||
                         selectedReq?.requestStatus === "in_progress") &&
@@ -944,7 +959,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           </div>
         </div>
       </div>
-
       <Modal
         className="h-[95%]"
         isOpen={showROPDF}

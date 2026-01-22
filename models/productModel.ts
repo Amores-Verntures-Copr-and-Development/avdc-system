@@ -5,7 +5,7 @@ import {
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
 import { getDBConnection } from "@/lib/db";
-import { Products, ProductVariants } from "@/types/products";
+import { ProductCategories, Products, ProductVariants } from "@/types/products";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertProducts = async ({
@@ -210,4 +210,28 @@ export const insertProductCategories = async ({
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results;
+};
+
+export const selectProductCategories = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields?: Partial<ProductCategories>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = ` SELECT * FROM ProductCategories pc
+  WHERE 1=1`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND pc.${key} IS NULL`;
+    } else {
+      sql += ` AND pc.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };
