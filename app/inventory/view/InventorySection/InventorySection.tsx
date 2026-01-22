@@ -782,7 +782,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         rowSize="h-10"
         textSize="xs"
         onSave={handleFilterSave}
-        showCheckBox
+        showCheckBox={showRequestStockMode ? false : true}
         onRowSelection={(row) => {
           setSelectedRow(row);
           setShowInventoryItemModal(true);
@@ -809,7 +809,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <Button
                   isRounded={false}
                   icon={Clipboard}
-                  label="View Request"
+                  label={`View Request (${selectedRequestRows.length})`}
                   onClick={() => {
                     setShowCreateRequestModal(true);
                   }}

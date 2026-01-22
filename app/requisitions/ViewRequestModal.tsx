@@ -10,7 +10,7 @@ import {
   RequestOrderPdf,
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
-import { Request } from "@/types/request";
+import { Request, RequestItems } from "@/types/request";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
@@ -36,6 +36,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 import { Rowdies } from "next/font/google";
+import { stringify } from "querystring";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -54,6 +55,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [showAddPOItem, setShowAddPOItem] = useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [isAddingItemPo, setIsAddingItemPo] = useState(false);
+  const [showEditMode, setShowEditMode] = useState(false);
+  const [isEditting, setIsEditting] = useState(false);
   const [requestItemData, setRequestItemData] = useState<DisplayRequestItems[]>(
     [],
   );
@@ -119,6 +122,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
         </span>
       ),
+      editable: showEditMode,
+      inputType: "number",
     },
     { name: "Status", key: "reqItemStatus" },
   ];
@@ -572,7 +577,39 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const hasToFollowDelivered = requestItemData.some(
     (i) => i.reqItemStatus === "delivered" && Number(i.reqItemToFollow) !== 0,
   );
-
+  const handleSaveEditItem = async () => {
+    setIsEditting(true);
+    const requestItems: Partial<RequestItems>[] = requestItemData.map(
+      (item) => ({
+        reqItemId: item.reqItemId,
+        reqItemQuantity: Number(item.reqItemQuantity),
+      }),
+    );
+    try {
+      console.log({ requestItems });
+      const result = await fetch(
+        `/api/requests/request-items/${selectedReq?.requestId}/`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestItems),
+        },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      toast.success(res.message);
+      setShowEditMode(false);
+      mutate();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsEditting(false);
+    }
+  };
   return (
     <>
       <div className="flex justify-between">
@@ -760,16 +797,50 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   </>
                 ) : isRequestor ? (
                   <>
-                    <div>
-                      <Button
-                        icon={Pencil}
-                        onClick={handleReceivedRO}
-                        size="sm"
-                        label="Edit"
-                        className="font-semibold"
-                        color="secondary"
-                      />
-                    </div>
+                    {showEditMode &&
+                    selectedReq?.requestStatus === "pending" ? (
+                      <>
+                        <div>
+                          <Button
+                            icon={X}
+                            onClick={() => {
+                              setShowEditMode(false);
+                            }}
+                            size="sm"
+                            label="Cancel"
+                            className="font-semibold"
+                            color="secondary"
+                            disabled={isEditting}
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            icon={Pencil}
+                            onClick={() => {
+                              handleSaveEditItem();
+                            }}
+                            size="sm"
+                            label="Save"
+                            className="font-semibold"
+                            loading={isEditting}
+                            color="primary"
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <Button
+                          icon={Pencil}
+                          onClick={() => {
+                            setShowEditMode(true);
+                          }}
+                          size="sm"
+                          label="Edit"
+                          className="font-semibold"
+                          color="secondary"
+                        />
+                      </div>
+                    )}
                     {Boolean(
                       (selectedReq?.requestStatus === "approved" ||
                         selectedReq?.requestStatus === "in_progress") &&

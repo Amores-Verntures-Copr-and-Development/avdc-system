@@ -11,12 +11,13 @@ import { processReceivedRequest } from "@/services/request/process-received-requ
 import { createRequestItem } from "@/services/request/request-items/create-request-items";
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
+import { updateRequestItems } from "@/services/request/request-items/update-request-items";
 import {
   getRequestItems,
   getRequestItemsByIds,
   getRequestOrderByPONumber,
 } from "@/services/requestServices";
-import { Request } from "@/types/request";
+import { Request, RequestItems } from "@/types/request";
 
 export const postRequest = async (data: CreateRequestFormDto) => {
   try {
@@ -127,7 +128,7 @@ export const getRequestOrderItemsPO = async (poNumber: string) => {
 export const updateRequest = async (
   controller: string,
   requestOrder: Request[],
-  controllerId?: number
+  controllerId?: number,
 ) => {
   try {
     let message: string = "";
@@ -188,6 +189,27 @@ export const addItemFromPOtoRequest = async (data: POAddToRequestItemForm) => {
     return {
       success: false,
       message: "Failed to add items to request",
+      error: e,
+    };
+  }
+};
+
+export const updateRequestItem = async (requestItem: RequestItems[]) => {
+  try {
+    const res = await updateRequestItems({
+      updates: requestItem,
+      keyFields: ["reqItemId"],
+    });
+    return {
+      success: true,
+      message: "Request Items updated successfully1",
+      data: res,
+    };
+  } catch (e) {
+    console.log({ e });
+    return {
+      success: false,
+      message: "Failed to update request items!",
       error: e,
     };
   }

@@ -61,6 +61,7 @@ const Header = () => {
         localStorage.setItem("storeData", JSON.stringify(store));
         await refreshSession();
         toast.success("Store selected successfully!");
+        window.location.reload();
       } else {
         toast.error(data.message || "Failed to update token");
       }

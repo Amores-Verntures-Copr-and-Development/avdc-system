@@ -40,7 +40,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     key: "requestStatus",
     selector: (row) => {
       const { label, bg, color, border } = getRequestStatusOption(
-        row.requestStatus
+        row.requestStatus,
       );
       return (
         <span
@@ -77,7 +77,7 @@ const AdminRequisitionPage = () => {
     setSelectedRows(selected);
   };
   const handleCreatePurchaseOrder = async (
-    data: CreatePurchaseOrderFormDto
+    data: CreatePurchaseOrderFormDto,
   ) => {
     try {
       const result = await fetch(`api/purchase-order`, {
@@ -144,7 +144,7 @@ const AdminRequisitionPage = () => {
                     />
                   </div>
                   {selectedtedRows.every(
-                    (ro) => ro.requestStatus === "pending"
+                    (ro) => ro.requestStatus === "pending",
                   ) && (
                     <div>
                       <Button
@@ -229,7 +229,7 @@ const AdminRequisitionPage = () => {
         title={`Request Order (${selectedtedRow?.requestNo})`}
         modalDetails={(() => {
           const { label, bg, color, border } = getRequestStatusOption(
-            selectedtedRow?.requestStatus || ""
+            selectedtedRow?.requestStatus || "",
           );
           return (
             <div className="flex flex-1 justify-between align-middle items-center">

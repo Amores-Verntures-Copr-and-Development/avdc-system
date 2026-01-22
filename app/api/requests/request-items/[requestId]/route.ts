@@ -1,8 +1,10 @@
 import {
   addRequestItem,
   getItemRequest,
+  updateRequestItem,
 } from "@/controllers/RequestController";
 import { CreateRequestItemDto } from "@/dtos/request.dto";
+import { RequestItems } from "@/types/request";
 
 import { NextResponse } from "next/server";
 
@@ -73,6 +75,44 @@ export async function POST(
       {
         success: false,
         message: "Failed to create request",
+        error: err?.message || String(err),
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(
+  request: Request,
+  {
+    params,
+  }: {
+    params: Promise<{ requestId: string }>;
+  },
+) {
+  try {
+    const slug = (await params).requestId;
+    const requestId = Number(slug);
+    if (!requestId) {
+      throw new Error("No requestId found!");
+    }
+    const data = (await request.json()) as RequestItems[];
+    console.log({ data });
+    const res = await updateRequestItem(data);
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: res.message,
+      data: res.data,
+    });
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to update request item",
         error: err?.message || String(err),
       },
       { status: 500 },
