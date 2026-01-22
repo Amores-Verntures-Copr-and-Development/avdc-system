@@ -382,6 +382,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       mutate();
       setShowCreateRequestModal(false);
       handleClear();
+      setShowRequestStockMode(false);
+      setSelectedRequestRows([]);
       return true;
     } catch (e) {
       console.log(e);
@@ -813,7 +815,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   }}
                   size="xs"
                   className="font-semibold"
-                  color="secondary"
+                  color="tertiary"
                 />
               </div>
             </div>
