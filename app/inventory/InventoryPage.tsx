@@ -15,9 +15,7 @@ import { StoreInterface } from "@/types/stores";
 import { StockRoom } from "@/types/stockRoom";
 
 export interface DisplayAllInventory
-  extends InventoryInterface,
-    StoreInterface,
-    StockRoom {}
+  extends InventoryInterface, StoreInterface, StockRoom {}
 const InventoryPage = () => {
   const [selectionSection, setSelectionSection] = useState<
     "inventory" | "movement" | "report"
@@ -32,7 +30,12 @@ const InventoryPage = () => {
     isLoading: isStockRoomLoading,
   } = useSWR<{
     data: StockRoom[];
-  }>(user ? `/api/stock-room/userId/${user?.userId}` : null, fetcher);
+  }>(
+    !["supervisor", "staff"].includes(user?.empPosition ?? "") && !hasStore
+      ? `/api/stock-room/userId/${user?.userId}`
+      : null,
+    fetcher,
+  );
 
   const stockRoomId = stockRoomResponse.data[0]?.stockRoomId
     ? stockRoomResponse.data[0]?.stockRoomId
@@ -41,15 +44,13 @@ const InventoryPage = () => {
   const inventoryBaseUrl = hasStore
     ? `/api/inventory/store/${user?.storeId}`
     : stockRoomId
-    ? `/api/inventory/stock-room/${user?.userId}`
-    : `/api/inventory`;
+      ? `/api/inventory/stock-room/${user?.userId}`
+      : `/api/inventory`;
 
   const { data: inventoryResponse = { data: [] } } = useSWR<{
     data: DisplayAllInventory[];
   }>(user ? inventoryBaseUrl : null, fetcher);
   useEffect(() => {
-
-
     if (
       user?.empPosition === "supervisor" ||
       user?.empPosition === "purchaser" ||
@@ -95,7 +96,7 @@ const InventoryPage = () => {
                       selectionSection === "inventory" ? "primary" : "secondary"
                     }
                     label="Inventory"
-                    icon={Package }
+                    icon={Package}
                   />
                 </div>
                 <div>
@@ -215,9 +216,7 @@ const InventoryPage = () => {
                         selectionSection === "report" ? "primary" : "secondary"
                       }
                       label="Report"
-                      icon={
-                        FileChartColumn
-                      }
+                      icon={FileChartColumn}
                     />
                   </div>
                 </div>
@@ -230,8 +229,8 @@ const InventoryPage = () => {
                   hasStore
                     ? "stores"
                     : stockRoomId
-                    ? "stock-room"
-                    : "inventoryId"
+                      ? "stock-room"
+                      : "inventoryId"
                 }
               />
             </>

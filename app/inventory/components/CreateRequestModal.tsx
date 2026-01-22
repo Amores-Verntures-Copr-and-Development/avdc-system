@@ -1,4 +1,5 @@
 import Button from "@/components/shared/Button";
+import IconButton from "@/components/shared/IconButton";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import {
@@ -6,6 +7,7 @@ import {
   InsertItemsRequestDto,
 } from "@/dtos/request.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { Trash } from "lucide-react";
 
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -14,6 +16,7 @@ interface CreateRequestModalProps {
   onCancel: () => void;
   onSubmit: (items: CreateRequestFormDto) => Promise<boolean>;
   user?: UserAuth | null;
+  onRemoveItem: (id: number) => void;
 }
 interface EditableItem {
   invItem: number;
@@ -44,38 +47,52 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   user,
   onCancel,
   onSubmit,
+  onRemoveItem,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const updatedItemsRef = useRef<EditableItem[]>([]);
-  const handleDataUpdate = (updatedData: EditableItem[]) => {
-    updatedItemsRef.current = updatedData; // Store without causing re-render
-  };
-  const newData = {
-    requestById: user?.userId ?? 0,
-    requestOrderId: "",
-    storeId: user?.storeId ?? 0,
-    items: data.map((items) => ({
+  const [tableData, setTableData] = useState<EditableItem[]>(() =>
+    data.map((items) => ({
       invItem: items.inventoryItemId,
-      reqItemQuantity: "",
+      reqItemQuantity: String(items.reqItemQuantity) ?? "",
       requestId: 0,
       itemName: items.itemName,
       itemUnit: items.itemUnit,
       categoryName: items.categoryName,
       inventoryItemQuantity: items.inventoryItemQuantity,
     })),
+  );
+
+  const updatedItemsRef = useRef<EditableItem[]>(tableData);
+
+  const handleDataUpdate = (updatedData: EditableItem[]) => {
+    updatedItemsRef.current = updatedData; // Store without causing re-render
+    setTableData(updatedData); // Keep UI in sync
+  };
+
+  const handleRemoveItem = (id: number) => {
+    const filtered = tableData.filter((item) => item.invItem !== id);
+    updatedItemsRef.current = filtered; // update ref
+    setTableData(filtered);
+    onRemoveItem(id); // update UI
   };
 
   const handleSubmit = async () => {
-    console.log("User: ", user);
-
     const updatedItems = updatedItemsRef.current;
+
+    if (updatedItems.length === 0) {
+      toast.error("Please add at least one item to request.");
+      return;
+    }
+
     const hasZeroQuantity = updatedItems.some(
-      (item) => Number(item.reqItemQuantity) <= 0 || item.reqItemQuantity === ""
+      (item) =>
+        Number(item.reqItemQuantity) <= 0 || item.reqItemQuantity === "",
     );
     if (hasZeroQuantity) {
       toast.error("Please enter a valid quantity for all items.");
       return;
     }
+
     setIsSubmitting(true);
     try {
       const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
@@ -89,9 +106,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         items: newItems,
       };
       const success = await onSubmit(requestData);
-      if (success) {
-        onCancel();
-      }
+      if (success) onCancel();
     } catch (error) {
       console.error("Error submitting request:", error);
       toast.error("An error occurred while submitting the request.");
@@ -105,29 +120,36 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       <Table
         uniqueIdKey="invItem"
         columns={columns}
-        data={newData.items}
+        data={tableData}
+        showActions
         updateData={handleDataUpdate}
+        renderActions={(row) => (
+          <div className="flex items-center justify-center">
+            <IconButton
+              onClick={() => handleRemoveItem(row.invItem)}
+              label="Remove"
+              bg="red"
+              icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+            />
+          </div>
+        )}
       />
       <div className="flex justify-end gap-2 mt-10">
-        <div>
-          <Button
-            label="Cancel"
-            color="secondary"
-            size="sm"
-            onClick={onCancel}
-            className="font-semibold"
-            disabled={isSubmitting}
-          />
-        </div>
-        <div>
-          <Button
-            label="Submit Request"
-            size="sm"
-            onClick={handleSubmit}
-            className="font-semibold"
-            loading={isSubmitting}
-          />
-        </div>
+        <Button
+          label="Cancel"
+          color="secondary"
+          size="sm"
+          onClick={onCancel}
+          className="font-semibold"
+          disabled={isSubmitting}
+        />
+        <Button
+          label="Submit Request"
+          size="sm"
+          onClick={handleSubmit}
+          className="font-semibold"
+          loading={isSubmitting}
+        />
       </div>
     </div>
   );

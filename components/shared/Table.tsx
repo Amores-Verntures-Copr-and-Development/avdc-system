@@ -445,13 +445,6 @@ const TableInner = <T extends Record<string, any>>(
                     sizes="sm"
                     placeholder="Search item in list"
                   />
-                  {/* <input
-                    type="text"
-                    placeholder="Search locally..."
-                    value={localSearchQuery}
-                    onChange={(e) => setLocalSearchQuery(e.target.value)}
-                    className="w-full pr-2 pl-2 py-1 border border-gray-300 rounded-md text-xs xl:text-sm"
-                  /> */}
                 </div>
               )}
               {showDateRange && (
@@ -598,6 +591,7 @@ const TableInner = <T extends Record<string, any>>(
                     {showActions && renderActions && (
                       <td
                         className={`px-1 py-0.5 xl:px-2 xl:py-1 text-center text-[10px] xl:text-${textSize}`}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {renderActions(row, rowIndex)}
                       </td>

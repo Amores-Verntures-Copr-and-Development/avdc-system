@@ -60,7 +60,9 @@ const ProductVariantCard = ({
 
   const hasOneVariant = data?.variantComponents?.length === 1;
   const left = hasOneVariant ? (data.variantComponents?.[0]?.left ?? 0) : 0;
-  const hasStock = !hasOneVariant && left > 0;
+  console.log("Deduct: ", data?.isDeductInv);
+  const deductInventory = Number(data?.isDeductInv) === 1;
+  const hasStock = deductInventory ? left > 0 : true;
   console.log({ hasOneVariant, left });
   console.log({ hasStock });
 
@@ -177,7 +179,7 @@ const ProductVariantCard = ({
         <div className="flex-1"></div>
 
         {/* Out of Stock Banner */}
-        {!hasStock && (
+        {!hasStock && Number(data.isDeductInv) === 1 && (
           <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
             <span className="text-xs font-semibold text-red-700">

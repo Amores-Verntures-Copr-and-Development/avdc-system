@@ -28,12 +28,10 @@ export type CreateInventoryItemDto = Pick<
 >;
 
 export interface CreateInventoryWithItemDto
-  extends CreateInventoryDto,
-    CreateInventoryItemDto {}
+  extends CreateInventoryDto, CreateInventoryItemDto {}
 
 export interface CreateFirstItem
-  extends CreateItemDto,
-    CreateInventoryItemDto {}
+  extends CreateItemDto, CreateInventoryItemDto {}
 
 export interface DisplayInventoryItems {
   inventoryId: number;
@@ -48,6 +46,7 @@ export interface DisplayInventoryItems {
   categoryName: string;
   storeId: number | null;
   inventoryItemReferenceType: InventoryReferenceType;
+  reqItemQuantity?: number;
   itemSuppliers: SupplierItemsData[];
 }
 

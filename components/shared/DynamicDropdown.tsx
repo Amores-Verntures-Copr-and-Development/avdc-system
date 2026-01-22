@@ -20,8 +20,8 @@ interface DynamicDropdownProps {
 const sizeClasses: Record<"xs" | "sm" | "md" | "lg", string> = {
   xs: "text-[9px] md:text-xs px-2 py-1",
   sm: "text-[9px] md:text-xs lg:text-xs xl:text-xs px-1.5 py-1 xl:px-3 xl:py-1.5",
-  md: "text-base px-4 py-2",
-  lg: "text-lg px-5 py-2.5",
+  md: "text-xs 2xl:text-base px-2 py-2",
+  lg: "text-md 2xl:text-lg px-5 py-2.5",
 };
 
 const DynamicDropdown = ({

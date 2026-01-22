@@ -37,7 +37,7 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
   >(null);
   const searchStore = async (query: string): Promise<StoreInterface[]> => {
     const res = await fetch(
-      `/api/stores/search?search=${encodeURIComponent(query)}`
+      `/api/stores/search?search=${encodeURIComponent(query)}`,
     );
     const json = await res.json();
     return json.data || [];
@@ -47,8 +47,8 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
       setInventoryItems(data);
     }
   }, [data]);
-  const handleSubmit = async () => {
 
+  const handleSubmit = async () => {
     const success = await onSubmit(addItemStoreForm);
     if (success) {
       onCancel();
@@ -56,9 +56,9 @@ const AddItemStoreModal: React.FC<AddItemStoreModalProps> = ({
   };
   const handleRemoveItem = (row: DisplayInventoryItems) => {
     const newData = inventoryItems?.filter(
-      (item) => item.itemId !== row.itemId
+      (item) => item.itemId !== row.itemId,
     );
- 
+
     if (newData) {
       setInventoryItems(newData);
       toast.custom((t) => (

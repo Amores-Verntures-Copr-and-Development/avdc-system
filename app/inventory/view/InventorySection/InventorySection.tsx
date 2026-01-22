@@ -96,6 +96,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [showInOrOutStock, setShowInOrOutStock] = useState<"in" | "out" | null>(
     null,
   );
+  const [showRequestStockMode, setShowRequestStockMode] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showCreateInventoryReport, setShowCreateInventoryReport] =
     useState(false);
@@ -104,7 +105,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [isSubmittingImport, setIsSubmittingImport] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
   const { user, loading: userLoading, hasStore, isAdmin } = useSession();
-  const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>();
+  const [selectedRows, setSelectedRows] = useState<DisplayInventoryItems[]>([]);
+  const [selectedRequestRows, setSelectedRequestRows] = useState<
+    DisplayInventoryItems[]
+  >([]);
   const [selectedRow, setSelectedRow] = useState<DisplayInventoryItems>();
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -140,7 +144,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       selector: (row) =>
         formatQuantityByUnit(row.inventoryItemMin, row.itemUnit),
     },
-
     { name: "Unit", key: "itemUnit" },
     { name: "Category", key: "categoryName" },
     {
@@ -161,7 +164,35 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         );
       },
     },
+    ...(showRequestStockMode
+      ? [
+          {
+            name: "Requested Qty",
+            key: "reqItemQuantity",
+            editable: (row) => {
+              const find = selectedRequestRows.find(
+                (i) => i.inventoryItemId === row.inventoryItemId,
+              );
+              return find ? false : true;
+            },
+            selector: (row) => {
+              const find = selectedRequestRows.find(
+                (i) => i.inventoryItemId === row.inventoryItemId,
+              );
+              return find?.reqItemQuantity;
+            },
+            value: (row) => {
+              const find = selectedRequestRows.find(
+                (i) => i.inventoryItemId === row.inventoryItemId,
+              );
+              return find?.reqItemQuantity;
+            },
+            inputType: "number",
+          } satisfies Column<DisplayInventoryItems>,
+        ]
+      : []),
   ];
+
   const adminInventoryItemColumns: Column<DisplayInventoryItems>[] = [
     {
       name: "#",
@@ -678,7 +709,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   );
   const columns = useMemo(
     () => (hasStore ? inventoryItemColumns : adminInventoryItemColumns),
-    [hasStore],
+    [hasStore, showRequestStockMode, selectedRequestRows],
   );
 
   const handleFilterSave = useCallback(
@@ -725,6 +756,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       setIsEditingItem(false);
     }
   };
+  const handleRemoveRequestItem = (id: number) => {
+    setSelectedRequestRows((prev) => {
+      if (!prev || prev.length === 0) return []; // nothing to remove
+      // Filter out the item with the given id
+      return prev.filter((item) => item.inventoryItemId !== id);
+    });
+  };
   return (
     <>
       <Table
@@ -749,7 +787,37 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }}
         onSelectionChange={handleSelectionChange}
         renderTopActions={
-          <>
+          showRequestStockMode ? (
+            <div className="flex">
+              <div>
+                <Button
+                  isRounded={false}
+                  icon={Clipboard}
+                  label="Exit Request"
+                  onClick={() => {
+                    setSelectedRequestRows([]);
+                    setShowRequestStockMode(false);
+                  }}
+                  size="xs"
+                  className="font-semibold"
+                  color="secondary"
+                />
+              </div>
+              <div>
+                <Button
+                  isRounded={false}
+                  icon={Clipboard}
+                  label="View Request"
+                  onClick={() => {
+                    setShowCreateRequestModal(true);
+                  }}
+                  size="xs"
+                  className="font-semibold"
+                  color="secondary"
+                />
+              </div>
+            </div>
+          ) : (
             <div className="flex">
               <div>
                 <Button
@@ -788,7 +856,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   <Button
                     isRounded={false}
                     icon={Store}
-                    label="Request Stock"
+                    label={`Request Stock (${selectedRows?.length})`}
                     onClick={() => {
                       setShowCreateRequestModal(true);
                     }}
@@ -798,6 +866,27 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   />
                 </div>
               )}
+              {Boolean(
+                !selectedRows?.length &&
+                selectedRows?.length === 0 &&
+                (user?.empPosition === "supervisor" ||
+                  user?.empPosition === "staff"),
+              ) && (
+                <div>
+                  <Button
+                    isRounded={false}
+                    icon={Store}
+                    label={`Request Stock`}
+                    onClick={() => {
+                      setShowRequestStockMode(true);
+                    }}
+                    size="xs"
+                    className="font-semibold"
+                    color="tertiary"
+                  />
+                </div>
+              )}
+
               {Boolean(selectedRows?.length && selectedRows?.length > 0) && (
                 <>
                   <div>
@@ -925,31 +1014,73 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 </div>
               )}
             </div>
-          </>
+          )
         }
-        renderActions={(row) => (
-          <div className="flex gap-1 xl:gap-2 px-1 justify-center">
-            <IconButton
-              onClick={function (): void {
-                setSelectedRow(row);
-                setShowInventoryItemModal(true);
-              }}
-              label={"View"}
-              bg={"nobg"}
-              icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
-            />
-            <IconButton
-              onClick={function (): void {
-                console.log("Delete");
-                setSelectedRow(row);
-                setShowDeleteModal(true);
-              }}
-              label={"Delete"}
-              bg={"red"}
-              icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
-            />
-          </div>
-        )}
+        renderActions={(row) =>
+          showRequestStockMode ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="gap-3 flex justify-center"
+            >
+              {" "}
+              <IconButton
+                onClick={() => {
+                  setSelectedRequestRows((prev) => {
+                    const arr = prev ?? [];
+                    if (
+                      arr.find((r) => r.inventoryItemId === row.inventoryItemId)
+                    )
+                      return arr; // replace id with unique key
+                    return [...arr, row];
+                  });
+                  console.log({ selectedRequestRows });
+                }}
+                label={"Add To Request"}
+                bg={"green"}
+                icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                disable={selectedRequestRows.some(
+                  (i) => i.inventoryItemId === row.inventoryItemId,
+                )}
+              />
+              <IconButton
+                onClick={() => {
+                  handleRemoveRequestItem(row.inventoryItemId);
+                  console.log({ selectedRequestRows });
+                }}
+                label={"Remove"}
+                bg={"red"}
+                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                disable={
+                  !selectedRequestRows.some(
+                    (i) => i.inventoryItemId === row.inventoryItemId,
+                  )
+                }
+              />
+            </div>
+          ) : (
+            <div className="flex gap-1 xl:gap-2 px-1 justify-center">
+              <IconButton
+                onClick={function (): void {
+                  setSelectedRow(row);
+                  setShowInventoryItemModal(true);
+                }}
+                label={"View"}
+                bg={"nobg"}
+                icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+              <IconButton
+                onClick={function (): void {
+                  console.log("Delete");
+                  setSelectedRow(row);
+                  setShowDeleteModal(true);
+                }}
+                label={"Delete"}
+                bg={"red"}
+                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+            </div>
+          )
+        }
         totalCount={itemResponse?.totalItems}
       />
       <Modal
@@ -1024,7 +1155,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         className="bg-white"
       >
         <CreateRequestModal
-          data={selectedRows ?? []}
+          data={
+            showRequestStockMode ? selectedRequestRows : (selectedRows ?? [])
+          }
+          onRemoveItem={handleRemoveRequestItem}
           onCancel={() => {
             setShowAddItemModal(false);
           }}
