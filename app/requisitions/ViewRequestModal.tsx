@@ -632,6 +632,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             label="Back"
             size="xs"
             icon={ChevronLeft}
+            color="outline"
             onClick={() => {
               if (onBack) {
                 onBack();
@@ -798,49 +799,36 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 ) : isRequestor ? (
                   <>
                     {showEditMode &&
-                    selectedReq?.requestStatus === "pending" ? (
-                      <>
-                        <div>
-                          <Button
-                            icon={X}
-                            onClick={() => {
-                              setShowEditMode(false);
-                            }}
-                            size="sm"
-                            label="Cancel"
-                            className="font-semibold"
-                            color="secondary"
-                            disabled={isEditting}
-                          />
-                        </div>
-                        <div>
-                          <Button
-                            icon={Pencil}
-                            onClick={() => {
-                              handleSaveEditItem();
-                            }}
-                            size="sm"
-                            label="Save"
-                            className="font-semibold"
-                            loading={isEditting}
-                            color="primary"
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div>
-                        <Button
-                          icon={Pencil}
-                          onClick={() => {
-                            setShowEditMode(true);
-                          }}
-                          size="sm"
-                          label="Edit"
-                          className="font-semibold"
-                          color="secondary"
-                        />
-                      </div>
-                    )}
+                      selectedReq?.requestStatus === "pending" && (
+                        <>
+                          <div>
+                            <Button
+                              icon={X}
+                              onClick={() => {
+                                setShowEditMode(false);
+                              }}
+                              size="sm"
+                              label="Cancel"
+                              className="font-semibold"
+                              color="secondary"
+                              disabled={isEditting}
+                            />
+                          </div>
+                          <div>
+                            <Button
+                              icon={Pencil}
+                              onClick={() => {
+                                handleSaveEditItem();
+                              }}
+                              size="sm"
+                              label="Save"
+                              className="font-semibold"
+                              loading={isEditting}
+                              color="primary"
+                            />
+                          </div>
+                        </>
+                      )}
                     {Boolean(
                       (selectedReq?.requestStatus === "approved" ||
                         selectedReq?.requestStatus === "in_progress") &&
@@ -986,6 +974,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           requestInventoryItem={getAllInventoryItemIdInRequest ?? []}
           onSubmit={handleAddItemRequest}
           mutate={mutate}
+          onClose={function (): void {
+            setShowAddItem(false);
+          }}
         />
       </Popup>
       <Popup

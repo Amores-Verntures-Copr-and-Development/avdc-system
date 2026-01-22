@@ -15,6 +15,7 @@ interface AddItemROModalProps {
   onSubmit: (data: CreateRequestItemDto) => Promise<boolean>;
   mutate: () => void;
   loading: boolean;
+  onClose: () => void;
 }
 const AddItemROModal = ({
   requestId,
@@ -23,6 +24,7 @@ const AddItemROModal = ({
   onSubmit,
   mutate,
   loading,
+  onClose,
 }: AddItemROModalProps) => {
   const handleAddItemRequest = async (data: CreateRequestItemDto) => {
     console.log({ data });
@@ -97,6 +99,7 @@ const AddItemROModal = ({
             label="Cancel"
             size="sm"
             color="secondary"
+            onClick={onClose}
             disabled={
               requestInventoryItem.includes(formatData.invItem) || loading
             }
