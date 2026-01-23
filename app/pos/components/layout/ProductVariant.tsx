@@ -31,7 +31,7 @@ const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
       return 0;
     });
   return (
-    <div className="h-full">
+    <div className="flex-1 w-full min-w-0">
       <div className="flex-1 grid grid-cols-3 xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
         {reorderedVariants &&
           reorderedVariants.length > 0 &&

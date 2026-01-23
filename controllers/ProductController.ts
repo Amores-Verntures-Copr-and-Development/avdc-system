@@ -14,6 +14,7 @@ import {
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
+import { updateProductsByFields } from "@/services/products/udpate-product";
 import { ProductCategories, Products, ProductVariants } from "@/types/products";
 
 export const createProductController = async (data: CreateProductDtos) => {
@@ -103,6 +104,26 @@ export const getProduct = async ({
     return {
       error: e,
       message: "Failed to fetched product!",
+      success: false,
+    };
+  }
+};
+
+export const updateProductById = async (product: Partial<Products>) => {
+  try {
+    const res = await updateProductsByFields({
+      keyFields: ["prodId"],
+      updates: [product],
+    });
+    return {
+      data: res,
+      message: "Product updated successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to update product!",
       success: false,
     };
   }

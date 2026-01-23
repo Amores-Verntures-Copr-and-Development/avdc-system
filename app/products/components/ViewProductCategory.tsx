@@ -2,6 +2,8 @@ import Table, { Column } from "@/components/shared/Table";
 import { ApiResponse } from "@/types/api";
 import { ProductCategories } from "@/types/products";
 import { fetcher } from "@/utils/fetcher";
+import { formatDateToWords } from "@/utils/formatDateToWords";
+import { formatDate } from "date-fns";
 import React from "react";
 import useSWR from "swr";
 
@@ -18,13 +20,16 @@ const ViewProductCategory = ({
     storeId ? `/api/products/${storeId}/product-categories/` : null,
     fetcher,
   );
+
   console.log(reponse?.data);
   const prodCatColumns: Column<ProductCategories>[] = [
     { name: "#", key: "#", selector: (row, _index) => _index + 1 },
     { name: "Name", key: "prodCatName" },
-    { name: "Date", key: "prodCatCreatedAt" },
-    { name: "Name", key: "prodCatCreatedBy" },
-    { name: "Name", key: "storeId" },
+    {
+      name: "Date",
+      key: "prodCatCreatedAt",
+      selector: (row) => formatDateToWords(row.prodCatCreatedAt),
+    },
   ];
   return (
     <div className="flex flex-col">

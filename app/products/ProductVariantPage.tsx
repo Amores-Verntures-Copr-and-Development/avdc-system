@@ -118,7 +118,7 @@ const ProductVariantPage = ({
       <div className="flex justify-between items-center">
         <PageHeader
           title={data?.prodName ?? ""}
-          subtitle="Add, edit, and track products"
+          subtitle="Manage product variants"
         />
         <div>
           <Button

@@ -17,7 +17,7 @@ const ProductCard = ({
   const variantCount = data.productVariants?.length ?? 0;
   return (
     <div
-      className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-4 border border-gray-200 hover:border-primary-1/50 cursor-pointer overflow-hidden relative"
+      className="group flex flex-col bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 p-2 2xl:p-4 border border-gray-200 hover:border-primary-1/50 cursor-pointer overflow-hidden relative"
       onClick={() => {
         if (variantCount === 1 && data.productVariants) {
           const variant = data.productVariants[0];
@@ -25,7 +25,7 @@ const ProductCard = ({
           const variantWords = variant.prodVarName.toLowerCase().split(" ");
           const productLower = productName.toLowerCase();
           const alreadyIncluded = variantWords.some((word) =>
-            productLower.includes(word)
+            productLower.includes(word),
           );
 
           const prodVarName = alreadyIncluded
@@ -56,7 +56,7 @@ const ProductCard = ({
       }}
     >
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary-1 to-primary-1-hover transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between 2xl:mb-3">
         <div className="flex-1">
           <h2 className="text-xs font-semibold text-gray-900 mb-1">
             {data.prodName}
@@ -73,16 +73,16 @@ const ProductCard = ({
                 {
                   style: "currency",
                   currency: "PHP",
-                }
+                },
               )}
             </span>
           </div>
         )}
       </div>
 
-      <div className="flex items-baseline justify-between mt-2 pt-3 border-t border-gray-100">
+      <div className="flex items-baseline justify-between mt-1 2xl:mt-2 pt-1 2xl:pt-3 border-t border-gray-100">
         <Package className="w-4 h-4" />{" "}
-        <span className="text-xs font-medium">
+        <span className="text-[9px] 2xl:text-xs font-medium">
           {variantCount} variant{variantCount !== 1 ? "s" : ""}
         </span>
       </div>

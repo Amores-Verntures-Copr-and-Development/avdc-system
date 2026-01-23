@@ -8,7 +8,7 @@ import {
 import { UserAuth, useSession } from "@/hooks/useSession";
 
 import { fetcher } from "@/utils/fetcher";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import ProductCardDetails from "./components/ProductCardDetails";
 import {
@@ -39,6 +39,9 @@ import { se } from "date-fns/locale";
 import EditProduct from "./components/EditProduct";
 import AddProductCategory from "./components/AddProductCategory";
 import ViewProductCategory from "./components/ViewProductCategory";
+import { ApiResponse } from "@/types/api";
+import { ProductCategories, Products } from "@/types/products";
+import Popup from "@/components/shared/Popup";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -90,6 +93,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     data: DisplayProductsDtos[];
   }>(user ? apiUrl : null, fetcher);
   const { stores } = useStores({ user, hasStore, isAdmin });
+  const { data: reponse, mutate: mutateCategory } = useSWR<
+    ApiResponse<ProductCategories[]>
+  >(storeId ? `/api/products/${storeId}/product-categories/` : null, fetcher);
   const storeOptions = Array.isArray(stores)
     ? stores.map((store) => ({
         label: store.storeName, // or whatever you want to show
@@ -99,6 +105,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
+    { key: "prodCatName", name: "Category" },
     {
       key: "prodCreatedAt",
       name: "Created",
@@ -150,6 +157,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
     { key: "storeName", name: "Store" },
+    { key: "prodCatName", name: "Category" },
     {
       key: "prodCreatedAt",
       name: "Created",
@@ -217,9 +225,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         throw new Error(res.err);
       }
       toast.success(res.message);
-      if (mutate) {
-        mutate();
-      }
+      mutateCategory();
       return true;
     } catch (e: any) {
       console.log({ e });
@@ -255,9 +261,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         throw new Error(res.err);
       }
       toast.success(res.message);
-      if (mutate) {
-        mutate();
-      }
+      mutate();
       return true;
     } catch (e) {
       console.log({ e });
@@ -267,6 +271,35 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       setIsAddingProduct(false);
     }
   };
+  const categoryOpions = reponse?.data.map((cat) => ({
+    label: cat.prodCatName,
+    value: String(cat.prodCatId),
+  }));
+  const productConfig = useMemo(
+    () => [
+      {
+        id: "category",
+        label: "Category",
+        type: "checkbox" as const,
+        options: categoryOpions ?? [],
+      },
+    ],
+    [categoryOpions],
+  );
+  console.log({ productConfig });
+  const handleFilterSave = useCallback(
+    (newFilters: Record<string, string[]>) => {
+      // setFilters(newFilters);
+      // const currentParams = new URLSearchParams(window.location.search);
+      // const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];
+      // filterKeys.forEach((key) => currentParams.delete(key));
+      // Object.entries(newFilters).forEach(([key, values]) => {
+      //   values.forEach((value) => currentParams.append(key, value));
+      // });
+      // router.push(`?${currentParams.toString()}`);
+    },
+    [router, productConfig],
+  );
   return (
     <PageLayout className=" gap-2 2xl:gap-4 p-2">
       {selectedRow && showProductVariantPage ? (
@@ -318,6 +351,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           </div>
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
             <Table
+              showFilter={true}
+              filterConfig={productConfig}
               uniqueIdKey="prodId"
               columns={hasStore ? columns : adminColumn}
               data={itemResponse.data}
@@ -325,6 +360,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               maxHeight="h-full"
               searchUrl="products"
               loading={isLoading}
+              onSave={handleFilterSave}
               onRowSelection={(row) => {
                 setSelectedRow(row);
                 setShowProductVariantPage(true);
@@ -345,6 +381,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                   <IconButton
                     onClick={() => {
                       setSelectedRow(row);
+                      console.log({ row });
                       setShowEdit(true);
                     }}
                     label={"Edit"}
@@ -422,21 +459,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           </div>
         </>
       )}
-      <Modal
-        title="View Product Category"
-        size="lg"
-        isOpen={showCategory}
-        onClose={function (): void {
-          setShowCategory(false);
-        }}
-      >
-        <ViewProductCategory
-          storeId={storeId ?? 0}
-          onClose={() => {
-            setShowCategory(false);
-          }}
-        />
-      </Modal>
+
       <Modal
         title="Create Product"
         size="lg"
@@ -456,7 +479,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         />
       </Modal>
       <Modal
-        className="h-[75%]"
+        className="min-h-0"
         title={`${selectedRow?.prodName}`}
         subtitle="Edit products."
         isOpen={showEdit}
@@ -471,9 +494,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
             setShowEdit(false);
             setSelectedRow(null);
           }}
-          onSave={function (updatedData: DisplayProductsDtos): void {
-            throw new Error("Function not implemented.");
-          }}
+          productCategory={reponse?.data ?? []}
+          mutate={mutate}
         />
       </Modal>
       <Modal
@@ -492,6 +514,21 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           }}
         />
       </Modal>
+      <Popup
+        background="bg-white/50"
+        isOpen={showCategory}
+        onClose={function (): void {
+          setShowCategory(false);
+        }}
+        title="Product Categories"
+      >
+        <ViewProductCategory
+          storeId={storeId ?? 0}
+          onClose={() => {
+            setShowCategory(false);
+          }}
+        />
+      </Popup>
     </PageLayout>
   );
 };

@@ -138,7 +138,7 @@ const colorClasses: Record<
 };
 
 const Button: React.FC<ButtonProps> = ({
-  label = "Add",
+  label,
   onClick,
   loading = false,
   disabled = false,
@@ -194,13 +194,13 @@ const Button: React.FC<ButtonProps> = ({
           </span>
           <span className="invisible flex items-center gap-2">
             {Icon && <Icon size={iconSize} />}
-            <span className="hidden sm:inline">{label}</span>
+            {label && <span className="hidden sm:inline">{label}</span>}
           </span>
         </>
       ) : (
         <>
           {Icon && <Icon size={iconSize} />}
-          <span className="inline">{label}</span>
+          {label && <span className="inline">{label}</span>}
         </>
       )}
     </button>

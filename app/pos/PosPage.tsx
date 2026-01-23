@@ -8,7 +8,9 @@ import {
   ArrowLeft,
   CreditCard,
   Files,
+  Filter,
   History,
+  Layers2,
   Package,
   Receipt,
   Tag,
@@ -49,6 +51,7 @@ import { Sales } from "@/types/sales";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import { Customer } from "@/types/customer";
 import { selectProductVariants } from "@/models/productModel";
+import SearchBar from "@/components/shared/SearchBar";
 
 export interface OrderList {
   prodVarId: number;
@@ -69,6 +72,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     setClearSignal((prev) => prev + 1);
     setCustomer(null);
   };
+  const [showProductView, setShowProductView] = useState<
+    "product" | "product-variant"
+  >("product");
+  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
@@ -98,49 +105,24 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
   console.log({ itemResponse });
   useEffect(() => {
-    const noProducts = !itemResponse?.data || itemResponse.data.length === 0;
-
-    if (noProducts) {
-      if (productList.length > 0) {
-        setProductList([]);
-        setSelectedOrder([]);
-        setSelectedProduct(null);
-      }
-      return;
+    if (itemResponse.data && itemResponse.data.length > 0) {
+      setProductList(itemResponse.data ?? []);
+    } else {
+      setProductList([]);
     }
-
-    const isEqual =
-      itemResponse.data.length === productList.length &&
-      itemResponse.data.every((p, i) => p.prodId === productList[i]?.prodId);
-
-    if (!isEqual) {
-      setProductList(itemResponse.data);
-    }
-  }, [itemResponse.data, productList]);
-  useEffect(() => {
-    const noPayments =
-      !paymentMethodResponse?.data || paymentMethodResponse.data.length === 0;
-
-    if (noPayments) {
-      // Only reset if paymentMethod is not already empty
-      if (paymentMethod && paymentMethod.length > 0) {
-        console.log("Reset payment methods");
-        setPaymentMethod([]);
-      }
-    }
-  }, [paymentMethodResponse.data, paymentMethod]);
+  }, [itemResponse.data?.length]);
 
   // Reset selectedDiscount when discountResponse changes
-  useEffect(() => {
-    const noDiscounts =
-      !discountResponse?.data || discountResponse.data.length === 0;
+  // useEffect(() => {
+  //   const noDiscounts =
+  //     !discountResponse?.data || discountResponse.data.length === 0;
 
-    // Only reset if selectedDiscount is not already null
-    if (noDiscounts && selectedDiscount !== null) {
-      console.log("Reset discounts");
-      setSelectedDiscount(null);
-    }
-  }, [discountResponse.data, selectedDiscount]);
+  //   // Only reset if selectedDiscount is not already null
+  //   if (noDiscounts && selectedDiscount !== null) {
+  //     console.log("Reset discounts");
+  //     setSelectedDiscount(null);
+  //   }
+  // }, [discountResponse.data, selectedDiscount]);
 
   const subtotal = useMemo(() => {
     return (
@@ -340,7 +322,22 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     });
   };
   // const removeQuantity = (product: DisplayProductsDtos) => {};
+  const productCategoriesList = useMemo(() => {
+    return Array.from(
+      new Set(
+        productList
+          .filter((p) => p.prodCatId !== null)
+          .map((p) => p.prodCatName),
+      ),
+    );
+  }, [productList]);
+  const filteredProductList = useMemo(() => {
+    if (categoryFilter === "all") return productList;
 
+    return productList.filter(
+      (product) => product.prodCatName === categoryFilter,
+    );
+  }, [productList, categoryFilter]);
   const removeProduct = (product: OrderList) => {
     const newSelectedOrder = selectedOrder?.filter(
       (prod) => prod.prodVarId !== product.prodVarId,
@@ -409,6 +406,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesItems: saleItems,
       salesPayments: paymentMethodData,
     };
+
     try {
       console.log({ salesData });
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
@@ -455,27 +453,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     }
   };
 
-  // const addPayment = (payment: CreateSalePaymentDto) => {
-  //   console.log({ payment });
-  //   setPaymentMethod((prev) => {
-  //     const existing = prev?.some((p) => p.payMetId === payment.payMetId);
-  //     if (existing) {
-  //       // Payment already added → do nothing
-  //       return prev;
-  //     }
-
-  //     // Add new payment
-  //     return [
-  //       ...(prev ?? []),
-  //       {
-  //         paymentReference: payment.paymentReference,
-  //         payMetId: payment.payMetId,
-  //         salesPaymentAmount: payment.salesPaymentAmount,
-  //         salesId: 0,
-  //       },
-  //     ];
-  //   });
-  // };
   const searchCustomers = async (query: string): Promise<Customer[]> => {
     const res = await fetch(
       `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`,
@@ -494,6 +471,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         salesPaymentStatus: "completed",
       },
     ]);
+  };
+  const handleViewToggle = () => {
+    const newView =
+      showProductView === "product" ? "product-variant" : "product";
+    setShowProductView(newView);
   };
   const addDiscount = (newDisc: Discounts) => {
     setSelectedDiscount((prev) => {
@@ -536,7 +518,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       <div className="flex flex-1 overflow-visible h-full">
         {/* Left section */}
         <div className="flex flex-col flex-[0.75] h-full">
-          <div className="bg-white h-15 border border-gray-200 flex justify-between items-center px-4 py-2 overflow-visible">
+          <div className="bg-white min-h-20 border border-gray-200 flex justify-between items-center px-4 py-2 overflow-visible">
             {selectedProduct ? (
               <>
                 {/* Product Detail Header */}
@@ -569,92 +551,159 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               <>
                 {/* Main Header */}
                 <div className="flex items-center">
-                  <h1 className="text-lg font-semibold text-gray-900 mr-5">
-                    Products
-                  </h1>
-                  <div className="flex gap-2">
-                    <div>
-                      {" "}
-                      <Button size="xs" label="All" />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 items-center">
+                      {showProductView === "product" ? (
+                        <div className="">
+                          <Button
+                            label=""
+                            icon={
+                              showProductView === "product" ? Layers2 : Package
+                            }
+                            color="outline"
+                            size="sm"
+                            onClick={handleViewToggle}
+                            aria-label={`Switch to ${showProductView === "product" ? "variant" : "product"} view`}
+                          />
+                        </div>
+                      ) : (
+                        <div className="">
+                          <Button
+                            label=""
+                            icon={Package}
+                            color="outline"
+                            size="sm"
+                            onClick={() => {
+                              setShowProductView("product");
+                            }}
+                          />
+                        </div>
+                      )}
+                      <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900 mr-5">
+                        Products
+                      </h1>
                     </div>
-                    <div>
-                      {" "}
-                      <Button size="xs" label="All" />
-                    </div>
-                    <div>
-                      {" "}
-                      <Button size="xs" label="All" />
+
+                    <div className="flex gap-2">
+                      <SearchBar url={""} />
+                      <div>
+                        {" "}
+                        <Button
+                          size="xs"
+                          label="All"
+                          color={
+                            categoryFilter === "all" ? "primary" : "outline"
+                          }
+                          onClick={() => {
+                            setCategoryFilter("all");
+                          }}
+                        />
+                      </div>
+                      {productCategoriesList.map((pc, index) => (
+                        <div key={index}>
+                          {" "}
+                          <Button
+                            size="xs"
+                            label={pc}
+                            color={
+                              categoryFilter === pc ? "primary" : "outline"
+                            }
+                            onClick={() => {
+                              setCategoryFilter(pc);
+                            }}
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
-                  <IconButton
-                    onClick={() => {
-                      setIsShowIcons("methods");
-                      console.log("Product list clicked");
-                    }}
-                    label="Payment Method List"
-                    bg="green"
-                    icon={<CreditCard size={15} />}
-                    isRounded={false}
-                  />
-                  <IconButton
-                    onClick={() => {
-                      setIsShowIcons("discount");
-                      // TODO: Implement product list functionality
-                      console.log("Product list clicked");
-                    }}
-                    label="Discount List"
-                    bg="blue"
-                    icon={<TicketPercent size={15} />}
-                    isRounded={false}
-                  />
-                  <IconButton
-                    onClick={() => {
-                      setIsShowIcons("product");
-                      console.log("Product list clicked");
-                    }}
-                    label="Product List"
-                    bg="yellow"
-                    icon={<Files size={15} />}
-                    isRounded={false}
-                  />
+                <div className="flex flex-col gap-2 items-end justify-start h-full">
+                  <div className="flex gap-2">
+                    <IconButton
+                      onClick={() => {
+                        setIsShowIcons("methods");
+                        console.log("Product list clicked");
+                      }}
+                      label="Payment Method List"
+                      bg="green"
+                      icon={<CreditCard size={15} />}
+                      isRounded={false}
+                    />
+                    <IconButton
+                      onClick={() => {
+                        setIsShowIcons("discount");
+                        // TODO: Implement product list functionality
+                        console.log("Product list clicked");
+                      }}
+                      label="Discount List"
+                      bg="blue"
+                      icon={<TicketPercent size={15} />}
+                      isRounded={false}
+                    />
+                    <IconButton
+                      onClick={() => {
+                        setIsShowIcons("product");
+                        console.log("Product list clicked");
+                      }}
+                      label="Product List"
+                      bg="yellow"
+                      icon={<Files size={15} />}
+                      isRounded={false}
+                    />
 
-                  <IconButton
-                    onClick={() => {
-                      setIsShowIcons("history");
-                      console.log("History clicked");
-                    }}
-                    label="History"
-                    bg="primary"
-                    icon={<History size={15} />}
-                    isRounded={false}
-                  />
+                    <IconButton
+                      onClick={() => {
+                        setIsShowIcons("history");
+                        console.log("History clicked");
+                      }}
+                      label="History"
+                      bg="primary"
+                      icon={<History size={15} />}
+                      isRounded={false}
+                    />
+                  </div>
                 </div>
               </>
             )}
           </div>
-          {selectedProduct ? (
-            <ProductVariant
-              addQuantity={addQuantity}
-              data={selectedProduct}
-              onClick={function (data: ProductVariants): void {
-                console.log({ data });
-              }}
-              onBack={() => {
-                setSelectedProduct(null);
-              }}
-              addProductOrder={addProductOrder}
-            />
+          {showProductView === "product" ? (
+            selectedProduct ? (
+              <ProductVariant
+                addQuantity={addQuantity}
+                data={selectedProduct}
+                onClick={function (data: ProductVariants): void {
+                  console.log({ data });
+                }}
+                onBack={() => {
+                  setSelectedProduct(null);
+                }}
+                addProductOrder={addProductOrder}
+              />
+            ) : (
+              <ProductContent
+                data={filteredProductList ?? []}
+                selectProduct={(data) => {
+                  setSelectedProduct(data);
+                }}
+                addProductOrder={addProductOrder}
+              />
+            )
           ) : (
-            <ProductContent
-              data={productList ?? []}
-              selectProduct={(data) => {
-                setSelectedProduct(data);
-              }}
-              addProductOrder={addProductOrder}
-            />
+            filteredProductList.map((p) => (
+              <ProductVariant
+                key={p.prodId}
+                data={p}
+                onClick={function (data: ProductVariants): void {
+                  console.log({ data });
+                }}
+                onBack={() => {
+                  setSelectedProduct(null);
+                }}
+                addProductOrder={addProductOrder}
+                addQuantity={addQuantity}
+              />
+            ))
           )}
         </div>
 

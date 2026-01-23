@@ -5,6 +5,7 @@ type ToggleProps = {
   initial?: boolean;
   onToggle?: (state: boolean) => void;
   sizes?: "xs" | "sm" | "md" | "lg";
+  flexType?: "flex" | "flex-col";
 };
 
 export default function Toggle({
@@ -12,6 +13,7 @@ export default function Toggle({
   initial = false,
   onToggle,
   sizes = "md",
+  flexType = "flex",
 }: ToggleProps) {
   const [enabled, setEnabled] = useState(initial);
 
@@ -27,7 +29,9 @@ export default function Toggle({
     lg: "text-md md:text-lg",
   }[sizes];
   return (
-    <div className="flex items-center space-x-4">
+    <div
+      className={`${flexType === "flex" ? `flex items-center space-x-4` : `flex flex-col space-y-2`} `}
+    >
       {label && (
         <span className={`${labelClass} font-semibold text-gray-700 `}>
           {label}

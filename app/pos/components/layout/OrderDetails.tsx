@@ -16,7 +16,7 @@ const OrderDetails = ({
   removeProduct,
 }: OrderDetailsProps) => {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-2 2xl:gap-4">
       {data?.map((prod) => (
         <OrderProductCard
           removeQuantityProductList={removeQuantityProductList}
