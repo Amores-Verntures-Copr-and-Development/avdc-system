@@ -90,16 +90,16 @@ const AdminRequisitionPage = () => {
       const res = await result.json();
       if (!res.success) {
         console.log("Res: ", res);
-        throw new Error(res.err);
+        throw new Error(res.message);
       }
-      toast.success("PO created successfully!");
+      toast.success(res.message);
       mutate();
       handleClear();
       setShowCreatePO(false);
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      toast.error("Failed to add Inventory.");
+      toast.error(e.message);
       return false;
     }
   };

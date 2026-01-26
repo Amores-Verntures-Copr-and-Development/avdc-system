@@ -31,7 +31,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
   onSubmit,
 }) => {
   const [orderItem, setOrderItem] = useState<DisplayTotalOrderItem[]>([]);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
     data: DisplayGroupedRequestItem[];
   }>(
@@ -124,28 +124,36 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     ...baseColumns.slice(5), // totals and editable fields
   ];
   const handleSubmit = async () => {
-    const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem
-      .filter((i) => i.poItemOrder !== 0)
-      .map((item) => ({
-        poId: 0,
-        poItemReceivedQty: 0,
-        poItemOrderedQty: item.poItemOrder,
-        itemId: item.itemId,
-        unitPrice: item.itemPrice,
-      }));
+    setIsSubmitting(true);
+    try {
+      const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem
+        .filter((i) => Number(i.poItemOrder) !== 0)
+        .map((item) => ({
+          poId: 0,
+          poItemReceivedQty: 0,
+          poItemOrderedQty: item.poItemOrder,
+          itemId: item.itemId,
+          unitPrice: item.itemPrice,
+        }));
 
-    const purchaseFormData: CreatePurchaseOrderFormDto = {
-      poCreatedBy: user?.userId ?? 0,
-      poDescription: "",
-      poNumber: "",
-      purchaseOrderItems: purchaseItems,
-      purchaseOrderRequest: data.map((req) => ({
-        requestId: req.requestId,
-        poId: 0,
-      })),
-    };
-    const success = await onSubmit(purchaseFormData);
-    if (success) {
+      const purchaseFormData: CreatePurchaseOrderFormDto = {
+        poCreatedBy: user?.userId ?? 0,
+        poDescription: "",
+        poNumber: "",
+        purchaseOrderItems: purchaseItems,
+        purchaseOrderRequest: data.map((req) => ({
+          requestId: req.requestId,
+          poId: 0,
+        })),
+      };
+      const success = await onSubmit(purchaseFormData);
+      if (success) {
+        onCancel();
+      }
+    } catch (e) {
+      throw e;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -199,6 +207,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               color="success"
               size="sm"
               icon={ClipboardCheck}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -208,6 +217,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
               onClick={handleSubmit}
               size="sm"
               icon={Send}
+              loading={isSubmitting}
             />
           </div>
         </div>
