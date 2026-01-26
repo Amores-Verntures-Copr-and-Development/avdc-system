@@ -33,6 +33,7 @@ interface CheckOutModalProps {
   remaining: number;
   change: number;
   canComplete: boolean;
+  isConfirming: boolean;
 }
 
 const CheckOutModal = ({
@@ -47,6 +48,7 @@ const CheckOutModal = ({
   remaining,
   change,
   canComplete,
+  isConfirming,
 }: CheckOutModalProps) => {
   const [selectedMethod, setSelectedMethod] =
     useState<CreateSalePaymentDto | null>({
@@ -414,6 +416,7 @@ const CheckOutModal = ({
               onClick={handleCompleteSale}
               icon={Check}
               disabled={!canComplete}
+              loading={isConfirming}
             />
           </div>
         </div>

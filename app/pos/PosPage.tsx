@@ -52,6 +52,7 @@ import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import { Customer } from "@/types/customer";
 import { selectProductVariants } from "@/models/productModel";
 import SearchBar from "@/components/shared/SearchBar";
+import ProductVariantCard from "./components/ProductVariantCard";
 
 export interface OrderList {
   prodVarId: number;
@@ -350,6 +351,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     if (parts.length === 2) return parts.pop()!.split(";").shift() || null;
     return null;
   }
+  const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
   const handleConfirmOrder = async () => {
     const totalAmount = getTotalAmount(); // total to pay
     let remaining = totalAmount;
@@ -364,6 +366,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       toast.error("No store found!");
       return;
     }
+    setIsConfirmingOrder(true);
     const saleItems: CreateSaleItemDto[] =
       selectedOrder?.map((items) => ({
         inventoryItemId: items.inventoryItemId || null,
@@ -450,6 +453,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       console.log(e);
       toast.error("Failed to add Inventory.");
       return false;
+    } finally {
+      setIsConfirmingOrder(false);
     }
   };
 
@@ -550,8 +555,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             ) : (
               <>
                 {/* Main Header */}
-                <div className="flex items-center">
-                  <div className="flex flex-col gap-2">
+                <div className="flex items-center flex-1">
+                  <div className="flex flex-col gap-2 flex-1">
                     <div className="flex gap-2 items-center">
                       {showProductView === "product" ? (
                         <div className="">
@@ -585,7 +590,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     </div>
 
                     <div className="flex gap-2">
-                      <SearchBar url={""} />
+                      <div>
+                        {" "}
+                        <SearchBar url={""} />
+                      </div>
                       <div>
                         {" "}
                         <Button
@@ -690,20 +698,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             )
           ) : (
-            filteredProductList.map((p) => (
-              <ProductVariant
-                key={p.prodId}
-                data={p}
-                onClick={function (data: ProductVariants): void {
-                  console.log({ data });
-                }}
-                onBack={() => {
-                  setSelectedProduct(null);
-                }}
-                addProductOrder={addProductOrder}
-                addQuantity={addQuantity}
-              />
-            ))
+            <div className="flex-1 grid grid-cols-3 xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+              {filteredProductList.flatMap((p) =>
+                p.productVariants?.flatMap((pv) => (
+                  <ProductVariantCard
+                    key={pv.prodVarId}
+                    data={pv}
+                    product={p ?? null}
+                    onClick={function (data: ProductVariants): void {
+                      console.log(data);
+                    }}
+                    addProductOrder={addProductOrder}
+                  />
+                )),
+              )}
+            </div>
           )}
         </div>
 
@@ -931,6 +940,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               remaining={remaining}
               change={change}
               canComplete={canComplete}
+              isConfirming={isConfirmingOrder}
             />
           ) : (
             <PaymentSuccessModal

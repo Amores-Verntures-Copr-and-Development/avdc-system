@@ -117,7 +117,6 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       key,
       selector: (row: any) => formatQuantityByUnit(row[key], row.itemUnit),
     }));
-  console.log("Store Columns: ", storeColumns);
   const requestItemColumn: Column<DisplayTotalOrderItem>[] = [
     ...baseColumns.slice(0, 5), // before totals
     ...storeColumns, // dynamically added per store

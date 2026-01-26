@@ -16,7 +16,10 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";
 import IconButton from "@/components/shared/IconButton";
-import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
+import {
+  getPurchaseStatusOption,
+  requestStatusOptions,
+} from "@/utils/purchaserOrderUtils";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { formatPeso } from "@/utils/formatPeso";
@@ -33,15 +36,15 @@ interface ShowAllIItemsProps {
   user: UserAuth | null;
   onAddItem: (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
   onUpdateItem: (
     data: Partial<PurchaseOrderItems>,
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
   onRemoveItem?: (
     data: Partial<PurchaseOrderItems>,
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
 }
 
@@ -115,7 +118,7 @@ const ShowAllIItems = ({
         if (!selectedId) return "Select Supplier";
 
         const selected = row.suppliers.find(
-          (s) => s.suppId === Number(selectedId)
+          (s) => s.suppId === Number(selectedId),
         );
 
         return selected
@@ -165,7 +168,7 @@ const ShowAllIItems = ({
 
       selector: (row) => {
         const supplier = row.suppliers?.find(
-          (s) => s.suppId === Number(row.suppId)
+          (s) => s.suppId === Number(row.suppId),
         );
 
         const supplierPrice = Number(supplier?.suppItemPrice) || 0;
@@ -176,7 +179,7 @@ const ShowAllIItems = ({
 
       value: (row) => {
         const supplier = row.suppliers?.find(
-          (s) => s.suppId === Number(row.suppId)
+          (s) => s.suppId === Number(row.suppId),
         );
 
         return (
@@ -188,9 +191,10 @@ const ShowAllIItems = ({
     {
       name: "Status",
       key: "poItemStatus",
+      editable: (row) => row.poItemId === isEditId,
       selector: (row) => {
         const { bg, color, label } = getPurchaseStatusOption(
-          row.poItemStatus ?? ""
+          row.poItemStatus ?? "",
         );
         return (
           <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
@@ -198,6 +202,9 @@ const ShowAllIItems = ({
           </div>
         );
       },
+      inputType: "select",
+      selectOptionVariant: "custom",
+      options: requestStatusOptions,
     },
   ];
   useEffect(() => {
@@ -227,11 +234,12 @@ const ShowAllIItems = ({
       original.suppId !== (Number(row.suppId) || null) ||
       original.unitPrice !== row.unitPrice ||
       original.poItemOrderedQty !== row.poItemOrderedQty ||
-      original.poItemReceivedQty !== row.poItemReceivedQty
+      original.poItemReceivedQty !== row.poItemReceivedQty ||
+      original.poItemStatus !== row.poItemStatus
     );
   };
   const handleUpdatePoItemSuppId = async (
-    dataItem: Partial<PurchaseOrderItems>
+    dataItem: Partial<PurchaseOrderItems>,
   ) => {
     console.log({ data });
     if (!dataItem.poItemId) return;
@@ -279,7 +287,7 @@ const ShowAllIItems = ({
         Number(
           ["received", "completed"].includes(item.poItemStatus ?? "")
             ? item.poItemReceivedQty
-            : item.poItemOrderedQty
+            : item.poItemOrderedQty,
         ) * Number(item.unitPrice);
       return total + Number(totalPrice);
     }, 0);
@@ -362,6 +370,7 @@ const ShowAllIItems = ({
                           poItemId: row.poItemId,
                           suppId: row.suppId,
                           poItemOrderedQty: row.poItemOrderedQty,
+                          poItemStatus: row.poItemStatus,
                         });
                       }}
                       label="Save"
@@ -386,7 +395,7 @@ const ShowAllIItems = ({
             // If supplier changed, update suppId and unitPrice too
             if (key === "selectedSupplierId") {
               const selected = row.suppliers?.find(
-                (s) => s.suppId === Number(value)
+                (s) => s.suppId === Number(value),
               );
               setPoItems((prev) =>
                 prev.map((item) =>
@@ -397,8 +406,8 @@ const ShowAllIItems = ({
                         suppId: selected?.suppId ?? null,
                         unitPrice: selected?.suppItemPrice ?? 0,
                       }
-                    : item
-                )
+                    : item,
+                ),
               );
             }
             if (key === "poItemOrderedQty") {
@@ -406,8 +415,8 @@ const ShowAllIItems = ({
                 prev.map((item) =>
                   item.poItemId === row.poItemId
                     ? { ...item, poItemOrderedQty: value }
-                    : item
-                )
+                    : item,
+                ),
               );
             }
           }}
@@ -480,7 +489,7 @@ const ShowAllIItems = ({
           " with " +
           formatQuantityByUnit(
             selectedItemId?.poItemOrderedQty ?? 0,
-            selectedItemId?.itemUnit ?? ""
+            selectedItemId?.itemUnit ?? "",
           ) +
           " ordered quantity?"
         }

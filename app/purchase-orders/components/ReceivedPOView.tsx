@@ -88,7 +88,7 @@ interface ReceivedPOViewProps {
   >;
   onAddItem: (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
   onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
 }
@@ -142,7 +142,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     {
       keepPreviousData: false, // This keeps the data when the key becomes null
       revalidateOnFocus: false, // Optional: prevent refetch on window focus
-    }
+    },
   );
   const columns: Column<PurchaseOrderItems>[] = [
     { name: "Item Name", key: "itemName" },
@@ -186,7 +186,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               (row.supplierPrice || row.unitPrice) *
                 (row.poItemReceivedQty > 0
                   ? row.poItemReceivedQty
-                  : row.poItemOrderedQty)
+                  : row.poItemOrderedQty),
             ),
       compute: (row) => {
         return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);
@@ -198,16 +198,16 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       key: "poItemStatus",
       editable: (row) => {
         const origData = originalData?.find(
-          (item) => item.suppId === row.suppId
+          (item) => item.suppId === row.suppId,
         )?.items;
         const origStatus = origData?.find(
-          (item) => item.poItemId === row.poItemId
+          (item) => item.poItemId === row.poItemId,
         )?.poItemStatus;
         return origStatus !== "not_ordered" && origStatus !== "received";
       },
       selector: (row) => {
         const { bg, color, label } = getPurchaseStatusOption(
-          row.poItemStatus ?? ""
+          row.poItemStatus ?? "",
         );
         return (
           <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
@@ -219,10 +219,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       selectOptionVariant: "custom", // ✅ matches interface
       options: (row) => {
         const origData = originalData?.find(
-          (item) => item.suppId === row.suppId
+          (item) => item.suppId === row.suppId,
         )?.items;
         const origStatus = origData?.find(
-          (item) => item.poItemId === row.poItemId
+          (item) => item.poItemId === row.poItemId,
         )?.poItemStatus;
         const { label, value, bg, color, border, dot } =
           getPurchaseStatusOption(origStatus ?? "");
@@ -257,12 +257,14 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   };
   const updateSupplierItems = (
     suppId: number,
-    newItems: PurchaseOrderItems[]
+    newItems: PurchaseOrderItems[],
   ) => {
     setSupplierData((prev) =>
       prev.map((supplier) =>
-        supplier.suppId === suppId ? { ...supplier, items: newItems } : supplier
-      )
+        supplier.suppId === suppId
+          ? { ...supplier, items: newItems }
+          : supplier,
+      ),
     );
   };
   useEffect(() => {
@@ -288,15 +290,15 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   ...item,
                   poItemReceivedQty: item.poItemOrderedQty,
                 }
-              : item
+              : item,
           ),
         };
-      })
+      }),
     );
   };
   const handleNotOrderedSupplier = async (data: DisplayPOItemsSupplier) => {
     const hasItemForUnordered = data.items.some(
-      (poi) => poi.poItemStatus === "sent"
+      (poi) => poi.poItemStatus === "sent",
     );
 
     if (!hasItemForUnordered) {
@@ -335,8 +337,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     : item.poItemOrderedQty,
               })),
             }
-          : supplier
-      )
+          : supplier,
+      ),
     );
   };
 
@@ -367,19 +369,19 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     }
   };
   const isAllItemsDelivered = data.every((po) =>
-    po.items.every((item) => item.poItemStatus === "delivered")
+    po.items.every((item) => item.poItemStatus === "delivered"),
   );
 
   const handleSubmitAddItemToSupplierPO = async (
-    dataItem: CreatePurchaseOrderItemDto
+    dataItem: CreatePurchaseOrderItemDto,
   ) => {
     const existingSupplier = supplierData.find((supp) =>
-      supp.items.some((item) => item.itemId === dataItem.itemId)
+      supp.items.some((item) => item.itemId === dataItem.itemId),
     );
 
     if (existingSupplier) {
       toast.error(
-        `Item already in ${existingSupplier.suppName}, change the supplier in View All Item!`
+        `Item already in ${existingSupplier.suppName}, change the supplier in View All Item!`,
       );
       return false;
     }
@@ -448,25 +450,25 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               <div className="space-y-2">
                 {supplierData.map((supplier) => {
                   const isSupplierItemsSent = supplier.items.some(
-                    (item) => item.poItemStatus === "sent"
+                    (item) => item.poItemStatus === "sent",
                   );
                   const origData = originalData?.find(
-                    (d) => d.suppId === supplier.suppId
+                    (d) => d.suppId === supplier.suppId,
                   )?.items;
 
                   const validForReceived = origData?.some(
-                    (item) => item.poItemStatus === "sent"
+                    (item) => item.poItemStatus === "sent",
                   );
                   const isAllNotOrdered = origData?.every(
-                    (item) => item.poItemStatus === "not_ordered"
+                    (item) => item.poItemStatus === "not_ordered",
                   );
 
                   const isNotOrderedAll = origData?.every(
-                    (item) => item.poItemStatus === "not_ordered"
+                    (item) => item.poItemStatus === "not_ordered",
                   );
 
                   const isSupplierItemsDelivered = supplier.items.every(
-                    (item) => item.poItemStatus === "delivered"
+                    (item) => item.poItemStatus === "delivered",
                   );
 
                   const isExpanded = expandedSupplier === supplier.suppId;
@@ -510,20 +512,20 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       (i) =>
                                         i.poItemStatus === "sent" ||
                                         i.poItemStatus === "received" ||
-                                        i.poItemStatus === "delivered"
+                                        i.poItemStatus === "delivered",
                                     )
                                     .reduce((total, item) => {
                                       const price =
                                         Number(
-                                          item.supplierPrice || item.unitPrice
+                                          item.supplierPrice || item.unitPrice,
                                         ) || 0;
                                       const qty = Number(
                                         item.poItemReceivedQty > 0
                                           ? item.poItemReceivedQty
-                                          : item.poItemOrderedQty
+                                          : item.poItemOrderedQty,
                                       );
                                       return total + price * qty;
-                                    }, 0)
+                                    }, 0),
                                 )}
                               </p>
                               <span className="text-[9px] xl:text-xs">
@@ -576,12 +578,13 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           (item) =>
                                             item.poItemStatus !==
                                               "not_ordered" &&
-                                            Number(item.poItemReceivedQty) === 0
+                                            Number(item.poItemReceivedQty) ===
+                                              0,
                                         );
 
                                       if (hasNoQuantityDelivered) {
                                         toast.error(
-                                          "There are items to be received with no quantity!"
+                                          "There are items to be received with no quantity!",
                                         );
                                         return;
                                       }
@@ -660,7 +663,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                           <button
                             onClick={() =>
                               setExpandedSupplier(
-                                isExpanded ? null : supplier.suppId
+                                isExpanded ? null : supplier.suppId,
                               )
                             }
                             className="inline-flex items-center px-1 py-.5 xl:px-3 xl:py-1.5 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors"
@@ -735,7 +738,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   updateData={(newData) =>
                                     updateSupplierItems(
                                       supplier.suppId,
-                                      newData
+                                      newData,
                                     )
                                   }
                                   loading={isLoading}
@@ -750,7 +753,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                             onClick={() => {
                                               setShowAddItem(true);
                                               setSelectedSupplierToAdd(
-                                                supplier
+                                                supplier,
                                               );
                                             }}
                                             label="Add Item"
@@ -782,7 +785,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                             onClick={() =>
                                               // handleNotOrderedSupplier(supplier)
                                               setSelectSupplierNotOrder(
-                                                supplier
+                                                supplier,
                                               )
                                             }
                                             label="Mark as Unordered"
@@ -805,13 +808,13 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                                     item.poItemStatus !==
                                                       "not_ordered" &&
                                                     Number(
-                                                      item.poItemReceivedQty
-                                                    ) === 0
+                                                      item.poItemReceivedQty,
+                                                    ) === 0,
                                                 );
 
                                               if (hasNoQuantityDelivered) {
                                                 toast.error(
-                                                  "There are items to be received with no quantity!"
+                                                  "There are items to be received with no quantity!",
                                                 );
                                                 return;
                                               }
@@ -842,7 +845,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           }
                                           handleAutoFill(
                                             row.suppId,
-                                            row.poItemId
+                                            row.poItemId,
                                           );
                                         }}
                                         label="Auto-Fill Received Qty"
