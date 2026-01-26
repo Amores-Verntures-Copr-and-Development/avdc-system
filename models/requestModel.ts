@@ -201,7 +201,7 @@ SELECT
 	LEFT JOIN StockRooms sr ON sr.stockRoomId = its.inventoryReferenceId AND its.inventoryReference = 'stock-room'
 	LEFT JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
 	LEFT JOIN RequestOrders ro ON ro.storeId = ss.storeId
-	WHERE ro.requestId IN (1,2) AND iis.inventoryItemReferenceId = i.itemId
+	WHERE ro.requestId IN (${placeholders}) AND iis.inventoryItemReferenceId = i.itemId
   ), 0) AS stockItem,
    ${storeColumns},
   SUM(ri.reqItemQuantity) AS totalQuantity,
@@ -219,7 +219,9 @@ INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
     ORDER BY i.itemName;
   `;
   // Step 4: Execute final query
-  const [rows] = await pool.execute(sql, requestIds);
+
+  const values = [...requestIds, ...requestIds];
+  const [rows] = await pool.execute(sql, values);
   return rows;
 };
 

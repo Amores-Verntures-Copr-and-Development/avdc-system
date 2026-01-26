@@ -40,7 +40,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           .map((item) => item.requestId)
           .join(",")}`
       : null,
-    fetcher
+    fetcher,
   );
   useEffect(() => {
     console.log("ASD", { orderItem });
@@ -50,7 +50,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           ...item,
           reqItemStock: 0,
           poItemOrder: 0,
-        })
+        }),
       );
       setOrderItem(newData);
     }
@@ -85,9 +85,12 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
 
         if (Number(row.stockItem) >= Number(row.totalQuantity)) {
           return (
-            <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
-              Available ({row.stockItem - row.totalQuantity})
-            </span>
+            <div className="w-full">
+              {" "}
+              <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
+                Avail ({row.stockItem - row.totalQuantity})
+              </span>
+            </div>
           );
         } else {
           const quantity = row.stockItem - row.totalQuantity; // Fixed: should be total - stock
@@ -156,7 +159,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           ...item,
           poItemOrder: totalQty > stockQty ? totalQty - stockQty : 0,
         };
-      })
+      }),
     );
   };
 
