@@ -26,10 +26,10 @@ const DashboardCard = ({
           <Icon className="text-white w-3 h-3 xs:w-5 xs:h-5 xl:w-5 xl:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
         </div>
         <div className="flex flex-col items-start min-w-0 flex-1">
-          <span className="block text-[10px]   lg:text-3xl font-bold text-gray-900 truncate w-full">
+          <span className="block text-[10px]   lg:text-2xl font-bold text-gray-900 truncate w-full">
             {value.toLocaleString()}
           </span>
-          <span className="text-[10px]  2xl:text-base text-gray-500 truncate w-full mt-0.5 xs:mt-1">
+          <span className="text-[10px]  2xl:text-sm text-gray-500 truncate w-full mt-0.5 xs:mt-1">
             {title}
           </span>
         </div>

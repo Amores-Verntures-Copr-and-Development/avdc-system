@@ -3,29 +3,58 @@ import { RowDataPacket } from "mysql2";
 
 export const selectPurchaserStats = async (userId: number) => {
   const pool = await getDBConnection();
-  const sql = `SELECT 
-    (SELECT COUNT(*) FROM PurchaseOrders po WHERE po.poCreatedBy = ? ) AS totalPurchase,
-    ( SELECT COUNT(*) FROM RequestOrders ro
-	 LEFT JOIN StockStores ss ON ro.storeId = ro.storeId
-	 LEFT JOIN StockPurchasers sp ON sp.stockRoomId = ss.stockRoomId
-	 WHERE ro.requestStatus = 'completed' AND  sp.userId = ?) AS completedRequest,
-    (SELECT COUNT(*) 
-     FROM InventoryItems ii 
-     LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId  
-     LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'
-	  LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
-     WHERE sp.userId = ?
-     AND ii.inventoryItemQuantity < ii.inventoryItemMin) AS lowStock,
-    (SELECT COUNT(*) 
-     FROM InventoryItems ii 
-     LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId  
-     LEFT JOIN StockRooms sr ON sr.stockRoomId = i.inventoryReferenceId AND i.inventoryReference = 'stock-room'
-	  LEFT JOIN StockPurchasers sp ON sp.stockRoomId = sr.stockRoomId
-     WHERE sp.userId = ?
+  const sql = `SELECT
+  (SELECT COUNT(*)
+   FROM PurchaseOrders po
+   WHERE po.poCreatedBy = ?
+  ) AS totalPurchase,
+
+  (SELECT 
+  SUM(ii.inventoryItemQuantity * it.itemPrice) 
+FROM InventoryItems ii
+LEFT JOIN Items it 
+  ON it.itemId = ii.inventoryItemReferenceId
+ AND ii.inventoryItemReferenceType = 'item'
+LEFT JOIN Inventories i 
+  ON i.inventoryId = ii.inventoryId
+LEFT JOIN StockRooms sr 
+  ON sr.stockRoomId = i.inventoryReferenceId
+ AND i.inventoryReference = 'stock-room'
+LEFT JOIN StockPurchasers sp 
+  ON sp.stockRoomId = sr.stockRoomId
+LEFT JOIN Users u 
+  ON u.userId = sp.userId
+WHERE u.userId = ?
+  ) AS inventoryCost,
+
+  (SELECT COUNT(*)
+   FROM InventoryItems ii
+   LEFT JOIN Inventories i 
+     ON i.inventoryId = ii.inventoryId
+   LEFT JOIN StockRooms sr 
+     ON sr.stockRoomId = i.inventoryReferenceId
+    AND i.inventoryReference = 'stock-room'
+   LEFT JOIN StockPurchasers sp 
+     ON sp.stockRoomId = sr.stockRoomId
+   WHERE sp.userId = ?
+     AND ii.inventoryItemQuantity < ii.inventoryItemMin
+  ) AS lowStock,
+
+  (SELECT COUNT(*)
+   FROM InventoryItems ii
+   LEFT JOIN Inventories i 
+     ON i.inventoryId = ii.inventoryId
+   LEFT JOIN StockRooms sr 
+     ON sr.stockRoomId = i.inventoryReferenceId
+    AND i.inventoryReference = 'stock-room'
+   LEFT JOIN StockPurchasers sp 
+     ON sp.stockRoomId = sr.stockRoomId
+   WHERE sp.userId = ?
      AND ii.inventoryItemQuantity = 0
-    ) AS outOfStock;`;
+  ) AS outOfStock;`;
 
   const [rows] = await pool.execute(sql, [userId, userId, userId, userId]);
+  console.log({ rows });
   return rows;
 };
 

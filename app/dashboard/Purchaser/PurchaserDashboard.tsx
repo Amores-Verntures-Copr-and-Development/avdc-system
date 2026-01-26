@@ -13,7 +13,7 @@ import { formatPeso } from "@/utils/formatPeso";
 
 interface DashboardStats {
   totalPurchase: number;
-  completedRequest: number;
+  inventoryCost: number;
   lowStock: number;
   outOfStock: number;
 }
@@ -28,19 +28,19 @@ const PurchaserDashboard = () => {
     ApiResponse<DashboardStats[]>
   >(
     user ? `/api/dashboard/purchaser/${user?.userId}/total-cards` : null,
-    fetcher
+    fetcher,
   );
   const { data: pendingRequest = { data: [] } } = useSWR<
     ApiResponse<PendingRequest[]>
   >(
     user ? `/api/dashboard/purchaser/${user?.userId}/pending-request` : null,
-    fetcher
+    fetcher,
   );
 
   // Provide proper default values
   const defaultStats: DashboardStats = {
     totalPurchase: 0,
-    completedRequest: 0,
+    inventoryCost: 0,
     lowStock: 0,
     outOfStock: 0,
   };
@@ -53,13 +53,13 @@ const PurchaserDashboard = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <DashboardCard
             title="Total Inventory Cost"
-            value={formatPeso(stats.totalPurchase ?? 0)}
+            value={`${formatPeso(stats.inventoryCost)}`}
             icon={ShoppingCart}
             bgColor="bg-primary-1"
           />
           <DashboardCard
-            title="Completed Requests"
-            value={`${stats.completedRequest}`}
+            title="Total Purchase"
+            value={formatPeso(stats.totalPurchase ?? 0)}
             icon={Calendar}
             bgColor="bg-purple-600"
           />
