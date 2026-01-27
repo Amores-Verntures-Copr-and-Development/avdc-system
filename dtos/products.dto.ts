@@ -43,8 +43,9 @@ export interface CreateProductItemDtos {
 export interface DisplayProductsDtos
   extends Products, StoreInterface, ProductCategories {}
 
-export interface DisplaProductVariantsDtos extends ProductVariants {
+export interface DisplaProductVariantsDtos extends ProductVariants, Products {
   sold?: number;
+  totalSales?: number;
 }
 
 export type CreateProductCategoryDto = Pick<

@@ -3,6 +3,7 @@ import PageLayout from "@/components/shared/PageLayout";
 import {
   CreateProductCategoryDto,
   CreateProductDtos,
+  DisplaProductVariantsDtos,
   DisplayProductsDtos,
 } from "@/dtos/products.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
@@ -12,6 +13,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import ProductCardDetails from "./components/ProductCardDetails";
 import {
+  ArrowLeftRight,
   Boxes,
   Eye,
   Icon,
@@ -21,6 +23,7 @@ import {
   PhilippinePeso,
   Plus,
   Store,
+  Trash,
   Users,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
@@ -42,6 +45,7 @@ import ViewProductCategory from "./components/ViewProductCategory";
 import { ApiResponse } from "@/types/api";
 import { ProductCategories, Products } from "@/types/products";
 import Popup from "@/components/shared/Popup";
+import ProductVariantTable from "./components/ProductVariantTable";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -49,6 +53,9 @@ interface ProductStorePageProps {
 
 const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const searchParams = useSearchParams();
+  const [productView, setProductView] = useState<
+    "product" | "product-variants"
+  >("product");
   const router = useRouter();
   const { hasStore, isAdmin } = useSession();
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -61,6 +68,34 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [showEdit, setShowEdit] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
+  const prodVarUrl = hasStore
+    ? `/api/products/${storeId}/product-variants/`
+    : `/api/products/${storeId}/product-variants/`;
+
+  const prodVarApi = useMemo(() => {
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "1";
+    const store = searchParams.get("store");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+    if (unit) params.append("unit", unit);
+    if (limit) params.append("limit", limit);
+    if (store) params.append("store", store);
+    if (to) params.append("to", to);
+    if (from) params.append("from", from);
+    params.append("page", page);
+
+    return `${prodVarUrl}?${params.toString()}`;
+  }, [storeId, searchParams]);
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -102,6 +137,13 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
+  const {
+    data: prodVarResponse = { data: [] },
+    mutate: mutateProdVar,
+    isLoading: isLoadingProdVar,
+  } = useSWR<{
+    data: DisplaProductVariantsDtos[];
+  }>(productView === "product-variants" ? prodVarApi : null, fetcher);
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
@@ -275,6 +317,10 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     label: cat.prodCatName,
     value: String(cat.prodCatId),
   }));
+  const { data: reponseCategory } = useSWR<ApiResponse<ProductCategories[]>>(
+    storeId ? `/api/products/${storeId}/product-categories/` : null,
+    fetcher,
+  );
   const productConfig = useMemo(
     () => [
       {
@@ -300,6 +346,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     },
     [router, productConfig],
   );
+
   return (
     <PageLayout className=" gap-2 2xl:gap-4 p-2">
       {selectedRow && showProductVariantPage ? (
@@ -313,10 +360,38 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         />
       ) : (
         <>
-          <PageHeader
-            title={"Products"}
-            subtitle="Add, edit, and track products"
-          />
+          <div className="flex justify-between items-center">
+            {" "}
+            <PageHeader
+              title={"Products"}
+              subtitle="Add, edit, and track products"
+            />
+            <div>
+              <div>
+                {productView === "product" ? (
+                  <Button
+                    label="Product Varaiants"
+                    size="sm"
+                    icon={ArrowLeftRight}
+                    hasBorder
+                    onClick={() => {
+                      setProductView("product-variants");
+                    }}
+                  />
+                ) : (
+                  <Button
+                    label="Products"
+                    size="sm"
+                    icon={ArrowLeftRight}
+                    hasBorder
+                    onClick={() => {
+                      setProductView("product");
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             <ProductCardDetails
               title={"Total Products"}
@@ -350,112 +425,122 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
             />
           </div>
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-            <Table
-              showFilter={true}
-              filterConfig={productConfig}
-              uniqueIdKey="prodId"
-              columns={hasStore ? columns : adminColumn}
-              data={itemResponse.data}
-              totalCount={20}
-              maxHeight="h-full"
-              searchUrl="products"
-              loading={isLoading}
-              onSave={handleFilterSave}
-              onRowSelection={(row) => {
-                setSelectedRow(row);
-                setShowProductVariantPage(true);
-              }}
-              // filterConfig={[]}
-              showActions
-              renderActions={(row) => (
-                <div className="flex justify-center gap-2">
-                  <IconButton
-                    onClick={function (): void {
-                      setSelectedRow(row);
-                      setShowProductVariantPage(true);
-                    }}
-                    label={"View"}
-                    bg={"gray"}
-                    icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
-                  />
-                  <IconButton
-                    onClick={() => {
-                      setSelectedRow(row);
-                      console.log({ row });
-                      setShowEdit(true);
-                    }}
-                    label={"Edit"}
-                    bg={"green"}
-                    icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
-                  />
-                </div>
-              )}
-              renderTopActions={
-                <div className="flex gap-2">
-                  <div>
-                    <Button
-                      isRounded={false}
-                      className="text-sm"
-                      label="View Category"
-                      size="xs"
-                      icon={Layers}
+            {productView === "product" ? (
+              <Table
+                showFilter={true}
+                filterConfig={productConfig}
+                uniqueIdKey="prodId"
+                columns={hasStore ? columns : adminColumn}
+                data={itemResponse.data}
+                totalCount={20}
+                maxHeight="h-full"
+                searchUrl="products"
+                loading={isLoading}
+                onSave={handleFilterSave}
+                onRowSelection={(row) => {
+                  setSelectedRow(row);
+                  setShowProductVariantPage(true);
+                }}
+                // filterConfig={[]}
+                showActions
+                renderActions={(row) => (
+                  <div className="flex justify-center gap-2">
+                    <IconButton
+                      onClick={function (): void {
+                        setSelectedRow(row);
+                        setShowProductVariantPage(true);
+                      }}
+                      label={"View"}
+                      bg={"gray"}
+                      icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                    <IconButton
                       onClick={() => {
-                        setShowCategory(true);
+                        setSelectedRow(row);
+                        console.log({ row });
+                        setShowEdit(true);
                       }}
-                      color="neutral"
+                      label={"Edit"}
+                      bg={"green"}
+                      icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
                     />
                   </div>
-                  <div>
-                    <Button
-                      isRounded={false}
-                      className="text-sm"
-                      label="Add Category"
-                      size="xs"
-                      icon={Layers}
-                      onClick={() => {
-                        setShowAddProductCat(true);
-                      }}
-                      color="tertiary"
-                    />
+                )}
+                renderTopActions={
+                  <div className="flex gap-2">
+                    <div>
+                      <Button
+                        isRounded={false}
+                        className="text-sm"
+                        label="View Category"
+                        size="xs"
+                        icon={Layers}
+                        onClick={() => {
+                          setShowCategory(true);
+                        }}
+                        color="outline"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        isRounded={false}
+                        className="text-sm"
+                        label="Add Category"
+                        size="xs"
+                        icon={Layers}
+                        onClick={() => {
+                          setShowAddProductCat(true);
+                        }}
+                        color="neutral"
+                      />
+                    </div>
+                    <div>
+                      <Button
+                        isRounded={false}
+                        className="text-sm"
+                        label="Add Product"
+                        size="xs"
+                        icon={Plus}
+                        onClick={() => {
+                          setShowAddProductModal(true);
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Button
-                      isRounded={false}
-                      className="text-sm"
-                      label="Add Product"
-                      size="xs"
-                      icon={Plus}
-                      onClick={() => {
-                        setShowAddProductModal(true);
-                      }}
-                    />
-                  </div>
-                </div>
-              }
-              addContentLeftTitle={
-                !hasStore && (
-                  <div>
-                    <DynamicDropdown
-                      options={storeOptions}
-                      onChange={function (value: string | number): void {
-                        if (value) {
-                          const url = new URL(window.location.href);
-                          url.searchParams.set("store", String(value));
-                          router.push(url.toString());
-                        } else {
-                          const url = new URL(window.location.href);
-                          url.searchParams.delete("store"); // remove 'store'
-                          router.push(url.toString());
-                        }
-                      }}
-                      placeholder={`Store (${storeOptions.length})`}
-                      icon={<Store className="w-4 h-4" />}
-                      size="sm"
-                    />
-                  </div>
-                )
-              }
-            />
+                }
+                addContentLeftTitle={
+                  !hasStore && (
+                    <div>
+                      <DynamicDropdown
+                        options={storeOptions}
+                        onChange={function (value: string | number): void {
+                          if (value) {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("store", String(value));
+                            router.push(url.toString());
+                          } else {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete("store"); // remove 'store'
+                            router.push(url.toString());
+                          }
+                        }}
+                        placeholder={`Store (${storeOptions.length})`}
+                        icon={<Store className="w-4 h-4" />}
+                        size="sm"
+                      />
+                    </div>
+                  )
+                }
+              />
+            ) : (
+              <ProductVariantTable
+                data={prodVarResponse.data}
+                isLoading={isLoadingProdVar}
+                onRowSelection={(row) => {
+                  console.log(row);
+                }}
+              />
+            )}
           </div>
         </>
       )}
@@ -476,6 +561,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           onCancel={() => {
             setShowAddProductModal(false);
           }}
+          categories={reponseCategory?.data ?? []}
         />
       </Modal>
       <Modal

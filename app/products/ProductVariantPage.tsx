@@ -28,24 +28,46 @@ interface ProductVariantPageProps {
 
 const columns: Column<DisplaProductVariantsDtos>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  { key: "prodVarName", name: "Variant Name" },
+  {
+    key: "prodVarName",
+    name: "Variant Name",
+    selector: (row) => (
+      <div className="flex flex-col">
+        <span className="font-semibold text-sm">{row.prodVarName}</span>
+        <span className="text-xs text-gray-500">{row.prodName}</span>
+      </div>
+    ),
+  },
   {
     key: "prodVarPrice",
     name: "Price",
     selector: (row) => formatPeso(row.prodVarPrice),
   },
+
   {
     key: "isDeductInv",
     name: "Deduct Inventory",
     selector: (row) => {
       const label = Number(row.isDeductInv) === 1 ? "True" : "False";
-      const bg = Number(row.isDeductInv) === 1 ? "bg-green-300" : "bg-red-300";
+      const textColor =
+        Number(row.isDeductInv) === 1 ? "text-green-600" : "text-red-600";
       return (
         <div className="">
-          <span className={`px-1.5 py-1.5 ${bg} rounded-lg`}>{label}</span>
+          <span
+            className={`px-1.5 py-1.5 ${textColor} font-semibold rounded-lg`}
+          >
+            {label}
+          </span>
         </div>
       );
     },
+  },
+  { key: "sold", name: "Sold", selector: (row) => (row.sold ? row.sold : 0) },
+  {
+    key: "totalSales",
+    name: "Total Sales",
+    selector: (row) =>
+      row.totalSales ? formatPeso(row.totalSales) : formatPeso(0),
   },
 ];
 
@@ -70,7 +92,7 @@ const ProductVariantPage = ({
     data: DisplaProductVariantsDtos[];
   }>(
     data
-      ? `/api/products/${data.storeId}/product-variants/${data.prodId}`
+      ? `/api/products/${data.storeId}/product-variants/${data.prodId}/`
       : null,
     fetcher,
   );
@@ -207,6 +229,11 @@ const ProductVariantPage = ({
             showAddComponent={showAddComponent}
             setShowAddComponent={setShowAddComponent}
             prod={data}
+            storeId={data?.storeId ?? 0}
+            mutate={mutate}
+            onClose={function (): void {
+              setIsShowModal(null);
+            }}
           />
         ) : (
           <></>

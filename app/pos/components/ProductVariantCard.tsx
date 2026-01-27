@@ -9,7 +9,7 @@ import React from "react";
 import { OrderList } from "../PosPage";
 
 interface ProductVariantCardProps {
-  data: DisplaProductVariantsDtos | null;
+  data: ProductVariants | null;
   product: DisplayProductsDtos | null;
   onClick: (data: ProductVariants) => void;
   addProductOrder: (data: OrderList) => void;
@@ -180,9 +180,9 @@ const ProductVariantCard = ({
 
         {/* Out of Stock Banner */}
         {!hasStock && Number(data.isDeductInv) === 1 && (
-          <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-1.5 2xl:px-3 py-1 2xl:py-2">
             <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <span className="text-xs font-semibold text-red-700">
+            <span className="text-[10px] font-semibold text-red-700">
               No Stock Available
             </span>
           </div>

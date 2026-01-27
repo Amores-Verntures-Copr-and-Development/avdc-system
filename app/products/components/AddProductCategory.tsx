@@ -5,6 +5,7 @@ import {
   CreateProductDtos,
 } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { ProductCategories } from "@/types/products";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -14,6 +15,7 @@ interface AddProductCategoryProps {
   storeId: number;
   user?: UserAuth | null;
   onCancel: () => void;
+
 }
 const AddProductCategory = ({
   onSubmit,

@@ -85,7 +85,7 @@ const AddItemToProductModal = ({
           prodVarUnit: item.itemUnit,
           prodVarPrice: 0,
           isDeductInv: false,
-          varianComponents: [
+          variantComponents: [
             {
               varComId: 0,
               quantityRequired: 1,

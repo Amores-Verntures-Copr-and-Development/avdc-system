@@ -40,16 +40,16 @@ export async function createProductVariants({
       localConnection = true;
       const newPool = await getDBConnection();
       newConnection = await newPool.getConnection();
-      newConnection.beginTransaction();
+     await newConnection.beginTransaction();
     }
-
+    
     // Use for...of instead of map to properly await async operations
     for (const item of data) {
       const prodVarId = await insertProductVariant({
         connection: connection ? connection : newConnection,
-        data: item,
+        data: {...item,isDeductInv:true},
       });
-
+      console.log(item.variantComponents)
       if (item.variantComponents && item.variantComponents.length > 0) {
         const variantComponents: CreateVarianComponentDto[] =
           item.variantComponents.map((vc) => ({ ...vc, prodVarId }));
@@ -60,10 +60,11 @@ export async function createProductVariants({
         });
       }
     }
-
+    
     // Commit transaction if we started it
     if (localConnection) {
-      await newConnection.rollback();
+      console.log("Agi here")
+      await newConnection.commit();
     }
   } catch (e) {
     // Rollback if we started transaction

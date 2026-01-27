@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
@@ -25,23 +25,23 @@ export async function POST(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetched products!",
+        message: err?.message || String(err),
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const storeId = (await params).storeId;
@@ -69,7 +69,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -78,7 +78,7 @@ export async function GET(
         message: "Items import failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

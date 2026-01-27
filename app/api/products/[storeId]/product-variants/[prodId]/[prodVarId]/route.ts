@@ -1,29 +1,36 @@
-import { createProductVariantBulkController } from "@/controllers/ProductController";
-import { CreateProductVariantDto } from "@/dtos/products.dto";
+import {
+  createProductVariantController,
+  updateProductVariantController,
+} from "@/controllers/ProductController";
+import { ProductVariants } from "@/types/products";
 import { NextResponse } from "next/server";
 
-export async function POST(
+export async function PUT(
   _request: Request,
   {
     params,
   }: {
-    params: Promise<{ storeId: string; prodId: string }>;
+    params: Promise<{ storeId: string; prodVarId: string; prodId: string }>;
   },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+    const slug1 = (await params).prodVarId;
+    const prodVarId = Number(slug1);
     if (!storeId) {
       throw new Error("No storeId found");
     }
-    const data = (await _request.json()) as CreateProductVariantDto[];
-    console.log("ROUTE: ", { data });
-    const res = await createProductVariantBulkController(data);
+    if (!prodVarId) {
+      throw new Error("No prodVarId found");
+    }
+    const data = (await _request.json()) as Partial<ProductVariants>;
+    const res = await updateProductVariantController(data);
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
     }
-
+    console.log({ data });
     return NextResponse.json(
       {
         success: true,

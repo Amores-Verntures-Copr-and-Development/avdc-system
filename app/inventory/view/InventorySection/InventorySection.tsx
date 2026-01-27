@@ -428,8 +428,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           isDeductInv: true,
           prodId: data.prodId || 0,
         }));
+        console.log({ productVariants });
         const result = await fetch(
-          `api/products/${data.storeId}/product-variants/${data.prodId}/create-bulk`,
+          `api/products/${data.storeId}/${data.prodId}/product-variants/create-bulk`,
           {
             method: "POST",
             headers: {

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string; prodId: string }> },
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
@@ -44,15 +44,31 @@ export async function POST(
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string; prodId: string }> },
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
-    const slug = (await params).prodId;
-    const prodId = Number(slug);
+    const slug = (await params).storeId;
+    const storeId = Number(slug);
     console.log("Agi here");
-    console.log({ prodId });
+    console.log({ storeId });
+    const { searchParams } = new URL(_request.url);
+    const search = searchParams.get("search") || "";
+    const statusParam = searchParams.get("status");
+    const category = searchParams.get("category") || "";
+    const from = searchParams.get("from") || "";
+    const to = searchParams.get("to") || "";
+    const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+
+    const status: "fast" | "slow" | undefined =
+      statusParam === "fast"
+        ? "fast"
+        : statusParam === "slow"
+          ? "slow"
+          : undefined;
     const res = await getProductVariantController(
-      prodId ? { keyFields: { prodId } } : {},
+      storeId ? { search, statusSold: status, from, to } : {},
     );
     if (!res.success) {
       console.log(res.message);

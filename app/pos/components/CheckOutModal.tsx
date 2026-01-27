@@ -342,7 +342,7 @@ const CheckOutModal = ({
                   icon={Plus}
                   disabled={
                     selectedMethod?.payMetId === null ||
-                    selectedMethod?.payMetId === 0
+                    selectedMethod?.payMetId === 0 || Number(selectedMethod?.salesPaymentAmount) === 0
                   }
                 />
               </div>

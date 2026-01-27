@@ -13,12 +13,18 @@ import { Pencil, Save, X } from "lucide-react";
 import Input from "@/components/shared/Input";
 import { ProductVariants } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
+import { handleChange } from "@/utils/handle-change";
+import { mutate } from "swr";
+import toast from "react-hot-toast";
 
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
   showAddComponent: boolean;
   setShowAddComponent: React.Dispatch<React.SetStateAction<boolean>>;
   prod: DisplayProductsDtos | null;
+  storeId:number;
+  mutate:()=>void;
+  onClose:()=>void;
 }
 
 const VariantComponentPage = ({
@@ -26,8 +32,12 @@ const VariantComponentPage = ({
   showAddComponent,
   setShowAddComponent,
   prod,
+  mutate,
+  onClose,
+  storeId
 }: VariantComponentPageProps) => {
   // const [showAddComponent, setShowAddComponent] = useState(false);
+  const [isSaving,setIsSaving] =useState(false)
   const [isEdit, setIsEdit] = useState(false);
   const [form, setForm] = useState<ProductVariants>({
     prodId: data?.prodId ?? 0,
@@ -41,6 +51,39 @@ const VariantComponentPage = ({
     prodVarUnit: data?.prodVarUnit,
     isDeductInv: Boolean(data?.isDeductInv),
   });
+  const handleFormChange = handleChange(form, setForm);
+  const handleSave = async ()=> {
+    console.log({form})
+    setIsSaving(true)
+    const variantForm:Partial<ProductVariants> = {
+      prodVarId:Number(form.prodVarId),
+      prodVarName:form.prodVarName,
+      prodVarPrice:Number(form.prodVarPrice),
+      isDeductInv:form.isDeductInv
+    }
+    try{const result = await fetch(`/api/products/${storeId}/${data?.prodId}/product-variants/${data?.prodVarId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(variantForm),
+        credentials: "include",
+      });
+
+      const res = await result.json();
+
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      setIsEdit(false);
+      mutate();
+    onClose();}
+    catch(e){}
+    finally{
+      setIsSaving(false)
+    }
+  }
   return (
     <div className="flex flex-col gap-5">
       <BigCard
@@ -68,15 +111,16 @@ const VariantComponentPage = ({
                   label={"Cancel"}
                   bg={"gray"}
                   icon={<X className="w-4 h-4" />}
+                  disable={isSaving}
                 />
               </div>
               <div>
+                {/* <Button label="" icon={Save} color="success" size="xs"/> */}
                 <IconButton
-                  onClick={function (): void {
-                    throw new Error("Function not implemented.");
-                  }}
-                  label={"Cancel"}
+                  onClick={handleSave}
+                  label={"Save"}
                   bg={"green"}
+                  loading={isSaving}
                   icon={<Save className="w-4 h-4" />}
                 />
               </div>
@@ -162,10 +206,22 @@ const VariantComponentPage = ({
                 <span className="text-sm font-semibold text-gray-800">
                   {data?.prodVarId}
                 </span> */}
-                <Input label={"Name"} sizes={"xs"} />
+                <Input
+                  label={"Name"}
+                  sizes={"xs"}
+                  value={form.prodVarName}
+                  onChange={handleFormChange}
+                  name="prodVarName"
+                />
               </div>
               <div className="flex flex-col">
-                <Input label={"Price"} sizes={"xs"} />
+                <Input
+                  label={"Price"}
+                  sizes={"xs"}
+                  value={form.prodVarPrice}
+                  onChange={handleFormChange}
+                  name="prodVarPrice"
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-6">
@@ -174,10 +230,25 @@ const VariantComponentPage = ({
                 <span className="text-sm font-semibold text-gray-800">
                   {data?.prodVarId}
                 </span> */}
-                <Input label={"Unit"} sizes={"xs"} />
+                <Input
+                  label={"Unit"}
+                  sizes={"xs"}
+                  value={form.prodVarUnit ?? ""}
+                  onChange={handleFormChange}
+                  name="prodVarUnit"
+                />
               </div>
               <div className="flex flex-col">
-                <Toggle sizes="xs" label="Is Deduct?" flexType="flex-col" />
+                <Toggle
+                  sizes="xs"
+                  label="Is Deduct?"
+                  flexType="flex-col"
+                  initial={form.isDeductInv === true}
+                  onToggle={(state) => (setForm((prev)=>({
+                    ...prev,
+                    isDeductInv:Boolean(state) === true ? true : false
+                  })))}
+                />
               </div>
             </div>
 

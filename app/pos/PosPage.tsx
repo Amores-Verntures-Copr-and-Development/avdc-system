@@ -287,6 +287,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       toast.error("Insufficient inventory");
       return;
     }
+    deductVariantComponents(product.prodVarId, 1);
     setSelectedOrder((prev) => {
       if (!prev) {
         // if empty, add product with quantity 1
@@ -322,6 +323,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       );
     });
   };
+  const [searchProd, setSearchProd] = useState("");
   // const removeQuantity = (product: DisplayProductsDtos) => {};
   const productCategoriesList = useMemo(() => {
     return Array.from(
@@ -333,13 +335,39 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
   }, [productList]);
   const filteredProductList = useMemo(() => {
-    if (categoryFilter === "all") return productList;
+    let list = productList;
 
-    return productList.filter(
-      (product) => product.prodCatName === categoryFilter,
-    );
-  }, [productList, categoryFilter]);
+    // 🔹 Category filter
+    if (categoryFilter !== "all") {
+      list = list.filter((product) => product.prodCatName === categoryFilter);
+    }
+
+    // 🔹 Search filter
+    if (searchProd.trim()) {
+      const keyword = searchProd.toLowerCase();
+
+      list = list.filter((item) => {
+        if (showProductView === "product") {
+          return item.prodName?.toLowerCase().includes(keyword);
+        }
+
+        if (showProductView === "product-variant") {
+          return item.productVariants?.some((variant) =>
+            variant.prodVarName?.toLowerCase().includes(keyword),
+          );
+        }
+
+        return true;
+      });
+    }
+
+    return list;
+  }, [productList, categoryFilter, searchProd, showProductView]);
   const removeProduct = (product: OrderList) => {
+    const findQuantity = selectedOrder?.find(
+      (p) => p.prodVarId === product.prodVarId,
+    )?.quantity;
+    restoreVariantComponents(product.prodVarId, findQuantity);
     const newSelectedOrder = selectedOrder?.filter(
       (prod) => prod.prodVarId !== product.prodVarId,
     );
@@ -592,7 +620,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <div className="flex gap-2">
                       <div>
                         {" "}
-                        <SearchBar url={""} />
+                        <SearchBar
+                          useUrl={false}
+                          onSearch={(value) => {
+                            setSearchProd(value);
+                          }}
+                        />
                       </div>
                       <div>
                         {" "}
@@ -778,8 +811,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </div>
 
             <div className="flex justify-between text-gray-500 text-sm">
-              <span className="text-[10px] 2xl:text-md">Subtotal</span>
-              <span className="text-[10px] 2xl:text-md">
+              <span className="text-[10px] 2xl:text-xs">Subtotal</span>
+              <span className="text-[10px] 2xl:text-xs">
                 {formatPeso(subtotal)}
               </span>
             </div>

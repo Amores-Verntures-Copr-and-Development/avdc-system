@@ -11,11 +11,13 @@ interface AddCustomerModalProps {
   storeId: number;
   onSumit: (data: CreateCustomerDto) => Promise<boolean>;
   isSubmitting?: boolean;
+  onClose: () => void;
 }
 const AddCustomerModal = ({
   user,
   storeId,
   onSumit,
+  onClose,
   isSubmitting,
 }: AddCustomerModalProps) => {
   const [customerForm, setCustomerForm] = useState<CreateCustomerDto>({
@@ -46,7 +48,7 @@ const AddCustomerModal = ({
     };
     const success = await onSumit(cusData);
     if (success) {
-      alert("Success");
+      onClose();
     }
   };
   return (

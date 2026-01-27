@@ -237,15 +237,23 @@ export const selectProducts = async ({
 export const selectProductVariants = async ({
   connection,
   keyFields = {},
+  statusSold,
+  from,
+  to,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ProductVariants>;
   search?: string;
+  statusSold?: "fast" | "slow" | null;
+  from?: string;
+  to?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  let sql = `SELECT pv.*,u.userName,u.userFname,u.userRole FROM ProductVariants pv
+  let sql = `
+SELECT pv.*,p.prodName,u.userName,u.userFname,u.userRole,(SELECT SUM(si.salesItemQuantity) FROM SalesItems si WHERE si.prodVarId = pv.prodVarId) AS sold,(SELECT SUM(si.salesItemSubtotal) FROM SalesItems si WHERE si.prodVarId = pv.prodVarId) AS totalSales FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
-  WHERE 1=1`;
+LEFT JOIN Products p ON p.prodId = pv.prodId
+WHERE 1=1`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
@@ -255,7 +263,10 @@ LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
       params.push(value);
     }
   }
-
+  if (statusSold) {
+  }
+  if (from && to) {
+  }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
@@ -303,4 +314,72 @@ export const selectProductCategories = async ({
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
+};
+
+export const updateProductVariants = async ({
+  connection,
+  updates,
+  keyFields = ["prodVarId"],
+}: // 👈 optional per-field mode
+{
+  connection?: PoolConnection;
+  updates: Partial<ProductVariants>[];
+  keyFields?: (keyof ProductVariants)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof ProductVariants),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE ProductVariants
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
 };

@@ -4,6 +4,7 @@ import {
   CreateProductVariantDto,
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
+import { updateProductVariants } from "@/models/productModel";
 import { createProducts } from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
@@ -14,6 +15,7 @@ import {
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
+import { updateProductVariantServices } from "@/services/products/product-variant/update-product-variants";
 import { updateProductsByFields } from "@/services/products/udpate-product";
 import { ProductCategories, Products, ProductVariants } from "@/types/products";
 
@@ -131,11 +133,25 @@ export const updateProductById = async (product: Partial<Products>) => {
 
 export const getProductVariantController = async ({
   keyFields = {},
+  search,
+  statusSold,
+  from,
+  to,
 }: {
   keyFields?: Partial<ProductVariants>;
+  search?: string;
+  statusSold?: "fast" | "slow";
+  from?: string;
+  to?: string;
 }) => {
   try {
-    const data = await getProductVariants({ keyFields });
+    const data = await getProductVariants({
+      keyFields,
+      search,
+      statusSold,
+      from,
+      to,
+    });
     return {
       data: data,
       message: "Product variants fetched successfully!",
@@ -189,6 +205,27 @@ export const getProductCategories = async ({
     return {
       error: e,
       message: "Failed to fetched product variants!",
+      success: false,
+    };
+  }
+};
+
+export const updateProductVariantController = async (
+  data: Partial<ProductVariants>,
+) => {
+  try {
+    const result = await updateProductVariantServices.updateProductVariants({
+      updates: [data],
+    });
+    return {
+      data: result,
+      message: "Product variants updated successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to update product variants!",
       success: false,
     };
   }

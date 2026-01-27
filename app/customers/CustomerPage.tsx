@@ -47,7 +47,7 @@ const CustomerPage = () => {
   const { user } = useSession();
   const { data: response } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
     user ? `api/customers/store/${user?.storeId}` : null,
-    fetcher
+    fetcher,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleSubmitAddCustomer = async (cusData: CreateCustomerDto) => {
@@ -76,7 +76,7 @@ const CustomerPage = () => {
       setShowAddCustomer(false);
       return true;
     } catch (e: any) {
-      toast.error(e);
+      toast.error(e.message);
       return false;
     } finally {
       setIsSubmitting(false);
@@ -124,6 +124,9 @@ const CustomerPage = () => {
           storeId={user?.storeId ?? 0}
           onSumit={handleSubmitAddCustomer}
           isSubmitting={isSubmitting}
+          onClose={function (): void {
+            setShowAddCustomer(false);
+          }}
         />
       </Modal>
     </PageLayout>

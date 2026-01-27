@@ -1,3 +1,4 @@
+import { Loader2 } from "lucide-react";
 import React, { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -9,6 +10,7 @@ interface IconButtonProps {
   isRounded?: boolean;
   showLabel?: boolean;
   disable?: boolean;
+  loading?:boolean
 }
 
 const colorMap: Record<string, string> = {
@@ -29,6 +31,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   isRounded = true,
   showLabel = true,
   disable = false,
+  loading = false
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -66,9 +69,13 @@ const IconButton: React.FC<IconButtonProps> = ({
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
               : colorMap[bg] || ""
           }`}
-          disabled={disable}
+        disabled={disable || loading}
         >
-          {icon}
+          {loading ? (
+    <Loader2 size={18} className="animate-spin text-current" />
+  ) : (
+    icon
+  )}
         </button>
       </div>
 

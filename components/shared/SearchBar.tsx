@@ -5,18 +5,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 
 interface SearchBarProps {
-  url: string;
+  url?: string;
   debounce?: number;
   label?: string;
   placeholder?: string;
-  fetchMode?: boolean;
+  useUrl?: boolean; // NEW FLAG
+  onSearch?: (value: string) => void; // optional callback
 }
 
 export default function SearchBar({
-  url,
+  url = "",
   debounce = 500,
   label,
   placeholder = "Search...",
+  useUrl = true,
+  onSearch,
 }: SearchBarProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,27 +34,31 @@ export default function SearchBar({
   // Update URL only when debounced search changes
   // SearchBar component - FIXED VERSION
   useEffect(() => {
-    // Only update URL if search actually changed
-    const currentSearch = searchParams.get("search") || "";
+  if (!useUrl) return; // 🚫 don't touch URL
 
-    if (debouncedSearch.trim() === currentSearch.trim()) {
-      return; // Don't update if search hasn't changed
-    }
+  const currentSearch = searchParams.get("search") || "";
 
-    const params = new URLSearchParams(searchParams.toString());
+  if (debouncedSearch.trim() === currentSearch.trim()) {
+    return;
+  }
 
-    if (debouncedSearch.trim()) {
-      params.set("search", debouncedSearch.trim());
-    } else {
-      params.delete("search");
-    }
+  const params = new URLSearchParams(searchParams.toString());
 
-    // Only reset page if search actually changed
-    params.set("page", "1");
+  if (debouncedSearch.trim()) {
+    params.set("search", debouncedSearch.trim());
+  } else {
+    params.delete("search");
+  }
 
-    router.push(`${url}?${params.toString()}`);
-  }, [debouncedSearch, searchParams, url, router]);
+  params.set("page", "1");
 
+  router.push(`${url}?${params.toString()}`);
+}, [debouncedSearch, searchParams, url, router, useUrl]);
+  useEffect(() => {
+  if (!useUrl && onSearch) {
+    onSearch(debouncedSearch);
+  }
+}, [debouncedSearch, useUrl, onSearch]);
   // Debounce the local search
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);

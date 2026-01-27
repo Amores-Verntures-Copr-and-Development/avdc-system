@@ -5,6 +5,7 @@ import Input from "@/components/shared/Input";
 
 import { CreateProductDtos } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { ProductCategories } from "@/types/products";
 
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
@@ -17,6 +18,7 @@ interface AddProductModalProps {
   onSubmit: (data: CreateProductDtos) => Promise<boolean>;
   isSubmitting?: boolean;
   onCancel: () => void;
+  categories: ProductCategories[];
 }
 
 const AddProductModal = ({
@@ -26,9 +28,10 @@ const AddProductModal = ({
   onSubmit,
   isSubmitting,
   onCancel,
+  categories,
 }: AddProductModalProps) => {
   const [formData, setFormData] = useState<CreateProductDtos>({
-    prodCatId: null,
+    prodCatId: 0,
     storeId: storeId,
     prodCreatedBy: user?.userId ?? 0,
     prodName: "",
@@ -68,9 +71,15 @@ const AddProductModal = ({
           />
           <DropdownSelect
             label="Category"
-            name={"Category"}
-            value={undefined}
-            options={[]}
+            name={"prodCatId"}
+            value={String(formData.prodCatId)}
+            options={[
+              { value: "", label: "Select a category" }, // default option
+              ...categories.map((cat) => ({
+                value: String(cat.prodCatId),
+                label: cat.prodCatName,
+              })),
+            ]}
             sizes={"sm"}
             onChange={handleDataChange}
           />
