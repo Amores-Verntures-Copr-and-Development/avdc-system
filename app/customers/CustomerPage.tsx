@@ -4,7 +4,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { PlusIcon } from "lucide-react";
+import { Import, PlusIcon, Store } from "lucide-react";
 import React, { useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
 import { useSession } from "@/hooks/useSession";
@@ -17,6 +17,9 @@ import useSWR from "swr";
 import { formatPeso } from "@/utils/formatPeso";
 
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { useStores } from "@/hooks/userStore";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
+import { useRouter } from "next/navigation";
 
 const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -42,11 +45,44 @@ const columns: Column<DisplayCustomerDto>[] = [
     selector: (row) => formatDateToWords(row.firstVisit),
   },
 ];
+const adminColumns: Column<DisplayCustomerDto>[] = [
+  { key: "#", name: "#", selector: (_row, index) => index + 1 },
+  { key: "customerName", name: "Name" },
+  { key: "customerEmail", name: "Email" },
+  { key: "customerPhone", name: "Phone" },
+  { key: "storeName", name: "Store" },
+  { key: "customerType", name: "Type" },
+  {
+    key: "totalSpent",
+    name: "Total Spent",
+    selector: (row) => (
+      <span className="font-semibold">{formatPeso(row.totalSpent)}</span>
+    ),
+  },
+  {
+    key: "lastVisit",
+    name: "Last Visit",
+    selector: (row) => formatDateToWords(row.lastVisit),
+  },
+  {
+    key: "firstVisit",
+    name: "First Visit",
+    selector: (row) => formatDateToWords(row.firstVisit),
+  },
+];
 const CustomerPage = () => {
+  const router = useRouter();
   const [showAddCustomer, setShowAddCustomer] = useState(false);
-  const { user } = useSession();
+  const { user, hasStore, isAdmin } = useSession();
+  const { stores } = useStores({ user, hasStore, isAdmin });
+  const url =
+    user && hasStore
+      ? `api/customers/store/${user?.storeId}`
+      : user
+        ? `api/customers/`
+        : null;
   const { data: response } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
-    user ? `api/customers/store/${user?.storeId}` : null,
+    url,
     fetcher,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -82,6 +118,12 @@ const CustomerPage = () => {
       setIsSubmitting(false);
     }
   };
+  const storeOptions = Array.isArray(stores)
+    ? stores.map((s) => ({
+        label: s.storeName,
+        value: s.storeName,
+      }))
+    : [];
   return (
     <PageLayout className="p-2 gap-2">
       <PageHeader title={"Customers"} subtitle="Manage store customers" />
@@ -89,7 +131,18 @@ const CustomerPage = () => {
         <Table
           searchUrl="/customers"
           renderTopActions={
-            <div>
+            <div className="flex gap-2">
+              <div>
+                <Button
+                  label="Import"
+                  size={"sm"}
+                  icon={Import}
+                  onClick={() => {
+                    setShowAddCustomer(true);
+                  }}
+                  color="outline"
+                />
+              </div>
               <div>
                 <Button
                   label="Add Customer"
@@ -102,8 +155,31 @@ const CustomerPage = () => {
               </div>
             </div>
           }
+          addContentLeftTitle={
+            !hasStore && (
+              <div>
+                <DynamicDropdown
+                  options={storeOptions}
+                  onChange={function (value: string | number): void {
+                    if (value) {
+                      const url = new URL(window.location.href);
+                      url.searchParams.set("store", String(value));
+                      router.push(url.toString());
+                    } else {
+                      const url = new URL(window.location.href);
+                      url.searchParams.delete("store"); // remove 'store'
+                      router.push(url.toString());
+                    }
+                  }}
+                  placeholder={`Stores (${storeOptions.length})`}
+                  icon={<Store />}
+                  size="xs"
+                />
+              </div>
+            )
+          }
           uniqueIdKey="customerId"
-          columns={columns}
+          columns={hasStore ? columns : adminColumns}
           data={response?.data ?? []}
           showCheckBox
           isRounded={false}

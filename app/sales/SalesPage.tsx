@@ -32,6 +32,7 @@ import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
 import { set } from "date-fns";
 import SalesReportModal from "./components/SalesReportModal";
+import { sign } from "crypto";
 
 interface SalesPageProps {
   storeId: number;
@@ -339,6 +340,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
     null
   );
+  const [selectedStoreId,setSelectedStoreId] =useState<number | null>(null)
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
   const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
   const [isViewSales, setIsViewSales] = useState(false);
@@ -380,7 +382,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   }, [storeId, searchParams]);
   const debounceApi = useDebounce(apiUrl, 600);
   const { data: responseDetails } = useSWR(
-    user && storeId ? `/api/sales/${storeId}/details` : null,
+    user && storeId ? `/api/sales/${storeId}/details` : user && selectedStoreId ? `/api/sales/${selectedStoreId}/details` : `/api/sales/details/`,
     fetcher
   );
 
@@ -548,11 +550,16 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           value={defaultStoreFromUrl}
                           onChange={function (value: string | number): void {
                             if (value) {
+                            const findStore = Array.isArray(stores)
+                            ? stores.find(i => i.storeName === value)
+                            : undefined;
+                              setSelectedStoreId(findStore?.storeId ?? null)
                               const url = new URL(window.location.href);
                               url.searchParams.set("store", String(value));
                               router.push(url.toString());
                             } else {
                               const url = new URL(window.location.href);
+                               setSelectedStoreId(null)
                               url.searchParams.delete("store"); // remove 'store'
                               router.push(url.toString());
                             }

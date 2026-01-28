@@ -130,7 +130,7 @@ export const getSalesItemBySalesId = async (salesId: number) => {
   }
 };
 
-export const getTotalSalesDetails = async (storeId: number) => {
+export const getTotalSalesDetails = async (storeId?: number) => {
   try {
     const data = await getSalesServices.findSalesTotalsByStoreId({ storeId });
     return {

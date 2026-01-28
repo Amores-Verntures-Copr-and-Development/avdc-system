@@ -5,7 +5,10 @@ import {
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
 import { updateProductVariants } from "@/models/productModel";
-import { createProducts } from "@/services/products/create-products";
+import {
+  createBulkProducts,
+  createProducts,
+} from "@/services/products/create-products";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 import { createProductCategory } from "@/services/products/product-category/create-product-category";
@@ -32,6 +35,26 @@ export const createProductController = async (data: CreateProductDtos) => {
     return {
       success: false,
       message: "Failed to add product!",
+      error: e,
+    };
+  }
+};
+
+export const createProductBulkController = async (
+  data: CreateProductDtos[],
+) => {
+  try {
+    const res = await createBulkProducts({ data });
+    return {
+      data: res,
+      success: true,
+      message: "Products added successfully!",
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to add products!",
       error: e,
     };
   }

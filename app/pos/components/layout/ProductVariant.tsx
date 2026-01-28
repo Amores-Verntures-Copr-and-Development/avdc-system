@@ -32,7 +32,7 @@ const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
     });
   return (
     <div className="flex-1 w-full min-w-0">
-      <div className="flex-1 grid grid-cols-3 xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
         {reorderedVariants &&
           reorderedVariants.length > 0 &&
           reorderedVariants.map((prod) => (

@@ -22,9 +22,9 @@ interface VariantComponentPageProps {
   showAddComponent: boolean;
   setShowAddComponent: React.Dispatch<React.SetStateAction<boolean>>;
   prod: DisplayProductsDtos | null;
-  storeId:number;
-  mutate:()=>void;
-  onClose:()=>void;
+  storeId: number;
+  mutate: () => void;
+  onClose: () => void;
 }
 
 const VariantComponentPage = ({
@@ -34,10 +34,10 @@ const VariantComponentPage = ({
   prod,
   mutate,
   onClose,
-  storeId
+  storeId,
 }: VariantComponentPageProps) => {
   // const [showAddComponent, setShowAddComponent] = useState(false);
-  const [isSaving,setIsSaving] =useState(false)
+  const [isSaving, setIsSaving] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [form, setForm] = useState<ProductVariants>({
     prodId: data?.prodId ?? 0,
@@ -52,23 +52,27 @@ const VariantComponentPage = ({
     isDeductInv: Boolean(data?.isDeductInv),
   });
   const handleFormChange = handleChange(form, setForm);
-  const handleSave = async ()=> {
-    console.log({form})
-    setIsSaving(true)
-    const variantForm:Partial<ProductVariants> = {
-      prodVarId:Number(form.prodVarId),
-      prodVarName:form.prodVarName,
-      prodVarPrice:Number(form.prodVarPrice),
-      isDeductInv:form.isDeductInv
-    }
-    try{const result = await fetch(`/api/products/${storeId}/${data?.prodId}/product-variants/${data?.prodVarId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
+  const handleSave = async () => {
+    setIsSaving(true);
+    const variantForm: Partial<ProductVariants> = {
+      prodVarId: Number(form.prodVarId),
+      prodVarName: form.prodVarName,
+      prodVarPrice: Number(form.prodVarPrice),
+      isDeductInv: form.isDeductInv,
+    };
+    console.log({ variantForm });
+    try {
+      const result = await fetch(
+        `/api/products/${storeId}/product-variants/${data?.prodId}/${data?.prodVarId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(variantForm),
+          credentials: "include",
         },
-        body: JSON.stringify(variantForm),
-        credentials: "include",
-      });
+      );
 
       const res = await result.json();
 
@@ -78,12 +82,12 @@ const VariantComponentPage = ({
       toast.success(res.message);
       setIsEdit(false);
       mutate();
-    onClose();}
-    catch(e){}
-    finally{
-      setIsSaving(false)
+      onClose();
+    } catch (e) {
+    } finally {
+      setIsSaving(false);
     }
-  }
+  };
   return (
     <div className="flex flex-col gap-5">
       <BigCard
@@ -244,10 +248,12 @@ const VariantComponentPage = ({
                   label="Is Deduct?"
                   flexType="flex-col"
                   initial={form.isDeductInv === true}
-                  onToggle={(state) => (setForm((prev)=>({
-                    ...prev,
-                    isDeductInv:Boolean(state) === true ? true : false
-                  })))}
+                  onToggle={(state) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      isDeductInv: Boolean(state) === true ? true : false,
+                    }))
+                  }
                 />
               </div>
             </div>

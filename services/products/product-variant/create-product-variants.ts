@@ -4,7 +4,7 @@ import {
 } from "@/dtos/products.dto";
 import {
   insertProductVariant,
-  insertProductVariants,
+  insertProductVariantsBulk,
 } from "@/models/productModel";
 import { PoolConnection } from "mysql2/promise";
 import { createVariantComponent } from "./variant-component/create-variant-component";
@@ -19,7 +19,8 @@ export async function createProductVariant({
   data: CreateProductVariantDto;
 }) {
   try {
-    await insertProductVariant({ connection, data });
+    const id = await insertProductVariant({ connection, data });
+    return id;
   } catch (e) {
     throw e;
   }
@@ -40,16 +41,16 @@ export async function createProductVariants({
       localConnection = true;
       const newPool = await getDBConnection();
       newConnection = await newPool.getConnection();
-     await newConnection.beginTransaction();
+      await newConnection.beginTransaction();
     }
-    
+
     // Use for...of instead of map to properly await async operations
     for (const item of data) {
       const prodVarId = await insertProductVariant({
         connection: connection ? connection : newConnection,
-        data: {...item,isDeductInv:true},
+        data: { ...item, isDeductInv: true },
       });
-      console.log(item.variantComponents)
+      console.log(item.variantComponents);
       if (item.variantComponents && item.variantComponents.length > 0) {
         const variantComponents: CreateVarianComponentDto[] =
           item.variantComponents.map((vc) => ({ ...vc, prodVarId }));
@@ -60,10 +61,10 @@ export async function createProductVariants({
         });
       }
     }
-    
+
     // Commit transaction if we started it
     if (localConnection) {
-      console.log("Agi here")
+      console.log("Agi here");
       await newConnection.commit();
     }
   } catch (e) {
@@ -77,5 +78,24 @@ export async function createProductVariants({
     if (localConnection) {
       await newConnection.release();
     }
+  }
+}
+
+export async function createProductVariantsBulk({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateProductVariantDto[];
+}) {
+  try {
+    const ids: number[] = await insertProductVariantsBulk({
+      connection,
+      data,
+    });
+
+    return ids;
+  } catch (e) {
+    throw e;
   }
 }

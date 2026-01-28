@@ -14,8 +14,10 @@ import { UserInterface } from "@/types/users";
 
 export type CreateProductDtos = Pick<
   Products,
-  "storeId" | "prodCatId" | "prodCreatedBy" | "prodName" | "productVariants"
->;
+  "storeId" | "prodCatId" | "prodCreatedBy" | "prodName"
+> & {
+  productVariants?: CreateProductVariantDto[];
+};
 
 export type CreateProductVariantDto = Pick<
   ProductVariants,
@@ -23,10 +25,11 @@ export type CreateProductVariantDto = Pick<
   | "prodVarCreatedBy"
   | "prodVarName"
   | "prodVarPrice"
-  | "variantComponents"
   | "prodVarUnit"
   | "isDeductInv"
->;
+> & {
+  variantComponents?: CreateVarianComponentDto[];
+};
 
 export type CreateVarianComponentDto = Pick<
   VariantComponents,

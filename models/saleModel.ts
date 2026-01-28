@@ -159,6 +159,74 @@ export const insertSales = async ({
   return results.insertId;
 };
 
+export const updateSales = async ({
+  connection,
+  updates,
+  keyFields = ["salesId"], // default primary key
+}: {
+  connection?: PoolConnection;
+  updates: Partial<Sales>[];
+  keyFields?: (keyof Sales)[]; // which fields define the WHERE condition
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  // ✅ Determine all updatable fields (exclude keys)
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof Sales),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // ✅ Build CASE WHEN for each update field
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      // Build WHERE condition for each key (e.g., poItemId, itemId)
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add all key values + field value to params
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    setClauses.push(`${field} = CASE ${caseParts.join(" ")} END`);
+  }
+
+  // ✅ WHERE clause (unique combination of all key values)
+  const whereConditions: string[] = [];
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  // Push all key values again for WHERE condition
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE Sales
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
+};
+
 export const selectCountSales = async ({
   keyFields = {},
   connection,
@@ -276,9 +344,12 @@ export const selectSalesItems = async ({
   return rows as DisplaySalesItems[];
 };
 
-export const selectSalesTotalDetails = async (storeId: number) => {
+export const selectSalesTotalDetails = async (storeId?: number) => {
   const pool = await getDBConnection();
-  let sql = `SELECT 
+  let sql;
+
+  if (storeId) {
+    sql = `SELECT 
 (SELECT SUM(s.salesTotalAmount) FROM Sales s WHERE s.storeId = ?) AS totalSales,
 (SELECT COUNT(DISTINCT(c.customerId)) FROM Customers c LEFT JOIN Sales s ON s.customerId = c.customerId AND s.storeId = ?) AS totalCustomer, 
   (SELECT SUM(s.salesTotalAmount)
@@ -291,8 +362,34 @@ export const selectSalesTotalDetails = async (storeId: number) => {
    FROM Sales s
    WHERE s.storeId = ?
   ) AS totalCountSales;`;
+  } else {
+    sql = `SELECT 
+  (SELECT SUM(s.salesTotalAmount)
+   FROM Sales s
+  ) AS totalSales,
 
-  const [rows] = await pool.execute(sql, [storeId, storeId, storeId, storeId]);
+  (SELECT COUNT(DISTINCT c.customerId)
+   FROM Customers c
+   LEFT JOIN Sales s 
+     ON s.customerId = c.customerId
+  ) AS totalCustomer,
+
+  (SELECT SUM(s.salesTotalAmount)
+   FROM Sales s
+   WHERE s.salesCreatedAt >= CURDATE()
+     AND s.salesCreatedAt < CURDATE() + INTERVAL 1 DAY
+  ) AS todaySales,
+
+  (SELECT COUNT(*)
+   FROM Sales s
+  ) AS totalCountSales;
+`;
+  }
+
+  const [rows] = await pool.execute(
+    sql,
+    storeId ? [storeId, storeId, storeId, storeId] : [],
+  );
   return rows;
 };
 

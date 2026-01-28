@@ -28,6 +28,46 @@ export const insertProducts = async ({
   return results.insertId;
 };
 
+export const insertProductsBulk = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: CreateProductDtos[];
+}): Promise<number[]> => {
+  if (!data.length) return [];
+
+  const pool = connection ? connection : await getDBConnection();
+
+  // Prepare values for bulk insert
+  const values: any[] = [];
+  const placeholders = data
+    .map((d) => {
+      values.push(
+        d.prodName,
+        d.storeId ?? null,
+        d.prodCreatedBy,
+        d.prodCatId ?? null,
+      );
+      return "(?,?,?,?)";
+    })
+    .join(",");
+
+  const sql = `INSERT INTO Products (prodName, storeId, prodCreatedBy, prodCatId)
+               VALUES ${placeholders}`;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
+
+  // Calculate all inserted IDs
+  const insertedIds: number[] = [];
+  const firstId = result.insertId;
+  for (let i = 0; i < result.affectedRows; i++) {
+    insertedIds.push(firstId + i);
+  }
+
+  return insertedIds;
+};
+
 export const updateProducts = async ({
   connection,
   updates,
@@ -114,17 +154,19 @@ export const insertProductVariant = async ({
   ]);
   return results.insertId;
 };
-export const insertProductVariants = async ({
+export const insertProductVariantsBulk = async ({
   connection,
   data,
 }: {
   connection?: PoolConnection;
   data: CreateProductVariantDto[];
-}) => {
-  const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId,isDeductInv)
-                VALUES ${data.map(() => "(?,?,?,?,?)").join(",")}`;
+}): Promise<number[]> => {
+  if (!data.length) return [];
 
+  const pool = connection ? connection : await getDBConnection();
+
+  // Build bulk insert query
+  const placeholders = data.map(() => "(?,?,?,?,?)").join(",");
   const values = data.flatMap((item) => [
     item.prodVarName,
     item.prodVarPrice,
@@ -132,8 +174,22 @@ export const insertProductVariants = async ({
     item.prodId,
     item.isDeductInv,
   ]);
-  const [results] = await pool.execute<ResultSetHeader>(sql, values);
-  return results.insertId;
+
+  const sql = `
+    INSERT INTO ProductVariants
+      (prodVarName, prodVarPrice, prodVarCreatedBy, prodId, isDeductInv)
+    VALUES ${placeholders}
+  `;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
+
+  // Calculate all inserted IDs
+  const insertedIds: number[] = [];
+  const firstId = result.insertId;
+  for (let i = 0; i < result.affectedRows; i++) {
+    insertedIds.push(firstId + i);
+  }
+  return insertedIds;
 };
 
 export const insertVarianComponents = async ({

@@ -3,20 +3,19 @@ import { Connection } from "mysql2/promise";
 
 export async function generateSalesInvoice({
   connection,
+  id,
 }: {
   connection: Connection;
+  id: number;
 }) {
   try {
     // 1️⃣ Count all sales
-    const totalSales = await selectCountSales({ connection });
 
     // 2️⃣ Get current year dynamically
     const year = new Date().getFullYear(); // e.g., 2026
 
     // 3️⃣ Generate invoice number with padded count
-    const invoiceNo = `INV-${year}-${(totalSales + 1)
-      .toString()
-      .padStart(6, "0")}`;
+    const invoiceNo = `INV-${year}-${(id + 1).toString().padStart(6, "0")}`;
 
     return invoiceNo;
   } catch (e) {

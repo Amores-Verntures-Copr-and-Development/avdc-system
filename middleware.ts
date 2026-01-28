@@ -33,10 +33,11 @@ export function middleware(request: NextRequest) {
     "/suppliers",
     "/users",
     "/store-selection",
+    "/pos",
   ];
 
   const isProtectedPage = protectedPages.some((route) =>
-    pathname.startsWith(route)
+    pathname.startsWith(route),
   );
 
   // ✅ Handle root path - redirect to dashboard if logged in, otherwise to login
@@ -88,5 +89,6 @@ export const config = {
     "/users/:path*",
     "/suppliers/:path*",
     "/api/:path*",
+    "/pos/:path*",
   ],
 };

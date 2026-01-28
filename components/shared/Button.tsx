@@ -36,8 +36,8 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: "text-lg px-5 py-2.5",
 };
 const iconSizes: Record<ButtonSize, number> = {
-  xs: 13,
-  sm: 14,
+  xs: 14,
+  sm: 16,
   md: 18,
   lg: 22,
 };

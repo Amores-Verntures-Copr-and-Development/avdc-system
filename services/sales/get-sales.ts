@@ -71,7 +71,7 @@ export const getSalesServices = {
       throw e;
     }
   },
-  findSalesTotalsByStoreId: async ({ storeId }: { storeId: number }) => {
+  findSalesTotalsByStoreId: async ({ storeId }: { storeId?: number }) => {
     try {
       const data = await selectSalesTotalDetails(storeId);
       return data;

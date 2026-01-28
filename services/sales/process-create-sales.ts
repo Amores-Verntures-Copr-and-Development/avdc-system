@@ -24,6 +24,7 @@ import {
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
+import { updateSalesByFields } from "./update-sales";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -31,7 +32,6 @@ export async function processCreateSales(data: CreateSaleDto) {
   try {
     await connection.beginTransaction();
     //generate sales invoice by getting counting all sales records and plus 1 -
-    const salesInvoice = await generateSalesInvoice({ connection });
     //generate salesNo by getting stores sales and plus 1 SALE-000001
     const salesNo = await generateSalesNo({
       connection,
@@ -39,7 +39,7 @@ export async function processCreateSales(data: CreateSaleDto) {
     });
     const salesData: CreateSaleDto = {
       salesStatus: data.salesStatus,
-      salesInvoice: salesInvoice,
+      salesInvoice: "",
       salesNo: salesNo,
       salesSubTotal: data.salesSubTotal,
       customerId: data.customerId,
@@ -48,9 +48,23 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesTotalPaid: data.salesTotalPaid,
       salesCreatedBy: data.salesCreatedBy,
     };
+
     //insert into sale table
     const salesId = await createSale({ connection, data: salesData });
-
+    const salesInvoice = await generateSalesInvoice({
+      connection,
+      id: salesId,
+    });
+    await updateSalesByFields({
+      connection,
+      updates: [
+        {
+          salesId: salesId,
+          salesInvoice: salesInvoice,
+        },
+      ],
+      keyFields: ["salesId"],
+    });
     const saleItemData: CreateSaleItemDto[] =
       data.salesItems?.map((item) => ({
         inventoryItemId: item.inventoryItemId,

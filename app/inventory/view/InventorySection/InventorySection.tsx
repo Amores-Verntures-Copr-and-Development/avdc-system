@@ -47,7 +47,10 @@ import { formatPeso } from "@/utils/formatPeso";
 import AddItemToProductModal, {
   AddItemToProductStoreInterface,
 } from "../../components/AddItemToProductModal";
-import { CreateProductVariantDto } from "@/dtos/products.dto";
+import {
+  CreateProductDtos,
+  CreateProductVariantDto,
+} from "@/dtos/products.dto";
 
 import ImportItemModal from "../../components/ImportItemModal";
 import { ImportItemInfo } from "@/dtos/items.dto";
@@ -448,17 +451,45 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         return true;
       }
       if (!data.isAddAsVariant) {
-        alert("Create automatically as product");
-        return true;
+        const createProduct: CreateProductDtos[] =
+          data.productVariant.map((p) => ({
+            prodCatId: null,
+            prodCreatedBy: user?.userId ?? 0,
+            prodName: p.prodVarName,
+            storeId: user?.storeId,
+            productVariants: [
+              {
+                prodId: 0,
+                prodVarCreatedBy: user?.userId ?? 0,
+                prodVarName: p.prodVarName,
+                prodVarPrice: p.prodVarPrice,
+                prodVarUnit: "",
+                isDeductInv: true,
+                variantComponents:
+                  p.variantComponents?.map((vc) => ({
+                    inventoryItemId: vc.inventoryItemId,
+                    prodVarId: 0,
+                    quantityRequired: vc.quantityRequired,
+                  })) ?? [],
+              },
+            ],
+          })) ?? [];
+        console.log({ createProduct });
+        const result = await fetch(`api/products/${user?.storeId}/bulk`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(createProduct),
+        });
+        const res = await result.json();
+        if (!res.success) {
+          throw new Error(res.err);
+        }
+        toast.success(res.message);
+        mutate();
+        return false;
       }
-      // const newData: CreateProductVariantDto[] =
-      //   data.map((prod) => ({
-      //     ...prod,
-      //     productCreatedBy: user?.userId ?? 0,
-      //     inventoryId: inventoryId ?? 0,
-      //     isDeduct: 1,
-      //   })) ?? [];
-      // console.log("Product: ", newData);
       return false;
     } catch (e) {
       console.log(e);
