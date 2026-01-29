@@ -212,6 +212,14 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         );
       },
       inputType: "number",
+      selector: (row) =>
+        row.reqItemStatus === "not_ordered"
+          ? 0
+          : row.reqItemTransfer === 0
+            ? ""
+            : row.reqItemTransfer,
+      value: (row) =>
+        row.reqItemStatus === "not_ordered" ? 0 : row.reqItemTransfer,
     },
 
     {
@@ -365,7 +373,14 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         );
       },
       inputType: "number",
-      selector: (row) => (row.reqItemTransfer === 0 ? "" : row.reqItemTransfer),
+      selector: (row) =>
+        row.reqItemStatus === "not_ordered"
+          ? 0
+          : row.reqItemTransfer === 0
+            ? ""
+            : row.reqItemTransfer,
+      value: (row) =>
+        row.reqItemStatus === "not_ordered" ? 0 : row.reqItemTransfer,
     },
 
     {
@@ -1079,7 +1094,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   handleCompletePO();
                 }}
                 label="Complete PO"
-                disabled={data.every((req) => req.requestStatus === "received")}
+                disabled={data.every((req) => req.requestStatus !== "received")}
                 icon={PackageCheckIcon}
                 className="font-semibold  text-xs px-2 py-2"
               />

@@ -224,13 +224,18 @@ const ReceivedComponent = ({
     console.log("Click");
     setSupplierData((prev) => ({
       ...prev,
-      items: prev.items.map((item) => ({
-        ...item,
-        poItemReceivedQty:
-          item.poItemStatus === "not_ordered"
-            ? 0
-            : Number(item.poItemOrderedQty),
-      })),
+      items: prev.items.map((item) => {
+        if (item.poItemStatus === "received") {
+          return { ...item };
+        }
+        return {
+          ...item,
+          poItemReceivedQty:
+            item.poItemStatus === "not_ordered"
+              ? 0
+              : Number(item.poItemOrderedQty),
+        };
+      }),
     }));
   };
 
@@ -342,7 +347,6 @@ const ReceivedComponent = ({
                     //   );
                     //   return;
                     // }
-
                     if (supplier) {
                       setIsShowReceivedConfirm(true);
                       setSupplierReceivedData([supplierData]);

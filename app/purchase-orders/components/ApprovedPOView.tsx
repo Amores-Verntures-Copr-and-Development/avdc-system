@@ -108,7 +108,6 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   const [showROPDF, setShowROPDF] = useState<
     "po" | "supplier" | "store" | null
   >(null);
-  const [orderView, setOrderView] = useState(false);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
   const [isView, setIsView] = useState<"all" | "store">("all");
   const [receivedSupplierItem, setReceivedSupplierItem] =
@@ -155,23 +154,26 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   //     onClose();
   //   }
   // };
-  const hasSentSomePO = data.some((s) =>
-    s.items.some((i) => i.poItemStatus === "sent"),
-  );
+
   const handleReceivePO = async (items: DisplayPOItemsSupplier[]) => {
     try {
       console.log({ items });
+      const itemData = items.flatMap((i) =>
+        i.items.filter(
+          (item) =>
+            item.poItemStatus === "not_ordered" ||
+            (item.poItemStatus === "sent" &&
+              Number(item.poItemReceivedQty) !== 0),
+        ),
+      );
+      if (itemData.length === 0) {
+        toast.error("No quantity to be received!");
+        return false;
+      }
       const updatePO: UpdatePurchaseOrdersDto = {
         updatedBy: user?.userId ?? 0,
         poId: poData?.poId,
-        poItems: items.flatMap((i) =>
-          i.items.filter(
-            (item) =>
-              item.poItemStatus === "not_ordered" ||
-              (item.poItemStatus === "sent" &&
-                Number(item.poItemReceivedQty) !== 0),
-          ),
-        ),
+        poItems: itemData,
       };
       const newData = {
         controller: "received",
@@ -280,18 +282,6 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                   color="outline"
                 />
               </div>
-              {hasSentSomePO && (
-                <div>
-                  <Button
-                    size="xs"
-                    label="Receive Sent Items"
-                    onClick={() => {
-                      setOrderView(true);
-                    }}
-                    color="success"
-                  />
-                </div>
-              )}
             </div>
           </div>
           {/* Scrollable Content Area */}
@@ -452,17 +442,37 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       icon={Check}
                                       className="font-semibold"
                                     />
-                                    <Button
-                                      isRounded={false}
-                                      size="xs"
-                                      onClick={() => {
-                                        setReceivedSupplierItem(data);
-                                      }}
-                                      color="primary"
-                                      label="Received"
-                                      icon={PackageOpen}
-                                      className="font-semibold"
-                                    />
+                                    {data.items
+                                      .filter(
+                                        (i) => i.poItemStatus !== "not_ordered",
+                                      )
+                                      .every(
+                                        (i) => i.poItemStatus === "received",
+                                      ) ? (
+                                      <Button
+                                        isRounded={false}
+                                        size="xs"
+                                        onClick={() => {
+                                          setReceivedSupplierItem(data);
+                                        }}
+                                        color="success"
+                                        label="Received"
+                                        icon={PackageCheck}
+                                        className="font-semibold"
+                                      />
+                                    ) : (
+                                      <Button
+                                        isRounded={false}
+                                        size="xs"
+                                        onClick={() => {
+                                          setReceivedSupplierItem(data);
+                                        }}
+                                        color="primary"
+                                        label="Receive"
+                                        icon={PackageOpen}
+                                        className="font-semibold"
+                                      />
+                                    )}
                                   </>
                                 ) : (
                                   <Button
@@ -479,6 +489,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     color="secondary"
                                     label="Send"
                                     icon={Send}
+                                    disabled={
+                                      sendingSupplier !== index &&
+                                      sendingSupplier !== null
+                                    }
                                     className="font-semibold"
                                   />
                                 )}
