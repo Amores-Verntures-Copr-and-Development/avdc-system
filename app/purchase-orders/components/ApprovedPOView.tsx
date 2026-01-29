@@ -1,6 +1,9 @@
 import Button from "@/components/shared/Button";
 import Table, { Column } from "@/components/shared/Table";
-import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
+import {
+  DisplayPOItemsSupplier,
+  UpdatePurchaseOrdersDto,
+} from "@/dtos/purchase.dto";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { formatPeso } from "@/utils/formatPeso";
 import {
@@ -12,6 +15,8 @@ import {
   FileText,
   Loader2,
   Package,
+  PackageCheck,
+  PackageOpen,
   Send,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -25,6 +30,8 @@ import Modal from "@/components/shared/Modal";
 import { PDFViewer } from "@react-pdf/renderer";
 import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
 import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
+import ReceivedComponent from "./_components/ReceivedComponent";
+import { useSession } from "@/hooks/useSession";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -90,6 +97,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   mutate,
   setShowAllItems,
 }) => {
+  const { user } = useSession();
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number | null;
     index: null | number;
@@ -100,11 +108,14 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   const [showROPDF, setShowROPDF] = useState<
     "po" | "supplier" | "store" | null
   >(null);
+  const [orderView, setOrderView] = useState(false);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
   const [isView, setIsView] = useState<"all" | "store">("all");
+  const [receivedSupplierItem, setReceivedSupplierItem] =
+    useState<DisplayPOItemsSupplier | null>(null);
   const [selectedSupplier, setSelectedSupplier] =
     useState<DisplayPOItemsSupplier | null>(null);
-  const { data: itemResponse = { data: [] } } = useSWR<{
+  const { data: itemResponse = { data: [] }, mutate: mutateItems } = useSWR<{
     data: StoreSupplierDetails[];
   }>(
     isView === "store" && expandedSupplier
@@ -114,12 +125,12 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     {
       keepPreviousData: true, // This keeps the data when the key becomes null
       revalidateOnFocus: false, // Optional: prevent refetch on window focus
-    }
+    },
   );
   const handleSendBySupplier = async (
     poItems: PurchaseOrderItems[],
     suppId: number,
-    index: number
+    index: number,
   ) => {
     setSendingSupplier(index);
 
@@ -137,11 +148,96 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     mutate();
     setSendingSupplier(null);
   };
-  const handleSendToSupliers = async (data: DisplayPOItemsSupplier[]) => {
-    const success = await onSendPO(data);
-    if (success) {
-      toast.success("Purchase Order successfully sent!");
-      onClose();
+  // const handleSendToSupliers = async (data: DisplayPOItemsSupplier[]) => {
+  //   const success = await onSendPO(data);
+  //   if (success) {
+  //     toast.success("Purchase Order successfully sent!");
+  //     onClose();
+  //   }
+  // };
+  const hasSentSomePO = data.some((s) =>
+    s.items.some((i) => i.poItemStatus === "sent"),
+  );
+  const handleReceivePO = async (items: DisplayPOItemsSupplier[]) => {
+    try {
+      console.log({ items });
+      const updatePO: UpdatePurchaseOrdersDto = {
+        updatedBy: user?.userId ?? 0,
+        poId: poData?.poId,
+        poItems: items.flatMap((i) =>
+          i.items.filter(
+            (item) =>
+              item.poItemStatus === "not_ordered" ||
+              (item.poItemStatus === "sent" &&
+                Number(item.poItemReceivedQty) !== 0),
+          ),
+        ),
+      };
+      const newData = {
+        controller: "received",
+        data: updatePO,
+      };
+      const result = await fetch(`/api/purchase-order/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      toast.success(
+        `PO Items from ${items[0].suppName} received successfully!`,
+      );
+      mutate();
+      mutateItems();
+      setReceivedSupplierItem(null);
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add Inventory.");
+      return false;
+    }
+  };
+  const handleNotOrderedSupplierItem = async (
+    dataSupp: DisplayPOItemsSupplier,
+  ) => {
+    try {
+      const newData = {
+        data: dataSupp.items.map((item) => ({
+          ...item,
+        })),
+        controller: "not_ordered",
+      };
+
+      const result = await fetch(
+        `/api/purchase-order/po-items/${poData?.poId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newData),
+        },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(
+        `PO Items from ${dataSupp.suppName} successfully mark as not ordered!`,
+      );
+      mutateItems();
+      mutate();
+      setReceivedSupplierItem(null);
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add Inventory.");
+      return false;
     }
   };
   return (
@@ -163,17 +259,41 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
               Order Items by Supplier
             </h3>
-            <div>
-              <Button
-                size="xs"
-                label="View all items"
-                onClick={() => {
-                  setShowAllItems("all");
-                }}
-              />
+            <div className="flex gap-2">
+              <div>
+                <Button
+                  size="xs"
+                  label="Request"
+                  onClick={() => {
+                    setShowAllItems("request");
+                  }}
+                  color="outline"
+                />
+              </div>
+              <div>
+                <Button
+                  size="xs"
+                  label="View all items"
+                  onClick={() => {
+                    setShowAllItems("all");
+                  }}
+                  color="outline"
+                />
+              </div>
+              {hasSentSomePO && (
+                <div>
+                  <Button
+                    size="xs"
+                    label="Receive Sent Items"
+                    onClick={() => {
+                      setOrderView(true);
+                    }}
+                    color="success"
+                  />
+                </div>
+              )}
             </div>
           </div>
-
           {/* Scrollable Content Area */}
           <div className="flex-1 overflow-y-auto min-h-0">
             {loading ? (
@@ -292,7 +412,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   size="xs"
                                   onClick={() => {
                                     throw new Error(
-                                      "Function not implemented."
+                                      "Function not implemented.",
                                     );
                                   }}
                                   color="secondary"
@@ -312,23 +432,38 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                   icon={FileText}
                                   className="font-semibold text-gray-700 text-xs"
                                 />
-                                {data.items.every(
-                                  (i) => i.poItemStatus === "sent"
+                                {data.items.some(
+                                  (i) =>
+                                    i.poItemStatus === "sent" ||
+                                    i.poItemStatus === "received",
                                 ) ? (
-                                  <Button
-                                    isRounded={false}
-                                    disabled={true}
-                                    size="xs"
-                                    onClick={() => {
-                                      throw new Error(
-                                        "Function not implemented."
-                                      );
-                                    }}
-                                    color="success"
-                                    label="Sent"
-                                    icon={Check}
-                                    className="font-semibold"
-                                  />
+                                  <>
+                                    <Button
+                                      isRounded={false}
+                                      disabled={true}
+                                      size="xs"
+                                      onClick={() => {
+                                        throw new Error(
+                                          "Function not implemented.",
+                                        );
+                                      }}
+                                      color="success"
+                                      label="Sent"
+                                      icon={Check}
+                                      className="font-semibold"
+                                    />
+                                    <Button
+                                      isRounded={false}
+                                      size="xs"
+                                      onClick={() => {
+                                        setReceivedSupplierItem(data);
+                                      }}
+                                      color="primary"
+                                      label="Received"
+                                      icon={PackageOpen}
+                                      className="font-semibold"
+                                    />
+                                  </>
                                 ) : (
                                   <Button
                                     loading={sendingSupplier === index}
@@ -338,7 +473,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                       handleSendBySupplier(
                                         data.items,
                                         data.suppId,
-                                        index
+                                        index,
                                       )
                                     }
                                     color="secondary"
@@ -364,7 +499,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     const qty =
                                       Number(item.poItemOrderedQty) || 0;
                                     return total + price * qty;
-                                  }, 0)
+                                  }, 0),
                                 )}
                               </p>
                             </div>
@@ -449,7 +584,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     size="xs"
                                     onClick={function (): void {
                                       throw new Error(
-                                        "Function not implemented."
+                                        "Function not implemented.",
                                       );
                                     }}
                                     color="secondary"
@@ -486,7 +621,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     const qty =
                                       Number(item.poItemOrderedQty) || 0;
                                     return total + price * qty;
-                                  }, 0)
+                                  }, 0),
                                 )}
                               </p>
                             </div>
@@ -568,7 +703,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
-            {data.some((supp) => supp.suppId) && (
+            {/* {data.some((supp) => supp.suppId) && (
               <div>
                 <Button
                   size="sm"
@@ -580,7 +715,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                   className="font-semibold text-xs px-2 py-2"
                 />
               </div>
-            )}
+            )} */}
           </div>
         </div>
       </div>
@@ -604,6 +739,40 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           )}
         </PDFViewer>
       </Modal>
+      {receivedSupplierItem && (
+        <Modal
+          className="h-[95%]"
+          isOpen={receivedSupplierItem !== null}
+          size="xl"
+          onClose={function (): void {
+            setReceivedSupplierItem(null);
+          }}
+          title={`Received from ${receivedSupplierItem.suppName}`}
+        >
+          <ReceivedComponent
+            onMaskAsDeliverdSupplier={handleNotOrderedSupplierItem}
+            onReceivePO={handleReceivePO}
+            supplier={receivedSupplierItem}
+            mutateInventory={mutate}
+            originalData={receivedSupplierItem}
+            expandedSupplier={null}
+            setExpandedSupplier={function (
+              value: React.SetStateAction<number | null>,
+            ): void {
+              throw new Error("Function not implemented.");
+            }}
+          />
+          {/* <PDFViewer width="100%" height="100%">
+            {showROPDF === "supplier" ? (
+              <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
+            ) : (
+              <PDFViewer width="100%" height="100%">
+                <PurchaseOrderPDF data={poData} />
+              </PDFViewer>
+            )}
+          </PDFViewer> */}
+        </Modal>
+      )}
     </div>
   );
 };

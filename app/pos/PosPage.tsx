@@ -751,7 +751,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
         <div className="flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
-            <h1 className="font-semibold text-xs 2xl:text-md">Order Details</h1>
+            <h1 className="font-semibold text-xs 2xl:text-sm">Order Details</h1>
             <span className="text-[9px] 2xl:text-sm font-semibold">
               {selectedOrder?.length} items
             </span>

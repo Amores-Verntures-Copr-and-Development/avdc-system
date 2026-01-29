@@ -40,18 +40,18 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
   const [showPage, setShowPage] = useState<"status" | "all" | "request">(
-    "status"
+    "status",
   );
   const api =
     data?.poStatus === "pending"
       ? `/api/purchase-order/po-items/${data?.poId}`
       : data?.poStatus === "approved"
-      ? `/api/purchase-order/po-items-supplier/${data?.poId}`
-      : data?.poStatus === "sent"
-      ? `/api/purchase-order/po-items-supplier/${data?.poId}`
-      : data?.poStatus === "received"
-      ? `/api/purchase-order/po-request-order/${data?.poNumber}`
-      : `/api/purchase-order/po-request-order/${data?.poNumber}`;
+        ? `/api/purchase-order/po-items-supplier/${data?.poId}`
+        : data?.poStatus === "sent"
+          ? `/api/purchase-order/po-items-supplier/${data?.poId}`
+          : data?.poStatus === "received"
+            ? `/api/purchase-order/po-request-order/${data?.poNumber}`
+            : `/api/purchase-order/po-request-order/${data?.poNumber}`;
 
   const {
     data: itemResponse = { data: [] },
@@ -117,7 +117,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   const handleSendPO = async (items: DisplayPOItemsSupplier[]) => {
     console.log(
       "Items: ",
-      items.flatMap((i) => i.items)
+      items.flatMap((i) => i.items),
     );
     const newData: UpdatePurchaseOrdersDto = {
       updatedBy: user?.userId ?? 0,
@@ -176,7 +176,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         throw new Error(res.err);
       }
       toast.success(
-        `PO Items from ${items[0].suppName} received successfully!`
+        `PO Items from ${items[0].suppName} received successfully!`,
       );
       mutateInventory();
       mutate();
@@ -252,7 +252,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   };
   const handleAddItemPo = async (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => {
     // console.log("Data: ", dataReq[0].requestItemsData);
     console.log({ data });
@@ -281,7 +281,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   };
   const handleUpdatePOItem = async (
     data: Partial<PurchaseOrderItems>,
-    poId: number
+    poId: number,
   ) => {
     try {
       const result = await fetch(
@@ -292,7 +292,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(data),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -311,7 +311,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   };
   const handleRemoveItem = async (
     dataItem: Partial<PurchaseOrderItems>,
-    poId: number
+    poId: number,
   ) => {
     if (!dataItem.poItemId || !poId) return false;
     const removePOItem: Partial<PurchaseOrderItems>[] = [
@@ -329,7 +329,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(removePOItem),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -347,7 +347,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     }
   };
   const handleNotOrderedSupplierItem = async (
-    dataSupp: DisplayPOItemsSupplier
+    dataSupp: DisplayPOItemsSupplier,
   ) => {
     try {
       const newData = {
@@ -369,7 +369,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
         throw new Error(res.err);
       }
       toast.success(
-        `PO Items from ${dataSupp.suppName} successfully mark as not ordered!`
+        `PO Items from ${dataSupp.suppName} successfully mark as not ordered!`,
       );
       mutateInventory();
       mutate();

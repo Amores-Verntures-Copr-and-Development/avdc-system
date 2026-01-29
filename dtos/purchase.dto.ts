@@ -89,9 +89,7 @@ export interface DisplayPOItemsSupplier extends Supplier {
 }
 
 export interface DisplayRequisitionWithItems
-  extends Request,
-    PurchaseOrders,
-    StoreInterface {
+  extends Request, PurchaseOrders, StoreInterface {
   requestItemsData: RequestItemsCombine[];
 }
 

@@ -22,7 +22,7 @@ const CompactOrderItem = ({
     <div className="flex items-center justify-between gap-2 rounded-lg shadow-sm p-1 2xl:p-2 bg-white hover:shadow-md border border-gray-200 hover:border-primary-1/50 transition-all group">
       {/* Product name - flex-1 to take available space */}
       <div className="flex-1 min-w-0">
-        <p className="text-[9px] 2xl:text-xs font-medium text-gray-800 truncate group-hover:text-primary-1 transition-colors">
+        <p className="text-[9px] 2xl:text-xs font-medium text-gray-800  group-hover:text-primary-1 transition-colors">
           {data.prodVarName}
         </p>
         <p className="text-[10px] text-gray-500 mt-0.5">

@@ -93,7 +93,7 @@ interface ReceivedPOViewProps {
   onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
 }
 
-interface StoreInSupplierDetails {
+export interface StoreInSupplierDetails {
   data: StoreSupplierDetails;
   supplier: Supplier;
 }
