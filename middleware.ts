@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, hostname } = request.nextUrl;
   const token = request.cookies.get("avdc_accessToken")?.value;
+  // Debug logging
 
   // ✅ Public API routes that don't require authentication
   const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];

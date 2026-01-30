@@ -23,7 +23,7 @@ const InventoryView = ({
 }: InventoryViewProps) => {
   const { data: inventoryItemResponse = { data: [] }, mutate } = useSWR(
     inventoryId ? `api/inventory/item/${inventoryId}/details` : null,
-    fetcher
+    fetcher,
   );
 
   const stats = inventoryItemResponse?.data?.[0] || {};
@@ -31,38 +31,40 @@ const InventoryView = ({
   return (
     <PageLayout className="gap-2">
       {/* Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
-        <InventoryCard
-          title="Total Inventory Cost"
-          value={formatPeso(stats.totalCost ?? 0)}
-          icon={
-            <PhilippinePeso className="h-3 w-3 xl:w-6 xl:h-6 text-blue-500" />
-          }
-          iconBg="bg-blue-100"
-        />
-        <InventoryCard
-          title="Total Items"
-          value={stats.totalItems ?? 0}
-          icon={<Box className="h-3 w-3 xl:w-6 xl:h-6 text-primary-1" />}
-          iconBg="bg-pink-200"
-        />
-        <InventoryCard
-          title="Good Stock Items"
-          value={stats.goodStock ?? 0}
-          icon={
-            <ShoppingCart className="h-3 w-3 xl:w-6 xl:h-6 text-green-500" />
-          }
-          iconBg="bg-green-100"
-        />
-        <InventoryCard
-          title="Low Stock Items"
-          value={stats.lowStock ?? 0}
-          icon={
-            <AlertTriangle className="h-3 w-3 xl:w-6 xl:h-6 text-yellow-500" />
-          }
-          iconBg="bg-yellow-100"
-        />
-      </div>
+      {!user?.storeId && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+          <InventoryCard
+            title="Total Inventory Cost"
+            value={formatPeso(stats.totalCost ?? 0)}
+            icon={
+              <PhilippinePeso className="h-3 w-3 xl:w-6 xl:h-6 text-blue-500" />
+            }
+            iconBg="bg-blue-100"
+          />
+          <InventoryCard
+            title="Total Items"
+            value={stats.totalItems ?? 0}
+            icon={<Box className="h-3 w-3 xl:w-6 xl:h-6 text-primary-1" />}
+            iconBg="bg-pink-200"
+          />
+          <InventoryCard
+            title="Good Stock Items"
+            value={stats.goodStock ?? 0}
+            icon={
+              <ShoppingCart className="h-3 w-3 xl:w-6 xl:h-6 text-green-500" />
+            }
+            iconBg="bg-green-100"
+          />
+          <InventoryCard
+            title="Low Stock Items"
+            value={stats.lowStock ?? 0}
+            icon={
+              <AlertTriangle className="h-3 w-3 xl:w-6 xl:h-6 text-yellow-500" />
+            }
+            iconBg="bg-yellow-100"
+          />
+        </div>
+      )}
       <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
         {view === "inventory" && (
           <InventorySection

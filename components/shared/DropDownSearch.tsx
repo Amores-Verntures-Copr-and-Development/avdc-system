@@ -46,16 +46,16 @@ export function DropdownSearch<T>({
 
   // Sizes consistent with DropdownSelect
   const sizeStyles = {
-    xs: "h-6 text-xs px-2",
-    sm: "h-8 text-sm px-3",
-    md: "h-10 text-base px-3",
-    lg: "h-12 text-lg px-4",
+    xs: "h-6 xl:h-8 text-xs px-2",
+    sm: "h-6 xl:h-8 text-xs xl:text-sm px-2",
+    md: "h-6 xl:h-10 text-xs xl:text-base px-3",
+    lg: "h-12 text-md md:text-lg px-4",
   }[sizes || "md"];
   const labelClass = {
-    xs: "text-xs",
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
+    xs: "text-[10px] xl:text-xs",
+    sm: "text-md xl:text-sm",
+    md: "text-sm xl:text-md md:text-base",
+    lg: "text-md md:text-lg",
   }[sizes || "md"];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -9,7 +9,7 @@ export function useCategories({
   reference,
 }: {
   inventoryId: number;
-  reference: "stock-room" | "stores" | "inventoryId";
+  reference?: "stock-room" | "stores" | "inventoryId";
 }) {
   const localStorageKey = `category_${inventoryId}_inventory`;
   const baseApi =
@@ -56,13 +56,13 @@ export function useCategories({
       shouldRetryOnError: (err) => {
         return !(err instanceof Error && err.message.includes("401"));
       },
-    }
+    },
   );
 
   const categoryOptions = data?.data
     .map((item) => item.categoryName)
     .filter(
-      (categoryName, index, array) => array.indexOf(categoryName) === index
+      (categoryName, index, array) => array.indexOf(categoryName) === index,
     )
     .map((categoryName) => ({
       label: categoryName,

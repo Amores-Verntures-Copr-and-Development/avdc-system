@@ -160,6 +160,7 @@ const ProductVariantPage = ({
           showActions
           onRowSelection={(row) => {
             setSelectedRow(row);
+            console.log({ row });
             setIsShowModal("variant");
           }}
           renderActions={(row) => (

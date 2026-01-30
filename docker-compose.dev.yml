@@ -11,6 +11,7 @@ services:
       - "3010:3000"
     environment:
       - NODE_ENV=development
+      - HOST=0.0.0.0
     volumes:
       - .:/app
       - /app/node_modules

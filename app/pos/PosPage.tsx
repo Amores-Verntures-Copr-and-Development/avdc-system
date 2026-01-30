@@ -53,12 +53,14 @@ import { Customer } from "@/types/customer";
 import { selectProductVariants } from "@/models/productModel";
 import SearchBar from "@/components/shared/SearchBar";
 import ProductVariantCard from "./components/ProductVariantCard";
+import Input from "@/components/shared/Input";
 
 export interface OrderList {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
   quantity: number;
+  prodVarTotal?: number;
   inventoryItemId: number | null;
 }
 
@@ -76,6 +78,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [showProductView, setShowProductView] = useState<
     "product" | "product-variant"
   >("product");
+  const [editOrderAmount, setEditOrderAmount] = useState<OrderList | null>(
+    null,
+  );
   const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
@@ -731,7 +736,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             )
           ) : (
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
               {filteredProductList.flatMap((p) =>
                 p.productVariants?.flatMap((pv) => (
                   <ProductVariantCard
@@ -749,7 +754,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </div>
 
-        <div className="flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
+        <div className="flex-[.40] lg:flex-[0.30] 2xl:flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
             <h1 className="font-semibold text-xs 2xl:text-sm">Order Details</h1>
             <span className="text-[9px] 2xl:text-sm font-semibold">
@@ -781,6 +786,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
           <div className="flex-1 p-2 overflow-auto">
             <OrderDetails
+              setEditOrderAmount={setEditOrderAmount}
               data={selectedOrder}
               removeQuantityProductList={removeQuantityProductList}
               addQuantity={addQuantity}
@@ -793,7 +799,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 <div className="w-4 h-4 2xl:w-7 2xl:h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
                   <Receipt className="w-2 h-2 2xl:w-4 2xl:h-4 text-white" />
                 </div>
-                <h1 className="font-semibold text-xs 2xl:text-md  text-gray-800">
+                <h1 className="font-semibold text-[9px] lg:text-sm 2xl:text-md  text-gray-800">
                   Payment Details
                 </h1>
               </div>
@@ -811,8 +817,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </div>
 
             <div className="flex justify-between text-gray-500 text-sm">
-              <span className="text-[10px] 2xl:text-xs">Subtotal</span>
-              <span className="text-[10px] 2xl:text-xs">
+              <span className="text-[9px] 2xl:text-xs">Subtotal</span>
+              <span className="text-[9px] 2xl:text-xs">
                 {formatPeso(subtotal)}
               </span>
             </div>
@@ -842,11 +848,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             )}
 
             {/* Total */}
-            <div className="flex justify-between border-t border-gray-200 pt-2 mt-2">
-              <span className=" font-semibold text-[10px] 2xl:text-sm">
+            <div className="flex justify-between border-t border-gray-200 pt-2">
+              <span className=" font-semibold text-[9px] 2xl:text-sm">
                 Total
               </span>
-              <span className="font-semibold text-[10px] 2xl:text-sm">
+              <span className="font-semibold text-[9px] 2xl:text-sm">
                 {formatPeso(getTotalAmount())}
               </span>
             </div>
@@ -923,15 +929,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       )}
       {isCheckOut && (
         <Modal
-          leftTitleContent={
-            isPaymentSuccess ? (
-              <div></div>
-            ) : (
-              <span className="font-semibold">
-                Total: {formatPeso(getTotalAmount())}
-              </span>
-            )
-          }
+          // leftTitleContent={
+          //   isPaymentSuccess ? (
+          //     <div></div>
+          //   ) : (
+          //     <span className="font-semibold">
+          //       Total: {formatPeso(getTotalAmount())}
+          //     </span>
+          //   )
+          // }
           title={!isPaymentSuccess ? "Confirm Order" : ""}
           className={isPaymentSuccess ? `` : `h-[95%]`}
           isOpen={isCheckOut}
@@ -943,21 +949,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             }
           }}
           size="lg"
-          modalDetails={
-            isPaymentSuccess ? (
-              <div></div>
-            ) : (
-              <div className="flex justify-between w-full">
-                {/* <span className=" text-xs 2xl:text-lg font-semibold">
-                  {" "}
-                  Confirm Order
-                </span> */}
-                <span className="font-semibold  text-[9px] 2xl:text-lg py-2 px-1.5 border border-gray-300 rounded-lg">
-                  Total: {formatPeso(getTotalAmount())}
-                </span>
-              </div>
-            )
-          }
         >
           {!isPaymentSuccess ? (
             <CheckOutModal
@@ -995,6 +986,31 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </Modal>
       )}
+      <Modal
+        isOpen={editOrderAmount !== null}
+        onClose={function (): void {
+          setEditOrderAmount(null);
+        }}
+        title={`Edit Order Item ${editOrderAmount?.prodVarName}`}
+      >
+        <div className="flex flex-col gap-2 h-full">
+          <h1 className="text-sm font-semibold">
+            Note:{" "}
+            <span className="font-normal">Modify total amount of order.</span>
+          </h1>
+          <div className="flex">
+            <Input label={"Amount"} sizes="sm" />
+          </div>
+          <div className="flex mt-auto gap-2 justify-end">
+            <div>
+              <Button label="Cancel" size="sm" />
+            </div>
+            <div>
+              <Button label="Cancel" size="sm" />
+            </div>
+          </div>
+        </div>
+      </Modal>
     </PageLayout>
   );
 };

@@ -222,12 +222,12 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
       },
     });
     const existingIds = new Set(
-      existingItems.data.map((i) => i.inventoryItemReferenceId)
+      existingItems.data.map((i) => i.inventoryItemReferenceId),
     );
 
     // Filter duplicates
     const duplicateItems = data.items.filter((item) =>
-      existingIds.has(item.inventoryItemReferenceId)
+      existingIds.has(item.inventoryItemReferenceId),
     );
 
     if (duplicateItems.length > 0) {
@@ -265,11 +265,28 @@ export const addItemToStoreInventory = async (data: AddItemToStoreDto) => {
 
 export const getInventoryMovements = async ({
   keyFields = {},
+  search,
+  from,
+  to,
+  type,
+  category,
 }: {
-  keyFields?: Partial<InventoryItemMovement>; // dynamic filters like {inventoryId: 1, storeId: null}
+  search?: string;
+  from?: string;
+  to?: string;
+  type?: string;
+  keyFields?: Partial<InventoryItemMovement>;
+  category?: string; // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   try {
-    const data = await getInventoryMovement({ keyFields });
+    const data = await getInventoryMovement({
+      keyFields,
+      search,
+      from,
+      to,
+      type,
+      category,
+    });
     return {
       success: true,
       message: "Item fetched successfully!",
@@ -302,7 +319,7 @@ export const getInventoryItemsStatusById = async (inventoryId: number) => {
 };
 
 export const processStockAdjustmetController = async (
-  data: CreateInventoryMovementDto
+  data: CreateInventoryMovementDto,
 ) => {
   try {
     const res = await processStockAdjustment(data);
@@ -313,7 +330,7 @@ export const processStockAdjustmetController = async (
 };
 
 export const processStockBulkAdjustmetController = async (
-  data: CreateInventoryMovementDto[]
+  data: CreateInventoryMovementDto[],
 ) => {
   try {
     const res = await processStockBulkAdjustment(data);
@@ -435,7 +452,7 @@ export const deleteInventoryItemById = async ({
 }) => {
   try {
     const data: Partial<InventoryItemInterface>[] = inventoryItemId.map(
-      (id) => ({ inventoryItemId: id })
+      (id) => ({ inventoryItemId: id }),
     );
     const result = await deleteInventoryItems({ updates: data });
 

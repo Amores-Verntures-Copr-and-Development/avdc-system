@@ -284,10 +284,12 @@ const VariantComponentPage = ({
               {data.variantComponents.map((comp) => (
                 <li
                   key={comp.varComId}
-                  className="text-sm text-gray-700 bg-gray-50 p-2 rounded flex justify-between items-center"
+                  className=" text-sm text-gray-700 bg-gray-50 p-2 rounded flex justify-between items-center"
                 >
-                  <span>{comp.inventoryItemId}</span>
-                  <span className="font-semibold">{comp.quantityRequired}</span>
+                  <span className="text-xs">{comp.itemName}</span>
+                  <span className="font-semibold">
+                    {comp.quantityRequired} qty
+                  </span>
                 </li>
               ))}
             </ul>
@@ -307,7 +309,15 @@ const VariantComponentPage = ({
           setShowAddComponent(false);
         }}
       >
-        <AssignComponentModal storeId={prod?.storeId ?? 0} />
+        <AssignComponentModal
+          storeId={prod?.storeId ?? 0}
+          prodId={prod?.prodId ?? 0}
+          prodVarId={data?.prodVarId ?? 0}
+          onClose={function (): void {
+            setShowAddComponent(false);
+          }}
+          mutate={mutate}
+        />
       </Modal>
     </div>
   );

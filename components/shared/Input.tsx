@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 
-interface DynamicInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+interface DynamicInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   sizes?: "xs" | "sm" | "md" | "lg";
@@ -25,7 +24,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       leadingIcon,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const [showPassword, setShowPassword] = useState(false);
     const isPassword = type === "password";
@@ -41,14 +40,14 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
     const labelClass = {
       xs: "text-[10px] xl:text-xs",
       sm: "text-md xl:text-sm",
-      md: "text-md md:text-base",
+      md: "text-sm xl:text-md md:text-base",
       lg: "text-md md:text-lg",
     }[sizes];
 
     const sizeClass = {
       xs: "h-6 xl:h-8 text-xs px-2",
       sm: "h-6 xl:h-8 text-xs xl:text-sm px-2",
-      md: "h-10 text-base px-3",
+      md: "h-6 xl:h-10 text-xs xl:text-base px-3",
       lg: "h-12 text-md md:text-lg px-4",
     }[sizes];
 
@@ -152,7 +151,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
         {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     );
-  }
+  },
 );
 
 Input.displayName = "Input";

@@ -19,6 +19,7 @@ import {
 } from "@/services/products/product-variant/create-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
 import { updateProductVariantServices } from "@/services/products/product-variant/update-product-variants";
+import { createVariantComponent } from "@/services/products/product-variant/variant-component/create-variant-component";
 import { updateProductsByFields } from "@/services/products/udpate-product";
 import { ProductCategories, Products, ProductVariants } from "@/types/products";
 
@@ -100,8 +101,24 @@ export const createProductVariantBulkController = async (
   }
 };
 export const createVariantComponentController = async (
-  data: CreateVarianComponentDto,
-) => {};
+  data: CreateVarianComponentDto[],
+) => {
+  try {
+    const res = await createVariantComponent({ data: data });
+    return {
+      data: res,
+      success: true,
+      message: "Variant added successfully!",
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      success: false,
+      message: "Failed to add variant!",
+      error: e,
+    };
+  }
+};
 
 export const getProduct = async ({
   search,

@@ -165,13 +165,13 @@ const CheckOutModal = ({
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-slate-50  p-1 2xl:p-4 shadow text-center">
           <p className="text-[10px] 2xl:text-xs text-slate-500 mb-1">Total</p>
-          <p className="font-bold text-xs 2xl:text-sm text-slate-800">
+          <p className="font-bold text-[9px] md:text-xs 2xl:text-sm text-slate-800">
             {formatPeso(getTotalAmount())}
           </p>
         </div>
         <div className="bg-emerald-50 shadow p-1 2xl:p-4 text-center">
           <p className="text-[10px] 2xl:text-xs text-emerald-600 mb-1">Paid</p>
-          <p className="font-bold text-xs 2xl:text-sm text-emerald-600">
+          <p className="font-bold text-[9px] md:text-xs 2xl:text-sm text-emerald-600">
             {formatPeso(totalPaid || 0)}
           </p>
         </div>
@@ -187,7 +187,7 @@ const CheckOutModal = ({
             {remaining > 0 ? "Remaining" : "Change"}
           </p>
           <p
-            className="font-bold text-xs 2xl:text-sm"
+            className="font-bold text-[9px] md:text-xs 2xl:text-sm"
             style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
           >
             {remaining > 0 ? formatPeso(remaining) : formatPeso(change)}
@@ -195,8 +195,8 @@ const CheckOutModal = ({
         </div>
       </div>
       {!canComplete ? (
-        <>
-          <div>
+        <div className="flex flex-row 2xl:flex-col flex-1 ">
+          <div className="flex-1">
             <BigCard isRounded={false} title="Current Payments">
               {selectedPaymentMethod && selectedPaymentMethod.length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
@@ -215,21 +215,21 @@ const CheckOutModal = ({
                           <div
                             className={`p-2 rounded-lg ${details.color} text-white`}
                           >
-                            <Icon className="w-4 h-4" />
+                            <Icon className="w-2 h-2 2xl:w-4 2xl:h-4" />
                           </div>
                           <div>
-                            <span className="font-medium text-slate-800">
+                            <span className="text-[9px] 2xl:text-sm  font-medium text-slate-800">
                               {method?.payMetName}
                             </span>
                             {payment.paymentReference && (
-                              <p className="text-xs text-slate-500">
+                              <p className="text-[9px]  2xl:text-xs text-slate-500">
                                 {payment.paymentReference}
                               </p>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-800">
+                          <span className=" text-[9px] 2xl:text-sm   font-semibold text-slate-800">
                             {formatPeso(payment.salesPaymentAmount)}
                           </span>
                           <IconButton
@@ -248,114 +248,117 @@ const CheckOutModal = ({
               )}
             </BigCard>
           </div>
-          <BigCard isRounded={false} title="Add Payments">
-            <div className="flex flex-col divide-gray-200 overflow-auto  p-3 gap-3 h-full">
-              <div className="grid grid-cols-4 gap-3">
-                {paymentMethods?.map((payment) => {
-                  const { icon, color } = getPaymentIcon(payment.payMetName);
-                  const Icon = icon || Banknote;
-                  return (
-                    <button
-                      key={payment.payMetId}
-                      onClick={() =>
-                        setSelectedMethod((prev) => {
-                          if (!prev) {
-                            return {
-                              salesId: 0,
-                              payMetId: payment.payMetId,
-                              salesPaymentAmount: 0,
-                              paymentReference: "",
-                              salesPaymentStatus: "pending",
-                            };
-                          }
+          <div className="flex-1">
+            <BigCard isRounded={false} title="Add Payments">
+              <div className="flex flex-col divide-gray-200 overflow-auto p-1  2xl:p-3 gap-3 h-full">
+                <div className="grid grid-cols-4 gap-3">
+                  {paymentMethods?.map((payment) => {
+                    const { icon, color } = getPaymentIcon(payment.payMetName);
+                    const Icon = icon || Banknote;
+                    return (
+                      <button
+                        key={payment.payMetId}
+                        onClick={() =>
+                          setSelectedMethod((prev) => {
+                            if (!prev) {
+                              return {
+                                salesId: 0,
+                                payMetId: payment.payMetId,
+                                salesPaymentAmount: 0,
+                                paymentReference: "",
+                                salesPaymentStatus: "pending",
+                              };
+                            }
 
-                          return {
-                            ...prev,
-                            payMetId: payment.payMetId,
-                          };
-                        })
-                      }
-                      className={`flex flex-col items-center justify-center p-1 2xl:p-4 rounded-xl border-2 transition-all ${
-                        selectedMethod?.payMetId === payment.payMetId
-                          ? "border-emerald-500 bg-emerald-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      <div
-                        className={`p-2 rounded-lg ${color} text-white mb-2`}
+                            return {
+                              ...prev,
+                              payMetId: payment.payMetId,
+                            };
+                          })
+                        }
+                        className={`flex flex-col items-center justify-center p-1 2xl:p-4 rounded-xl border-2 transition-all ${
+                          selectedMethod?.payMetId === payment.payMetId
+                            ? "border-emerald-500 bg-emerald-50"
+                            : "border-slate-200 hover:border-slate-300"
+                        }`}
                       >
-                        <Icon className="w-3 h-3 2xl:w-5 2xl:h-5" />
-                      </div>
-                      <span className="text-[9px] 2xl:text-sm font-medium text-slate-700">
-                        {payment.payMetName}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {quickAmounts.map((qa) => (
+                        <div
+                          className={`p-2 rounded-lg ${color} text-white mb-2`}
+                        >
+                          <Icon className="w-3 h-3 2xl:w-5 2xl:h-5" />
+                        </div>
+                        <span className="text-[9px] 2xl:text-sm font-medium text-slate-700">
+                          {payment.payMetName}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  {quickAmounts.map((qa) => (
+                    <Button
+                      key={qa}
+                      color="secondary"
+                      size="sm"
+                      onClick={() => handleQuickAmount(qa)}
+                      className="flex-1"
+                      label={formatPeso(qa)}
+                    ></Button>
+                  ))}
                   <Button
-                    key={qa}
-                    color="secondary"
+                    color="warning"
                     size="sm"
-                    onClick={() => handleQuickAmount(qa)}
-                    className="flex-1"
-                    label={formatPeso(qa)}
+                    onClick={() => handleQuickAmount(remaining)}
+                    className="flex-1 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+                    label={`${formatPeso(remaining)}`}
                   ></Button>
-                ))}
-                <Button
-                  color="warning"
-                  size="sm"
-                  onClick={() => handleQuickAmount(remaining)}
-                  className="flex-1 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
-                  label={`${formatPeso(remaining)}`}
-                ></Button>
-              </div>
-              <div className="flex flex-col gap-2">
-                <Input
-                  leadingIcon={<PhilippinePeso className="w-4 h-4" />}
-                  label={""}
-                  sizes={"md"}
-                  type="number"
-                  name="salesPaymentAmount"
-                  value={Number(selectedMethod?.salesPaymentAmount) || ""}
-                  onChange={handleChangeSelectedPayment}
-                />
-                {findPaymentMethod?.payMetHasRef === 1 && (
+                </div>
+                <div className="flex flex-col gap-2">
                   <Input
+                    leadingIcon={<PhilippinePeso className="w-4 h-4" />}
                     label={""}
-                    placeholder="Reference (optional)"
-                    value={selectedMethod?.paymentReference}
-                    name="paymentReference"
+                    sizes={"md"}
+                    type="number"
+                    name="salesPaymentAmount"
+                    value={Number(selectedMethod?.salesPaymentAmount) || ""}
                     onChange={handleChangeSelectedPayment}
                   />
-                )}
-              </div>
+                  {findPaymentMethod?.payMetHasRef === 1 && (
+                    <Input
+                      label={""}
+                      placeholder="Reference (optional)"
+                      value={selectedMethod?.paymentReference}
+                      name="paymentReference"
+                      onChange={handleChangeSelectedPayment}
+                    />
+                  )}
+                </div>
 
-              <div className="mt-auto">
-                <Button
-                  label="Add Payment"
-                  size={"sm"}
-                  className="w-full"
-                  onClick={handleAddPayment}
-                  icon={Plus}
-                  disabled={
-                    selectedMethod?.payMetId === null ||
-                    selectedMethod?.payMetId === 0 || Number(selectedMethod?.salesPaymentAmount) === 0
-                  }
-                />
+                <div className="mt-auto">
+                  <Button
+                    label="Add Payment"
+                    size={"sm"}
+                    className="w-full"
+                    onClick={handleAddPayment}
+                    icon={Plus}
+                    disabled={
+                      selectedMethod?.payMetId === null ||
+                      selectedMethod?.payMetId === 0 ||
+                      Number(selectedMethod?.salesPaymentAmount) === 0
+                    }
+                  />
+                </div>
               </div>
-            </div>
-          </BigCard>
-        </>
+            </BigCard>
+          </div>
+        </div>
       ) : (
         <div className="flex flex-col h-full">
-          <div className="flex flex-col gap-2">
-            <label className="text-gray-600 font-semibold text-sm">
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="text-gray-600 font-semibold text-xs xl:text-sm">
               Applied Payments
             </label>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
               {selectedPaymentMethod &&
                 selectedPaymentMethod.length &&
                 selectedPaymentMethod.map((payment, index) => {
@@ -376,7 +379,7 @@ const CheckOutModal = ({
                           <Icon className="w-4 h-4" />
                         </div>
                         <div>
-                          <span className="font-medium text-slate-800">
+                          <span className="font-medium text-[10px] 2xl:text-sm  text-slate-800">
                             {method?.payMetName}
                           </span>
                           {payment.paymentReference && (
@@ -387,7 +390,7 @@ const CheckOutModal = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-[9px] 2xl:text-sm  text-slate-800">
                           {formatPeso(payment.salesPaymentAmount)}
                         </span>
                         <IconButton

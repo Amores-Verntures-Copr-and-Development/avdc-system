@@ -341,7 +341,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const unit = searchParams.get("unit") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "1";
-
     const params = new URLSearchParams();
     if (search) params.append("search", search);
     if (status) params.append("status", status);

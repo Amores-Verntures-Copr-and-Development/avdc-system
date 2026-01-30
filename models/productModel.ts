@@ -306,7 +306,39 @@ export const selectProductVariants = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
-SELECT pv.*,p.prodName,u.userName,u.userFname,u.userRole,(SELECT SUM(si.salesItemQuantity) FROM SalesItems si WHERE si.prodVarId = pv.prodVarId) AS sold,(SELECT SUM(si.salesItemSubtotal) FROM SalesItems si WHERE si.prodVarId = pv.prodVarId) AS totalSales FROM ProductVariants pv
+SELECT 
+    pv.*,
+    p.prodName,
+    u.userName,
+    u.userFname,
+    u.userRole,
+    (SELECT SUM(si.salesItemQuantity) 
+     FROM SalesItems si 
+     WHERE si.prodVarId = pv.prodVarId) AS sold,
+    (SELECT SUM(si.salesItemSubtotal) 
+     FROM SalesItems si 
+     WHERE si.prodVarId = pv.prodVarId) AS totalSales,
+    (
+      SELECT JSON_ARRAYAGG(
+        JSON_OBJECT(
+          'itemName', i.itemName,
+          'itemId', i.itemId,
+          'varComId', vc.varComId,
+          'quantityRequired', vc.quantityRequired,
+          'inventoryItemId', vc.inventoryItemId,
+          'prodVarId', vc.prodVarId,
+          'itemUnit', i.itemUnit
+        )
+      )
+      FROM VariantComponents vc
+      LEFT JOIN InventoryItems ii 
+             ON ii.inventoryItemId = vc.inventoryItemId 
+             AND ii.inventoryItemReferenceType = 'item'
+      LEFT JOIN Items i 
+             ON i.itemId = ii.inventoryItemReferenceId
+      WHERE vc.prodVarId = pv.prodVarId
+    ) AS variantComponents
+FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 WHERE 1=1`;

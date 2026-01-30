@@ -73,7 +73,7 @@ const ProductVariantCard = ({
 
   return (
     <div
-      className={`group relative min-h-[120px] flex flex-col bg-white rounded-xl shadow-sm transition-all duration-300 p-4 border overflow-hidden ${
+      className={`group relative min-h-0 flex flex-col bg-white rounded-xl shadow-sm transition-all duration-300 p-2 2xl:p-4 border overflow-hidden ${
         hasStock
           ? "hover:shadow-xl border-gray-200 hover:border-primary-1 cursor-pointer active:scale-[0.98]"
           : "border-gray-300 opacity-75 cursor-not-allowed"
@@ -113,10 +113,10 @@ const ProductVariantCard = ({
 
       <div className="relative z-10 flex flex-col h-full">
         {/* Header section */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start justify-between gap-1 2xl:gap-3 mb-1 2xl:mb-3">
           {/* Product Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-start gap-2 mb-2">
+            <div className="flex items-start gap-2 mb-1 2xl:mb-2">
               <div
                 className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
                   hasStock
@@ -125,20 +125,19 @@ const ProductVariantCard = ({
                 }`}
               >
                 <Tag
-                  className={`w-3.5 h-3.5 xl:w-4 xl:h-4 ${
+                  className={`w-2 h-2 lg:w-3.5 lg:h-3.5 xl:w-4 xl:h-4 ${
                     hasStock ? "text-primary-1" : "text-gray-400"
                   }`}
                 />
               </div>
               <span
-                className={`text-xs xl:text-sm font-semibold break-words leading-tight ${
+                className={`text-[9px] lg:text-xs xl:text-sm font-semibold break-words leading-tight ${
                   hasStock ? "text-gray-700" : "text-gray-500"
                 }`}
               >
                 {data.prodVarName}
               </span>
             </div>
-
             {/* Product base name (if different from variant) */}
             {product.prodName &&
               !product.prodName

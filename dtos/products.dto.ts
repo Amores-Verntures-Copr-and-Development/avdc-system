@@ -49,7 +49,11 @@ export interface DisplayProductsDtos
 export interface DisplaProductVariantsDtos extends ProductVariants, Products {
   sold?: number;
   totalSales?: number;
+  variantComponents: DisplayVariantComponents[];
 }
+
+export interface DisplayVariantComponents
+  extends VariantComponents, InventoryItemInterface, ItemInterface {}
 
 export type CreateProductCategoryDto = Pick<
   ProductCategories,

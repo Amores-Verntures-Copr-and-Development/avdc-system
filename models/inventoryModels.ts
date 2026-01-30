@@ -253,10 +253,10 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     ].includes(key)
       ? "ii"
       : key === "storeId"
-      ? "i"
-      : key === "categoryId"
-      ? "c"
-      : "i";
+        ? "i"
+        : key === "categoryId"
+          ? "c"
+          : "i";
 
     if (value === null) {
       sql += ` AND ${tableAlias}.${key} IS NULL`;
@@ -364,10 +364,10 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     ].includes(key)
       ? "ii"
       : key === "storeId"
-      ? "i"
-      : key === "categoryId"
-      ? "c"
-      : "i";
+        ? "i"
+        : key === "categoryId"
+          ? "c"
+          : "i";
 
     if (value === null) {
       sql += ` AND ${tableAlias}.${key} IS NULL`;
@@ -423,7 +423,7 @@ export const updateInventoryItems = async ({
 
   // ✅ Determine all updatable fields (exclude key fields)
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof InventoryItemInterface)
+    (field) => !keyFields.includes(field as keyof InventoryItemInterface),
   );
 
   if (updateFields.length === 0)
@@ -466,7 +466,7 @@ export const updateInventoryItems = async ({
 
   // ✅ WHERE clause (unique key combinations)
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   const whereSql =
@@ -527,16 +527,27 @@ export const insertInventoryMovement = async ({
 
 export const selectInventoryMovementItems = async ({
   keyFields = {},
+  search,
+  from,
+  to,
+  type,
+  category,
 }: {
-  keyFields?: Partial<InventoryItemMovement>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryItemMovement>;
+  search?: string;
+  from?: string;
+  to?: string;
+  type?: string;
+  category?: string;
+  // dynamic filters like {inventoryId: 1, storeId: null}
 }) => {
   const pool = await getDBConnection();
   let sql = `SELECT iim.invItemMovementId,iim.inventoryId,iim.inventoryItemId,iim.itemMovementType,iim.itemMovementReferenceId,iim.itemMovementReference,
-iim.itemMovementQuantity,iim.itemMovementRemarks,iim.itemMovementCreatedAt,i.itemId,i.itemName,i.itemUnit,i.itemPrice,c.categoryName,c.categoryType
- FROM InventoryItemMovements iim
-LEFT JOIN InventoryItems ii ON ii.inventoryItemId = iim.inventoryItemId
-LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"
-LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
+  iim.itemMovementQuantity,iim.itemMovementRemarks,iim.itemMovementCreatedAt,i.itemId,i.itemName,i.itemUnit,i.itemPrice,c.categoryName,c.categoryType
+  FROM InventoryItemMovements iim
+  LEFT JOIN InventoryItems ii ON ii.inventoryItemId = iim.inventoryItemId
+  LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"
+  LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
   const params: any[] = [];
 
   // ✅ Build WHERE dynamically
@@ -545,12 +556,12 @@ LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
     const tableAlias = ["inventoryId"].includes(key)
       ? "iim"
       : key === "inventoryId"
-      ? "iim"
-      : key === "categoryId"
-      ? "c"
-      : key === "inventoryItemId"
-      ? "iim"
-      : "it";
+        ? "iim"
+        : key === "categoryId"
+          ? "c"
+          : key === "inventoryItemId"
+            ? "iim"
+            : "it";
 
     if (value === null) {
       sql += ` AND ${tableAlias}.${key} IS NULL`;
@@ -559,7 +570,28 @@ LEFT JOIN Categories c ON c.categoryId = i.categoryId WHERE 1=1`;
       params.push(value);
     }
   }
+  console.log({ search });
+  if (search) {
+    sql += ` AND i.itemName LIKE ?`;
+    params.push(`%${search}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(iim.itemMovementCreatedAt) BETWEEN ? AND ?`;
+    params.push(from);
+    params.push(to);
+  }
+  if (type) {
+    sql += ` AND iim.itemMovementType = ?`;
+
+    params.push(type);
+  }
+  if (category) {
+    sql += ` AND c.categoryName = ?`;
+    params.push(category);
+  }
   sql += ` ORDER BY iim.itemMovementCreatedAt DESC`;
+
   const [rows] = await pool.execute(sql, params);
   return rows;
 };

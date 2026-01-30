@@ -414,6 +414,7 @@ const TableInner = <T extends Record<string, any>>(
           subtitle ||
           title ||
           localSearch ||
+          showDateRange ||
           addContentLeftTitle) && (
           <div className="bg-white flex p-1 lg:p-2 gap-2 xl:gap-5 items-center align-middle justify-between border-b border-gray-200">
             {(subtitle || title) && (

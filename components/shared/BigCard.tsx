@@ -23,7 +23,7 @@ const BigCard = ({
     <div
       className={`border flex flex-col flex-1 overflow-hidden ${
         isRounded ? "rounded-2xl" : ""
-      } shadow-sm border-gray-200 bg-white h-full p-4 
+      } shadow-sm border-gray-200 bg-white h-full p-2 2xl:p-4 
   ${
     isHover
       ? `hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer`
@@ -31,13 +31,13 @@ const BigCard = ({
   }`}
       onClick={onClick}
     >
-      <div className="mb-2">
+      <div className="">
         {" "}
         {/* Added margin to separate header */}
         <div className="flex flex-col">
           <div className="flex justify-between">
             <div className="flex flex-col justify-between">
-              <h1 className="text-[10px] xl:text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h1 className="text-[9px] xl:text-sm font-semibold text-gray-900 mb-2 2xl:mb-4 flex items-center gap-2">
                 {title}
               </h1>
               <span className="text-xs text-gray-400">{subtitle}</span>
