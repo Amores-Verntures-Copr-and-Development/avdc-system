@@ -5,7 +5,12 @@ import {
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
 import { getDBConnection } from "@/lib/db";
-import { ProductCategories, Products, ProductVariants } from "@/types/products";
+import {
+  ProductCategories,
+  Products,
+  ProductVariants,
+  VariantComponents,
+} from "@/types/products";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertProducts = async ({
@@ -202,12 +207,13 @@ export const insertVarianComponents = async ({
   const pool = connection ? connection : await getDBConnection();
   if (!data.length) return 0;
   console.log({ data });
-  const sql = `INSERT INTO VariantComponents(quantityRequired,prodVarId,inventoryItemId)
-                VALUES ${data.map(() => "(?,?,?)").join(",")}`;
+  const sql = `INSERT INTO VariantComponents(quantityRequired,prodVarId,inventoryItemId,isDeductVar)
+                VALUES ${data.map(() => "(?,?,?,?)").join(",")}`;
   const values = data.flatMap((item) => [
     item.quantityRequired,
     item.prodVarId,
     item.inventoryItemId,
+    item.isDeductVar,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
@@ -250,7 +256,8 @@ export const selectProducts = async ({
                   'prodVarId', vc.prodVarId,
                   'quantityRequired', vc.quantityRequired,
                   'inventoryItemId', vc.inventoryItemId,
-                  'left', ii.inventoryItemQuantity
+                  'left', ii.inventoryItemQuantity,
+                  'isDeductVar',vc.isDeductVar
                   
                 )
               )
@@ -327,7 +334,9 @@ SELECT
           'quantityRequired', vc.quantityRequired,
           'inventoryItemId', vc.inventoryItemId,
           'prodVarId', vc.prodVarId,
-          'itemUnit', i.itemUnit
+          'itemUnit', i.itemUnit,
+          'isDeductVar',vc.isDeductVar,
+          'itemPrice',i.itemPrice
         )
       )
       FROM VariantComponents vc
@@ -469,5 +478,116 @@ export const updateProductVariants = async ({
     WHERE ${whereSql};
   `;
   const [result] = await pool.execute(sql, params);
+  return result;
+};
+
+export const updateVariantComponents = async ({
+  connection,
+  updates,
+  keyFields = ["varComId"],
+}: // 👈 optional per-field mode
+{
+  connection?: PoolConnection;
+  updates: Partial<VariantComponents>[];
+  keyFields?: (keyof VariantComponents)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof VariantComponents),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE VariantComponents
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
+};
+
+export const hardDeleteVariantComponents = async ({
+  connection,
+  updates,
+  keyFields = ["varComId"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<VariantComponents>[];
+  keyFields?: (keyof VariantComponents)[];
+}) => {
+  if (!updates || updates.length === 0) return;
+
+  const pool = connection ?? (await getDBConnection());
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const params: any[] = [];
+
+  let whereSql: string;
+
+  if (keyFields.length === 1) {
+    // Single key
+    whereSql = `${keyFields[0]} IN (${uniqueKeyCombinations
+      .map(() => "?")
+      .join(",")})`;
+    uniqueKeyCombinations.forEach((vals) => params.push(vals[0]));
+  } else {
+    // Composite key
+    whereSql = `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+      .map((vals) => `(${vals.map(() => "?").join(",")})`)
+      .join(",")})`;
+    uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+  }
+
+  // Execute delete
+  const sql = `DELETE FROM VariantComponents WHERE ${whereSql};`;
+  const [result] = await pool.execute(sql, params);
+
   return result;
 };

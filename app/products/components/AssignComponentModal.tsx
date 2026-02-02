@@ -1,6 +1,7 @@
 import Button from "@/components/shared/Button";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import Input from "@/components/shared/Input";
+import Toggle from "@/components/shared/Toggle";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { CreateVarianComponentDto } from "@/dtos/products.dto";
 import { handleChange } from "@/utils/handle-change";
@@ -23,6 +24,7 @@ const AssignComponentModal = ({
   mutate,
 }: AssignComponentModalProps) => {
   // const {} = useInventoryItems({ id:2, search:, reference: "storeId" });
+  const [isAdding, setIsAdding] = useState(false);
   const searchItems = async (
     query: string,
   ): Promise<DisplayInventoryItems[]> => {
@@ -36,10 +38,16 @@ const AssignComponentModal = ({
     prodVarId: prodVarId,
     inventoryItemId: 0,
     quantityRequired: 0,
+    isDeductVar: false,
   });
   const handleChangeForm = handleChange(formData, setFormData);
   const handleAssignVariant = async () => {
     console.log({ formData });
+    if (!formData.inventoryItemId) {
+      toast.error("No item from inventory selected!");
+      return;
+    }
+    setIsAdding(true);
     try {
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${prodId}/${prodVarId}/variant-component/`,
@@ -60,11 +68,13 @@ const AssignComponentModal = ({
       onClose();
     } catch (e: any) {
       toast.error(e.error);
+    } finally {
+      setIsAdding(false);
     }
   };
   return (
-    <div className="flex flex-col gap-2 h-full bg-white p-2 rounded">
-      <div className="flex gap-2">
+    <div className="flex flex-col gap-2 h-full bg-white rounded ga-2">
+      <div className="flex flex-row gap-2">
         <DropdownSearch<DisplayInventoryItems>
           searchFn={searchItems}
           onSelect={(item) => {
@@ -91,12 +101,36 @@ const AssignComponentModal = ({
           name="quantityRequired"
         />
       </div>
+      <div>
+        <Toggle
+          flexType="flex-col"
+          label="Deduct in inventory?"
+          sizes="sm"
+          initial={formData.isDeductVar}
+          onToggle={(state) =>
+            setFormData((prev) => ({
+              ...prev,
+              isDeductVar: state,
+            }))
+          }
+        />
+      </div>
       <div className="flex mt-auto justify-end gap-3">
         <div>
-          <Button size="sm" label="Cancel" color="outline" />
+          <Button
+            size="sm"
+            label="Cancel"
+            color="outline"
+            disabled={isAdding}
+          />
         </div>{" "}
         <div>
-          <Button size="sm" label="Assign" onClick={handleAssignVariant} />
+          <Button
+            size="sm"
+            label="Assign"
+            onClick={handleAssignVariant}
+            loading={isAdding}
+          />
         </div>
       </div>
     </div>

@@ -30,6 +30,7 @@ export interface VariantComponents {
   quantityRequired: number;
   prodVarId: number;
   inventoryItemId: number;
+  isDeductVar: boolean;
   sold?: number;
   left?: number;
 }

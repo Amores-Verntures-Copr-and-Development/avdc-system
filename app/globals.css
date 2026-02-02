@@ -1,30 +1,30 @@
 @import "tailwindcss";
 
 :root {
+  /* Define your raw values here */
   --background: #f3f4f6;
   --foreground: hsl(0, 0%, 9%);
-  --font-sans: var(--font-poppins);
+  overscroll-behavior: none;
+  /* POS Specifics */
 }
 
 @theme inline {
+  /* Map Tailwind utilities to your variables */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  /* Define your custom colors */
   --color-primary-1: #c51d71;
   --color-primary-1-hover: #e63389;
-  --color-background-white: #f3f4f6;
+
+  /* Fix the font to use Poppins as the default sans */
+  --font-sans: var(--font-poppins), sans-serif;
 }
 
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-} */
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  /* Use the Tailwind utility we just mapped above */
+  @apply bg-background text-foreground antialiased;
+
+  /* POS Essentials */
   font-family: var(--font-poppins), sans-serif;
 }

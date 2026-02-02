@@ -33,7 +33,7 @@ export type CreateProductVariantDto = Pick<
 
 export type CreateVarianComponentDto = Pick<
   VariantComponents,
-  "inventoryItemId" | "quantityRequired" | "prodVarId"
+  "inventoryItemId" | "quantityRequired" | "prodVarId" | "isDeductVar"
 >;
 
 export interface CreateProductItemDtos {

@@ -55,13 +55,18 @@ import SearchBar from "@/components/shared/SearchBar";
 import ProductVariantCard from "./components/ProductVariantCard";
 import Input from "@/components/shared/Input";
 
+export interface ComponentsVariant {
+  inventoryItemId: number;
+  quantityRequired: number;
+}
+
 export interface OrderList {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
   quantity: number;
   prodVarTotal?: number;
-  inventoryItemId: number | null;
+  components?: ComponentsVariant[];
 }
 
 interface PosPageProps {
@@ -177,10 +182,14 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
   const addProductOrder = (newProduct: OrderList) => {
     // ✅ Always deduct inventory
+    console.log({ newProduct });
     const isAvailable = hasSufficientInventory(newProduct.prodVarId);
     if (!isAvailable) {
       toast.error("Insufficient inventory");
       return;
+    }
+
+    if (newProduct.components && newProduct.components.length > 1) {
     }
     deductVariantComponents(newProduct.prodVarId, 1);
 
@@ -223,10 +232,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
           return {
             ...variant,
-            variantComponents: variant.variantComponents?.map((vc) => ({
-              ...vc,
-              left: (vc.left ?? 0) - vc.quantityRequired * quantityToAdd,
-            })),
+            variantComponents: variant.variantComponents
+              ?.filter((i) => Boolean(i.isDeductVar) === true)
+              .map((vc) => ({
+                ...vc,
+                left: (vc.left ?? 0) - vc.quantityRequired * quantityToAdd,
+              })),
           };
         }),
       })),
@@ -402,12 +413,16 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     setIsConfirmingOrder(true);
     const saleItems: CreateSaleItemDto[] =
       selectedOrder?.map((items) => ({
-        inventoryItemId: items.inventoryItemId || null,
         salesItemPrice: items.prodVarPrice,
         salesItemQuantity: items.quantity,
         salesId: 0,
         salesItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
         prodVarId: items.prodVarId,
+        components:
+          items.components?.map((i) => ({
+            inventoryItemId: i.inventoryItemId,
+            quantityRequired: i.quantityRequired,
+          })) ?? [],
       })) ?? [];
     const paymentMethodData: CreateSalePaymentDto[] = paymentMethod
       ?.map((pm) => {
@@ -442,7 +457,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesItems: saleItems,
       salesPayments: paymentMethodData,
     };
-
     try {
       console.log({ salesData });
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {

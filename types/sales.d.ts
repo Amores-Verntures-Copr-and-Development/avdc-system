@@ -29,7 +29,6 @@ export interface Sales {
 export interface SaleItems {
   salesItemId: number;
   salesId: number;
-  inventoryItemId: number | null;
   salesItemQuantity: number;
   salesItemSubtotal: number;
   salesItemPrice: number;

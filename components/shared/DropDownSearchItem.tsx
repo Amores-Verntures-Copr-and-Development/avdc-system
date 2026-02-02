@@ -32,7 +32,7 @@ const DropDownSearchItem = ({
 }: DropDownSearchItemProps) => {
   const searchItems = async (query: string): Promise<ItemInterface[]> => {
     const res = await fetch(
-      `/api/items/search?search=${encodeURIComponent(query)}`
+      `/api/items/search?search=${encodeURIComponent(query)}`,
     );
     const json = await res.json();
     return json.data || [];

@@ -227,7 +227,7 @@ const Modal: React.FC<ModalProps> = ({
 
         {/* Content Area (scrollable) - Fixed height for mobile */}
         <div
-          className={`flex-1 overflow-y-auto  overscroll-contain ${
+          className={`flex-1 overflow-y-auto  overscroll-contain bg-white ${
             hasPadding ? "p-4" : ""
           }`}
         >

@@ -33,7 +33,7 @@ export async function GET(_request: Request) {
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -42,7 +42,7 @@ export async function GET(_request: Request) {
         message: err?.message,
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

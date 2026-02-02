@@ -469,6 +469,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     inventoryItemId: vc.inventoryItemId,
                     prodVarId: 0,
                     quantityRequired: vc.quantityRequired,
+                    isDeductVar: true,
                   })) ?? [],
               },
             ],

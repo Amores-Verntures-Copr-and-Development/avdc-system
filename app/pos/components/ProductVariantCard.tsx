@@ -20,8 +20,23 @@ const ProductVariantCard = ({
   product,
   addProductOrder,
 }: ProductVariantCardProps) => {
+  const deductInventory = Number(data?.isDeductInv) === 1;
+  const hasOneVariant = data?.variantComponents?.length === 1;
+  const left = hasOneVariant ? (data.variantComponents?.[0]?.left ?? 0) : 0;
+  const hasNoAssignComponent = !data?.variantComponents?.length;
+  console.log({ hasNoAssignComponent });
+  const hasMoreVariant =
+    data?.variantComponents?.length && data?.variantComponents?.length > 1;
+  const hasStock = hasMoreVariant
+    ? data?.variantComponents &&
+      data?.variantComponents?.every((i) => i.left !== 0)
+    : deductInventory
+      ? left > 0
+      : true;
+
   const handleClick = () => {
-    console.log({ data, product });
+    console.log({ hasOneVariant });
+    console.log("Data: ", data);
     if (!data || !product || !hasStock) return;
 
     const variantName = data.prodVarName?.trim() || "";
@@ -39,13 +54,18 @@ const ProductVariantCard = ({
     const prodVarName = alreadyIncluded
       ? variantName
       : `${productName} ${variantName}`;
-    if (data.variantComponents && data.variantComponents.length === 1) {
+    if (hasOneVariant && data.variantComponents) {
       addProductOrder({
         prodVarId: data.prodVarId,
         prodVarName: prodVarName,
         quantity: 1,
         prodVarPrice: data.prodVarPrice,
-        inventoryItemId: data.variantComponents[0].inventoryItemId,
+        components: [
+          {
+            inventoryItemId: data.variantComponents[0].inventoryItemId,
+            quantityRequired: data.variantComponents[0].quantityRequired,
+          },
+        ],
       });
     } else {
       addProductOrder({
@@ -53,18 +73,15 @@ const ProductVariantCard = ({
         prodVarName: prodVarName,
         quantity: 1,
         prodVarPrice: data.prodVarPrice,
-        inventoryItemId: 0,
+        components: data.variantComponents
+          ?.filter((i) => Boolean(i.isDeductVar) === true)
+          .map((i) => ({
+            inventoryItemId: i.inventoryItemId,
+            quantityRequired: i.quantityRequired,
+          })),
       });
     }
   };
-
-  const hasOneVariant = data?.variantComponents?.length === 1;
-  const left = hasOneVariant ? (data.variantComponents?.[0]?.left ?? 0) : 0;
-  console.log("Deduct: ", data?.isDeductInv);
-  const deductInventory = Number(data?.isDeductInv) === 1;
-  const hasStock = deductInventory ? left > 0 : true;
-  console.log({ hasOneVariant, left });
-  console.log({ hasStock });
 
   // Safety check for missing data
   if (!data || !product) {
@@ -76,7 +93,7 @@ const ProductVariantCard = ({
       className={`group relative min-h-0 flex flex-col bg-white rounded-xl shadow-sm transition-all duration-300 p-2 2xl:p-4 border overflow-hidden ${
         hasStock
           ? "hover:shadow-xl border-gray-200 hover:border-primary-1 cursor-pointer active:scale-[0.98]"
-          : "border-gray-300 opacity-75 cursor-not-allowed"
+          : "border-gray-300 opacity-75"
       }`}
       onClick={handleClick}
       role="button"
@@ -178,26 +195,37 @@ const ProductVariantCard = ({
         <div className="flex-1"></div>
 
         {/* Out of Stock Banner */}
-        {!hasStock && Number(data.isDeductInv) === 1 && (
-          <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-1.5 2xl:px-3 py-1 2xl:py-2">
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <span className="text-[10px] font-semibold text-red-700">
-              No Stock Available
-            </span>
-          </div>
-        )}
+        {!hasStock &&
+          Number(data.isDeductInv) === 1 &&
+          (!hasNoAssignComponent ? (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-1.5 2xl:px-3 py-1 2xl:py-2">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+              <span className="text-[10px] font-semibold text-red-700">
+                No Stock Available
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-1.5 2xl:px-3 py-1 2xl:py-2">
+              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+              <span className="text-[10px] font-semibold text-red-700">
+                No Assign Component
+              </span>
+            </div>
+          ))}
 
         {/* Footer section */}
         {hasStock && (
           <div className="flex items-center justify-between pt-3 border-t border-gray-100 group-hover:border-primary-1/20 transition-colors">
             <div className="flex items-center gap-1">
               {Number(data.isDeductInv) === 1 ? (
-                <div className="flex items-center gap-1 bg-gray-50 group-hover:bg-primary-1/5 px-2 py-1 rounded transition-colors">
-                  <Package className="w-3 h-3 text-green-700 group-hover:text-green-900 transition-colors" />
-                  <span className="text-[9px] xl:text-xs text-gray-600 font-semibold">
-                    {left} <span className="text-[9px] xl:text-xs">left</span>
-                  </span>
-                </div>
+                hasOneVariant && (
+                  <div className="flex items-center gap-1 bg-gray-50 group-hover:bg-primary-1/5 px-2 py-1 rounded transition-colors">
+                    <Package className="w-3 h-3 text-green-700 group-hover:text-green-900 transition-colors" />
+                    <span className="text-[9px] xl:text-xs text-gray-600 font-semibold">
+                      {left} <span className="text-[9px] xl:text-xs">left</span>
+                    </span>
+                  </div>
+                )
               ) : (
                 <div className="w-[48px]" />
               )}

@@ -116,25 +116,27 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   };
 
   return (
-    <div className="flex flex-col">
-      <Table
-        uniqueIdKey="invItem"
-        columns={columns}
-        data={tableData}
-        showActions
-        updateData={handleDataUpdate}
-        renderActions={(row) => (
-          <div className="flex items-center justify-center">
-            <IconButton
-              onClick={() => handleRemoveItem(row.invItem)}
-              label="Remove"
-              bg="red"
-              icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
-            />
-          </div>
-        )}
-      />
-      <div className="flex justify-end gap-2 mt-10">
+    <div className="flex flex-col h-full gap-4">
+      <div className="flex-1 min-h-0">
+        <Table
+          uniqueIdKey="invItem"
+          columns={columns}
+          data={tableData}
+          showActions
+          updateData={handleDataUpdate}
+          renderActions={(row) => (
+            <div className="flex items-center justify-center">
+              <IconButton
+                onClick={() => handleRemoveItem(row.invItem)}
+                label="Remove"
+                bg="red"
+                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+            </div>
+          )}
+        />
+      </div>
+      <div className="flex flex-1 justify-end gap-2">
         <Button
           label="Cancel"
           color="secondary"

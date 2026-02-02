@@ -24,8 +24,8 @@ export default function Toggle({
   };
   const labelClass = {
     xs: "text-[10px] xl:text-xs",
-    sm: "text-md xl:text-sm",
-    md: "text-md md:text-base",
+    sm: "text-[10px] lg:text-md xl:text-sm",
+    md: "text-[10px] lg:text-md xl:text-sm",
     lg: "text-md md:text-lg",
   }[sizes];
   return (

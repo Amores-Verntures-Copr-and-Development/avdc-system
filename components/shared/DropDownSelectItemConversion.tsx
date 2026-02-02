@@ -71,7 +71,7 @@ const DropDownSelectItemConversion = ({
 
       // Find the selected item from filteredItems
       const selectedItemData = filteredItems.find(
-        (item) => item.itemId?.toString() === selectedValue
+        (item) => item.itemId?.toString() === selectedValue,
       );
 
       if (selectedItemData) {

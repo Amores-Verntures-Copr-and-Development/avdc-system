@@ -24,41 +24,41 @@ export default function SearchBar({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = useState(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const [debouncedSearch, setDebouncedSearch] = useState(
-    searchParams.get("search") || ""
+    searchParams.get("search") || "",
   );
   const timer = useRef<NodeJS.Timeout | null>(null);
 
   // Update URL only when debounced search changes
   // SearchBar component - FIXED VERSION
   useEffect(() => {
-  if (!useUrl) return; // 🚫 don't touch URL
+    if (!useUrl) return; // 🚫 don't touch URL
 
-  const currentSearch = searchParams.get("search") || "";
+    const currentSearch = searchParams.get("search") || "";
 
-  if (debouncedSearch.trim() === currentSearch.trim()) {
-    return;
-  }
+    if (debouncedSearch.trim() === currentSearch.trim()) {
+      return;
+    }
 
-  const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(searchParams.toString());
 
-  if (debouncedSearch.trim()) {
-    params.set("search", debouncedSearch.trim());
-  } else {
-    params.delete("search");
-  }
+    if (debouncedSearch.trim()) {
+      params.set("search", debouncedSearch.trim());
+    } else {
+      params.delete("search");
+    }
 
-  params.set("page", "1");
+    params.set("page", "1");
 
-  router.push(`${url}?${params.toString()}`);
-}, [debouncedSearch, searchParams, url, router, useUrl]);
+    router.push(`${url}?${params.toString()}`);
+  }, [debouncedSearch, searchParams, url, router, useUrl]);
   useEffect(() => {
-  if (!useUrl && onSearch) {
-    onSearch(debouncedSearch);
-  }
-}, [debouncedSearch, useUrl, onSearch]);
+    if (!useUrl && onSearch) {
+      onSearch(debouncedSearch);
+    }
+  }, [debouncedSearch, useUrl, onSearch]);
   // Debounce the local search
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -91,7 +91,7 @@ export default function SearchBar({
   return (
     <div className="flex w-full h-full items-center gap-2">
       {label && (
-        <span className="text-xs xl:text-sm font-medium text-gray-700 whitespace-nowrap">
+        <span className="text-[10px] lg:text-xs xl:text-sm font-medium text-gray-700 whitespace-nowrap">
           {label}
         </span>
       )}

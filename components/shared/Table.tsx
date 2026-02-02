@@ -425,7 +425,7 @@ const TableInner = <T extends Record<string, any>>(
                 )}
               </div>
             )}
-            <div className="flex gap-5">
+            <div className="flex gap-5 items-center">
               {searchUrl && (
                 <div className="w-25 xl:w-40 items-center align-middle">
                   {searchUrl && <SearchBar url={searchUrl} />}
@@ -499,7 +499,7 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column, index) => (
                   <th
                     key={column.key}
-                    className={`px-1 py-1 xl:px-2 xl:py-3 font-semibold text-left text-[9px] lg:text-${textSize} text-gray-700 bg-gray-50 ${
+                    className={`px-1 py-1 xl:px-2 xl:py-3 font-semibold text-left text-xs lg:text-${textSize} text-gray-700 bg-gray-50 ${
                       index < columns.length - 1
                         ? "border-r border-gray-300"
                         : ""
@@ -511,7 +511,7 @@ const TableInner = <T extends Record<string, any>>(
 
                 {showActions && (
                   <th
-                    className={`px-1 py-1 xl:px-2 xl:py-1 text-center border-l border-r border-gray-300 font-semibold text-[10px] lg:text-${textSize} text-gray-700 bg-gray-50`}
+                    className={`px-1 py-1 xl:px-2 xl:py-1 text-center border-l border-r border-gray-300 font-semibold text-xs lg:text-${textSize} text-gray-700 bg-gray-50`}
                   >
                     Actions
                   </th>
@@ -567,7 +567,7 @@ const TableInner = <T extends Record<string, any>>(
                     {showCheckBox && (
                       <td
                         onClick={(e) => e.stopPropagation()}
-                        className="px-1 py-0.5 xl:px-2 xl:py-1 text-center border-r border-gray-100"
+                        className="px-2 py-1 xl:px-2 xl:py-1 text-center border-r border-gray-100"
                       >
                         <input
                           type="checkbox"
@@ -581,7 +581,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-[9px] xl:text-${textSize} ${
+                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >

@@ -39,7 +39,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
 
     const labelClass = {
       xs: "text-[10px] xl:text-xs",
-      sm: "text-md xl:text-sm",
+      sm: "text-[10px] lg:text-md xl:text-sm",
       md: "text-sm xl:text-md md:text-base",
       lg: "text-md md:text-lg",
     }[sizes];

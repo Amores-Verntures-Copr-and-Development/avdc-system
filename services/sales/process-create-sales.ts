@@ -67,13 +67,13 @@ export async function processCreateSales(data: CreateSaleDto) {
     });
     const saleItemData: CreateSaleItemDto[] =
       data.salesItems?.map((item) => ({
-        inventoryItemId: item.inventoryItemId,
         salesItemPrice: item.salesItemPrice,
         salesItemQuantity: item.salesItemQuantity,
         salesItemSubtotal: item.salesItemSubtotal,
         salesId: salesId,
         saleItemQuantity: item.salesItemQuantity,
         prodVarId: item.prodVarId,
+        components: item.components,
       })) ?? [];
 
     //insert into saleItems table
@@ -93,9 +93,10 @@ export async function processCreateSales(data: CreateSaleDto) {
     if (salesPaymentData.length > 0) {
       await createSalePayments({ connection, data: salesPaymentData });
     }
-    const needDeductInventory = saleItemData.some(
-      (item) => item.inventoryItemId,
+    const needDeductInventory = saleItemData.filter(
+      (i) => i.components?.length !== 0,
     );
+    console.log({ needDeductInventory });
     const salesDiscounts: CreateSalesDiscount[] =
       data.saleDiscounts?.map((dis) => ({
         ...dis,
@@ -104,22 +105,25 @@ export async function processCreateSales(data: CreateSaleDto) {
     if (salesDiscounts.length > 0) {
       await createSalesDiscounts({ connection, data: salesDiscounts });
     }
-    if (needDeductInventory) {
+    if (needDeductInventory.length > 0) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },
         connection,
       });
+      console.log({ needDeductInventory });
+      const componentVar: Partial<InventoryItemInterface>[] =
+        needDeductInventory.flatMap(
+          (item) =>
+            item.components?.flatMap((comp) => ({
+              inventoryItemId: comp.inventoryItemId ?? 0,
+              inventoryItemQuantity:
+                comp.quantityRequired * item.salesItemQuantity,
+            })) ?? [],
+        ) ?? [];
+      console.log({ componentVar });
 
-      const filterDeductItem = saleItemData.filter(
-        (item) => item.inventoryItemId || item.inventoryItemId !== 0,
-      );
-      const inventoryItem: Partial<InventoryItemInterface>[] =
-        filterDeductItem.map((item) => ({
-          inventoryItemId: item.inventoryItemId ?? 0,
-          inventoryItemQuantity: item.salesItemQuantity,
-        }));
       const inventoryMovement: CreateInventoryMovementDto[] =
-        inventoryItem.map((item) => ({
+        componentVar.map((item) => ({
           inventoryId: inventory[0].inventoryId,
           inventoryItemId: item.inventoryItemId ?? 0,
           itemMovementReference: "sales",
@@ -132,7 +136,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       await updateInventoryItem({
         connection,
         fieldModes: { inventoryItemQuantity: "decrement" },
-        updates: inventoryItem,
+        updates: componentVar,
         keyFields: ["inventoryItemId"],
       });
       await createInventoryMovement({ connection, data: inventoryMovement });

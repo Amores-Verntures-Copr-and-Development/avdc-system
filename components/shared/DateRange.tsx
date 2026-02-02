@@ -100,12 +100,12 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
         } shadow-sm hover:bg-gray-50 transition-colors duration-200 min-w-[140px]`}
       >
         <Calendar
-          className={`w-4 h-4 text-gray-600         ${
+          className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
             isShow ? "!text-white" : "text-gray-600"
           } `}
         />
         <span
-          className={`text-[9px] 2xl:text-xs 3xl:text-sm ${
+          className={`text-[8px] 2xl:text-xs 3xl:text-sm ${
             isShow ? "!text-white" : "text-gray-700"
           } font-medium flex-1 text-left`}
         >
@@ -114,13 +114,13 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
 
         {isShow ? (
           <ChevronUp
-            className={`w-4 h-4 text-gray-600         ${
+            className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
               isShow ? "!text-white" : "text-gray-600"
             } `}
           />
         ) : (
           <ChevronDown
-            className={`w-4 h-4 text-gray-600         ${
+            className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
               isShow ? "!text-white" : "text-gray-600"
             } `}
           />

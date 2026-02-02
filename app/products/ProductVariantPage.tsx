@@ -96,6 +96,15 @@ const ProductVariantPage = ({
       : null,
     fetcher,
   );
+  const updateData = async () => {
+    const data = await mutate();
+    const findSelectedRowToData = data?.data.find(
+      (i) => i.prodVarId === selectedRow?.prodVarId,
+    );
+    if (findSelectedRowToData) {
+      setSelectedRow(findSelectedRowToData);
+    }
+  };
   const handleAddVariant = async (prodVariant: CreateProductVariantDto) => {
     console.log({ data });
     setIsSubmitting(true);
@@ -231,7 +240,7 @@ const ProductVariantPage = ({
             setShowAddComponent={setShowAddComponent}
             prod={data}
             storeId={data?.storeId ?? 0}
-            mutate={mutate}
+            mutate={updateData}
             onClose={function (): void {
               setIsShowModal(null);
             }}

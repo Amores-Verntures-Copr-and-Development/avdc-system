@@ -1,9 +1,11 @@
 import Button from "@/components/shared/Button";
+import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import DropDownSelectItemConversion from "@/components/shared/DropDownSelectItemConversion";
 import Input from "@/components/shared/Input";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { CreateItemConversionDto } from "@/dtos/items.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { ItemInterface } from "@/types/items";
 
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
@@ -29,7 +31,13 @@ const AddConversionModal = ({
     toUnit: "",
     itemConCreatedBy: 0,
   });
-
+  const searchItems = async (query: string): Promise<ItemInterface[]> => {
+    const res = await fetch(
+      `/api/items/search?search=${encodeURIComponent(query)}`,
+    );
+    const json = await res.json();
+    return json.data || [];
+  };
   const handleQuantityChange = handleChange(convertForm, setConvertForm);
   const handleCreateConversion = async () => {
     const newForm: CreateItemConversionDto = {
@@ -106,26 +114,29 @@ const AddConversionModal = ({
 
         <div className="space-y-4">
           {/* Search Item Dropdown */}
-          <div>
-            <DropDownSelectItemConversion
-              name={"toItemId"}
-              label="Select Unit"
-              value={String(convertForm.toItemId)}
-              sizes="xs"
-              itemName={data?.itemName ?? ""}
-              id={data?.itemId}
-              onChange={handleQuantityChange}
-              selectedItem={(row) => {
-                if (row) {
-                  setConvertForm((prev) => ({
-                    ...prev,
-                    toUnit: row.itemUnit,
-                    toItemId: row.itemId,
-                  }));
-                }
-              }}
-            />
-          </div>
+          <DropdownSearch<ItemInterface>
+            label={"Select Unit"}
+            sizes="xs"
+            searchFn={searchItems}
+            renderItem={(item) => (
+              <span>
+                <span>
+                  {item.itemName}{" "}
+                  <span className="font-semibold">({item.itemUnit})</span>
+                </span>
+              </span>
+            )}
+            displayValue={(s) => `${s.itemName}`}
+            onSelect={function (item: ItemInterface): void {
+              if (item) {
+                setConvertForm((prev) => ({
+                  ...prev,
+                  toUnit: item.itemUnit,
+                  toItemId: item.itemId,
+                }));
+              }
+            }}
+          />
 
           {/* Conversion Ratio */}
           <div className="grid grid-cols-2 gap-4">

@@ -84,13 +84,15 @@ const ConvertSection = ({
     const findConvert = response.data.find(
       (item) => item.toItemId === Number(toForm.itemId),
     );
-
+    const isMultiply =
+      Number(findConvert?.fromQuantity) < Number(findConvert?.toQuantity);
     // Update toForm quantity if fromForm quantity and conversion exist
     if (findConvert) {
       setToForm((prev) => ({
         ...prev,
-        inventoryItemQuantity:
-          fromForm.inventoryItemQuantity * findConvert.toQuantity,
+        inventoryItemQuantity: isMultiply
+          ? fromForm.inventoryItemQuantity * findConvert.toQuantity
+          : fromForm.inventoryItemQuantity / findConvert.fromQuantity,
       }));
     }
   }, [toForm.itemId, response.data, fromForm.inventoryItemQuantity]);
@@ -121,7 +123,6 @@ const ConvertSection = ({
   ];
 
   const handleConvertItem = async () => {
-    setIsConverting(true);
     const convertFormData: ConvertInventoryItemsDto = {
       to: toForm,
       from: fromForm,
@@ -139,7 +140,7 @@ const ConvertSection = ({
       toast.error("Cannot convert 0 quantity!");
       return;
     }
-
+    setIsConverting(true);
     try {
       const result = await fetch(
         `api/items/${convertFormData.from.itemId}/conversion`,

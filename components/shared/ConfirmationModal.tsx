@@ -9,6 +9,7 @@ interface ConfirmationModalProps {
   confirmLabel?: string;
   isShow: boolean;
   isLoading?: boolean;
+  title?: string;
 }
 const ConfirmationModal = ({
   onConfirm,
@@ -17,6 +18,7 @@ const ConfirmationModal = ({
   confirmLabel = "Submit",
   isShow = false,
   isLoading = false,
+  title = "Received Confirmation",
 }: ConfirmationModalProps) => {
   return (
     <Modal
@@ -24,7 +26,7 @@ const ConfirmationModal = ({
       onClose={function (): void {
         onClose();
       }}
-      title="Received Confirmation"
+      title={title}
     >
       <div className="flex flex-col gap-5">
         <div className="items-center text-center text-sm font-semibold">

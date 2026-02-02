@@ -20,8 +20,15 @@ import {
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
 import { updateProductVariantServices } from "@/services/products/product-variant/update-product-variants";
 import { createVariantComponent } from "@/services/products/product-variant/variant-component/create-variant-component";
+import { deleteVariantComponentServices } from "@/services/products/product-variant/variant-component/delete-variant-components";
+import { updateVariantComponentServices } from "@/services/products/product-variant/variant-component/update-variant-component";
 import { updateProductsByFields } from "@/services/products/udpate-product";
-import { ProductCategories, Products, ProductVariants } from "@/types/products";
+import {
+  ProductCategories,
+  Products,
+  ProductVariants,
+  VariantComponents,
+} from "@/types/products";
 
 export const createProductController = async (data: CreateProductDtos) => {
   try {
@@ -266,6 +273,50 @@ export const updateProductVariantController = async (
     return {
       error: e,
       message: "Failed to update product variants!",
+      success: false,
+    };
+  }
+};
+
+export const updateVariantComponentController = async (
+  data: Partial<VariantComponents>[],
+) => {
+  try {
+    const result =
+      await updateVariantComponentServices.updateVariantComponentByFields({
+        updates: data,
+      });
+    return {
+      data: result,
+      message: "Variants component updated successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to update variant components!",
+      success: false,
+    };
+  }
+};
+
+export const hardDeleteVariantComponentController = async (
+  data: Partial<VariantComponents>[],
+) => {
+  try {
+    const result =
+      await deleteVariantComponentServices.hardDeleteVariantComponent({
+        updates: data,
+      });
+    return {
+      data: result,
+      message: "Variants component deleted successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to delete variant components!",
       success: false,
     };
   }

@@ -266,14 +266,13 @@ export const insertSaleItems = async ({
     throw new Error("No data provided for bulk insert");
   }
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SalesItems(salesItemQuantity,salesItemPrice,salesItemSubtotal,salesId,inventoryItemId,prodVarId) 
-            VALUES ${data.map(() => "(?, ?, ?,?,?,?)").join(", ")}`;
+  const sql = `INSERT INTO SalesItems(salesItemQuantity,salesItemPrice,salesItemSubtotal,salesId,prodVarId) 
+            VALUES ${data.map(() => "(?, ?, ?,?,?)").join(", ")}`;
   const values = data.flatMap((item) => [
     item.salesItemQuantity,
     item.salesItemPrice,
     item.salesItemSubtotal,
     item.salesId,
-    item.inventoryItemId,
     item.prodVarId,
   ]);
   const [results] = await pool.execute(sql, values);

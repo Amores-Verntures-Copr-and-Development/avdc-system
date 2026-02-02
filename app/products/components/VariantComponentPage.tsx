@@ -4,18 +4,23 @@ import Modal from "@/components/shared/Modal";
 import {
   DisplaProductVariantsDtos,
   DisplayProductsDtos,
+  DisplayVariantComponents,
 } from "@/dtos/products.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import React, { useState } from "react";
 import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, Trash, X } from "lucide-react";
 import Input from "@/components/shared/Input";
-import { ProductVariants } from "@/types/products";
+import { ProductVariants, VariantComponents } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
 import { handleChange } from "@/utils/handle-change";
 import { mutate } from "swr";
 import toast from "react-hot-toast";
+import ViewVariantComponent from "./ViewVariantComponent";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import { useSession } from "@/hooks/useSession";
+import { formatPeso } from "@/utils/formatPeso";
 
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
@@ -29,14 +34,23 @@ interface VariantComponentPageProps {
 
 const VariantComponentPage = ({
   data,
-  showAddComponent,
-  setShowAddComponent,
+  showAddComponent: showComponent,
+  setShowAddComponent: setShowComponent,
   prod,
   mutate,
   onClose,
   storeId,
 }: VariantComponentPageProps) => {
-  // const [showAddComponent, setShowAddComponent] = useState(false);
+  const { user, hasStore } = useSession();
+  const isAllowedShowCosting =
+    !hasStore && !["supervisor", "staff"].includes(user?.empPosition ?? "");
+  console.log({ isAllowedShowCosting });
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteVariant, setShowDeleteVariant] =
+    useState<DisplayVariantComponents | null>(null);
+  const [showAddComponent, setShowAddComponent] = useState(false);
+  const [selectedVariant, setSelectedVariant] =
+    useState<DisplayVariantComponents | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [form, setForm] = useState<ProductVariants>({
@@ -86,6 +100,38 @@ const VariantComponentPage = ({
     } catch (e) {
     } finally {
       setIsSaving(false);
+    }
+  };
+  const totalCosting =
+    data?.variantComponents?.reduce(
+      (sum, item) => sum + Number(item.itemPrice),
+      0,
+    ) ?? 0;
+  const handleDeleteVariantComponent = async () => {
+    setIsDeleting(true);
+    console.log({ selectedVariant });
+    try {
+      const result = await fetch(
+        `/api/products/${storeId}/product-variants/${showDeleteVariant?.prodVarId}/${data?.prodVarId}/variant-component/${showDeleteVariant?.varComId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          method: "DELETE",
+        },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      toast.success(res.message);
+      mutate();
+      setShowDeleteVariant(null);
+      setShowComponent(false);
+    } catch (e: any) {
+      toast.error(e.error);
+    } finally {
+      setIsDeleting(false);
     }
   };
   return (
@@ -272,6 +318,7 @@ const VariantComponentPage = ({
               size="sm"
               onClick={() => {
                 setShowAddComponent(true);
+                setShowComponent(true);
               }}
             />
           </div>
@@ -279,23 +326,63 @@ const VariantComponentPage = ({
       >
         {data?.variantComponents && data?.variantComponents.length > 0 ? (
           <div className="mt-4">
-            <span className="text-xs text-gray-400 uppercase">Components</span>
-            <ul className="mt-2 space-y-1">
+            <div className="flex justify-between">
+              {" "}
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                Components
+              </span>
+              <span className="text-xs 2xl:text-sm font-semibold">
+                {formatPeso(totalCosting)}{" "}
+                <span className="font-normal">cost price</span>
+              </span>
+            </div>
+            <ul className="mt-2 divide-y divide-gray-200 rounded-md border border-gray-100 overflow-hidden">
               {data.variantComponents.map((comp) => (
                 <li
                   key={comp.varComId}
-                  className=" text-sm text-gray-700 bg-gray-50 p-2 rounded flex justify-between items-center"
+                  onClick={() => {
+                    setSelectedVariant(comp);
+                    setShowComponent(true);
+                  }}
+                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-white hover:bg-gray-50 transition"
                 >
-                  <span className="text-xs">{comp.itemName}</span>
-                  <span className="font-semibold">
-                    {comp.quantityRequired} qty
-                  </span>
+                  <div className="flex flex-col sm:flex-col sm:items-start gap-2">
+                    <span className="text-[10px] 2xl:text-xs font-medium text-gray-800">
+                      {comp.itemName}
+                    </span>
+                    <span className="text-gray-500 text-[9px]  2xl:text-xs">
+                      {comp.quantityRequired} qty
+                    </span>
+                  </div>
+
+                  <div className="mt-2 sm:mt-0 text-[9px] 2xl:text-xs font-medium">
+                    Deduct:{" "}
+                    <span
+                      className={`${
+                        Boolean(comp.isDeductVar)
+                          ? "text-green-600"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {Boolean(comp.isDeductVar) ? "Yes" : "No"}
+                    </span>
+                  </div>
+                  <IconButton
+                    onClick={function (): void {
+                      console.log({ comp });
+                      setShowDeleteVariant(comp);
+                      setShowComponent(true);
+                    }}
+                    icon={<Trash className="w-3 h-3" />}
+                    label={"Delete Variant"}
+                    bg={"red"}
+                  />
                 </li>
               ))}
             </ul>
           </div>
         ) : (
-          <div className="items-center text-center">
+          <div className="mt-4 text-center text-gray-400">
             No components available!
           </div>
         )}
@@ -307,6 +394,7 @@ const VariantComponentPage = ({
         isOpen={showAddComponent}
         onClose={function (): void {
           setShowAddComponent(false);
+          setShowComponent(false);
         }}
       >
         <AssignComponentModal
@@ -315,10 +403,46 @@ const VariantComponentPage = ({
           prodVarId={data?.prodVarId ?? 0}
           onClose={function (): void {
             setShowAddComponent(false);
+            setShowComponent(false);
           }}
           mutate={mutate}
         />
       </Modal>
+      <Modal
+        size="lg"
+        className=""
+        title="Variant Component"
+        isOpen={selectedVariant !== null}
+        onClose={function (): void {
+          setSelectedVariant(null);
+          setShowComponent(false);
+        }}
+      >
+        <ViewVariantComponent
+          storeId={prod?.storeId ?? 0}
+          prodId={prod?.prodId ?? 0}
+          data={selectedVariant}
+          onClose={() => {
+            setSelectedVariant(null);
+            setShowComponent(false);
+          }}
+          mutate={mutate}
+        />
+      </Modal>
+      <ConfirmationModal
+        onConfirm={function (): void {
+          handleDeleteVariantComponent();
+        }}
+        confirmationInfo={`Are you sure you want to delete ${showDeleteVariant?.itemName} as variant component?`}
+        onClose={function (): void {
+          setShowDeleteVariant(null);
+          setShowComponent(false);
+        }}
+        isShow={showDeleteVariant !== null}
+        confirmLabel="Delete"
+        title="Delete Variant Component"
+        isLoading={isDeleting}
+      />
     </div>
   );
 };
