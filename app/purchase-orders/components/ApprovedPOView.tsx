@@ -89,7 +89,6 @@ const columns: Column<PurchaseOrderItems>[] = [
 ];
 const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   data,
-  onSendPO,
   onSendPOItem,
   loading,
   poData,
@@ -773,7 +772,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             setExpandedSupplier={function (
               value: React.SetStateAction<number | null>,
             ): void {
-              throw new Error("Function not implemented.");
+              console.log({ value });
             }}
           />
           {/* <PDFViewer width="100%" height="100%">

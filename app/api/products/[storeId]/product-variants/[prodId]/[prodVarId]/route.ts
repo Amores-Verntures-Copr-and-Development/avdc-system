@@ -1,7 +1,4 @@
-import {
-  createProductVariantController,
-  updateProductVariantController,
-} from "@/controllers/ProductController";
+import { updateProductVariantController } from "@/controllers/ProductController";
 import { ProductVariants } from "@/types/products";
 import { NextResponse } from "next/server";
 

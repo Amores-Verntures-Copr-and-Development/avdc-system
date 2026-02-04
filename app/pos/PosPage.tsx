@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   CreditCard,
   Files,
-  Filter,
   History,
   Layers2,
   Package,
@@ -37,6 +36,7 @@ import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import {
   CreateSaleDto,
+  CreateSaleItemDisc,
   CreateSaleItemDto,
   CreateSalePaymentDto,
   CreateSalesDiscount,
@@ -47,13 +47,12 @@ import toast from "react-hot-toast";
 
 import CheckOutModal from "./components/CheckOutModal";
 import PaymentSuccessModal from "./components/PaymentSuccessModal";
-import { Sales } from "@/types/sales";
+import { Sales, SalesPaymentStatus, SalesStatus } from "@/types/sales";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import { Customer } from "@/types/customer";
-import { selectProductVariants } from "@/models/productModel";
 import SearchBar from "@/components/shared/SearchBar";
 import ProductVariantCard from "./components/ProductVariantCard";
-import Input from "@/components/shared/Input";
+import ViewEditAmountItemOrder from "./components/ViewEditAmountItemOrder";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -65,8 +64,10 @@ export interface OrderList {
   prodVarName: string;
   prodVarPrice: number;
   quantity: number;
+  prodVarSubtotal?: number;
   prodVarTotal?: number;
   components?: ComponentsVariant[];
+  discounts?: CreateSaleItemDisc[];
 }
 
 interface PosPageProps {
@@ -123,22 +124,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     }
   }, [itemResponse.data?.length]);
 
-  // Reset selectedDiscount when discountResponse changes
-  // useEffect(() => {
-  //   const noDiscounts =
-  //     !discountResponse?.data || discountResponse.data.length === 0;
-
-  //   // Only reset if selectedDiscount is not already null
-  //   if (noDiscounts && selectedDiscount !== null) {
-  //     console.log("Reset discounts");
-  //     setSelectedDiscount(null);
-  //   }
-  // }, [discountResponse.data, selectedDiscount]);
-
   const subtotal = useMemo(() => {
-    return (
-      selectedOrder?.reduce((t, o) => t + o.prodVarPrice * o.quantity, 0) ?? 0
-    );
+    return selectedOrder?.reduce((t, o) => t + Number(o.prodVarTotal), 0) ?? 0;
   }, [selectedOrder]);
   const totalPaid = paymentMethod?.reduce(
     (sum, p) => sum + p.salesPaymentAmount,
@@ -180,35 +167,100 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return true;
   };
 
+  const calculateItemDiscount = (
+    price: number,
+    quantity: number,
+    discounts: CreateSaleItemDisc[] = [],
+  ) => {
+    const subtotal = price * quantity;
+    let discountTotal = 0;
+
+    for (const d of discounts) {
+      const discountDef = discountResponse.data.find(
+        (dis) => dis.discountId === d.discountId,
+      );
+
+      if (!discountDef) continue;
+
+      const value = Number(discountDef.discountValue);
+
+      if (d.discountType === "percent") {
+        // Example: 10% of subtotal
+        discountTotal += subtotal * (value / 100);
+      }
+
+      if (d.discountType === "fixed") {
+        // Example: ₱50 off per item
+        discountTotal += value * quantity;
+      }
+    }
+
+    return Math.min(discountTotal, subtotal);
+  };
   const addProductOrder = (newProduct: OrderList) => {
-    // ✅ Always deduct inventory
-    console.log({ newProduct });
-    const isAvailable = hasSufficientInventory(newProduct.prodVarId);
-    if (!isAvailable) {
+    if (!hasSufficientInventory(newProduct.prodVarId)) {
       toast.error("Insufficient inventory");
       return;
     }
 
-    if (newProduct.components && newProduct.components.length > 1) {
-    }
-    deductVariantComponents(newProduct.prodVarId, 1);
-
     setSelectedOrder((prev) => {
-      if (!prev) {
-        return [{ ...newProduct, quantity: 1 }];
-      }
+      const orders = prev ?? [];
+      const existing = orders.find((p) => p.prodVarId === newProduct.prodVarId);
 
-      const exists = prev.find((p) => p.prodVarId === newProduct.prodVarId);
+      // NEW ITEM
+      if (!existing) {
+        deductVariantComponents(newProduct.prodVarId, 1);
 
-      if (exists) {
-        return prev.map((p) =>
-          p.prodVarId === newProduct.prodVarId
-            ? { ...p, quantity: p.quantity + 1 }
-            : p,
+        const quantity = 1;
+        const subtotal = newProduct.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          newProduct.prodVarPrice,
+          quantity,
+          newProduct.discounts,
         );
+        return [
+          ...orders,
+          {
+            ...newProduct,
+            quantity,
+            prodVarSubtotal: subtotal,
+            prodVarTotal: subtotal - discount,
+            discounts: newProduct.discounts
+              ? newProduct.discounts.map((d) => ({
+                  ...d,
+                  discountAmount: calculateItemDiscount(
+                    newProduct.prodVarPrice,
+                    1,
+                    [d],
+                  ),
+                }))
+              : [],
+          },
+        ];
       }
 
-      return [...prev, { ...newProduct, quantity: 1 }];
+      // UPDATE ITEM
+      return orders.map((item) => {
+        if (item.prodVarId !== newProduct.prodVarId) return item;
+
+        deductVariantComponents(newProduct.prodVarId, 1);
+
+        const quantity = item.quantity + 1;
+        const subtotal = newProduct.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          newProduct.prodVarPrice,
+          quantity,
+          item.discounts,
+        );
+        console.log("Discounts: ", item.discounts);
+        console.log({ discount });
+        return {
+          ...item,
+          quantity,
+          prodVarSubtotal: subtotal,
+          prodVarTotal: subtotal - discount,
+        };
+      });
     });
   };
   useEffect(() => {
@@ -265,20 +317,36 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
   };
   const removeQuantityProductList = (product: OrderList) => {
+    // Restore inventory first
     restoreVariantComponents(product.prodVarId, 1);
+
     setSelectedOrder((prev) => {
-      if (!prev) return null;
+      if (!prev) return [];
 
       return prev
-        .map((p) =>
-          p.prodVarId === product.prodVarId
-            ? {
-                ...p,
-                quantity: Math.max((p.quantity || 0) - 1, 0),
-              }
-            : p,
-        )
-        .filter((p) => p.quantity > 0); // ✅ remove items with 0 quantity
+        .map((p) => {
+          if (p.prodVarId !== product.prodVarId) return p;
+
+          const newQuantity = Math.max((p.quantity || 0) - 1, 0);
+
+          // Recalculate subtotal
+          const newSubtotal = p.prodVarPrice * newQuantity;
+
+          // Recalculate total with discounts
+          const newDiscount = calculateItemDiscount(
+            p.prodVarPrice,
+            newQuantity,
+            p.discounts,
+          );
+
+          return {
+            ...p,
+            quantity: newQuantity,
+            prodVarSubtotal: newSubtotal,
+            prodVarTotal: newSubtotal - newDiscount,
+          };
+        })
+        .filter((p) => p.quantity > 0); // remove items with 0 quantity
     });
   };
   useEffect(() => {
@@ -297,46 +365,66 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
   }, [subtotal]);
   const addQuantity = (product: OrderList) => {
-    const isAvailable = hasSufficientInventory(product.prodVarId);
-    console.log({});
-    if (!isAvailable) {
+    // Check inventory first
+    if (!hasSufficientInventory(product.prodVarId)) {
       toast.error("Insufficient inventory");
       return;
     }
-    deductVariantComponents(product.prodVarId, 1);
+
     setSelectedOrder((prev) => {
-      if (!prev) {
-        // if empty, add product with quantity 1
-        return [
-          {
-            ...product,
-            quantity: 1,
-          },
-        ];
-      }
+      const orders = prev ?? [];
 
-      const exists = prev.some((p) => p.prodVarId === product.prodVarId);
-
-      if (!exists) {
-        // if not in list, add it
-        return [
-          ...prev,
-          {
-            ...product,
-            quantity: 1,
-          },
-        ];
-      }
-
-      // if exists, increase quantity
-      return prev.map((p) =>
-        p.prodVarId === product.prodVarId
-          ? {
-              ...p,
-              quantity: (p.quantity || 0) + 1,
-            }
-          : p,
+      const existingIndex = orders.findIndex(
+        (p) => p.prodVarId === product.prodVarId,
       );
+
+      // NEW ITEM
+      if (existingIndex === -1) {
+        // Deduct inventory only when we actually add
+        deductVariantComponents(product.prodVarId, 1);
+
+        const quantity = 1;
+        const subtotal = product.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          product.prodVarPrice,
+          quantity,
+          product.discounts,
+        );
+
+        return [
+          ...orders,
+          {
+            ...product,
+            quantity,
+            prodVarSubtotal: subtotal,
+            prodVarTotal: subtotal - discount,
+          },
+        ];
+      }
+
+      // EXISTING ITEM: increase quantity
+      return orders.map((item, index) => {
+        if (index !== existingIndex) return item;
+
+        // Deduct inventory for the added unit
+        deductVariantComponents(product.prodVarId, 1);
+
+        const quantity = item.quantity + 1;
+        const subtotal = item.prodVarPrice * quantity;
+
+        const discount = calculateItemDiscount(
+          item.prodVarPrice,
+          quantity,
+          item.discounts,
+        );
+
+        return {
+          ...item,
+          quantity,
+          prodVarSubtotal: subtotal,
+          prodVarTotal: subtotal - discount,
+        };
+      });
     });
   };
   const [searchProd, setSearchProd] = useState("");
@@ -416,12 +504,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         salesItemPrice: items.prodVarPrice,
         salesItemQuantity: items.quantity,
         salesId: 0,
-        salesItemSubtotal: Number(items.quantity) * Number(items.prodVarPrice),
+        salesItemSubtotal: Number(items.prodVarSubtotal),
+        salesItemTotal: Number(items.prodVarTotal),
         prodVarId: items.prodVarId,
         components:
           items.components?.map((i) => ({
             inventoryItemId: i.inventoryItemId,
             quantityRequired: i.quantityRequired,
+          })) ?? [],
+        salesItemDiscounts:
+          items.discounts?.map((dis) => ({
+            discountAmount: dis.discountAmount,
+            discountId: dis.discountId,
+            salesItemId: 0,
+            salesItemDiscCreatedBy: user?.userId ?? 0,
+            discountType: dis.discountType,
           })) ?? [],
       })) ?? [];
     const paymentMethodData: CreateSalePaymentDto[] = paymentMethod
@@ -448,7 +545,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesInvoice: "",
       salesCreatedBy: user?.userId ?? 0,
       salesNo: "",
-      salesStatus: "completed",
+      salesStatus: SalesStatus.COMPLETED,
       salesTotalAmount: getTotalAmount(),
       storeId: user?.storeId ?? 0,
       salesSubTotal: subtotal,
@@ -495,7 +592,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setSelectedOrder([]);
       setSelectedDiscount([]);
       handleClearCustomerComponent();
-      return false;
+      return true;
     } catch (e) {
       console.log(e);
       toast.error("Failed to add Inventory.");
@@ -520,7 +617,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         payMetId: payment.payMetId,
         salesPaymentAmount: payment.salesPaymentAmount,
         salesId: 0,
-        salesPaymentStatus: "completed",
+        salesPaymentStatus: SalesPaymentStatus.COMPLETED,
       },
     ]);
   };
@@ -564,7 +661,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
     setSelectedDiscount(filter ?? []);
   };
-
+  const updateOrderList = (updatedOrder: OrderList) => {
+    setSelectedOrder((prev) =>
+      prev!.map((order) =>
+        order.prodVarId === updatedOrder.prodVarId ? updatedOrder : order,
+      ),
+    );
+  };
   return (
     <PageLayout>
       <div className="flex flex-1 overflow-visible h-full">
@@ -1007,23 +1110,14 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         }}
         title={`Edit Order Item ${editOrderAmount?.prodVarName}`}
       >
-        <div className="flex flex-col gap-2 h-full">
-          <h1 className="text-sm font-semibold">
-            Note:{" "}
-            <span className="font-normal">Modify total amount of order.</span>
-          </h1>
-          <div className="flex">
-            <Input label={"Amount"} sizes="sm" />
-          </div>
-          <div className="flex mt-auto gap-2 justify-end">
-            <div>
-              <Button label="Cancel" size="sm" />
-            </div>
-            <div>
-              <Button label="Cancel" size="sm" />
-            </div>
-          </div>
-        </div>
+        <ViewEditAmountItemOrder
+          updateOrderList={updateOrderList}
+          discountData={discountResponse.data}
+          data={editOrderAmount}
+          onClose={function (): void {
+            setEditOrderAmount(null);
+          }}
+        />
       </Modal>
     </PageLayout>
   );

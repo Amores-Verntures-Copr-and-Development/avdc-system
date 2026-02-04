@@ -9,7 +9,6 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { Plus, Trash } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 import useSWR from "swr";
 interface AddItemToRequestFromPOModaProps {
   reqData: DisplayRequisitionWithItems | null;
@@ -30,8 +29,7 @@ export interface POAddToRequestItemForm {
   requestId: number;
   addedBy: number;
 }
-interface DisplayPurchaseOrderItemsDtoExtended
-  extends DisplayPurchaseOrderItemsDto {
+interface DisplayPurchaseOrderItemsDtoExtended extends DisplayPurchaseOrderItemsDto {
   reqItemTransfer?: number;
 }
 const AddItemToRequestFromPOModal = ({
@@ -48,7 +46,7 @@ const AddItemToRequestFromPOModal = ({
     DisplayPurchaseOrderItemsDtoExtended[]
   >([]);
   const [selectedPoItems, setSelectedPoItems] = useState<POAddToRequestItem[]>(
-    []
+    [],
   );
 
   console.log({ itemResponse });
@@ -100,7 +98,7 @@ const AddItemToRequestFromPOModal = ({
         if (!selectedId) return "Select Supplier";
 
         const selected = row.suppliers.find(
-          (s) => s.suppId === Number(selectedId)
+          (s) => s.suppId === Number(selectedId),
         );
 
         return selected
@@ -114,7 +112,7 @@ const AddItemToRequestFromPOModal = ({
 
       selector: (row) => {
         const supplier = row.suppliers?.find(
-          (s) => s.suppId === Number(row.suppId)
+          (s) => s.suppId === Number(row.suppId),
         );
 
         const supplierPrice = Number(supplier?.suppItemPrice) || 0;
@@ -125,7 +123,7 @@ const AddItemToRequestFromPOModal = ({
 
       value: (row) => {
         const supplier = row.suppliers?.find(
-          (s) => s.suppId === Number(row.suppId)
+          (s) => s.suppId === Number(row.suppId),
         );
 
         return (
@@ -218,7 +216,7 @@ const AddItemToRequestFromPOModal = ({
                 bg={"green"}
                 icon={<Plus size={16} />}
                 disable={selectedPoItems.some(
-                  (item) => item.itemId === row.itemId
+                  (item) => item.itemId === row.itemId,
                 )}
               />
             </div>

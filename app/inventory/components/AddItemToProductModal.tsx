@@ -91,6 +91,7 @@ const AddItemToProductModal = ({
               quantityRequired: 1,
               prodVarId: 0,
               inventoryItemId: item.inventoryItemId,
+              isDeductVar: true,
             },
           ],
         })),

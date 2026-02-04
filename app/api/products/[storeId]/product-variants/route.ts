@@ -54,12 +54,12 @@ export async function GET(
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const statusParam = searchParams.get("status");
-    const category = searchParams.get("category") || "";
+    // const category = searchParams.get("category") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
-    const unit = searchParams.get("unit") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "";
+    // const unit = searchParams.get("unit") || "";
+    // const limit = searchParams.get("limit") || "";
+    // const page = searchParams.get("page") || "";
 
     const status: "fast" | "slow" | undefined =
       statusParam === "fast"

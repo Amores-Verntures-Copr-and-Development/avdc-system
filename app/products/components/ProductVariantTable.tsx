@@ -5,8 +5,7 @@ import { DisplaProductVariantsDtos } from "@/dtos/products.dto";
 import { formatPeso } from "@/utils/formatPeso";
 import { Eye, Plus, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { format } from "path";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 interface ProductVariantTableProps {
   data: DisplaProductVariantsDtos[];
   isLoading: boolean;
@@ -62,7 +61,7 @@ const ProductVariantTable = ({
   onRowSelection,
 }: ProductVariantTableProps) => {
   const router = useRouter();
-  const [filters, setFilters] = useState<Record<string, string[]>>({});
+  // const [filters, setFilters] = useState<Record<string, string[]>>({});
   const productVariantConfig = useMemo(
     () => [
       {
@@ -79,7 +78,7 @@ const ProductVariantTable = ({
   );
   const handleSave = useCallback(
     (newFilters: Record<string, string[]>) => {
-      setFilters(newFilters);
+      // setFilters(newFilters);
       const currentParams = new URLSearchParams(window.location.search);
       const filterKeys = [...productVariantConfig.map((f) => f.id), "branch"];
 

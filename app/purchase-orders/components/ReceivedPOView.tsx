@@ -70,10 +70,6 @@ const storeColumns: Column<RequestItems>[] = [
     key: "reqItemRemarks",
   },
 ];
-type RequestItemDraft = Pick<
-  PurchaseOrderItems,
-  "poItemId" | "poItemReceivedQty" | "supplierPrice"
->;
 
 interface ReceivedPOViewProps {
   data: DisplayPOItemsSupplier[];
@@ -368,9 +364,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       return false;
     }
   };
-  const isAllItemsDelivered = data.every((po) =>
-    po.items.every((item) => item.poItemStatus === "delivered"),
-  );
+  // const isAllItemsDelivered = data.every((po) =>
+  //   po.items.every((item) => item.poItemStatus === "delivered"),
+  // );
 
   const handleSubmitAddItemToSupplierPO = async (
     dataItem: CreatePurchaseOrderItemDto,
@@ -393,6 +389,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         return false;
       }
     } catch (e) {
+      console.log(e);
       return false;
     }
   };

@@ -31,9 +31,9 @@ export async function POST(_request: Request) {
   }
 }
 
-export async function GET(_request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(_request.url);
+    // const { searchParams } = new URL(_request.url);
     // const search = searchParams.get("search") || "";
     // console.log({ search });
     const res = await getCustomer({

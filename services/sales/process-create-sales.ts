@@ -25,6 +25,7 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 import { updateSalesByFields } from "./update-sales";
+import { SalesPaymentStatus } from "@/types/sales";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -70,10 +71,12 @@ export async function processCreateSales(data: CreateSaleDto) {
         salesItemPrice: item.salesItemPrice,
         salesItemQuantity: item.salesItemQuantity,
         salesItemSubtotal: item.salesItemSubtotal,
+        salesItemTotal: item.salesItemTotal,
         salesId: salesId,
         saleItemQuantity: item.salesItemQuantity,
         prodVarId: item.prodVarId,
         components: item.components,
+        salesItemDiscounts: item.salesItemDiscounts,
       })) ?? [];
 
     //insert into saleItems table
@@ -86,7 +89,7 @@ export async function processCreateSales(data: CreateSaleDto) {
         paymentReference: payment.paymentReference,
         salesPaymentAmount: payment.salesPaymentAmount,
         payMetId: payment.payMetId,
-        salesPaymentStatus: "completed",
+        salesPaymentStatus: SalesPaymentStatus.COMPLETED,
       })) ?? [];
 
     //insert into salePayments

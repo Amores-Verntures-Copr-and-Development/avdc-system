@@ -2,9 +2,9 @@ import Button from "@/components/shared/Button";
 import DropDownSearchItem from "@/components/shared/DropDownSearchItem";
 import Input from "@/components/shared/Input";
 import { DisplayRequisitionWithItems } from "@/dtos/purchase.dto";
-import { CreateRequestItemDto } from "@/dtos/request.dto";
+
 import { ItemInterface } from "@/types/items";
-import React, { useState } from "react";
+import React from "react";
 
 interface AddItemToRequestModalProps {
   data: DisplayRequisitionWithItems | null;
@@ -14,11 +14,11 @@ const AddItemToRequestModal = ({
   onCancel,
   data,
 }: AddItemToRequestModalProps) => {
-  const [itemForm, seItemForm] = useState<CreateRequestItemDto>({
-    requestId: data?.requestId ?? 0,
-    reqItemQuantity: 0,
-    invItem: 0,
-  });
+  // const [itemForm, seItemForm] = useState<CreateRequestItemDto>({
+  //   requestId: data?.requestId ?? 0,
+  //   reqItemQuantity: 0,
+  //   invItem: 0,
+  // });
   const handleAddItemInRequest = async () => {
     console.log({ data });
   };

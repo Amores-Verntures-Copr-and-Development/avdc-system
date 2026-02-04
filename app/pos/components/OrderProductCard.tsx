@@ -19,7 +19,7 @@ const CompactOrderItem = ({
   removeProduct,
 }: OrderItemProps) => {
   const unitPrice = Number(data.prodVarPrice);
-  const totalPrice = unitPrice * Number(data.quantity);
+  const totalPrice = data.prodVarTotal;
 
   return (
     <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between 2xl:gap-2 rounded-lg shadow-sm p-1 2xl:p-2 bg-white hover:shadow-md border border-gray-200 hover:border-primary-1/50 transition-all group">
@@ -63,7 +63,7 @@ const CompactOrderItem = ({
         {/* Total price - compact */}
         <div className="flex-shrink-0 text-right">
           <span className="text-[9px] 2xl:text-sm font-bold text-primary-1 whitespace-nowrap">
-            {totalPrice.toLocaleString("en-PH", {
+            {totalPrice?.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
             })}

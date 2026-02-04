@@ -14,18 +14,15 @@ import { formatPeso } from "@/utils/formatPeso";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 
 import {
-  PrinterIcon,
   Edit,
   ChevronDown,
   ChevronUp,
   CheckCircle,
-  FileText,
   Clock,
   PackageCheckIcon,
   Check,
   Truck,
   Package,
-  X,
   Printer,
   Download,
   Plus,
@@ -45,43 +42,7 @@ interface StatusOption {
   bg: string;
   color: string;
 }
-const statusConfig = {
-  pending: {
-    label: "Pending",
-    bg: "bg-amber-50",
-    color: "text-amber-700",
-    border: "border-amber-200",
-    icon: Clock,
-  },
-  delivered: {
-    label: "Delivered",
-    bg: "bg-blue-50",
-    color: "text-blue-700",
-    border: "border-blue-200",
-    icon: Truck,
-  },
-  received: {
-    label: "Received",
-    bg: "bg-emerald-50",
-    color: "text-emerald-700",
-    border: "border-emerald-200",
-    icon: CheckCircle,
-  },
-  not_ordered: {
-    label: "Not Ordered",
-    bg: "bg-red-50",
-    color: "text-red-700",
-    border: "border-red-200",
-    icon: X,
-  },
-  partial: {
-    label: "Partial",
-    bg: "bg-purple-50",
-    color: "text-purple-700",
-    border: "border-purple-200",
-    icon: Package,
-  },
-};
+
 export const statusOptions: StatusOption[] = [
   {
     label: "Not Ordered",
@@ -212,14 +173,19 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         );
       },
       inputType: "number",
-      selector: (row) =>
-        row.reqItemStatus === "not_ordered"
-          ? 0
-          : row.reqItemTransfer === 0
-            ? ""
-            : row.reqItemTransfer,
-      value: (row) =>
-        row.reqItemStatus === "not_ordered" ? 0 : row.reqItemTransfer,
+      selector: (row) => {
+        if (row.reqItemStatus === "not_ordered") return 0;
+
+        const qty = Number(row.reqItemTransfer ?? 0);
+        return qty === 0 ? "" : qty;
+      },
+
+      value: (row) => {
+        if (row.reqItemStatus === "not_ordered") return 0;
+
+        const qty = Number(row.reqItemTransfer ?? 0);
+        return qty === 0 ? "" : qty;
+      },
     },
 
     {
@@ -792,7 +758,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             const hasToFollowQty = origRequest?.some(
               (i) => Number(i.reqItemToFollow) !== 0,
             );
-            console.log({ hasPartial });
             return (
               <div
                 className="flex flex-col rounded-lg shadow w-full border-1 border-gray-200 cursor-pointer"

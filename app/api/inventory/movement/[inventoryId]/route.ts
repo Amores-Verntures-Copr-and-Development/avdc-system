@@ -17,11 +17,11 @@ export async function GET(
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     const type = searchParams.get("type") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "";
+    // const limit = searchParams.get("limit") || "";
+    // const page = searchParams.get("page") || "";
     const category = searchParams.get("category") || "";
-    const limitNumber = Number(limit) || 100;
-    const pageNumber = Number(page) || 1;
+    // const limitNumber = Number(limit) || 100;
+    // const pageNumber = Number(page) || 1;
     const res = await getInventoryMovements({
       keyFields: { inventoryId },
       search,

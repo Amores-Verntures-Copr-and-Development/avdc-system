@@ -1,28 +1,16 @@
 import Button from "@/components/shared/Button";
 import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
 import { formatPeso } from "@/utils/formatPeso";
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Edit,
-  Package,
-  PackageCheck,
-  PackageMinus,
-  Store,
-} from "lucide-react";
+import { Package, PackageCheck, PackageMinus } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { StoreInSupplierDetails } from "../ReceivedPOView";
+
 import Table, { Column } from "@/components/shared/Table";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import IconButton from "@/components/shared/IconButton";
-import StoreCardInSupplier from "./StoreCardInSupplier";
-import { getStatusOption } from "../CompletePOView";
-import { RequestItems } from "@/types/request";
+
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface ReceivedComponentProps {
@@ -34,57 +22,26 @@ interface ReceivedComponentProps {
   onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
   mutateInventory: () => void;
 }
-const storeColumns: Column<RequestItems>[] = [
-  { name: "#", key: "#", selector: (row, index) => index + 1 },
-  { name: "Item Name", key: "itemName" },
-  { name: "Price", key: "itemPrice" },
-  { name: "Ordered Qty", key: "reqItemQuantity" },
-  {
-    name: "Status",
-    key: "reqItemStatus",
-    selector: (row) => {
-      const { label, bg, color } = getStatusOption(row.reqItemStatus);
-      return (
-        <div
-          className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
-        >
-          <span
-            className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
-          >
-            {label}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    name: "Remarks",
-    key: "reqItemRemarks",
-  },
-];
+
 const ReceivedComponent = ({
   supplier,
   originalData,
-  expandedSupplier,
-  setExpandedSupplier,
   mutateInventory,
   onMaskAsDeliverdSupplier,
   onReceivePO,
 }: ReceivedComponentProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedStoreSupplier, setSelectedStoreSupplier] =
-    useState<StoreInSupplierDetails | null>(null);
+
   const [supplierReceivedData, setSupplierReceivedData] = useState<
     DisplayPOItemsSupplier[] | null
   >(null);
   //   const [supplierData, setSupplierData] =
   //     useState<DisplayPOItemsSupplier[]>(supplier);
   const [isShowReceivedConfirm, setIsShowReceivedConfirm] = useState(false);
-  const [isView, setIsView] = useState<"all" | "store">("all");
+
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier>(supplier);
-  const [showDeliverToStore, setShowDeliverToStore] =
-    useState<DisplayPOItemsSupplier | null>(null);
+
   const columns: Column<PurchaseOrderItems>[] = [
     { name: "Item Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
@@ -191,13 +148,13 @@ const ReceivedComponent = ({
     (item) => item.poItemStatus === "not_ordered",
   );
 
-  const isNotOrderedAll = originalData?.items.every(
-    (item) => item.poItemStatus === "not_ordered",
-  );
+  // const isNotOrderedAll = originalData?.items.every(
+  //   (item) => item.poItemStatus === "not_ordered",
+  // );
 
-  const isSupplierItemsDelivered = supplier.items.every(
-    (item) => item.poItemStatus === "delivered",
-  );
+  // const isSupplierItemsDelivered = supplier.items.every(
+  //   (item) => item.poItemStatus === "delivered",
+  // );
   const handleReceivePO = async (row: DisplayPOItemsSupplier[]) => {
     setIsSubmitting(true);
     try {
@@ -212,7 +169,7 @@ const ReceivedComponent = ({
       setIsSubmitting(false);
     }
   };
-  const isExpanded = expandedSupplier === supplier.suppId;
+  // const isExpanded = expandedSupplier === supplier.suppId;
   const updateSupplierItems = (newItems: PurchaseOrderItems[]) => {
     console.log({ newItems });
     setSupplierData((prev) => ({

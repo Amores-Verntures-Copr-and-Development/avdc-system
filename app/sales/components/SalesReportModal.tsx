@@ -8,7 +8,7 @@ import { exportToExcel } from "@/utils/exportExcel";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import { Download, File, FileText, Printer } from "lucide-react";
+import { Download, FileText, Printer } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 

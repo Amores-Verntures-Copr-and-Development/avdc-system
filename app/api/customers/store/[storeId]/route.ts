@@ -50,7 +50,7 @@ export async function GET(
       throw new Error("No item ID found!");
     }
 
-    const { searchParams } = new URL(_request.url);
+    // const { searchParams } = new URL(_request.url);
     // const search = searchParams.get("search") || "";
     // console.log({ search });
     const res = await getCustomer({

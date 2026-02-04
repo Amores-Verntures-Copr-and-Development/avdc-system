@@ -4,6 +4,7 @@ import {
   CreateSaleItemDto,
   DisplaySalesItems,
   CreateSalesDiscount,
+  CreateSaleItemDisc,
 } from "@/dtos/sales.dto";
 import { getDBConnection } from "@/lib/db";
 import { Sales } from "@/types/sales";
@@ -53,6 +54,7 @@ ${
     'salesItemQuantity', si.salesItemQuantity,
     'salesItemPrice', si.salesItemPrice,
     'salesItemSubtotal', si.salesItemSubtotal,
+    'salesItemTotal', si.salesItemTotal,
     'prodVarName', pv.prodVarName,
     'saleItemName',
       CASE
@@ -60,7 +62,24 @@ ${
         WHEN pv.prodVarName LIKE CONCAT('%', p.prodName, '%')
           THEN pv.prodVarName
         ELSE CONCAT(p.prodName, ' ', pv.prodVarName)
-      END
+      END,
+      'salesItemDiscounts',
+              (
+              SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'salesItemDiscId', vc.salesItemDiscId,
+                  'discountId', vc.discountId,
+                  'discountAmount', vc.discountAmount,
+                  'discountName', vc.discountName,
+                  'discountValue', ii.discountValue,
+                  'discountType',vc.discountType
+                  
+                )
+              )
+              SELECT * FROM SalesItemsDiscount sid
+					LEFT JOIN Discounts d ON d.discountId = sid.discountId
+              WHERE sid.salesItemId = si.salesItemId
+            )
   )
 )
 FROM SalesItems si
@@ -265,18 +284,33 @@ export const insertSaleItems = async ({
   if (!data || data.length === 0) {
     throw new Error("No data provided for bulk insert");
   }
+
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SalesItems(salesItemQuantity,salesItemPrice,salesItemSubtotal,salesId,prodVarId) 
-            VALUES ${data.map(() => "(?, ?, ?,?,?)").join(", ")}`;
+
+  const sql = `INSERT INTO SalesItems(salesItemQuantity, salesItemPrice, salesItemSubtotal, salesItemTotal,  salesId, prodVarId) 
+               VALUES ${data.map(() => "(?, ?, ?, ?, ?,?)").join(", ")}`;
+
   const values = data.flatMap((item) => [
     item.salesItemQuantity,
     item.salesItemPrice,
     item.salesItemSubtotal,
+    item.salesItemTotal,
     item.salesId,
     item.prodVarId,
   ]);
-  const [results] = await pool.execute(sql, values);
-  return results;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
+  console.log({ result });
+  const insertId = result.insertId; // first inserted ID
+  const affectedRows = result.affectedRows; // number of inserted rows
+
+  // return all IDs
+  const insertedIds = Array.from(
+    { length: affectedRows },
+    (_, i) => insertId + i,
+  );
+  console.log({ insertedIds });
+  return insertedIds;
 };
 
 export const insertSalePayments = async ({
@@ -327,10 +361,27 @@ export const selectSalesItems = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
-  let sql = `SELECT * FROM SalesItems si
-  LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
-  LEFT JOIN Products p ON p.prodId = pv.prodId
-  WHERE 1=1`;
+  let sql = `
+SELECT *, (
+  SELECT JSON_ARRAYAGG(
+    JSON_OBJECT(
+      'salesItemDiscId', sid.salesItemDiscId,
+      'discountId', sid.discountId,
+      'discountAmount', sid.discountAmount,
+      'discountName', d.discountName,
+      'discountValue', d.discountValue,
+      'discountType', d.discountType
+    )
+  )
+  FROM SalesItemsDiscount sid
+  LEFT JOIN Discounts d ON d.discountId = sid.discountId
+  WHERE sid.salesItemId = si.salesItemId
+) AS salesItemsDiscount
+FROM SalesItems si
+LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+LEFT JOIN Products p ON p.prodId = pv.prodId
+WHERE 1=1
+`;
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND si.${key} IS NULL`;
@@ -412,4 +463,30 @@ export const insertSaleDiscounts = async ({
   ]);
   const [results] = await pool.execute(sql, values);
   return results;
+};
+
+export const insertSaleItemDiscounts = async ({
+  connection,
+  data,
+}: {
+  connection: PoolConnection;
+  data: CreateSaleItemDisc[];
+}) => {
+  if (!data || data.length === 0) {
+    throw new Error("No data provided for bulk insert");
+  }
+
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `INSERT INTO SalesItemsDiscount(salesItemId, discountId, salesItemDiscCreatedBy, discountAmount) 
+               VALUES ${data.map(() => "(?, ?, ?, ?)").join(", ")}`;
+
+  const values = data.flatMap((item) => [
+    item.salesItemId,
+    item.discountId,
+    item.salesItemDiscCreatedBy,
+    item.discountAmount,
+  ]);
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
+  return result;
 };

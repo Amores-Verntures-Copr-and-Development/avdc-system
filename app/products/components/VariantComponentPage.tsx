@@ -12,10 +12,9 @@ import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
 import { Pencil, Save, Trash, X } from "lucide-react";
 import Input from "@/components/shared/Input";
-import { ProductVariants, VariantComponents } from "@/types/products";
+import { ProductVariants } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
 import { handleChange } from "@/utils/handle-change";
-import { mutate } from "swr";
 import toast from "react-hot-toast";
 import ViewVariantComponent from "./ViewVariantComponent";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
@@ -34,7 +33,7 @@ interface VariantComponentPageProps {
 
 const VariantComponentPage = ({
   data,
-  showAddComponent: showComponent,
+
   setShowAddComponent: setShowComponent,
   prod,
   mutate,
@@ -98,6 +97,7 @@ const VariantComponentPage = ({
       mutate();
       onClose();
     } catch (e) {
+      console.log(e);
     } finally {
       setIsSaving(false);
     }

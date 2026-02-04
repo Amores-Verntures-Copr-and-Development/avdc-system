@@ -1,7 +1,4 @@
-import {
-  DisplaProductVariantsDtos,
-  DisplayProductsDtos,
-} from "@/dtos/products.dto";
+import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { ProductVariants } from "@/types/products";
 import { formatPeso } from "@/utils/formatPeso";
 import { Tag, TrendingUp, Package, AlertCircle } from "lucide-react";

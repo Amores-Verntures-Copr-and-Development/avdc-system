@@ -1,5 +1,4 @@
-import { getProduct, updateProductById } from "@/controllers/ProductController";
-import { Products } from "@/types/products";
+import { getProduct } from "@/controllers/ProductController";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -7,11 +6,11 @@ export async function GET(
   { params }: { params: Promise<{ storeId: string; prodId: string }> },
 ) {
   try {
-    const { searchParams } = new URL(_request.url);
+    // const { searchParams } = new URL(_request.url);
     const slug = (await params).storeId;
     const storeId = Number(slug);
     const slug2 = (await params).prodId;
-    const prodId = Number(slug);
+    const prodId = Number(slug2);
     if (!storeId) {
       throw new Error("No store found");
     }

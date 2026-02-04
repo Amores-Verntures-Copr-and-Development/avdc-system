@@ -8,6 +8,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import React from "react";
 import useSWR from "swr";
+import { formatDiscountValue } from "../pos/components/sidebar/DiscountList";
 
 interface SelectedSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -22,8 +23,9 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
     salesData?.salesId
       ? `/api/sales/${salesData.storeId}/${salesData.salesId}/sales-items`
       : null,
-    fetcher
+    fetcher,
   );
+  console.log({ response });
   if (isLoading) return <LoaderComponent />;
   return (
     <div className="min-h-screen overflow-auto-y">
@@ -79,7 +81,7 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-6 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-4 gap-6 pt-4 border-t border-gray-200">
             <div>
               <div className="text-xs text-gray-500 mb-1">Customer</div>
               <div className="text-sm font-medium text-gray-900">
@@ -96,6 +98,12 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
               <div className="text-xs text-gray-500 mb-1">Date</div>
               <div className="text-sm font-medium text-gray-900">
                 {formatDateToWords(salesData?.salesCreatedAt ?? "")}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Status</div>
+              <div className="text-sm font-medium text-gray-900">
+                {salesData?.salesStatus}
               </div>
             </div>
           </div>
@@ -120,15 +128,21 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
                   <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
                     Subtotal
                   </th>
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                    Discount
+                  </th>
+                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                    Total
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {response?.data.map((item, index) => {
-                  const modifyName = item.prodVarName
+                  const modifyName = (item.prodVarName ?? "")
                     .toLowerCase()
-                    .includes(item.prodName.toLowerCase())
+                    .includes((item.prodName ?? "").toLowerCase())
                     ? item.prodVarName
-                    : `${item.prodName} ${item.prodVarName}`.trim();
+                    : `${item.prodName ?? ""} ${item.prodVarName ?? ""}`.trim();
                   return (
                     <tr
                       key={item.salesItemId}
@@ -149,11 +163,24 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
                       <td className="py-2 text-right text-sm text-gray-700">
                         {formatPeso(item.salesItemPrice)}
                       </td>
-                      <td className="py-2 text-center text-sm text-gray-700">
+                      <td className="py-2 text-right text-sm text-gray-700">
                         {item.salesItemQuantity}
                       </td>
-                      <td className="py-2 text-right text-sm font-medium text-gray-900">
+                      <td className="py-2 text-right text-sm font-normal text-gray-900">
                         {formatPeso(item.salesItemSubtotal)}
+                      </td>
+                      <td className="py-2 text-right text-sm text-gray-700">
+                        {item.salesItemsDiscount?.map((dis) => {
+                          const formatDiscount =
+                            dis.discountType === "percent"
+                              ? `${formatDiscountValue(dis.discountValue)}%`
+                              : `${formatPeso(dis.discountValue)}`;
+                          return `${formatDiscount} (${formatPeso(dis.discountAmount)})`;
+                        })}
+                      </td>
+
+                      <td className="py-2 text-right text-sm font-medium text-gray-900">
+                        {formatPeso(item.salesItemTotal)}
                       </td>
                     </tr>
                   );
@@ -235,7 +262,7 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
                 <div className="text-sm font-medium text-green-600">
                   {formatPeso(
                     Number(salesData?.salesTotalPaid ?? 0) -
-                      Number(salesData?.salesTotalAmount ?? 0)
+                      Number(salesData?.salesTotalAmount ?? 0),
                   )}
                 </div>
               </div>

@@ -9,7 +9,6 @@ import { ItemInterface } from "@/types/items";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import { mutate } from "swr";
 
 interface AddItemToPoSupplierProps {
   supplier: DisplayPOItemsSupplier | null;

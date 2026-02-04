@@ -11,7 +11,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { ArrowLeft, Check, Clock, Edit, LogOut, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Clock, Edit, Trash2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";

@@ -3,7 +3,6 @@ import { ApiResponse } from "@/types/api";
 import { ProductCategories } from "@/types/products";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { formatDate } from "date-fns";
 import React from "react";
 import useSWR from "swr";
 
@@ -12,10 +11,7 @@ interface ViewProductCategoryProps {
   onClose: () => void;
 }
 
-const ViewProductCategory = ({
-  storeId,
-  onClose,
-}: ViewProductCategoryProps) => {
+const ViewProductCategory = ({ storeId }: ViewProductCategoryProps) => {
   const { data: reponse } = useSWR<ApiResponse<ProductCategories[]>>(
     storeId ? `/api/products/${storeId}/product-categories/` : null,
     fetcher,

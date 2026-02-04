@@ -2,7 +2,6 @@ import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import Toggle from "@/components/shared/Toggle";
 import { DisplayVariantComponents } from "@/dtos/products.dto";
-import { useSession } from "@/hooks/useSession";
 import { VariantComponents } from "@/types/products";
 import { handleChange } from "@/utils/handle-change";
 import { Edit, X } from "lucide-react";

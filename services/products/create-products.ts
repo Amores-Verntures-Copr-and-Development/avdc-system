@@ -77,6 +77,7 @@ export async function createBulkProducts({
             prodVarId,
             inventoryItemId: vc.inventoryItemId,
             quantityRequired: Number(vc.quantityRequired),
+            isDeductVar: vc.isDeductVar,
           });
         });
       });

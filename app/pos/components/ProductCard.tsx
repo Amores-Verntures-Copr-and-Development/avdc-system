@@ -38,7 +38,13 @@ const ProductCard = ({
               prodVarName: prodVarName,
               quantity: 1,
               prodVarPrice: variant.prodVarPrice,
-              inventoryItemId: variant.variantComponents?.[0].inventoryItemId,
+              components: [
+                {
+                  inventoryItemId: variant.variantComponents[0].inventoryItemId,
+                  quantityRequired:
+                    variant.variantComponents[0].quantityRequired,
+                },
+              ],
             });
           } else {
             addProductOrder({
@@ -46,7 +52,12 @@ const ProductCard = ({
               prodVarName: prodVarName,
               quantity: 1,
               prodVarPrice: variant.prodVarPrice,
-              inventoryItemId: null,
+              components: variant.variantComponents
+                ?.filter((i) => Boolean(i.isDeductVar) === true)
+                .map((i) => ({
+                  inventoryItemId: i.inventoryItemId,
+                  quantityRequired: i.quantityRequired,
+                })),
             });
           }
         }

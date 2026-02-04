@@ -5,7 +5,6 @@ import Input from "@/components/shared/Input";
 import Textarea from "@/components/shared/TextArea";
 import { unitOptions } from "@/constants/dropdown-options";
 import { CreateFirstItem } from "@/dtos/inventory.dto";
-import { useStores } from "@/hooks/userStore";
 import { UserAuth } from "@/hooks/useSession";
 import { useStockRoom } from "@/hooks/useStockRoom";
 import { handleChange } from "@/utils/handle-change";

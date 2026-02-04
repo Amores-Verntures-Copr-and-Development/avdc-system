@@ -30,9 +30,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
-import { set } from "date-fns";
+
 import SalesReportModal from "./components/SalesReportModal";
-import { sign } from "crypto";
 
 interface SalesPageProps {
   storeId: number;
@@ -75,10 +74,10 @@ const columns: Column<DisplaySalesDto>[] = [
               {discount.length > 1
                 ? `Discounts (${discount.filter((s) => s !== null).length})`
                 : discount.length === 1
-                ? `${discount[0].discountName} (${formatPeso(
-                    discount[0].discountAmount
-                  )})`
-                : ``}
+                  ? `${discount[0].discountName} (${formatPeso(
+                      discount[0].discountAmount,
+                    )})`
+                  : ``}
             </option>
           </select>
           {discount?.length > 0 && discount.some((d) => d !== null) && (
@@ -145,13 +144,13 @@ const columns: Column<DisplaySalesDto>[] = [
                     paymentMethod.filter((s) => s !== null).length
                   })`
                 : paymentMethod.length === 1
-                ? `${paymentMethod[0].payMetName} (${formatPeso(
-                    Number(paymentMethod[0].salesPaymentAmount) >
-                      Number(row.salesTotalAmount)
-                      ? row.salesTotalAmount
-                      : paymentMethod[0].salesPaymentAmount
-                  )})`
-                : `No payment`}
+                  ? `${paymentMethod[0].payMetName} (${formatPeso(
+                      Number(paymentMethod[0].salesPaymentAmount) >
+                        Number(row.salesTotalAmount)
+                        ? row.salesTotalAmount
+                        : paymentMethod[0].salesPaymentAmount,
+                    )})`
+                  : `No payment`}
             </option>
           </select>
           {paymentMethod.filter((s) => s !== null).length > 0 && (
@@ -167,7 +166,7 @@ const columns: Column<DisplaySalesDto>[] = [
                       Number(method.salesPaymentAmount) >
                         Number(row.salesTotalAmount)
                         ? row.salesTotalAmount
-                        : method.salesPaymentAmount
+                        : method.salesPaymentAmount,
                     )})`}
                   </div>
                 ))}
@@ -219,10 +218,10 @@ const adminColumns: Column<DisplaySalesDto>[] = [
               {discount.length > 1
                 ? `Discounts (${discount.filter((s) => s !== null).length})`
                 : discount.length === 1
-                ? `${discount[0].discountName} (${formatPeso(
-                    discount[0].discountAmount
-                  )})`
-                : ``}
+                  ? `${discount[0].discountName} (${formatPeso(
+                      discount[0].discountAmount,
+                    )})`
+                  : ``}
             </option>
           </select>
           {discount?.length > 0 && discount.some((d) => d !== null) && (
@@ -289,13 +288,13 @@ const adminColumns: Column<DisplaySalesDto>[] = [
                     paymentMethod.filter((s) => s !== null).length
                   })`
                 : paymentMethod.length === 1
-                ? `${paymentMethod[0].payMetName} (${formatPeso(
-                    Number(paymentMethod[0].salesPaymentAmount) >
-                      Number(row.salesTotalAmount)
-                      ? row.salesTotalAmount
-                      : paymentMethod[0].salesPaymentAmount
-                  )})`
-                : `No payment`}
+                  ? `${paymentMethod[0].payMetName} (${formatPeso(
+                      Number(paymentMethod[0].salesPaymentAmount) >
+                        Number(row.salesTotalAmount)
+                        ? row.salesTotalAmount
+                        : paymentMethod[0].salesPaymentAmount,
+                    )})`
+                  : `No payment`}
             </option>
           </select>
           {paymentMethod.filter((s) => s !== null).length > 0 && (
@@ -311,7 +310,7 @@ const adminColumns: Column<DisplaySalesDto>[] = [
                       Number(method.salesPaymentAmount) >
                         Number(row.salesTotalAmount)
                         ? row.salesTotalAmount
-                        : method.salesPaymentAmount
+                        : method.salesPaymentAmount,
                     )})`}
                   </div>
                 ))}
@@ -338,9 +337,9 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const router = useRouter();
   console.log({ hasStore, isAdmin });
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
-    null
+    null,
   );
-  const [selectedStoreId,setSelectedStoreId] =useState<number | null>(null)
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
   const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
   const [isViewSales, setIsViewSales] = useState(false);
@@ -382,8 +381,12 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   }, [storeId, searchParams]);
   const debounceApi = useDebounce(apiUrl, 600);
   const { data: responseDetails } = useSWR(
-    user && storeId ? `/api/sales/${storeId}/details` : user && selectedStoreId ? `/api/sales/${selectedStoreId}/details` : `/api/sales/details/`,
-    fetcher
+    user && storeId
+      ? `/api/sales/${storeId}/details`
+      : user && selectedStoreId
+        ? `/api/sales/${selectedStoreId}/details`
+        : `/api/sales/details/`,
+    fetcher,
   );
 
   const {
@@ -392,7 +395,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     user ? debounceApi : null,
-    fetcher
+    fetcher,
   );
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
@@ -405,7 +408,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
       router.push(url.toString());
     },
-    [router] // include dependencies
+    [router], // include dependencies
   );
   const details = responseDetails?.data[0];
   const totalSales = details?.totalSales ?? 0;
@@ -550,16 +553,16 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           value={defaultStoreFromUrl}
                           onChange={function (value: string | number): void {
                             if (value) {
-                            const findStore = Array.isArray(stores)
-                            ? stores.find(i => i.storeName === value)
-                            : undefined;
-                              setSelectedStoreId(findStore?.storeId ?? null)
+                              const findStore = Array.isArray(stores)
+                                ? stores.find((i) => i.storeName === value)
+                                : undefined;
+                              setSelectedStoreId(findStore?.storeId ?? null);
                               const url = new URL(window.location.href);
                               url.searchParams.set("store", String(value));
                               router.push(url.toString());
                             } else {
                               const url = new URL(window.location.href);
-                               setSelectedStoreId(null)
+                              setSelectedStoreId(null);
                               url.searchParams.delete("store"); // remove 'store'
                               router.push(url.toString());
                             }
@@ -591,11 +594,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
             ? isReport === "Customer"
               ? "Customer Report"
               : isReport === "Sales"
-              ? "Sales Report"
-              : "Report"
+                ? "Sales Report"
+                : "Report"
             : showModal === "export"
-            ? "Export Sales"
-            : ""
+              ? "Export Sales"
+              : ""
         }
         isOpen={showModal !== null}
         onClose={function (): void {

@@ -1,8 +1,4 @@
-import {
-  createProductBulkController,
-  createProductController,
-  getProduct,
-} from "@/controllers/ProductController";
+import { createProductBulkController } from "@/controllers/ProductController";
 import { CreateProductDtos } from "@/dtos/products.dto";
 import { NextResponse } from "next/server";
 

@@ -63,6 +63,7 @@ const EditProduct = ({
       }
       onClose();
     } catch (e) {
+      console.log(e);
     } finally {
       setIsSaving(false);
     }

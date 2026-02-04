@@ -1,6 +1,5 @@
 import {
   hardDeleteVariantComponentController,
-  updateProductVariantController,
   updateVariantComponentController,
 } from "@/controllers/ProductController";
 import { VariantComponents } from "@/types/products";

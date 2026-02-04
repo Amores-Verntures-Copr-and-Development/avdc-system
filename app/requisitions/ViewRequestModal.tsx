@@ -35,8 +35,6 @@ import AddItemPOModal from "./components/AddItemPOModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
-import { Rowdies } from "next/font/google";
-import { stringify } from "querystring";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -410,6 +408,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setShowReceivedConfirmation(false);
       return true;
     } catch (_e) {
+      console.log(_e);
       toast.error("Failed to update Inventory.");
       return false;
     } finally {

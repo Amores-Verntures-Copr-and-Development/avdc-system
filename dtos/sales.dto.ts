@@ -1,5 +1,5 @@
 import { ComponentsVariant } from "@/app/pos/PosPage";
-import { Discounts } from "@/types/discount";
+import { Discounts, DiscountType } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import {
   ProductPrices,
@@ -7,7 +7,12 @@ import {
   ProductVariants,
   VariantComponents,
 } from "@/types/products";
-import { SaleItems, SalePayments, Sales } from "@/types/sales";
+import {
+  SaleItems,
+  SalePayments,
+  Sales,
+  SalesItemDiscounts,
+} from "@/types/sales";
 import { SalesDiscounts } from "@/types/sales-discounts";
 
 export type CreateSaleDto = Pick<
@@ -38,10 +43,12 @@ export interface DisplaySalesDto extends Sales {
 }
 
 interface SalePaymentMethods extends SalePayments, PaymentMethods {}
+interface DisplaySaleItemDiscounts extends SalesItemDiscounts, Discounts {}
 interface SaleDiscountExtends extends SalesDiscounts, Discounts {}
 export interface DisplaySalesItems
   extends SaleItems, Products, ProductVariants {
   saleItemName?: string;
+  salesItemsDiscount?: DisplaySaleItemDiscounts[];
 }
 
 export type CreateSaleItemDto = Pick<
@@ -51,8 +58,10 @@ export type CreateSaleItemDto = Pick<
   | "salesItemPrice"
   | "salesItemSubtotal"
   | "prodVarId"
+  | "salesItemTotal"
 > & {
   components?: ComponentsVariant[];
+  salesItemDiscounts?: CreateSaleItemDisc[];
 };
 
 export type CreateSalePaymentDto = Pick<
@@ -68,3 +77,10 @@ export type CreateSalesDiscount = Pick<
   SalesDiscounts,
   "discountAmount" | "discountId" | "saleId"
 >;
+
+export type CreateSaleItemDisc = Pick<
+  SalesItemDiscounts,
+  "discountAmount" | "discountId" | "salesItemId" | "salesItemDiscCreatedBy"
+> & {
+  discountType?: DiscountType;
+};

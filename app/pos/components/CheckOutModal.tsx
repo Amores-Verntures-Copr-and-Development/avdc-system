@@ -17,6 +17,7 @@ import {
 import { CreateSalePaymentDto, CreateSalesDiscount } from "@/dtos/sales.dto";
 import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
+import { SalesPaymentStatus } from "@/types/sales";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;
@@ -56,7 +57,7 @@ const CheckOutModal = ({
       payMetId: 0,
       salesPaymentAmount: 0,
       salesId: 0,
-      salesPaymentStatus: "completed",
+      salesPaymentStatus: SalesPaymentStatus.COMPLETED,
     });
 
   useEffect(() => {
@@ -76,7 +77,7 @@ const CheckOutModal = ({
               payMetId: defaultMethod.payMetId,
               salesPaymentAmount: 0,
               paymentReference: "",
-              salesPaymentStatus: "completed",
+              salesPaymentStatus: SalesPaymentStatus.COMPLETED,
             };
           }
 
@@ -137,7 +138,7 @@ const CheckOutModal = ({
       payMetId: 0,
       salesId: 0,
       salesPaymentAmount: 0,
-      salesPaymentStatus: "completed",
+      salesPaymentStatus: SalesPaymentStatus.COMPLETED,
     });
   };
   const handleQuickAmount = (qa: number) => {
@@ -266,7 +267,7 @@ const CheckOutModal = ({
                                 payMetId: payment.payMetId,
                                 salesPaymentAmount: 0,
                                 paymentReference: "",
-                                salesPaymentStatus: "pending",
+                                salesPaymentStatus: SalesPaymentStatus.PENDING,
                               };
                             }
 

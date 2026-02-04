@@ -13,11 +13,9 @@ import useSWR from "swr";
 
 const ProcurementHistoryPage = () => {
   const { user } = useSession();
-  const { data: inventoryResponse = { data: [] }, mutate: mutateInventory } =
-    useSWR<ApiResponse<DisplayProcurementHistory[]>>(
-      user ? `/api/procurement-history` : null,
-      fetcher
-    );
+  const { data: inventoryResponse = { data: [] } } = useSWR<
+    ApiResponse<DisplayProcurementHistory[]>
+  >(user ? `/api/procurement-history` : null, fetcher);
   const columns: Column<DisplayProcurementHistory>[] = [
     { key: "#", name: "#", selector: (row, index) => index + 1 },
     {

@@ -1,11 +1,7 @@
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
-import {
-  CreateProductCategoryDto,
-  CreateProductDtos,
-} from "@/dtos/products.dto";
+import { CreateProductCategoryDto } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
-import { ProductCategories } from "@/types/products";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -15,7 +11,6 @@ interface AddProductCategoryProps {
   storeId: number;
   user?: UserAuth | null;
   onCancel: () => void;
-
 }
 const AddProductCategory = ({
   onSubmit,
@@ -54,6 +49,7 @@ const AddProductCategory = ({
         });
       }
     } catch (e) {
+      console.log(e);
     } finally {
       setIsSubmitting(false);
     }

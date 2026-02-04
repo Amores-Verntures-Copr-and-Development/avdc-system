@@ -16,14 +16,12 @@ import {
   ArrowLeftRight,
   Boxes,
   Eye,
-  Icon,
   Layers,
   Package2,
   Pencil,
   PhilippinePeso,
   Plus,
   Store,
-  Trash,
   Users,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
@@ -38,12 +36,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useStores } from "@/hooks/userStore";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import IconButton from "@/components/shared/IconButton";
-import { se } from "date-fns/locale";
+
 import EditProduct from "./components/EditProduct";
 import AddProductCategory from "./components/AddProductCategory";
 import ViewProductCategory from "./components/ViewProductCategory";
 import { ApiResponse } from "@/types/api";
-import { ProductCategories, Products } from "@/types/products";
+import { ProductCategories } from "@/types/products";
 import Popup from "@/components/shared/Popup";
 import ProductVariantTable from "./components/ProductVariantTable";
 interface ProductStorePageProps {
@@ -137,13 +135,10 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
-  const {
-    data: prodVarResponse = { data: [] },
-    mutate: mutateProdVar,
-    isLoading: isLoadingProdVar,
-  } = useSWR<{
-    data: DisplaProductVariantsDtos[];
-  }>(productView === "product-variants" ? prodVarApi : null, fetcher);
+  const { data: prodVarResponse = { data: [] }, isLoading: isLoadingProdVar } =
+    useSWR<{
+      data: DisplaProductVariantsDtos[];
+    }>(productView === "product-variants" ? prodVarApi : null, fetcher);
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
@@ -335,6 +330,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   console.log({ productConfig });
   const handleFilterSave = useCallback(
     (newFilters: Record<string, string[]>) => {
+      console.log({ newFilters });
       // setFilters(newFilters);
       // const currentParams = new URLSearchParams(window.location.search);
       // const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];

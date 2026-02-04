@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string; salesId: string }> }
+  { params }: { params: Promise<{ storeId: string; salesId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
@@ -30,7 +30,7 @@ export async function GET(
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -39,7 +39,7 @@ export async function GET(
         message: err?.message,
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

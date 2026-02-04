@@ -1,4 +1,3 @@
-import Button from "@/components/shared/Button";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplayInventoryMovementDto } from "@/dtos/inventory.dto";
@@ -8,7 +7,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import { getMovementType } from "@/utils/formatMovementType";
 import { Download } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import useSWR from "swr";
 const columns: Column<DisplayInventoryMovementDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -87,7 +86,7 @@ const StockMovementSection: React.FC<StockMovementSectionProps> = ({
     data: DisplayInventoryMovementDto[];
   }>(inventoryId ? apiUrl : null, fetcher);
 
-  const [filters, setFilters] = useState<Record<string, string[]>>({});
+  // const [filters, setFilters] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
     router.replace(pathname); // replace = no history pollution
@@ -136,7 +135,6 @@ const StockMovementSection: React.FC<StockMovementSectionProps> = ({
   );
   const handleSave = useCallback(
     (newFilters: Record<string, string[]>) => {
-      setFilters(newFilters);
       const currentParams = new URLSearchParams(window.location.search);
       const filterKeys = [...filterConfig.map((f) => f.id), "branch"];
 
@@ -162,7 +160,7 @@ const StockMovementSection: React.FC<StockMovementSectionProps> = ({
                   { label: "By Date", value: "date" },
                 ]}
                 onChange={function (value: string | number): void {
-                  throw new Error("Function not implemented.");
+                  console.log({ value });
                 }}
                 placeholder={"Export"}
                 icon={<Download className="w-4 h-4" />}
