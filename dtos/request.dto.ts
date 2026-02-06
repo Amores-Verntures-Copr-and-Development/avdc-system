@@ -25,6 +25,7 @@ export type DisplayRequestOrderDto = Request & {
   totalItems: number;
   storeName: string;
   requestedByName: string;
+  totalCost: number;
 };
 
 export type DisplayRequestItems = RequestItems & {
@@ -47,6 +48,8 @@ export interface DisplayGroupedRequestItem {
 
 export interface DisplayTotalOrderItem extends DisplayGroupedRequestItem {
   poItemOrder: number;
+  itemPrice: number;
+  orderNeed?: number;
 }
 
 export type UpdateRequestDto = Partial<Request>;

@@ -95,7 +95,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <button
         onClick={() => setIsShow((prev) => !prev)}
-        className={`flex items-center gap-2 px-1.5 py-1 2xl:px-3 2xl:py-2 rounded-md border border-gray-300 ${
+        className={`flex items-center gap-2 px-1.5 py-1 2xl:px-3 2xl:py-1.5 rounded-md border border-gray-300 ${
           isShow ? "!bg-primary-1" : "bg-white"
         } shadow-sm hover:bg-gray-50 transition-colors duration-200 min-w-[140px]`}
       >

@@ -74,19 +74,38 @@ export const selectRequestOrders = async ({
   }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-  const sql = `SELECT ro.*, COUNT(ri.reqItemId) AS totalItems,CONCAT_WS('',u.userFname,u.userLname) AS requestedByName,s.storeName FROM  RequestOrders ro
+  const sql = `SELECT 
+    ro.*,
+    COUNT(ri.reqItemId) AS totalItems,
+    CONCAT_WS('', u.userFname, u.userLname) AS requestedByName,
+    s.storeName,
+    (
+        SELECT SUM(
+            CASE 
+                WHEN ro.requestStatus = 'delivered' THEN ri.reqItemTransfer * i.itemPrice
+                WHEN ro.requestStatus = 'received' OR ro.requestStatus = 'completed'  THEN ri.reqItemReceived * i.itemPrice
+                ELSE ri.reqItemQuantity * i.itemPrice
+            END
+        )
+        FROM RequestItems ri
+        LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+        LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
+        WHERE ri.requestId = ro.requestId
+    ) AS totalCost
+FROM RequestOrders ro
 LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 LEFT JOIN Users u ON u.userId = ro.requestById
 LEFT JOIN Stores s ON s.storeId = ro.storeId ${whereSQL}
 GROUP BY ro.requestId
-ORDER BY CASE ro.requestStatus
-WHEN 'pending' THEN 1
-WHEN 'in_progress' THEN 2
-WHEN 'delivered' THEN 3
-WHEN 'received' THEN 4
-ELSE 5
-END,
-ro.requestCreatedAt DESC`;
+ORDER BY 
+    CASE ro.requestStatus
+        WHEN 'pending' THEN 1
+        WHEN 'in_progress' THEN 2
+        WHEN 'delivered' THEN 3
+        WHEN 'received' THEN 4
+        ELSE 5
+    END,
+    ro.requestCreatedAt DESC;`;
   const [rows] = await pool.execute(sql, values);
   return rows;
 };

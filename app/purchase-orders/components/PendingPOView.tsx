@@ -47,6 +47,11 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
       key: "itemName",
     },
     {
+      name: "Unit",
+      key: "itemUnit",
+    },
+
+    {
       name: "Ordered Qty",
       key: "poItemOrderedQty",
     },
@@ -69,7 +74,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
         if (!selectedId) return "Select Supplier";
 
         const selected = row.suppliers.find(
-          (s) => s.suppId === Number(selectedId)
+          (s) => s.suppId === Number(selectedId),
         );
 
         return selected ? selected.suppName : "Select Supplier";
@@ -107,7 +112,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
       selector: (row) => `₱${(row.totalPrice ?? 0).toFixed(2)}`,
       compute: (row) => {
         const selected = row.suppliers?.find(
-          (s) => s.suppId === Number(row.selectedSupplierId)
+          (s) => s.suppId === Number(row.selectedSupplierId),
         );
         const supplierPrice = Number(selected?.suppItemPrice) ?? 0;
         const quantity = Number(row.poItemOrderedQty) ?? 0;
@@ -222,7 +227,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
               options={supplierOptions}
               onChange={(e) =>
                 setSelectedSupplier(
-                  e.target.value ? Number(e.target.value) : null
+                  e.target.value ? Number(e.target.value) : null,
                 )
               }
             />
@@ -252,7 +257,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
               // If supplier changed, update suppId and unitPrice too
               if (key === "selectedSupplierId") {
                 const selected = row.suppliers?.find(
-                  (s) => s.suppId === Number(value)
+                  (s) => s.suppId === Number(value),
                 );
                 if (selected) {
                   row.suppId = selected.suppId; // ✅ mirror value

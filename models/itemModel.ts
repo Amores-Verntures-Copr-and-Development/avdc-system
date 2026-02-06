@@ -109,7 +109,7 @@ export const updateItems = async ({
   if (!updates || updates.length === 0) return;
 
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof ItemInterface)
+    (field) => !keyFields.includes(field as keyof ItemInterface),
   );
 
   if (updateFields.length === 0)
@@ -133,14 +133,14 @@ export const updateItems = async ({
 
     // Build the CASE statement for this field and add to setClauses
     const caseStatement = `${field} = (CASE ${caseParts.join(
-      " "
+      " ",
     )} ELSE ${field} END)`;
     setClauses.push(caseStatement);
   }
 
   // Build WHERE clause
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   const whereSql =
@@ -225,7 +225,9 @@ export const selectItemConversionFromFields = async ({
       ic.*,
       fromItem.itemName AS fromItemName,
       fromItem.itemUnit AS fromItemUnit,
+      fromItem.itemPrice as fromItemPrice,
       toItem.itemName AS toItemName,
+      toItem.itemPrice as toItemPrice,
       toItem.itemUnit AS toItemUnit
     FROM ItemConversions ic
     LEFT JOIN Items fromItem ON fromItem.itemId = ic.fromItemId
@@ -262,7 +264,7 @@ export const selectItemConversionFromFields = async ({
       params.push(value);
     }
   }
-  console.log({})
+  console.log({});
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

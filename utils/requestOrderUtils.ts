@@ -79,6 +79,15 @@ export const requestStatusOptions: RequestStatusOption[] = [
     border: "border-primary-1/50",
     dot: "bg-primary-1",
   },
+
+  {
+    label: "Not Ordered",
+    value: "not_ordered",
+    bg: "bg-red-200",
+    color: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
+  },
 ];
 
 export function getRequestStatusOption(value: string): RequestStatusOption {

@@ -1,3 +1,4 @@
+import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
 import { selectItemConversionFromFields } from "@/models/itemModel";
 import { ItemConversions } from "@/types/items";
 import { PoolConnection } from "mysql2/promise";
@@ -24,9 +25,11 @@ export async function getItemConversionByFields({
           fromItemId: row.toItemId,
           toItemId: row.fromItemId,
           fromUnit: row.toUnit,
+          fromItemPrice: row.fromItemPrice,
           toUnit: row.fromUnit,
           fromQuantity: row.toQuantity,
           toQuantity: row.fromQuantity,
+          toItemPrice: row.toItemPrice,
         };
       }
       return row;

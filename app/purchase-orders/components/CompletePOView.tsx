@@ -829,7 +829,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
 
                 {isRequestExpanded === reqData.requestNo && (
                   <>
-                    <div className="flex p-2 border-t border-gray-200 bg-gray-100 justify-between">
+                    <div className="flex p-2 border-t border-gray-200 bg-white justify-between">
                       {/* Left side: Fulfill button */}
                       <div>
                         {!["delivered", "received", "completed"].includes(

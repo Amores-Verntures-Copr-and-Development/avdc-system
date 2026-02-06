@@ -45,8 +45,9 @@ interface ApprovedPOViewProps {
     React.SetStateAction<"status" | "all" | "request">
   >;
 }
-interface RequestItemWithPOItem extends RequestItems {
+export interface RequestItemWithPOItem extends RequestItems {
   poItemId: number;
+  storeId?: number;
 }
 
 export interface StoreSupplierDetails {
@@ -130,21 +131,28 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     suppId: number,
     index: number,
   ) => {
+    if (sendingSupplier !== null) return; // already sending
+
     setSendingSupplier(index);
 
-    const supplierName = data.find((req) => req.suppId === suppId)?.suppName;
-    const success = await onSendPOItem(poItems);
-    if (success) {
-      toast.success(`Items for ${supplierName}  sent!`);
+    try {
+      const supplierName = data.find((req) => req.suppId === suppId)?.suppName;
+      const success = await onSendPOItem(poItems);
 
-      if (
-        data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
-      ) {
-        onClose();
+      if (success) {
+        toast.success(`Items for ${supplierName} sent!`);
+
+        await mutate(); // wait refresh
+
+        if (
+          data.every((req) => req.items.every((i) => i.poItemStatus === "sent"))
+        ) {
+          onClose();
+        }
       }
+    } finally {
+      setSendingSupplier(null);
     }
-    mutate();
-    setSendingSupplier(null);
   };
   // const handleSendToSupliers = async (data: DisplayPOItemsSupplier[]) => {
   //   const success = await onSendPO(data);

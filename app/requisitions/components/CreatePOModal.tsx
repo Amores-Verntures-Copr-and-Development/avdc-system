@@ -1,4 +1,6 @@
 import Button from "@/components/shared/Button";
+import IconButton from "@/components/shared/IconButton";
+import Popup from "@/components/shared/Popup";
 import Table, { Column } from "@/components/shared/Table";
 import {
   CreatePurchaseOrderFormDto,
@@ -13,9 +15,17 @@ import { UserAuth } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-import { XCircle, ClipboardCheck, Send } from "lucide-react";
+import {
+  XCircle,
+  ClipboardCheck,
+  Send,
+  ArrowLeft,
+  RefreshCcw,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
+import ConvertSideModal from "./ConvertSideModal";
+import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
 
 interface CreatePOModalPros {
   data: DisplayRequestOrderDto[];
@@ -30,6 +40,8 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
   onCancel,
   onSubmit,
 }) => {
+  const [selectedConvert, setSelectedConvert] =
+    useState<DisplayTotalOrderItem | null>(null);
   const [orderItem, setOrderItem] = useState<DisplayTotalOrderItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
@@ -79,8 +91,6 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       name: "Need to Order",
       key: "orderNeed",
       selector: (row) => {
-        console.log("Stock Item: ", row.stockItem);
-        console.log("Total Quantity: ", row.totalQuantity);
         // const isGreater = Number(row.stockItem) > Number(row.totalQuantity);
 
         if (Number(row.stockItem) >= Number(row.totalQuantity)) {
@@ -169,7 +179,30 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       }),
     );
   };
-
+  const handleConvert = (
+    conversion: DisplayItemConversionFromTo,
+    quantity: number,
+    convertedFrom: DisplayTotalOrderItem | null,
+  ) => {
+    console.log("TEST: ", { conversion, quantity, convertedFrom });
+    const convertOrderItem: DisplayTotalOrderItem = {
+      itemId: conversion.toItemId,
+      itemName: conversion.fromItemName ?? "",
+      itemUnit: conversion.toUnit,
+      itemPrice: conversion.fromItemPrice,
+      totalQuantity: Number(quantity),
+      totalReceived: 0,
+      stockItem: 0,
+      poItemOrder: Number(quantity),
+      orderNeed: Number(quantity),
+    };
+    setOrderItem((prev) => {
+      const items =
+        prev.filter((i) => i.itemId !== convertedFrom?.itemId) ?? [];
+      return [...items, convertOrderItem];
+    });
+    setSelectedConvert(null);
+  };
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Section */}
@@ -182,6 +215,19 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           loading={loading}
           maxHeight="h-full"
           updateData={setOrderItem}
+          showActions
+          renderActions={(row) => (
+            <div className="flex justify-center">
+              <IconButton
+                onClick={function (): void {
+                  setSelectedConvert(row);
+                }}
+                label={"Convert"}
+                bg={"green"}
+                icon={<RefreshCcw className="w-3 h-3" />}
+              />
+            </div>
+          )}
         />
       </div>
 
@@ -221,6 +267,16 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           </div>
         </div>
       </div>
+      <Popup
+        isOpen={selectedConvert !== null}
+        onClose={function (): void {
+          setSelectedConvert(null);
+        }}
+        title="Convert PO Item"
+        background="bg-white/25"
+      >
+        <ConvertSideModal data={selectedConvert} onConvert={handleConvert} />
+      </Popup>
     </div>
   );
 };

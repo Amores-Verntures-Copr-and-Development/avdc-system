@@ -8,8 +8,8 @@ import Table, { Column, TableHandle } from "@/components/shared/Table";
 import { DisplayRequestOrderDto } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import { Eye, FileText, Printer } from "lucide-react";
-import React, { useState, useRef } from "react";
+import { Eye, FileText, Printer, Store } from "lucide-react";
+import React, { useState, useRef, useCallback, useMemo } from "react";
 import useSWR from "swr";
 import CreatePOModal from "./components/CreatePOModal";
 import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
@@ -19,13 +19,19 @@ import PageLayout from "@/components/shared/PageLayout";
 
 import ViewRequestModal from "./ViewRequestModal";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import { formatPeso } from "@/utils/formatPeso";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useStores } from "@/hooks/userStore";
+import { Option } from "@/components/shared/DropdownSelect";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
+import Popup from "@/components/shared/Popup";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
-  { name: "Total Items", key: "totalItems" },
+
   { name: "Requested By", key: "requestedByName" },
   {
-    name: "Date Created",
+    name: "Date Requested",
     key: "requestCreatedAt",
     selector: (row) => formatDateToWords(row.requestCreatedAt),
   },
@@ -35,6 +41,14 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     selector: (row) => formatDateToWords(row.requestUpdatedAt),
   },
   { name: "Store", key: "storeName" },
+  { name: "Total Items", key: "totalItems" },
+  {
+    name: "Total Cost",
+    key: "totalCost",
+    selector: (row) => (
+      <span className="font-semibold">{formatPeso(row.totalCost)}</span>
+    ),
+  },
   {
     name: "Status",
     key: "requestStatus",
@@ -55,23 +69,46 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
 
 const AdminRequisitionPage = () => {
   const tableRef = useRef<TableHandle>(null);
-  const [isShowRequest, setIsShowRequest] = useState(false);
+  const { user, hasStore, isAdmin } = useSession();
+  const router = useRouter();
+  const { stores } = useStores({ user, hasStore, isAdmin });
   const handleClear = () => {
     tableRef.current?.clearSelection();
   };
-  const { user } = useSession();
+  const searchParams = useSearchParams();
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [selectedtedRows, setSelectedRows] =
     useState<DisplayRequestOrderDto[]>();
   const [selectedtedRow, setSelectedRow] =
     useState<DisplayRequestOrderDto | null>();
+  const url = `/api/requests/request-orders/`;
 
+  const getApiUrl = useMemo(() => {
+    if (!user) return null;
+
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const from = searchParams.get("from") || "";
+    const to = searchParams.get("to") || "";
+    const store = searchParams.get("store") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "1";
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (from) params.append("from", from);
+    if (to) params.append("to", to);
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+    if (store) params.append("store", store);
+    if (limit) params.append("limit", limit);
+    params.append("page", page);
+
+    return `${url}?${params.toString()}`;
+  }, [user, searchParams]);
   const { data: itemResponse = { data: [] }, mutate } = useSWR<{
     data: DisplayRequestOrderDto[];
-  }>(user ? `/api/requests/request-orders/` : null, fetcher);
-  // const { data: itemResponse = { data: [] }, mutate } = useSWR<{
-  //   data: DisplayRequestOrderDto[];
-  // }>(user ? `/api/requests/stock-room/userId/${user?.userId}` : null, fetcher);
+  }>(user ? getApiUrl : null, fetcher);
 
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
@@ -103,173 +140,197 @@ const AdminRequisitionPage = () => {
       return false;
     }
   };
+  const handleDateRangeChange = useCallback(
+    (rangeData: { from: string; to: string }) => {
+      const { from, to } = rangeData;
+
+      const url = new URL(window.location.href);
+
+      if (from) {
+        url.searchParams.set("from", from);
+      } else {
+        url.searchParams.delete("from");
+      }
+
+      if (to) {
+        url.searchParams.set("to", to);
+      } else {
+        url.searchParams.delete("to");
+      }
+
+      router.push(url.toString());
+    },
+    [router],
+  );
+  const storeOptions = Array.isArray(stores)
+    ? stores.map((s) => ({ label: s.storeName, value: s.storeName }))
+    : [];
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader
-        title={"Requisition"}
-        subtitle="Manage request orders from stores."
-      />
-
-      <div className="flex-1 min-h-0  flex flex-col">
-        {(itemResponse.data && itemResponse.data.length > 0) ||
-        user?.empPosition !== "purchaser" ? (
-          <Table<DisplayRequestOrderDto>
-            columns={requisitionColumns}
-            ref={tableRef}
-            data={itemResponse.data}
-            totalCount={10}
-            onRowSelection={(row) => {
-              setSelectedRow(row);
-              setIsShowRequest(true);
-            }}
-            showActions
-            showCheckBox
-            maxHeight="h-full"
-            uniqueIdKey="requestId"
-            onSelectionChange={handleSelectionChange}
-            renderTopActions={
-              selectedtedRows &&
-              selectedtedRows.length > 0 && (
-                <div className="flex gap-4">
-                  <div>
-                    {" "}
-                    <Button
-                      icon={FileText}
-                      label="View Request"
-                      onClick={() => {
-                        // setShowCreatePO(true);
-                      }}
-                      size="xs"
-                      color="secondary"
-                    />
-                  </div>
-                  {selectedtedRows.every(
-                    (ro) => ro.requestStatus === "pending",
+      {!selectedtedRow ? (
+        <>
+          <PageHeader
+            title={"Requisition"}
+            subtitle="Manage request orders from stores."
+          />
+          <div className="flex-1 min-h-0  flex flex-col">
+            {(itemResponse.data && itemResponse.data.length > 0) ||
+            user?.empPosition !== "purchaser" ? (
+              <Table<DisplayRequestOrderDto>
+                onDateRangeChange={handleDateRangeChange}
+                showDateRange
+                columns={requisitionColumns}
+                ref={tableRef}
+                data={itemResponse.data}
+                totalCount={10}
+                onRowSelection={(row) => {
+                  setSelectedRow(row);
+                }}
+                showFilter
+                onSave={() => {
+                  console.log({});
+                }}
+                addContentLeftTitle={
+                  !["supervisor", "staff"].includes(
+                    user?.empPosition ?? "",
                   ) && (
                     <div>
-                      <Button
-                        icon={FileText}
-                        label="Convert to PO"
-                        onClick={() => {
-                          setShowCreatePO(true);
+                      <DynamicDropdown
+                        defaultValue={
+                          new URL(window.location.href).searchParams.get(
+                            "store",
+                          ) || ""
+                        }
+                        options={storeOptions}
+                        onChange={function (value: string | number): void {
+                          if (value) {
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("store", String(value));
+                            router.push(url.toString());
+                          } else {
+                            const url = new URL(window.location.href);
+                            url.searchParams.delete("store"); // remove 'store'
+                            router.push(url.toString());
+                          }
                         }}
-                        size="xs"
+                        placeholder={`Stores (${storeOptions.length})`}
+                        icon={<Store className="w-4 h-4" />}
+                        size="sm"
                       />
                     </div>
-                  )}
-                </div>
-              )
-            }
-            searchUrl="/requisitions"
-            renderActions={(row) => (
-              <div className="flex gap-2 justify-center">
-                {/* View Button */}
-                <IconButton
-                  onClick={() => {
-                    setSelectedRow(row);
-                    setIsShowRequest(true);
-                    console.log(selectedtedRow);
-                  }}
-                  label={"View"}
-                  bg={"gray"}
-                  icon={<Eye size={18} />}
-                />
-                <IconButton
-                  onClick={() => {}}
-                  label={"Print"}
-                  bg={"green"}
-                  icon={<Printer size={18} />}
-                />
-                <IconButton
-                  onClick={() => {}}
-                  label={"Convert to PO"}
-                  bg={"blue"}
-                  icon={<FileText size={18} />}
-                />
+                  )
+                }
+                showActions
+                showCheckBox
+                maxHeight="h-full"
+                uniqueIdKey="requestId"
+                onSelectionChange={handleSelectionChange}
+                renderTopActions={
+                  selectedtedRows &&
+                  selectedtedRows.length > 0 && (
+                    <div className="flex gap-4">
+                      <div>
+                        {" "}
+                        <Button
+                          icon={FileText}
+                          label="View Request"
+                          onClick={() => {
+                            // setShowCreatePO(true);
+                          }}
+                          size="xs"
+                          color="secondary"
+                        />
+                      </div>
+                      {selectedtedRows.every(
+                        (ro) => ro.requestStatus === "pending",
+                      ) && (
+                        <div>
+                          <Button
+                            icon={FileText}
+                            label="Convert to PO"
+                            onClick={() => {
+                              setShowCreatePO(true);
+                            }}
+                            size="xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+                searchUrl="/requisitions"
+                renderActions={(row) => (
+                  <div className="flex gap-2 justify-center">
+                    {/* View Button */}
+                    <IconButton
+                      onClick={() => {
+                        setSelectedRow(row);
+                        console.log(selectedtedRow);
+                      }}
+                      label={"View"}
+                      bg={"gray"}
+                      icon={<Eye size={18} />}
+                    />
+                    <IconButton
+                      onClick={() => {}}
+                      label={"Print"}
+                      bg={"green"}
+                      icon={<Printer size={18} />}
+                    />
+                    <IconButton
+                      onClick={() => {}}
+                      label={"Convert to PO"}
+                      bg={"blue"}
+                      icon={<FileText size={18} />}
+                    />
+                  </div>
+                )}
+              />
+            ) : (
+              <div className="flex flex-1 justify-center items-center">
+                <span>
+                  To view store requests, please ask admin first to assign
+                  stores to your stock room.
+                </span>
               </div>
             )}
-          />
-        ) : (
-          <div className="flex flex-1 justify-center items-center">
-            <span>
-              To view store requests, please ask admin first to assign stores to
-              your stock room.
-            </span>
           </div>
-        )}
-      </div>
-      <Modal
-        className="bg-white h-[80%]"
-        title="Create Purchase Order"
-        hasPadding={false}
-        isOpen={showCreatePO}
-        modalDetails={
-          <span className="text-xs font-semibold">
-            From Requests:{" "}
-            {selectedtedRows?.map((req) => req.requestNo).join(",")}
-          </span>
-        }
-        onClose={function (): void {
-          setShowCreatePO(false);
-        }}
-        size="xl"
-      >
-        <CreatePOModal
-          data={selectedtedRows ?? []}
-          user={user}
-          onCancel={() => {
-            setShowCreatePO(false);
-          }}
-          onSubmit={handleCreatePurchaseOrder}
-        />
-      </Modal>
-      <Modal
-        hasPadding={false}
-        className="bg-white h-[95%] p-2"
-        title={`Request Order (${selectedtedRow?.requestNo})`}
-        modalDetails={(() => {
-          const { label, bg, color, border } = getRequestStatusOption(
-            selectedtedRow?.requestStatus || "",
-          );
-          return (
-            <div className="flex flex-1 justify-between align-middle items-center">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-600">
-                  Store:{" "}
-                  <span className="font-bold text-black">
-                    {selectedtedRow?.storeName}
-                  </span>
-                </span>
-                <span className="text-xs text-gray-600">
-                  Requestor:{" "}
-                  <span className="font-bold text-black">
-                    {selectedtedRow?.requestedByName}
-                  </span>
-                </span>
-              </div>
-              <span className="text-xs text-gray-600">
-                Status:{" "}
-                <span
-                  className={`${bg} ${color} ${border} text-xs rounded px-1 py-1 text-center font-semibold`}
-                >
-                  {label}
-                </span>
+          <Modal
+            className="bg-white h-[80%]"
+            title="Create Purchase Order"
+            hasPadding={false}
+            isOpen={showCreatePO}
+            modalDetails={
+              <span className="text-xs font-semibold">
+                From Requests:{" "}
+                {selectedtedRows?.map((req) => req.requestNo).join(",")}
               </span>
-            </div>
-          );
-        })()}
-        size="xl"
-        isOpen={isShowRequest}
-        onClose={() => {
-          setIsShowRequest(false);
-        }}
-      >
+            }
+            onClose={function (): void {
+              setShowCreatePO(false);
+            }}
+            size="xl"
+          >
+            <CreatePOModal
+              data={selectedtedRows ?? []}
+              user={user}
+              onCancel={() => {
+                setShowCreatePO(false);
+              }}
+              onSubmit={handleCreatePurchaseOrder}
+            />
+          </Modal>
+        </>
+      ) : (
         <ViewRequestModal
           selectedReq={selectedtedRow || null}
           mutateRequest={mutate}
           user={user}
+          onBack={() => {
+            setSelectedRow(null);
+          }}
         />
-      </Modal>
+      )}
     </PageLayout>
   );
 };

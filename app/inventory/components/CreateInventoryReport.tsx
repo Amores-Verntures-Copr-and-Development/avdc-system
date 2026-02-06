@@ -86,7 +86,7 @@ const CreateInventoryReport = ({
   user,
 }: CreateInventoryReportProps) => {
   const [range, setRange] = useState<{ from: string; to: string } | undefined>(
-    undefined
+    undefined,
   );
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -96,7 +96,7 @@ const CreateInventoryReport = ({
     inventoryId && range
       ? `/api/inventory/item/${inventoryId}/for-report?from=${range.from}&to=${range.to}`
       : null,
-    fetcher
+    fetcher,
   );
 
   // Calculate totals using useMemo for performance
@@ -116,16 +116,15 @@ const CreateInventoryReport = ({
         totalCurrentStock: 0,
         totalIn: 0,
         totalOut: 0,
-      }
+      },
     );
   }, [itemResponse.data]);
 
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
-
       setRange(rangeData);
     },
-    []
+    [],
   );
 
   const handleCreate = async (data: DisplayForReportItems[]) => {

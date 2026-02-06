@@ -10,11 +10,11 @@ import {
 import { RequestOrderPdf } from "@/dtos/request.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-
+import { formatPeso } from "@/utils/formatPeso";
 
 const styles = StyleSheet.create({
   page: {
-    padding: 20,
+    padding: 10,
     fontSize: 9,
     fontFamily: "Helvetica",
   },
@@ -30,21 +30,19 @@ const styles = StyleSheet.create({
   divider: {
     borderBottom: "1px solid #000",
     width: "100%",
+    marginVertical: 3,
   },
   body: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 3,
   },
   supplierSection: {
     width: "48%",
   },
-  infoSection: {
-    width: "48%",
-    flexDirection: "column",
-  },
   infoRow: {
     flexDirection: "column",
-    marginBottom: 6,
+    marginBottom: 3,
   },
   label: {
     fontSize: 9,
@@ -56,104 +54,50 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
 
-  // Single Column Table Styles
+  // Table Styles
   tableHeader: {
     flexDirection: "row",
     backgroundColor: "#f8f8f8",
     borderTop: "1px solid #333",
     borderBottom: "1px solid #333",
-    padding: 6,
+    padding: 4,
     fontWeight: "bold",
   },
   row: {
     flexDirection: "row",
     borderBottom: "0.5px solid #ddd",
-    padding: 6,
+    padding: 4,
     alignItems: "center",
     minHeight: 22,
   },
-  colIndex: {
-    width: "8%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  colDesc: {
-    width: "52%",
-    paddingHorizontal: 3,
-  },
-  colUnit: {
-    width: "15%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  colQty: {
-    width: "15%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  colTotal: {
-    width: "10%",
-    textAlign: "right",
-    fontWeight: "bold",
-  },
+  colIndex: { width: "8%", fontSize: 8 },
+  colDesc: { width: "40%", paddingHorizontal: 3, fontSize: 8 },
+  colUnit: { width: "12%", fontSize: 8 },
+  colPrice: { width: "12%", fontSize: 8 },
+  colQty: { width: "10%", fontSize: 8 },
+  colTotal: { width: "18%", fontSize: 8, fontWeight: "bold" },
 
-  // Two Column Table Styles - More compact
   tableContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     gap: 8,
   },
-  table: {
-    width: "49%",
-  },
+  table: { width: "49%" },
   twoColTableHeader: {
     flexDirection: "row",
     backgroundColor: "#f8f8f8",
     borderTop: "1px solid #333",
     borderBottom: "1px solid #333",
-    padding: 5,
+    padding: 4,
     fontWeight: "bold",
   },
   twoColRow: {
     flexDirection: "row",
-    border: "0.5px solid #ddd",
-    padding: 5,
+    borderBottom: "0.5px solid #ddd",
+    padding: 4,
     alignItems: "center",
     minHeight: 20,
   },
-  twoColIndex: {
-    width: "12%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  twoColDesc: {
-    width: "48%",
-    paddingHorizontal: 2,
-  },
-  twoColUnit: {
-    width: "18%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-  twoColQty: {
-    width: "22%",
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-
-  // Summary section
-  summarySection: {
-    marginTop: 15,
-    padding: 10,
-    backgroundColor: "#f8f8f8",
-    border: "1px solid #ddd",
-  },
-  totalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 3,
-  },
-
   pageNumber: {
     position: "absolute",
     bottom: 20,
@@ -163,156 +107,130 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#666",
   },
-  footerNote: {
-    position: "absolute",
-    bottom: 35,
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    fontSize: 8,
-    color: "#666",
-    fontStyle: "italic",
-  },
 });
 
 interface RequestOrderPFGProps {
   data: RequestOrderPdf | null;
 }
 
-const TWO_COLUMN_THRESHOLD = 40;
-const ITEMS_PER_PAGE_SINGLE_COLUMN = 56;
-const ITEMS_PER_PAGE_TWO_COLUMN = 50;
+const TWO_COLUMN_THRESHOLD = 30;
+const FIRST_PAGE_SINGLE_COLUMN = 60;
+const NEXT_PAGE_SINGLE_COLUMN = 70;
+const FIRST_PAGE_TWO_COLUMN = 60;
+const NEXT_PAGE_TWO_COLUMN = 80;
 
 const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
-  const chunkItems = (items: any[], chunkSize: number) => {
-    const chunks = [];
-    for (let i = 0; i < items.length; i += chunkSize) {
-      chunks.push(items.slice(i, i + chunkSize));
+  const items = data?.requestItems || [];
+
+  const chunkItemsWithFirstPage = (
+    items: any[],
+    firstSize: number,
+    nextSize: number,
+  ) => {
+    if (items.length === 0) return [[]];
+    const chunks: any[] = [];
+    let index = 0;
+    chunks.push(items.slice(index, index + firstSize));
+    index += firstSize;
+    while (index < items.length) {
+      chunks.push(items.slice(index, index + nextSize));
+      index += nextSize;
     }
     return chunks;
   };
 
-  const items = data?.requestItems || [];
-  const useTwoColumns = items.length > TWO_COLUMN_THRESHOLD;
+  const itemChunks = chunkItemsWithFirstPage(
+    items,
+    items.length > TWO_COLUMN_THRESHOLD
+      ? FIRST_PAGE_TWO_COLUMN
+      : FIRST_PAGE_SINGLE_COLUMN,
+    items.length > TWO_COLUMN_THRESHOLD
+      ? NEXT_PAGE_TWO_COLUMN
+      : NEXT_PAGE_SINGLE_COLUMN,
+  );
 
-  // Determine chunk size based on layout
-  const chunkSize = useTwoColumns
-    ? ITEMS_PER_PAGE_TWO_COLUMN
-    : ITEMS_PER_PAGE_SINGLE_COLUMN;
-  const itemChunks = chunkItems(items, chunkSize);
+  const getQuantityByStatus = (item: any, status: string) => {
+    switch (status) {
+      case "pending":
+      case "approved":
+      case "in_progress":
+        return item.reqItemQuantity;
+      case "delivered":
+        return item.reqItemTransfer;
+      case "received":
+      case "completed":
+        return item.reqItemReceived;
+      default:
+        return 0;
+    }
+  };
 
-  const renderSingleColumnTable = (items: any[], startIndex: number = 0) => (
+  const renderTable = (items: any[], startIndex = 0) => (
     <View>
       <View style={styles.tableHeader}>
         <Text style={styles.colIndex}>#</Text>
         <Text style={styles.colDesc}>Item</Text>
         <Text style={styles.colUnit}>Unit</Text>
-        <Text style={styles.colQty}>Order Qty</Text>
-        <Text style={styles.colQty}>Receive Qty</Text>
+        <Text style={styles.colPrice}>Price</Text>
+        <Text style={styles.colQty}>O</Text>
+        <Text style={styles.colQty}>D</Text>
+        <Text style={styles.colQty}>R</Text>
+        <Text style={styles.colTotal}>Total</Text>
       </View>
-      {items.map((item, i) => (
-        <View key={i} style={styles.row}>
-          <Text style={styles.colIndex}> {"#" + `${startIndex + i + 1}`}</Text>
-          <Text style={styles.colDesc}>{item.itemName}</Text>
-          <Text style={styles.colUnit}>{item.itemUnit}</Text>
-          <Text style={styles.colQty}>
-            {formatQuantityByUnit(item.reqItemQuantity, item.itemUnit ?? "")}
-          </Text>
-          <Text style={styles.colQty}>
-            {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-              ? ""
-              : formatQuantityByUnit(item.reqItemReceived, item.itemUnit ?? "")}
-          </Text>
-        </View>
-      ))}
+
+      {items.map((item, i) => {
+        const total =
+          getQuantityByStatus(item, data?.requestOrder.requestStatus ?? "") *
+          Number(item.itemPrice);
+        return (
+          <View key={i} style={styles.row}>
+            <Text style={styles.colIndex}>{startIndex + i + 1}</Text>
+            <Text style={styles.colDesc}>{item.itemName}</Text>
+            <Text style={styles.colUnit}>{item.itemUnit}</Text>
+            <Text style={styles.colPrice}>{Number(item.itemPrice)}</Text>
+            <Text style={styles.colQty}>
+              {item.reqItemQuantity
+                ? formatQuantityByUnit(
+                    item.reqItemQuantity,
+                    item.itemUnit ?? "",
+                  )
+                : ""}
+            </Text>
+            <Text style={styles.colQty}>
+              {item.reqItemTransfer
+                ? formatQuantityByUnit(
+                    item.reqItemTransfer,
+                    item.itemUnit ?? "",
+                  )
+                : ""}
+            </Text>
+            <Text style={styles.colQty}>
+              {item.reqItemReceived
+                ? formatQuantityByUnit(
+                    item.reqItemReceived,
+                    item.itemUnit ?? "",
+                  )
+                : ""}
+            </Text>
+            <Text style={styles.colTotal}>{total}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 
-  const renderTwoColumnTable = (items: any[], startIndex: number = 0) => {
-    const half = Math.ceil(items.length / 2);
-    const leftItems = items.slice(0, half);
-    const rightItems = items.slice(half);
-
-    return (
-      <View style={styles.tableContainer}>
-        {/* Left Column */}
-        <View style={styles.table}>
-          <View style={styles.twoColTableHeader}>
-            <Text style={styles.twoColIndex}>#</Text>
-            <Text style={styles.twoColDesc}>Item</Text>
-            <Text style={styles.twoColUnit}>Unit</Text>
-            <Text style={styles.twoColQty}>Ordr Qty</Text>
-            <Text style={styles.twoColQty}>Rcvd Qty</Text>
-          </View>
-          {leftItems.map((item, i) => (
-            <View key={i} style={styles.twoColRow}>
-              <Text style={styles.twoColIndex}>{startIndex + i + 1}</Text>
-              <Text style={styles.twoColDesc}>{item.itemName}</Text>
-              <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
-              <Text style={styles.twoColQty}>
-                {formatQuantityByUnit(
-                  item.reqItemQuantity,
-                  item.itemUnit ?? ""
-                )}
-              </Text>
-              <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-                  ? ""
-                  : formatQuantityByUnit(
-                      item.reqItemReceived,
-                      item.itemUnit ?? ""
-                    )}
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Right Column */}
-        <View style={styles.table}>
-          <View style={styles.twoColTableHeader}>
-            <Text style={styles.twoColIndex}>#</Text>
-            <Text style={styles.twoColDesc}>Item</Text>
-            <Text style={styles.twoColUnit}>Unit</Text>
-            <Text style={styles.twoColQty}>Ordr Qty</Text>
-            <Text style={styles.twoColQty}>Rcvd Qty</Text>
-          </View>
-          {rightItems.map((item, i) => (
-            <View key={i} style={styles.twoColRow}>
-              <Text style={styles.twoColIndex}>
-                {"#" + `${startIndex + i + 1}`}
-              </Text>
-              <Text style={styles.twoColDesc}>{item.itemName}</Text>
-              <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
-              <Text style={styles.twoColQty}>
-                {formatQuantityByUnit(
-                  item.reqItemQuantity,
-                  item.itemUnit ?? ""
-                )}
-              </Text>
-              <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
-                  ? ""
-                  : formatQuantityByUnit(
-                      item.reqItemReceived,
-                      item.itemUnit ?? ""
-                    )}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  };
-
   return (
     <Document>
-      {itemChunks.map((items, pageIndex) => {
-        const startIndex = pageIndex * chunkSize;
+      {itemChunks.map((chunk, pageIndex) => {
         const isFirstPage = pageIndex === 0;
+        const startIndex =
+          pageIndex === 0
+            ? 0
+            : FIRST_PAGE_SINGLE_COLUMN +
+              (pageIndex - 1) * NEXT_PAGE_SINGLE_COLUMN;
 
         return (
           <Page key={pageIndex} size="A4" style={styles.page}>
-            {/* Header - Only on first page */}
             {isFirstPage && (
               <>
                 <View style={styles.header}>
@@ -330,12 +248,9 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                         : ""}
                     </Text>
                   </View>
-
                   <Image style={styles.logo} source={"/avdclogo.png"} />
                 </View>
-
                 <View style={styles.divider} />
-
                 <View style={styles.body}>
                   <View style={styles.supplierSection}>
                     <View style={styles.infoRow}>
@@ -352,36 +267,22 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                       <Text style={styles.label}>Date</Text>
                       <Text style={styles.value}>
                         {formatDateToWords(
-                          data?.requestOrder.requestCreatedAt ?? ""
+                          data?.requestOrder.requestCreatedAt ?? "",
                         )}
                       </Text>
                     </View>
                     <View style={styles.infoRow}>
                       <Text style={styles.label}>Status</Text>
-                      <Text style={styles.value}>{status}</Text>
+                      <Text style={styles.value}>
+                        {data?.requestOrder.requestStatus ?? "N/A"}
+                      </Text>
                     </View>
                   </View>
                 </View>
-
                 <View style={styles.divider} />
               </>
             )}
-
-            {/* Items Table - Layout determined by total item count */}
-            {useTwoColumns
-              ? renderTwoColumnTable(items, startIndex)
-              : renderSingleColumnTable(items, startIndex)}
-
-            {/* Empty state */}
-            {items.length === 0 && (
-              <View style={styles.row}>
-                <Text style={{ width: "100%", textAlign: "center" }}>
-                  No items found
-                </Text>
-              </View>
-            )}
-
-            {/* Page number */}
+            {renderTable(chunk, startIndex)}
             <Text style={styles.pageNumber}>
               Page {pageIndex + 1} of {itemChunks.length}
             </Text>

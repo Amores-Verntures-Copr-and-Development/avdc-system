@@ -581,7 +581,7 @@ const TableInner = <T extends Record<string, any>>(
                     {columns.map((column, colIndex) => (
                       <td
                         key={column.key}
-                        className={`px-1 py-0.5 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${
+                        className={`px-1 py-4 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${
                           colIndex < columns.length - 1 ? "" : ""
                         }`}
                       >

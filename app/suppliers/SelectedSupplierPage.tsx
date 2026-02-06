@@ -46,12 +46,12 @@ const SelectedSupplierPage = ({
 }: SelectedSupplierPageProps) => {
   const searchParams = useSearchParams();
   const [showDeleteModal, setShowDeleteModal] = useState<"row" | "rows" | null>(
-    null
+    null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedRows, setSelectedRows] = useState<DisplaySupplierItemDto[]>();
   const [selectedRow, setSelectedRow] = useState<DisplaySupplierItemDto | null>(
-    null
+    null,
   );
   const [showAddItem, setShowAddItem] = useState(false);
   const [showViewItem, setShowViewItem] = useState(false);
@@ -106,7 +106,7 @@ const SelectedSupplierPage = ({
             "Content-Type": "application/json",
           },
           body: JSON.stringify(apiBody),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {
@@ -162,7 +162,7 @@ const SelectedSupplierPage = ({
     const updatedData = await mutate();
     // The updatedData should contain the fresh data
     const findSelectedRow = updatedData?.data.find(
-      (item) => item.suppItemId === selectedRow?.suppItemId
+      (item) => item.suppItemId === selectedRow?.suppItemId,
     );
     if (findSelectedRow) {
       setSelectedRow(findSelectedRow);
@@ -341,9 +341,8 @@ const SelectedSupplierPage = ({
                       if (!selectedRows) {
                         return;
                       }
-                      const success = await handleRemoveItemFromSupplier(
-                        selectedRows
-                      );
+                      const success =
+                        await handleRemoveItemFromSupplier(selectedRows);
                       if (success) {
                         setShowDeleteModal(null);
                       }

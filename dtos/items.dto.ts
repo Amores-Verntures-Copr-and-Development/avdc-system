@@ -40,6 +40,8 @@ export type CreateItemConversionDto = Pick<
 >;
 
 export interface DisplayItemConversionFromTo extends ItemConversions {
-  fromItemName: number;
-  toItemName: number;
+  fromItemName: string;
+  toItemName: string;
+  fromItemPrice: number;
+  toItemPrice: number;
 }

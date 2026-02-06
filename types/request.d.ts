@@ -42,4 +42,5 @@ export interface RequestItems {
   itemId: number;
   reqItemToFollow?: number;
   receivedToFollow?: number;
+  itemPrice?: number;
 }

@@ -45,6 +45,7 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
   { name: "Item Name", key: "itemName" },
+  { name: "Unit", key: "itemUnit" },
   { name: "Price", key: "itemPrice" },
   { name: "Ordered Qty", key: "reqItemQuantity" },
   {

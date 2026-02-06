@@ -15,11 +15,12 @@ import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
-import { PDFViewer } from "@react-pdf/renderer";
+import { Checkbox, pdf, PDFViewer } from "@react-pdf/renderer";
 import {
   CheckLine,
   ChevronLeft,
   Clock,
+  Download,
   FileText,
   Pencil,
   Plus,
@@ -35,6 +36,8 @@ import AddItemPOModal from "./components/AddItemPOModal";
 import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import { formatPeso } from "@/utils/formatPeso";
+import DynamicCheckbox from "@/components/shared/CheckBox";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -123,19 +126,90 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       editable: showEditMode,
       inputType: "number",
     },
-    { name: "Status", key: "reqItemStatus" },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
+    },
   ];
   const adminColumn: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
-    { name: "Request Qty", key: "reqItemQuantity" },
-    { name: "Delivered Qty", key: "reqItemTransfer" },
-    { name: "Status", key: "reqItemStatus" },
+    {
+      name: "Unit Price",
+      key: "itemPrice",
+      selector: (row) => (
+        <span className="font-semibold">{formatPeso(row.itemPrice)}</span>
+      ),
+    },
+    {
+      name: "Request Qty",
+      key: "reqItemQuantity",
+      selector: (row) =>
+        selectedReq?.requestStatus === "pending" ||
+        selectedReq?.requestStatus === "approved" ||
+        selectedReq?.requestStatus === "in_progress" ? (
+          <span className="font-semibold">{row.reqItemQuantity}</span>
+        ) : (
+          row.reqItemQuantity
+        ),
+    },
+    {
+      name: "Delivered Qty",
+      key: "reqItemTransfer",
+      selector: (row) =>
+        ["delivered", "completed"].includes(
+          selectedReq?.requestStatus ?? "",
+        ) ? (
+          <span className="font-semibold">{row.reqItemTransfer}</span>
+        ) : (
+          row.reqItemTransfer
+        ),
+    },
+
     { name: "Remarks", key: "reqItemRemarks" },
     {
       name: "Received",
       key: "reqItemReceived",
+      selector: (row) =>
+        ["recieved", "completed"].includes(selectedReq?.requestStatus ?? "") ? (
+          <span className="font-semibold">{row.reqItemReceived}</span>
+        ) : (
+          row.reqItemReceived
+        ),
+    },
+    { name: "Total", key: "totalCost" },
+    {
+      name: "Status",
+      key: "reqItemStatus",
+      selector: (row) => {
+        const { label, bg, color } = getStatusOption(row.reqItemStatus);
+        return (
+          <div
+            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+          >
+            <span
+              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+            >
+              {label}
+            </span>
+          </div>
+        );
+      },
     },
   ];
   const findOriginalData = (reqItemId: number) => {
@@ -458,6 +532,30 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     (item) => item.invItem,
   );
 
+  const handleDownload = async () => {
+    const pdfData: RequestOrderPdf = {
+      requestItems: itemResponse.data,
+      store: {
+        storeName: selectedReq?.storeName,
+      },
+      requestOrder: {
+        requestId: selectedReq?.requestId,
+        requestNo: selectedReq?.requestNo,
+        requestCreatedAt: selectedReq?.requestCreatedAt,
+        requestStatus: selectedReq?.requestStatus,
+      },
+      requestedBy: selectedReq?.requestedByName ?? "",
+    };
+    const blob = await pdf(<RequestOrderPDF data={pdfData} />).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `RequestOrder-${selectedReq?.requestNo}.pdf`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
   const handleDownloadPDF = () => {
     const pdfData: RequestOrderPdf = {
       requestItems: itemResponse.data,
@@ -609,6 +707,34 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setIsEditting(false);
     }
   };
+  const getTotalCost = (() => {
+    if (!selectedReq) return 1;
+
+    if (selectedReq.requestStatus === "delivered") {
+      return requestItemData.reduce(
+        (sum, item) =>
+          sum + Number(item.reqItemTransfer) * Number(item.itemPrice),
+        0,
+      );
+    }
+
+    if (
+      selectedReq.requestStatus === "received" ||
+      selectedReq.requestStatus === "completed"
+    ) {
+      return requestItemData.reduce(
+        (sum, item) =>
+          sum + Number(item.reqItemReceived) * Number(item.itemPrice),
+        0,
+      );
+    }
+
+    return requestItemData.reduce(
+      (sum, item) =>
+        sum + Number(item.reqItemQuantity) * Number(item.itemPrice),
+      0,
+    );
+  })();
   return (
     <>
       <div className="flex justify-between">
@@ -626,7 +752,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             <span className="">{label}</span>
           </div>
         </div>
-        <div>
+        <div className="flex flex-col gap-2">
           <Button
             label="Back"
             size="xs"
@@ -641,42 +767,60 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
       </div>
       <div className="bg-white h-full flex flex-col overflow-hidden">
-        {selectedReq?.requestStatus === "pending" ||
-        selectedReq?.requestStatus === "in_progress" ||
-        selectedReq?.requestStatus === "approved" ? (
-          <span className="text-[9px] xl:text-sm text-gray-600 font-medium p-2 xl:p-4">
-            Note: Please wait for the order request to be delivered before
-            receiving it. If it takes longer than expected, kindly contact your
-            Purchasing Department.
-          </span>
-        ) : selectedReq?.requestStatus === "delivered" ? (
-          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-2 xl:p-4">
-            Note: Please verify all delivered items and accurately input the
-            received quantities into the system to keep your inventory records
-            up to date.
-          </span>
-        ) : selectedReq?.requestStatus === "received" ? (
-          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-2 xl:p-4">
-            Note: The request status is currently marked as Received. Please
-            complete the request to finalize the process, ensure that all items
-            are accurately recorded, and generate the corresponding inventory
-            report.
-          </span>
-        ) : selectedReq?.requestStatus === "completed" ? (
-          <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-4">
-            Note: This request order is completed.
-          </span>
-        ) : (
-          <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
-            Note: This request has been cancelled. No further action is
-            required.
-          </span>
-        )}
+        <div className="flex justify-between p-2">
+          <div>
+            {" "}
+            {selectedReq?.requestStatus === "pending" ||
+            selectedReq?.requestStatus === "in_progress" ||
+            selectedReq?.requestStatus === "approved" ? (
+              <span className="text-[9px] xl:text-sm text-gray-600 font-medium ">
+                Note: Please wait for the order request to be delivered before
+                receiving it. If it takes longer than expected, kindly contact
+                your Purchasing Department.
+              </span>
+            ) : selectedReq?.requestStatus === "delivered" ? (
+              <span className="text-[9px] xl:text-sm text-blue-600 font-medium ">
+                Note: Please verify all delivered items and accurately input the
+                received quantities into the system to keep your inventory
+                records up to date.
+              </span>
+            ) : selectedReq?.requestStatus === "received" ? (
+              <span className="text-[9px] xl:text-sm text-blue-600 font-medium ">
+                Note: The request status is currently marked as Received. Please
+                complete the request to finalize the process, ensure that all
+                items are accurately recorded, and generate the corresponding
+                inventory report.
+              </span>
+            ) : selectedReq?.requestStatus === "completed" ? (
+              <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-4">
+                Note: This request order is completed.
+              </span>
+            ) : (
+              <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
+                Note: This request has been cancelled. No further action is
+                required.
+              </span>
+            )}
+          </div>
+          {Boolean(
+            !["supervisor", "staff"].includes(user?.empPosition ?? ""),
+          ) && (
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-[9px] 2xl:text-sm text-gray-500">
+                Total
+              </span>
+              <span className="text-xs sm:text-lg font-semibold">
+                {formatPeso(getTotalCost)}
+              </span>
+            </div>
+          )}
+        </div>
         <div className="flex-1 overflow-y-auto pr-4 pl-4">
           <Table
             localSearch
             renderTopActions={
               <div className="flex gap-2">
+                <div></div>
                 {selectedReq?.requestStatus === "delivered" && (
                   <div>
                     <Button
@@ -748,17 +892,30 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
               <>
                 <div>
                   <Button
+                    icon={Download}
+                    onClick={() => {
+                      handleDownload();
+                    }}
+                    size="sm"
+                    label="Download PDF"
+                    className="text-xs font-semibold"
+                    color="secondary"
+                  />
+                </div>
+                <div>
+                  <Button
                     icon={FileText}
                     onClick={() => {
                       handleDownloadPDF();
                       setShowROPDF(true);
                     }}
                     size="sm"
-                    label="PDF"
+                    label="View PDF"
                     className="text-xs font-semibold"
                     color="secondary"
                   />
                 </div>
+
                 {/* <div>
                 <Button
                   icon={<Printer size={15} />}

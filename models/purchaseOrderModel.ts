@@ -1,4 +1,7 @@
-import { StoreSupplierDetails } from "@/app/purchase-orders/components/ApprovedPOView";
+import {
+  RequestItemWithPOItem,
+  StoreSupplierDetails,
+} from "@/app/purchase-orders/components/ApprovedPOView";
 import {
   CreatePurchaseOrderDto,
   CreatePurchaseOrderItemDto,
@@ -182,7 +185,7 @@ export const updatePurchaseOrder = async ({
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof UpdatePurchaseOrdersDto)
+    (field) => !keyFields.includes(field as keyof UpdatePurchaseOrdersDto),
   );
 
   if (updateFields.length === 0)
@@ -211,7 +214,7 @@ export const updatePurchaseOrder = async ({
   // ✅ WHERE clause (unique combination of all key values)
   const whereConditions: string[] = [];
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
@@ -250,7 +253,7 @@ export const updatePOItems = async ({
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(
-    (field) => !keyFields.includes(field as keyof PurchaseOrderItems)
+    (field) => !keyFields.includes(field as keyof PurchaseOrderItems),
   );
 
   if (updateFields.length === 0)
@@ -279,7 +282,7 @@ export const updatePOItems = async ({
   // ✅ WHERE clause (unique combination of all key values)
   const whereConditions: string[] = [];
   const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k])
+    keyFields.map((k) => (row as any)[k]),
   );
 
   // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
@@ -373,10 +376,55 @@ INNER JOIN PurchaseOrderRequest por ON por.requestId = ro.requestId
 INNER JOIN PurchaseOrders po ON po.poId = por.poId
 LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 WHERE po.poId = ?
-GROUP BY s.storeId, s.storeName, ro.requestId;;
+GROUP BY s.storeId, s.storeName, ro.requestId;
 `;
   const [rows] = await pool.execute(sql, [poId, suppId, poId]);
   return rows as StoreSupplierDetails[];
+};
+
+export const selectStoreItemsBySupplierAndPOIdConversion = async ({
+  connection,
+  suppId,
+  poId,
+}: {
+  connection?: PoolConnection;
+  poId: number;
+  suppId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT
+    i.itemId,
+    i.itemName,
+    i.itemUnit,
+    GROUP_CONCAT(DISTINCT ri.reqItemId) AS reqItemId,
+    GROUP_CONCAT(DISTINCT ri.reqItemQuantity) AS reqItemQuantity,
+    GROUP_CONCAT(DISTINCT ri.reqItemStatus) AS reqItemStatus,
+    GROUP_CONCAT(DISTINCT ri.reqItemRemarks) AS reqItemRemarks,
+    i.itemPrice,
+    poi.poItemId,
+    poi.suppId,
+    c.categoryName,
+    c.categoryType,
+    ic.toItemId,
+    ro.storeId
+FROM PurchaseOrderItems poi
+LEFT JOIN PurchaseOrderRequest por 
+       ON por.poId = poi.poId
+LEFT JOIN ItemConversions ic
+       ON ic.fromItemId = poi.itemId  -- only take conversion if PO item is the "fromItem"
+LEFT JOIN Items i
+       ON i.itemId = COALESCE(ic.toItemId, poi.itemId)  -- take toItemId if conversion exists
+LEFT JOIN Categories c
+       ON c.categoryId = i.categoryId
+LEFT JOIN InventoryItems ii
+       ON ii.inventoryItemReferenceId = i.itemId  -- link inventory to final item
+LEFT JOIN RequestItems ri
+       ON ri.invItem = ii.inventoryItemId AND ri.requestId = por.requestId
+LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
+WHERE poi.poId = ? AND poi.suppId = ?
+GROUP BY i.itemId, i.itemName, i.itemUnit, poi.poItemId, poi.suppId, c.categoryName, c.categoryType, ic.toItemId,ro.storeId,i.itemPrice;`;
+  const [rows] = await pool.execute(sql, [poId, suppId]);
+  return rows as RequestItemWithPOItem[];
 };
 
 export const selectPurchaserOrderItems = async ({

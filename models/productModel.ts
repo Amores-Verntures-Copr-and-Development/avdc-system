@@ -179,13 +179,11 @@ export const insertProductVariantsBulk = async ({
     item.prodId,
     item.isDeductInv,
   ]);
-
   const sql = `
     INSERT INTO ProductVariants
       (prodVarName, prodVarPrice, prodVarCreatedBy, prodId, isDeductInv)
     VALUES ${placeholders}
   `;
-
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
 
   // Calculate all inserted IDs

@@ -52,7 +52,7 @@ export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
 };
 
 export const createPurchaseOrderItemByPOId = async (
-  data: CreatePurchaseOrderItemDto[]
+  data: CreatePurchaseOrderItemDto[],
 ) => {
   try {
     await createPurchaseOrderItem({ data });
@@ -124,7 +124,7 @@ export const getPurchaseOrderItemById = async (poId: number) => {
 };
 
 export const updateApprovedPurchaseOrder = async (
-  data: UpdatePurchaseOrdersDto
+  data: UpdatePurchaseOrdersDto,
 ) => {
   try {
     await processApprovedPO(data);
@@ -160,7 +160,7 @@ export const getPOItemsSupplierById = async (poId: number) => {
 
 export const getStorePOItemsSupplierById = async (
   poId: number,
-  suppId: number
+  suppId: number,
 ) => {
   try {
     const data = await findStoreItemsBySupplierAndPOIds({ poId, suppId });
@@ -181,7 +181,7 @@ export const getStorePOItemsSupplierById = async (
 
 export const updatePurchaseOrder = async (
   controller: string,
-  data: PurchaseOrders
+  data: PurchaseOrders,
 ) => {
   let message: string = "";
   try {
@@ -221,7 +221,7 @@ export const updatePurchaseOrder = async (
 
 export const updatePurchaseOrderItem = async (
   controller: string,
-  data: PurchaseOrderItems[]
+  data: PurchaseOrderItems[],
 ) => {
   let message: string = "";
   try {
@@ -293,7 +293,7 @@ export const getPOByPORFields = async ({
 };
 
 export const updatePurchaseOrderItemByPoId = async (
-  data: CreatePurchaseOrderItemDto[]
+  data: CreatePurchaseOrderItemDto[],
 ) => {
   try {
     const result = await handleUpdatePurchaseItems(data);
@@ -313,7 +313,7 @@ export const updatePurchaseOrderItemByPoId = async (
 };
 
 export const updatePurchaserOrderById = async (
-  data: Partial<PurchaseOrderItems>
+  data: Partial<PurchaseOrderItems>,
 ) => {
   try {
     const result = await updatePurchaseOrderItems({
@@ -356,7 +356,7 @@ export const getProcurementHistory = async () => {
 export const updatePurchaseOrderItemByPOId = async (
   poId: number,
   poItemData: Partial<PurchaseOrderItems>[],
-  controller: "delete" | "update"
+  controller: "delete" | "update",
 ) => {
   let message = "";
   try {
