@@ -1,5 +1,6 @@
 import { createCustomer, getCustomer } from "@/controllers/CustomerController";
 import { CreateCustomerDto } from "@/dtos/customer.dto";
+import { count } from "console";
 import { NextResponse } from "next/server";
 
 export async function POST(
@@ -12,8 +13,9 @@ export async function POST(
     if (!storeId) {
       throw new Error("No store found");
     }
-    const data = (await _request.json()) as CreateCustomerDto;
+    const data = (await _request.json()) as CreateCustomerDto[];
     const res = await createCustomer(data);
+    console.log("Data in route: ", data);
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
@@ -50,11 +52,19 @@ export async function GET(
       throw new Error("No item ID found!");
     }
 
-    // const { searchParams } = new URL(_request.url);
-    // const search = searchParams.get("search") || "";
-    // console.log({ search });
+    const { searchParams } = new URL(_request.url);
+    const search = searchParams.get("search") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const type = searchParams.get("type") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
     const res = await getCustomer({
       keyFields: { storeId: Number(storeId) },
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
+      search,
+      type,
     });
 
     if (!res.success) {
@@ -67,7 +77,8 @@ export async function GET(
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data,
+        count: res.count, // could sanitize before returning
       },
       { status: 201 },
     );

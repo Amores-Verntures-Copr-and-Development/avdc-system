@@ -28,7 +28,7 @@ export const insertProducts = async ({
     data.prodName,
     data.storeId,
     data.prodCreatedBy,
-    data.prodCatId,
+    data.prodCatId || null,
   ]);
   return results.insertId;
 };

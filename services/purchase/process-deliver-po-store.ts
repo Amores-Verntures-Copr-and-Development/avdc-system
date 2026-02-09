@@ -35,7 +35,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
     });
 
     const allSameSupplier = data.items.every(
-      (i) => i.suppId === data.items[0].suppId
+      (i) => i.suppId === data.items[0].suppId,
     );
     const suppId = allSameSupplier ? data.items[0].suppId : null;
 
@@ -44,7 +44,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       connection,
     });
     const isAllDelivered = requestItems.every(
-      (item) => item.reqItemStatus === "delivered"
+      (item) => item.reqItemStatus === "delivered",
     );
     const allRequestItems = requestItems.map((item) => ({
       reqitemId: item.reqItemId,
@@ -63,7 +63,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
         });
 
       const allRequestItemsWithSameSupplierDelivered = storeSuppPoId.every(
-        (i) => i.items.every((items) => items.reqItemStatus === "delivered")
+        (i) => i.items.every((items) => items.reqItemStatus === "delivered"),
       );
 
       if (allRequestItemsWithSameSupplierDelivered) {
@@ -73,7 +73,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
             s.items.flatMap((i) => ({
               poItemId: i.poItemId,
               poItemStatus: "delivered",
-            }))
+            })),
           ),
         });
       }
@@ -83,7 +83,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       poId: data.poId,
     });
     const isAllPOitemsDelivered = purchaseItems.every(
-      (item) => item.poItemStatus === "delivered"
+      (item) => item.poItemStatus === "delivered",
     );
     // console.log({ purchaseItems, isAllPOitemsDelivered });
     if (isAllPOitemsDelivered) {

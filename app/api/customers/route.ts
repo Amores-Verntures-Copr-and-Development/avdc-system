@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(_request: Request) {
   try {
-    const data = (await _request.json()) as CreateCustomerDto;
+    const data = (await _request.json()) as CreateCustomerDto[];
     const res = await createCustomer(data);
     if (!res.success) {
       console.log(res.message);

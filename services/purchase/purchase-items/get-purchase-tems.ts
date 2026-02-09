@@ -35,13 +35,16 @@ export async function findStoreItemsBySupplierAndPOIds({
         const convertedItemsForStore = converted.filter(
           (c) => c.storeId === store.storeId,
         );
-
+        const notExistingInFirst = convertedItemsForStore.filter((item) =>
+          store.items.some((po) => po.reqItemId !== Number(item.reqItemId)),
+        );
         return {
           ...store,
           // Merge items arrays: original items + converted items
-          items: [...(store.items || []), ...convertedItemsForStore],
+          items: [...(store.items || []), ...notExistingInFirst],
         };
       });
+
       return details;
     }
     //try search for

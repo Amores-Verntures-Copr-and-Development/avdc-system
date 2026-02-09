@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ poId: string }> }
+  { params }: { params: Promise<{ poId: string }> },
 ) {
   try {
     const slug = (await params).poId;
@@ -25,7 +25,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -35,7 +35,7 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -56,7 +56,7 @@ export async function PUT(_request: Request) {
         success: true,
         message: " res.message",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -66,7 +66,7 @@ export async function PUT(_request: Request) {
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

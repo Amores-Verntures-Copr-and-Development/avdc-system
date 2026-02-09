@@ -343,6 +343,7 @@ SELECT
             SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
                     'itemName', i.itemName,
+                    'itemPrice', i.itemPrice,
                     'itemUnit', i.itemUnit,
                     'reqItemId', ri.reqItemId,
                     'categoryName', c.categoryName,
@@ -396,6 +397,7 @@ export const selectStoreItemsBySupplierAndPOIdConversion = async ({
     i.itemId,
     i.itemName,
     i.itemUnit,
+    i.itemPrice,
     GROUP_CONCAT(DISTINCT ri.reqItemId) AS reqItemId,
     GROUP_CONCAT(DISTINCT ri.reqItemQuantity) AS reqItemQuantity,
     GROUP_CONCAT(DISTINCT ri.reqItemStatus) AS reqItemStatus,
@@ -422,7 +424,8 @@ LEFT JOIN RequestItems ri
        ON ri.invItem = ii.inventoryItemId AND ri.requestId = por.requestId
 LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
 WHERE poi.poId = ? AND poi.suppId = ?
-GROUP BY i.itemId, i.itemName, i.itemUnit, poi.poItemId, poi.suppId, c.categoryName, c.categoryType, ic.toItemId,ro.storeId,i.itemPrice;`;
+GROUP BY i.itemId,i.itemPrice, i.itemName, i.itemUnit, poi.poItemId, poi.suppId, c.categoryName, c.categoryType, ic.toItemId,ro.storeId,i.itemPrice;`;
+  console.log({ sql });
   const [rows] = await pool.execute(sql, [poId, suppId]);
   return rows as RequestItemWithPOItem[];
 };

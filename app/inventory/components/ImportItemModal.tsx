@@ -26,7 +26,7 @@ const ImportItemModal = ({
     fileInputRef.current?.click();
   };
   const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -90,26 +90,28 @@ const ImportItemModal = ({
             />
           </div>
         </div>
-        <div className="flex">
-          <input
-            className="text-xs"
-            type="file"
-            accept=".xlsx, .xls"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            style={{ display: "none" }}
-          />
-          <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded">
-            File: <span className="font-medium">{fileName}</span>
-          </div>
-          <div>
-            <Button
-              icon={Import}
-              label="Select file"
-              onClick={triggerFileInput}
-              size="xs"
+        {fileName !== "" && (
+          <div className="flex">
+            <input
+              className="text-xs"
+              type="file"
+              accept=".xlsx, .xls"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              style={{ display: "none" }}
             />
+            <div className="text-xs text-gray-600 bg-gray-100 px-3 py-1 rounded">
+              File: <span className="font-medium">{fileName}</span>
+            </div>
           </div>
+        )}
+        <div>
+          <Button
+            icon={Import}
+            label="Select file"
+            onClick={triggerFileInput}
+            size="xs"
+          />
         </div>
       </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">

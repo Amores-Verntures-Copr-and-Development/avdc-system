@@ -105,6 +105,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   setShowAllItems,
   onMaskAsDeliverdSupplier,
 }) => {
+  const [deliverPOItems, setDeliverPOItems] = useState<
+    PurchaseOrderItems[] | null
+  >(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [isSubmittingNotOrder, setIsSubmittingNotOrder] = useState(false);
@@ -356,6 +359,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       toast.success(res.message);
       mutate();
       mutateInventory();
+      console.log({ data });
       setIsShowDeliverConfirmation(false);
       setSelectedStoreSupplier(null);
       return true;
@@ -882,7 +886,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         hasBorder={true}
                                         size="xs"
                                         onClick={() => {
-                                          // setShowDeliverToStore(supplier);
+                                          setDeliverPOItems(supplier.items);
                                           setIsShowDeliverConfirmation(true);
                                         }}
                                         color="success"
@@ -994,8 +998,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   requestId: selectedStoreSupplier.data.requestId,
                   items: selectedStoreSupplier?.data.items,
                   poItems:
-                    selectedStoreSupplier?.data.items.map((poItem) => ({
-                      poItemId: poItem.poItemId,
+                    deliverPOItems?.map((poi) => ({
+                      itemId: poi.itemId,
                     })) ?? [],
                 };
                 handleDeliverItemStore(data);

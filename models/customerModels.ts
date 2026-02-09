@@ -7,23 +7,87 @@ export const insertCustomer = async ({
   data,
   connection,
 }: {
-  data: CreateCustomerDto;
+  data: CreateCustomerDto[];
   connection?: PoolConnection;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Customers(customerName,customerEmail,customerPhone,customerType,customerCreatedBy,storeId) VALUES(?,?,?,?,?,?)`;
-  const [result] = await pool.execute<ResultSetHeader>(sql, [
-    data.customerName,
-    data.customerEmail,
-    data.customerPhone,
-    data.customerType,
-    data.customerCreatedBy,
-    data.storeId,
+  console.log({ data });
+  const sql = `INSERT INTO Customers(customerName,customerEmail,customerPhone,customerType,customerCreatedBy,storeId) VALUES ${data.map(() => "(?,?,?,?,?,?)")} `;
+  const values = data.flatMap((item) => [
+    item.customerName ?? "",
+    item.customerEmail ?? "",
+    item.customerPhone ?? "",
+    item.customerType,
+    item.customerCreatedBy,
+    item.storeId,
   ]);
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
   return result.insertId;
 };
 
 export const selectCustomers = async ({
+  keyFields = {},
+  connection,
+  limit,
+  offset,
+  search,
+  type,
+}: {
+  keyFields?: Partial<Customer>;
+  connection?: PoolConnection;
+  search?: string;
+  type?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const params: any[] = [];
+  let sql = `SELECT 
+  c.customerId,
+  c.customerName,
+  c.customerEmail,
+  c.customerPhone,
+  c.customerType,
+  c.storeId,
+  st.storeName,
+  COALESCE(SUM(sa.salesTotalAmount), 0) AS totalSpent,
+  MAX(sa.salesCreatedAt) AS lastVisit,
+  MIN(sa.salesCreatedAt) AS firstVisit
+FROM Customers c
+LEFT JOIN Stores st ON st.storeId = c.storeId
+LEFT JOIN Sales sa ON sa.customerId = c.customerId
+WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND c.${key} IS NULL`;
+    } else {
+      sql += ` AND c.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  if (search) {
+    sql += ` AND (
+    c.customerName LIKE ?
+    OR c.customerEmail LIKE ?
+    OR c.customerPhone LIKE ?
+  )`;
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  sql += ` GROUP BY c.customerId, c.customerName, c.customerEmail, c.customerPhone, c.customerType, c.storeId, st.storeName`;
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as Customer[];
+};
+
+export const selectCountCustomers = async ({
   keyFields = {},
   connection,
 }: {
@@ -33,30 +97,11 @@ export const selectCustomers = async ({
   const pool = connection ? connection : await getDBConnection();
 
   const params: any[] = [];
-  let sql = ` SELECT 
-    c.*,
-    s.storeName,
-    s.storeId,
-    -- total spent per customer
-    (SELECT SUM(s.salesTotalAmount) 
-     FROM Sales s 
-     WHERE s.customerId = c.customerId) AS totalSpent,
-     
-    -- last visit
-    (SELECT s.salesCreatedAt 
-     FROM Sales s 
-     WHERE s.customerId = c.customerId 
-     ORDER BY s.salesCreatedAt DESC 
-     LIMIT 1) AS lastVisit,
-     
-    -- first visit
-    (SELECT s.salesCreatedAt 
-     FROM Sales s 
-     WHERE s.customerId = c.customerId 
-     ORDER BY s.salesCreatedAt ASC 
-     LIMIT 1) AS firstVisit
+  let sql = `SELECT 
+  COUNT(*) as totalCustomer
 FROM Customers c
-LEFT JOIN Stores s ON s.storeId = c.storeId 
+LEFT JOIN Stores st ON st.storeId = c.storeId
+LEFT JOIN Sales sa ON sa.customerId = c.customerId
 WHERE 1=1`;
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
@@ -67,5 +112,5 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows as Customer[];
+  return rows[0];
 };

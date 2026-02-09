@@ -4,8 +4,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Import, PlusIcon, Store } from "lucide-react";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
 import { useSession } from "@/hooks/useSession";
 import { CreateCustomerDto, DisplayCustomerDto } from "@/dtos/customer.dto";
@@ -19,7 +18,8 @@ import { formatPeso } from "@/utils/formatPeso";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useStores } from "@/hooks/userStore";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { PlusIcon, Store } from "lucide-react";
 
 const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -71,6 +71,7 @@ const adminColumns: Column<DisplayCustomerDto>[] = [
   },
 ];
 const CustomerPage = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user, hasStore, isAdmin } = useSession();
@@ -81,20 +82,51 @@ const CustomerPage = () => {
       : user
         ? `api/customers/`
         : null;
-  const { data: response } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
-    url,
-    fetcher,
-  );
+  const getApiUrl = useMemo(() => {
+    if (!user) return null;
+
+    const params = new URLSearchParams();
+
+    // List all the keys you want to read from searchParams
+    const keys = [
+      "search",
+      "status",
+      "category",
+      "from",
+      "to",
+      "store",
+      "limit",
+    ];
+
+    keys.forEach((key) => {
+      const value = searchParams.get(key);
+      if (value) params.append(key, value);
+    });
+
+    // Always include page, default to 1
+    params.append("page", searchParams.get("page") || "1");
+
+    return `${url}?${params.toString()}`;
+  }, [user, searchParams]);
+  const { data: response, isLoading } = useSWR<
+    ApiResponse<DisplayCustomerDto[]>
+  >(getApiUrl, fetcher);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const handleSubmitAddCustomer = async (cusData: CreateCustomerDto) => {
+  const handleSubmitAddCustomer = async (cusData: CreateCustomerDto[]) => {
     setIsSubmitting(true);
-    console.log({ cusData });
-    if (!cusData.customerName || cusData.customerName === "") {
-      toast.error("Customer name is required");
-      return false;
-    }
     try {
-      const data = await fetch(`/api/customers/store/${cusData.storeId}`, {
+      if (cusData.length === 0) {
+        toast.error("Customer is required");
+        return false;
+      }
+      const hasSomeNoType = cusData.some(
+        (c) => c.customerType === undefined || !c.customerType,
+      );
+      if (hasSomeNoType) {
+        toast.error("Customer Type is required");
+        return false;
+      }
+      const data = await fetch(`/api/customers/store/${user?.storeId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -102,9 +134,7 @@ const CustomerPage = () => {
         body: JSON.stringify(cusData),
         credentials: "include",
       });
-
       const res = await data.json();
-
       if (!res.success) {
         throw new Error(res.message || "Failed to add customer.");
       }
@@ -132,17 +162,6 @@ const CustomerPage = () => {
           searchUrl="/customers"
           renderTopActions={
             <div className="flex gap-2">
-              <div>
-                <Button
-                  label="Import"
-                  size={"sm"}
-                  icon={Import}
-                  onClick={() => {
-                    setShowAddCustomer(true);
-                  }}
-                  color="outline"
-                />
-              </div>
               <div>
                 <Button
                   label="Add Customer"
@@ -183,8 +202,9 @@ const CustomerPage = () => {
           data={response?.data ?? []}
           showCheckBox
           isRounded={false}
-          totalCount={10}
+          totalCount={response?.count}
           maxHeight="h-full"
+          loading={isLoading}
         />
       </div>
       <Modal
@@ -193,9 +213,11 @@ const CustomerPage = () => {
           setShowAddCustomer(false);
         }}
         title="Add Customer"
-        size="lg"
+        size="xl"
+        className="min-h-0"
       >
         <AddCustomerModal
+          hasStore={hasStore}
           user={user}
           storeId={user?.storeId ?? 0}
           onSumit={handleSubmitAddCustomer}

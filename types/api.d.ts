@@ -3,4 +3,5 @@ export interface ApiResponse<T> {
   message: string;
   data: T;
   totalItems?: number;
+  count?: number;
 }

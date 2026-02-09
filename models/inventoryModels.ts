@@ -129,7 +129,6 @@ export const insertInventoryItem = async ({
   connection?: PoolConnection;
   data: CreateInventoryItemDto;
 }) => {
-  console.log("CreateInventoryItemDto: ", data);
   const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO InventoryItems(inventoryId,inventoryItemReferenceType,inventoryItemReferenceId,inventoryItemQuantity,inventoryItemMin,inventoryItemCreatedBy)
   VALUES(?,?,?,?,?,?)`;
