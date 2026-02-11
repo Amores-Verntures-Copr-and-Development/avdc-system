@@ -20,6 +20,7 @@ import { useStores } from "@/hooks/userStore";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlusIcon, Store } from "lucide-react";
+import { StoreInterface } from "@/types/stores";
 
 const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -108,10 +109,56 @@ const CustomerPage = () => {
 
     return `${url}?${params.toString()}`;
   }, [user, searchParams]);
-  const { data: response, isLoading } = useSWR<
-    ApiResponse<DisplayCustomerDto[]>
-  >(getApiUrl, fetcher);
+  const {
+    data: response,
+    isLoading,
+    mutate,
+  } = useSWR<ApiResponse<DisplayCustomerDto[]>>(getApiUrl, fetcher);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmitAddCustomerStores = async (
+    dataCus: CreateCustomerDto[],
+    store: StoreInterface[],
+  ) => {
+    try {
+      if (dataCus.length === 0) {
+        toast.error("Customer is required");
+        return false;
+      }
+      const hasSomeNoType = dataCus.some(
+        (c) => c.customerType === undefined || !c.customerType,
+      );
+      const createStoreCustomer = {
+        data: dataCus,
+        store: store,
+      };
+      if (hasSomeNoType) {
+        toast.error("Customer Type is required");
+        return false;
+      }
+      const data = await fetch(`/api/customers/multiple-store/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createStoreCustomer),
+        credentials: "include",
+      });
+      const res = await data.json();
+      if (!res.success) {
+        throw new Error(res.message || "Failed to add customer.");
+      }
+      toast.success(res.message);
+      mutate();
+      setShowAddCustomer(false);
+      return true;
+    } catch (e: any) {
+      toast.error(e.message);
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const handleSubmitAddCustomer = async (cusData: CreateCustomerDto[]) => {
     setIsSubmitting(true);
     try {
@@ -139,6 +186,7 @@ const CustomerPage = () => {
         throw new Error(res.message || "Failed to add customer.");
       }
       toast.success(res.message);
+      mutate();
       setShowAddCustomer(false);
       return true;
     } catch (e: any) {
@@ -214,7 +262,7 @@ const CustomerPage = () => {
         }}
         title="Add Customer"
         size="xl"
-        className="min-h-0"
+        className="h-[90%]"
       >
         <AddCustomerModal
           hasStore={hasStore}
@@ -225,6 +273,8 @@ const CustomerPage = () => {
           onClose={function (): void {
             setShowAddCustomer(false);
           }}
+          stores={Array.isArray(stores) ? stores : stores}
+          onSubmitCustomerStores={handleSubmitAddCustomerStores}
         />
       </Modal>
     </PageLayout>

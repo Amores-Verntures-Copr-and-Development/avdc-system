@@ -6,7 +6,7 @@ import {
 
 export const getDashboardStatsByRole = async (
   position: "purchaser" | "admin",
-  userId?: number
+  userId?: number,
 ) => {
   try {
     let data: any;
@@ -31,7 +31,7 @@ export const getDashboardStatsByRole = async (
 
 export const getPendingRequest = async (
   position: "purchaser" | "admin",
-  userId?: number
+  userId?: number,
 ) => {
   try {
     let data: any;
@@ -107,9 +107,8 @@ export const getOwnerSalesChartData = async (year: string) => {
 
 export const getOwnerPurchaseOrderChartData = async (year: string) => {
   try {
-    const data = await getOwnerDashboardServices.getPurchaseOrderChartData(
-      year
-    );
+    const data =
+      await getOwnerDashboardServices.getPurchaseOrderChartData(year);
     return {
       success: true,
       data: data,

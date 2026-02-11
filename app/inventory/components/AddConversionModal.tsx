@@ -14,12 +14,14 @@ interface AddConversionModalProps {
   data: DisplayInventoryItems | null;
   user?: UserAuth | null;
   onClose: () => void;
+  mutate: () => void;
 }
 
 const AddConversionModal = ({
   data,
   user,
   onClose,
+  mutate,
 }: AddConversionModalProps) => {
   const [convertForm, setConvertForm] = useState<CreateItemConversionDto>({
     fromItemId: data?.itemId ?? 0,
@@ -57,6 +59,7 @@ const AddConversionModal = ({
         throw new Error(res.err);
       }
       toast.success(res.message);
+      mutate();
       onClose();
     } catch (e) {
       console.log(e);

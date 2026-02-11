@@ -1,5 +1,6 @@
 import { ItemInterface } from "@/types/items";
 import {
+  OrderCompositeItem,
   PurchaseOrderItems,
   PurchaseOrderRequest,
   PurchaseOrders,
@@ -8,6 +9,7 @@ import { Supplier } from "@/types/supplier";
 import { InventoryItemInterface } from "@/types/inventory";
 import { Request, RequestItems } from "@/types/request";
 import { StoreInterface } from "@/types/stores";
+import { DisplayOrderCompositeItemDto } from "@/app/purchase-orders/components/_components/ViewCompositePOItem";
 
 export type CreatePurchaseOrderDto = Pick<
   PurchaseOrders,
@@ -70,6 +72,7 @@ export type DisplayPurchaseOrderItemsDto = Pick<
     suppliers: SupplierItemDetails[] | null;
     selectedSupplierId?: number | null | string;
     totalPrice?: number;
+    composite?: DisplayOrderCompositeItemDto[];
   };
 
 export type SupplierItemDetails = {
@@ -107,3 +110,13 @@ export interface DeliverItemsToStore {
   items: (Partial<RequestItems> & { suppId?: number | null })[];
   poItems: Partial<PurchaseOrderItems>[];
 }
+
+export type CreateOrderCompositeItemDro = Pick<
+  OrderCompositeItem,
+  | "itemId"
+  | "ordComCreatedBy"
+  | "ordComQuantity"
+  | "poItemId"
+  | "ordComPrice"
+  | "reqItemId"
+>;

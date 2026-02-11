@@ -21,7 +21,7 @@ interface PendingPOViewProps {
   onClose: () => void;
   user: UserAuth | null;
   setShowAllItems: React.Dispatch<
-    React.SetStateAction<"status" | "all" | "request">
+    React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
 }
 

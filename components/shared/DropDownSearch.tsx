@@ -1,5 +1,6 @@
 import { useDebounce } from "@/hooks/useDebounce";
 import React, { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import toast from "react-hot-toast";
 
 type DropdownSearchProps<T> = {
@@ -41,9 +42,16 @@ export function DropdownSearch<T>({
   const [isOpen, setIsOpen] = useState(false);
   const [hasSelected, setHasSelected] = useState(!!selectedValue);
   const [isLoading, setIsLoading] = useState(false);
-
+  const portalRef = useRef<HTMLUListElement>(null);
   const clearedRef = useRef(false);
-
+  const handleClickOutside = (e: MouseEvent) => {
+    if (
+      !dropdownRef.current?.contains(e.target as Node) &&
+      !portalRef.current?.contains(e.target as Node)
+    ) {
+      setIsOpen(false);
+    }
+  };
   // Sizes consistent with DropdownSelect
   const sizeStyles = {
     xs: "h-6 xl:h-8 text-xs px-2",
@@ -108,8 +116,8 @@ export function DropdownSearch<T>({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
+        !dropdownRef.current?.contains(e.target as Node) &&
+        !portalRef.current?.contains(e.target as Node)
       ) {
         setIsOpen(false);
       }
@@ -119,6 +127,7 @@ export function DropdownSearch<T>({
   }, []);
 
   const handleSelect = (item: T) => {
+    console.log({ item });
     const display = displayValue(item);
     setQuery(display);
     setHasSelected(true);
@@ -173,19 +182,35 @@ export function DropdownSearch<T>({
           </div>
         )}
 
-        {isOpen && suggestions.length > 0 && (
-          <ul className="absolute z-50 w-full bg-white border border-gray-300 rounded-md shadow-md max-h-48 overflow-y-auto mt-1">
-            {suggestions.map((item, index) => (
-              <li
-                key={index}
-                onClick={() => handleSelect(item)}
-                className="hover:bg-blue-100 cursor-pointer px-3 py-2 text-sm"
-              >
-                {renderItem(item)}
-              </li>
-            ))}
-          </ul>
-        )}
+        {isOpen &&
+          suggestions.length > 0 &&
+          ReactDOM.createPortal(
+            <ul
+              ref={portalRef}
+              className="absolute z-50 w-60 bg-white border border-gray-300 rounded-md shadow-md max-h-48 overflow-y-auto"
+              style={{
+                top: dropdownRef.current
+                  ? dropdownRef.current.getBoundingClientRect().bottom +
+                    window.scrollY
+                  : 0,
+                left: dropdownRef.current
+                  ? dropdownRef.current.getBoundingClientRect().left +
+                    window.scrollX
+                  : 0,
+              }}
+            >
+              {suggestions.map((item, index) => (
+                <li
+                  key={index}
+                  onClick={() => handleSelect(item)}
+                  className="hover:bg-blue-100 cursor-pointer px-3 py-2 text-sm"
+                >
+                  {renderItem(item)}
+                </li>
+              ))}
+            </ul>,
+            document.body,
+          )}
       </div>
 
       {error && <span className="text-red-500 text-sm mt-1">{error}</span>}

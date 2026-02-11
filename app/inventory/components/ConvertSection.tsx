@@ -27,19 +27,6 @@ interface ConvertSectionProps {
   setShowAddComponent?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const dataCon: ItemConversions[] = [
-  {
-    itemConId: 1,
-    fromItemId: 1,
-    fromUnit: "box",
-    fromQuantity: 1,
-    toItemId: 2,
-    toQuantity: 12,
-    toUnit: "bot",
-    itemConCreatedBy: 1,
-  },
-];
-
 const ConvertSection = ({
   data,
   user,
@@ -281,7 +268,7 @@ const ConvertSection = ({
           }
         >
           <div className="flex flex-col">
-            {dataCon.length > 0 ? (
+            {response.data.length > 0 ? (
               <>
                 {/* Header */}
                 <div className="grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 border-b border-gray-200 text-xs font-medium text-gray-600">
@@ -329,6 +316,7 @@ const ConvertSection = ({
               setShowAddComponent(false);
             }
           }}
+          mutate={mutate}
         />
       </Modal>
     </div>
@@ -355,7 +343,7 @@ const ConversionCard = ({ data, index }: ConversionCardProps) => {
           <span className="text-sm font-medium text-gray-900">
             {data.fromQuantity} {data.fromUnit}
           </span>
-          <span className="text-xs text-gray-500">Item #{data.fromItemId}</span>
+          <span className="text-xs text-gray-500">{data.fromItemName}</span>
         </div>
       </div>
 
@@ -384,7 +372,7 @@ const ConversionCard = ({ data, index }: ConversionCardProps) => {
           <span className="text-sm font-medium text-gray-900">
             {data.toQuantity} {data.toUnit}
           </span>
-          <span className="text-xs text-gray-500">Item #{data.toItemId}</span>
+          <span className="text-xs text-gray-500">{data.toItemName}</span>
         </div>
       </div>
 

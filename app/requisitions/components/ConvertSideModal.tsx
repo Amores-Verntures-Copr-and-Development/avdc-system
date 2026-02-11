@@ -76,8 +76,8 @@ const ConvertSideModal = ({ data, onConvert }: ConvertSideModalProps) => {
               checked={selectedConversionId === conversion.itemConId}
               onChange={() => setSelectedConversionId(conversion.itemConId)}
             />
-            <span>
-              {conversion.toUnit} ({conversion.fromQuantity}{" "}
+            <span className="text-xs 2xl:text-sm">
+              {conversion.toItemName} ({conversion.fromQuantity}{" "}
               {conversion.fromUnit} = {conversion.toQuantity}{" "}
               {conversion.toUnit})
             </span>

@@ -1,9 +1,10 @@
 import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
 import Input from "@/components/shared/Input";
-import Table from "@/components/shared/Table";
+import Table, { Column } from "@/components/shared/Table";
 import { CreateCustomerDto } from "@/dtos/customer.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { StoreInterface } from "@/types/stores";
 import { downloadExcelTemplate } from "@/utils/downloadExcelTemplateFile";
 import { handleChange } from "@/utils/handle-change";
 import { importExcel } from "@/utils/importExcel";
@@ -15,9 +16,14 @@ interface AddCustomerModalProps {
   user: UserAuth | null;
   storeId: number;
   onSumit: (data: CreateCustomerDto[]) => Promise<boolean>;
+  onSubmitCustomerStores: (
+    data: CreateCustomerDto[],
+    store: StoreInterface[],
+  ) => Promise<boolean>;
   isSubmitting?: boolean;
   onClose: () => void;
   hasStore: boolean;
+  stores?: StoreInterface[] | StoreInterface | null;
 }
 const AddCustomerModal = ({
   user,
@@ -26,7 +32,17 @@ const AddCustomerModal = ({
   onClose,
   isSubmitting,
   hasStore,
+  stores,
+  onSubmitCustomerStores,
 }: AddCustomerModalProps) => {
+  const [isSelectStore, setIsSelectStore] = useState(false);
+  const columns: Column[] = [
+    { key: "#", name: "#", selector: (row, index) => index + 1 },
+    { key: "storeName", name: "Name" },
+
+    { key: "storeLocation", name: "Location" },
+  ];
+  const [selectedStores, setSelectedStores] = useState<StoreInterface[]>([]);
   const [isImport, setIsImport] = useState(false);
   const [importData, setImportData] = useState<any[]>([]);
   const [fileName, setFileName] = useState("");
@@ -117,11 +133,18 @@ const AddCustomerModal = ({
         Object.keys(row).forEach((key) => allKeys.add(key));
       });
 
-      const columns = Array.from(allKeys).map((key) => ({
-        key,
-        name: key,
-        selector: (row: any) => row[key] ?? "",
-      }));
+      const columns = [
+        {
+          key: "#",
+          name: "#",
+          selector: (_row: any, rowIndex: number) => rowIndex + 1, // row index starting at 1
+        },
+        ...Array.from(allKeys).map((key) => ({
+          key,
+          name: key,
+          selector: (row: any) => row[key] ?? "",
+        })),
+      ];
 
       setImportDataColumns(columns);
       setIsImport(true);
@@ -131,9 +154,33 @@ const AddCustomerModal = ({
     }
   };
   const isUserHasStore = user?.storeId && hasStore;
+  const handleSelectionChange = (selected: StoreInterface[]) => {
+    // 👉 Here you can trigger bulk delete, bulk approve, etc.
+    setSelectedStores(selected);
+  };
+
+  const handleAddCustomerMultipleStores = async () => {
+    const createCustomer: CreateCustomerDto[] =
+      importData.map((cus) => ({
+        customerCreatedBy: user?.userId ?? 0,
+        customerEmail: cus.Email,
+        customerName: cus.Name,
+        customerPhone: cus.Phone,
+        customerType: cus["Type(staff)"],
+        storeId: 0,
+      })) ?? [];
+
+    const success = await onSubmitCustomerStores(
+      createCustomer,
+      selectedStores,
+    );
+    if (success) {
+      onClose();
+    }
+  };
   return (
     <div className="flex flex-col gap-4 h-full">
-      <div className="flex justify-end gap-2 flex-1">
+      <div className="flex justify-end gap-2">
         <IconButton
           onClick={function (): void {
             handleDownloadCustomerTemplate();
@@ -167,6 +214,18 @@ const AddCustomerModal = ({
           </div>
         </div>
       </div>
+      {isSelectStore && (
+        <div className="flex justify-between items-center">
+          <h1 className="text-black font-semibold text-sm">
+            Select Stores to add customer ({importData.length}).
+          </h1>
+          {selectedStores.length > 0 && (
+            <span className="text-black font-semibold text-xs">
+              Added to {selectedStores.length} store(s)
+            </span>
+          )}
+        </div>
+      )}
       {!isImport ? (
         <div className="flex flex-col gap-2 pr-20 pl-20">
           <div className="flex gap-4">
@@ -206,8 +265,19 @@ const AddCustomerModal = ({
             />
           </div>
         </div>
+      ) : isSelectStore ? (
+        <div className="flex-1 min-h-0  flex flex-col justify-between">
+          <Table
+            showCheckBox
+            uniqueIdKey="storeId"
+            onSelectionChange={handleSelectionChange}
+            columns={columns}
+            data={Array.isArray(stores) ? stores : []}
+            maxHeight="h-full"
+          />
+        </div>
       ) : (
-        <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+        <div className="flex-1 min-h-0  flex flex-col justify-between">
           <Table
             columns={importDataColumns}
             data={importData}
@@ -266,14 +336,29 @@ const AddCustomerModal = ({
               disabled={isSubmitting}
             />
           </div>
-          <div>
-            <Button
-              size="sm"
-              label="Select Store"
-              onClick={handleSubmitAddCustomer}
-              loading={isSubmitting}
-            />
-          </div>
+          {isSelectStore ? (
+            <div>
+              <Button
+                size="sm"
+                label="Import Customer "
+                onClick={() => {
+                  handleAddCustomerMultipleStores();
+                }}
+                loading={isSubmitting}
+              />
+            </div>
+          ) : (
+            <div>
+              <Button
+                size="sm"
+                label="Select Store"
+                onClick={() => {
+                  setIsSelectStore(true);
+                }}
+                loading={isSubmitting}
+              />
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex mt-auto justify-end gap-3">

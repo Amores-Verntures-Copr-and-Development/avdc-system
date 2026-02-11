@@ -1,7 +1,7 @@
 import React from "react";
 import { DropdownSearch } from "./DropDownSearch";
 import { ItemInterface } from "@/types/items";
-
+import { createPortal } from "react-dom";
 interface DropDownSearchItemProps {
   onSelect: (item: ItemInterface) => void;
   selectedValue?: string;

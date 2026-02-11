@@ -1,20 +1,15 @@
-import { getStoreByPOId } from "@/controllers/StoreControllers";
+import { createCustomerMultipleStore } from "@/controllers/CustomerController";
 import { NextResponse } from "next/server";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ poId: string }> },
-) {
+export async function POST(_request: Request) {
   try {
-    const slug = (await params).poId;
-    const poId = Number(slug);
-    const res = await getStoreByPOId(poId);
-
+    const { data, store } = await _request.json();
+    const res = await createCustomerMultipleStore(data, store);
     if (!res.success) {
-      // propagate the actual message if available
       console.log(res.message);
       throw new Error(`${res.error}`);
     }
+    console.log("[STORE]: ", { store });
 
     return NextResponse.json(
       {
@@ -25,11 +20,10 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetched inventory!",
+        message: err?.message || String(err),
         error: err?.message || String(err),
       },
       { status: 500 },

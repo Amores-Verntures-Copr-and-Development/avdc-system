@@ -11,7 +11,6 @@ export const insertCustomer = async ({
   connection?: PoolConnection;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  console.log({ data });
   const sql = `INSERT INTO Customers(customerName,customerEmail,customerPhone,customerType,customerCreatedBy,storeId) VALUES ${data.map(() => "(?,?,?,?,?,?)")} `;
   const values = data.flatMap((item) => [
     item.customerName ?? "",

@@ -22,6 +22,7 @@ import Button from "@/components/shared/Button";
 import { ArrowLeft } from "lucide-react";
 import ShowAllIItems from "./ShowAllIItems";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import SupplierView from "./SupplierView";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -39,9 +40,9 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
 }) => {
   const statusSteps = ["pending", "approved", "sent", "received", "completed"];
   const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
-  const [showPage, setShowPage] = useState<"status" | "all" | "request">(
-    "status",
-  );
+  const [showPage, setShowPage] = useState<
+    "status" | "all" | "request" | "supplier"
+  >("status");
   const api =
     data?.poStatus === "pending"
       ? `/api/purchase-order/po-items/${data?.poId}`
@@ -512,6 +513,8 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           onUpdateItem={handleUpdatePOItem}
           onRemoveItem={handleRemoveItem}
         />
+      ) : showPage === "supplier" ? (
+        <SupplierView data={data} setShowAllItems={setShowPage} />
       ) : (
         <ShowPOByRequest setShowAllItems={setShowPage} data={data} />
       )}

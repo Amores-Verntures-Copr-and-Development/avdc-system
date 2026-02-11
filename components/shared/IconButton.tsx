@@ -10,7 +10,7 @@ interface IconButtonProps {
   isRounded?: boolean;
   showLabel?: boolean;
   disable?: boolean;
-  loading?:boolean
+  loading?: boolean;
 }
 
 const colorMap: Record<string, string> = {
@@ -31,7 +31,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   isRounded = true,
   showLabel = true,
   disable = false,
-  loading = false
+  loading = false,
 }) => {
   const btnRef = useRef<HTMLButtonElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -69,13 +69,13 @@ const IconButton: React.FC<IconButtonProps> = ({
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
               : colorMap[bg] || ""
           }`}
-        disabled={disable || loading}
+          disabled={disable || loading}
         >
           {loading ? (
-    <Loader2 size={18} className="animate-spin text-current" />
-  ) : (
-    icon
-  )}
+            <Loader2 size={18} className="animate-spin text-current" />
+          ) : (
+            icon
+          )}
         </button>
       </div>
 
@@ -93,7 +93,7 @@ const IconButton: React.FC<IconButtonProps> = ({
           >
             {label}
           </span>,
-          document.body
+          document.body,
         )}
     </>
   );

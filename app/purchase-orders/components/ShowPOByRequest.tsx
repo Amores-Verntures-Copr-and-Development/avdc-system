@@ -25,14 +25,14 @@ import { getStatusOption } from "./CompletePOView";
 
 interface ShowPOByRequestProps {
   setShowAllItems: React.Dispatch<
-    React.SetStateAction<"status" | "all" | "request">
+    React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
   data: PurchaseOrders | null;
 }
 
 const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
-    null
+    null,
   );
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayRequisitionWithItems[];
@@ -88,7 +88,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
         const quantity = Number(item.reqItemQuantity || 1);
         const price = Number(item.itemPrice || 0);
         return total + quantity * price;
-      }, 0)
+      }, 0),
     )
     .reduce((sum, itemTotal) => sum + itemTotal, 0);
   return (
@@ -140,7 +140,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
         <div className="flex flex-col p-4 gap-4">
           {itemResponse.data.map((reqData) => {
             const { label, bg, color, border } = getRequestStatusOption(
-              reqData.requestStatus
+              reqData.requestStatus,
             );
             const totalRequestItemPrice = reqData.requestItemsData.reduce(
               (total, item) => {
@@ -148,7 +148,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                 const price = Number(item.itemPrice || 0);
                 return total + quantity * price;
               },
-              0
+              0,
             );
             return (
               <div
@@ -158,7 +158,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                   setIsRequestExpanded(
                     isRequestExpanded === reqData.requestNo
                       ? null
-                      : reqData.requestNo
+                      : reqData.requestNo,
                   )
                 }
               >
@@ -176,7 +176,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                       setIsRequestExpanded(
                         isRequestExpanded === reqData.requestNo
                           ? null
-                          : reqData.requestNo
+                          : reqData.requestNo,
                       )
                     }
                     className="cursor-pointer"
@@ -209,7 +209,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                       columns={columns}
                       showActions={
                         !["delivered", "completed", "received"].includes(
-                          reqData.requestStatus ?? ""
+                          reqData.requestStatus ?? "",
                         )
                       }
                       data={reqData.requestItemsData}

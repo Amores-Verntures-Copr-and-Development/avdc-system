@@ -149,6 +149,24 @@ export const selectPurchaseOrderItems = async ({
   poi.*,
   i.itemName,
   i.itemUnit,
+  	  (
+	      SELECT JSON_ARRAYAGG(
+	        JSON_OBJECT(
+	          'ordComItemId', oc.ordComItemId,
+	          'itemId', oc.itemId,
+	          'poItemId', oc.poItemId,
+	          'reqItemId', oc.reqItemId,
+	          'itemName', i.itemName,
+	          'itemPrice', i.itemPrice,
+	          'itemUnit', i.itemUnit,
+            'ordComQuantity', oc.ordComQuantity
+	        )
+	      )
+	      FROM OrderCompositeItem oc
+			LEFT JOIN PurchaseOrderItems pois ON oc.poItemId = pois.poItemId
+			LEFT JOIN Items i ON i.itemId = oc.itemId
+			WHERE oc.poItemId =  poi.poItemId
+	    ) AS composite,
   COALESCE(
     (
       SELECT JSON_ARRAYAGG(
@@ -314,7 +332,25 @@ export const selectPurchaseOrderItemsSupplier = async (poId: number) => {
                 (poi.poItemOrderedQty * poi.unitPrice) totalPrice,
                 s.*, 
                 i.itemName,
-                i.itemUnit
+                i.itemUnit,
+		         (
+			      SELECT JSON_ARRAYAGG(
+			        JSON_OBJECT(
+			          'ordComItemId', oc.ordComItemId,
+			          'itemId', oc.itemId,
+			          'poItemId', oc.poItemId,
+			          'reqItemId', oc.reqItemId,
+			          'itemName', i.itemName,
+			          'itemPrice', i.itemPrice,
+			          'itemUnit', i.itemUnit,
+                'ordComQuantity', oc.ordComQuantity
+			        )
+			      )
+			      FROM OrderCompositeItem oc
+					LEFT JOIN PurchaseOrderItems pois ON oc.poItemId = pois.poItemId
+					LEFT JOIN Items i ON i.itemId = oc.itemId
+					WHERE oc.poItemId =  poi.poItemId
+			    ) AS composite
               FROM PurchaseOrderItems poi
               LEFT JOIN Suppliers s ON s.suppId = poi.suppId
               LEFT JOIN Items i ON i.itemId = poi.itemId WHERE poi.poId = ? AND poi.poItemStatus != 'removed'`;
@@ -423,9 +459,8 @@ LEFT JOIN InventoryItems ii
 LEFT JOIN RequestItems ri
        ON ri.invItem = ii.inventoryItemId AND ri.requestId = por.requestId
 LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
-WHERE poi.poId = ? AND poi.suppId = ?
+WHERE poi.poId = ? AND poi.suppId = ? AND ri.reqItemId IS NOT NULL
 GROUP BY i.itemId,i.itemPrice, i.itemName, i.itemUnit, poi.poItemId, poi.suppId, c.categoryName, c.categoryType, ic.toItemId,ro.storeId,i.itemPrice;`;
-  console.log({ sql });
   const [rows] = await pool.execute(sql, [poId, suppId]);
   return rows as RequestItemWithPOItem[];
 };

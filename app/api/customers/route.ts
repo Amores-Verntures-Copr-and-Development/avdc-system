@@ -31,13 +31,24 @@ export async function POST(_request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(_request: Request) {
   try {
-    // const { searchParams } = new URL(_request.url);
-    // const search = searchParams.get("search") || "";
-    // console.log({ search });
+    const { searchParams } = new URL(_request.url);
+    const search = searchParams.get("search") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const type = searchParams.get("type") || "";
+    const store = searchParams.get("store") || "";
+
+    console.log({ search });
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
     const res = await getCustomer({
       keyFields: {},
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
+      search,
+      type,
     });
 
     if (!res.success) {
@@ -50,7 +61,8 @@ export async function GET() {
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data,
+        count: res.count, // could sanitize before returning
       },
       { status: 201 },
     );

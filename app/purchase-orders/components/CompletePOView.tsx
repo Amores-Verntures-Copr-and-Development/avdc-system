@@ -100,7 +100,7 @@ interface CompletePOViewProps {
   onClose: () => void;
   mutate: () => void;
   setShowAllItems: React.Dispatch<
-    React.SetStateAction<"status" | "all" | "request">
+    React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
 }
 
@@ -694,7 +694,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               <div className="self-center">
                 <Button
                   size="sm"
-                  label="View All PO"
+                  label="Supplier View"
+                  onClick={() => {
+                    setShowAllItems("supplier");
+                  }}
+                  color="outline"
+                />
+              </div>
+              <div className="self-center">
+                <Button
+                  size="sm"
+                  label="All PO View"
                   onClick={() => {
                     setShowAllItems("all");
                   }}
@@ -704,7 +714,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               <div className="self-center">
                 <Button
                   size="sm"
-                  label="View PO Request"
+                  label="PO Request View"
                   onClick={() => {
                     setShowAllItems("request");
                   }}

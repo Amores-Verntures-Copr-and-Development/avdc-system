@@ -6,6 +6,7 @@ import {
   CreatePurchaseOrderItemDto,
   DeliverItemsToStore,
   DisplayPOItemsSupplier,
+  DisplayPurchaseOrderItemsDto,
 } from "@/dtos/purchase.dto";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { formatPeso } from "@/utils/formatPeso";
@@ -23,8 +24,9 @@ import {
   Store,
   Loader2,
   PackageMinus,
+  Layers2,
 } from "lucide-react";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import DeliverItemStoreModal from "./_components/DeliverItemStoreModal";
 import Popup from "@/components/shared/Popup";
@@ -41,6 +43,9 @@ import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
+import ViewCompositePOItem from "./_components/ViewCompositePOItem";
+import { createPortal } from "react-dom";
+import { PortalDropdown } from "@/components/shared/PortalDropDown";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -81,7 +86,7 @@ interface ReceivedPOViewProps {
   onClose: () => void;
   mutateInventory: () => void;
   setShowAllItems: React.Dispatch<
-    React.SetStateAction<"status" | "all" | "request">
+    React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
   onAddItem: (
     data: CreatePurchaseOrderItemDto[],
@@ -108,6 +113,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const [deliverPOItems, setDeliverPOItems] = useState<
     PurchaseOrderItems[] | null
   >(null);
+  const [showComponent, setShowComponent] = useState(false);
+  const [showCompositeItem, setShowCompositeItem] =
+    useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const [isSubmittingNotOrder, setIsSubmittingNotOrder] = useState(false);
@@ -177,18 +185,85 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       inputType: "number",
     },
     {
+      key: "composite",
+      name: "Composite",
+      selector: (row) => {
+        const composite = row.composite || [];
+        const filtered = composite.filter((c) => c !== null);
+
+        if (filtered.length === 0) return null;
+        return (
+          <PortalDropdown
+            trigger={
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option>{`Items (${filtered.length})`}</option>
+              </select>
+            }
+          >
+            {filtered.map((c, index) => {
+              const total = Number(c.ordComQuantity) * Number(c.itemPrice);
+              return (
+                <div
+                  key={index}
+                  className="px-3 py-2 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default border-b last:border-b-0"
+                >
+                  <div className="font-semibold text-gray-800">
+                    {c.itemName}
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Qty: {c.ordComQuantity}</span>
+                    <span>Unit: {formatPeso(c.itemPrice)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-gray-800 mt-1">
+                    <span>Total</span>
+                    <span>{formatPeso(total)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </PortalDropdown>
+        );
+      },
+    },
+    {
       name: "Total",
       key: "total",
-      selector: (row) =>
-        row.poItemStatus === "not_ordered"
-          ? 0
-          : formatPeso(
-              (row.supplierPrice || row.unitPrice) *
-                (row.poItemReceivedQty > 0
-                  ? row.poItemReceivedQty
-                  : row.poItemOrderedQty),
-            ),
+      selector: (row) => {
+        const hasComposite = row.composite && row.composite.length > 0;
+
+        if (row.poItemStatus === "not_ordered") return formatPeso(0);
+
+        if (hasComposite) {
+          const total = row?.composite
+            ?.filter((c) => c !== null)
+            .reduce((sum, item) => {
+              return sum + Number(item.ordComQuantity) * Number(item.itemPrice);
+            }, 0);
+
+          return formatPeso(total);
+        }
+
+        const qty =
+          row.poItemReceivedQty > 0
+            ? row.poItemReceivedQty
+            : row.poItemOrderedQty;
+
+        const price = row.supplierPrice || row.unitPrice;
+
+        return formatPeso(Number(price) * Number(qty));
+      },
       compute: (row) => {
+        const hasComposite = row.composite && row.composite.length > 0;
+        if (hasComposite) {
+          const total = row.composite?.reduce((total, item) => {
+            const subtotal = item.ordComQuantity * item.itemPrice;
+            return (total += subtotal);
+          }, 0);
+          return `${formatPeso(total)}`;
+        }
         return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);
       },
       dependsOn: ["poItemOrderedQty", "unitPrice", "supplierPrice"],
@@ -421,6 +496,18 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   color="neutral"
                   isRounded={false}
                   size="sm"
+                  label="Supplier View"
+                  onClick={() => {
+                    setShowAllItems("supplier");
+                    setSelectedStoreSupplier(null);
+                  }}
+                />
+              </div>
+              <div className="self-center">
+                <Button
+                  color="neutral"
+                  isRounded={false}
+                  size="sm"
                   label="View All PO Item"
                   onClick={() => {
                     setShowAllItems("all");
@@ -474,7 +561,44 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   );
 
                   const isExpanded = expandedSupplier === supplier.suppId;
+                  const totalItemsSupplier = supplier.items
+                    .filter(
+                      (i) =>
+                        i.poItemStatus === "sent" ||
+                        i.poItemStatus === "received" ||
+                        i.poItemStatus === "delivered",
+                    )
+                    .reduce((total, item) => {
+                      // skip not_ordered (extra safety)
+                      if (item.poItemStatus === "not_ordered") return total;
 
+                      const hasComposite =
+                        item.composite && item.composite.length > 0;
+
+                      if (hasComposite) {
+                        const compositeTotal = item.composite
+                          ?.filter((c) => c !== null)
+                          .reduce((sum, c) => {
+                            return (
+                              sum +
+                              Number(c.ordComQuantity) * Number(c.itemPrice)
+                            );
+                          }, 0);
+
+                        return total + Number(compositeTotal);
+                      }
+
+                      const price =
+                        Number(item.supplierPrice || item.unitPrice) || 0;
+
+                      const qty = Number(
+                        item.poItemReceivedQty > 0
+                          ? item.poItemReceivedQty
+                          : item.poItemOrderedQty,
+                      );
+
+                      return total + price * qty;
+                    }, 0);
                   return (
                     <div
                       key={supplier.suppId}
@@ -508,27 +632,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 Total Amount
                               </span>
                               <p className="font-bold text-primary-1 text-sm xl:text-lg">
-                                {formatPeso(
-                                  supplier.items
-                                    .filter(
-                                      (i) =>
-                                        i.poItemStatus === "sent" ||
-                                        i.poItemStatus === "received" ||
-                                        i.poItemStatus === "delivered",
-                                    )
-                                    .reduce((total, item) => {
-                                      const price =
-                                        Number(
-                                          item.supplierPrice || item.unitPrice,
-                                        ) || 0;
-                                      const qty = Number(
-                                        item.poItemReceivedQty > 0
-                                          ? item.poItemReceivedQty
-                                          : item.poItemOrderedQty,
-                                      );
-                                      return total + price * qty;
-                                    }, 0),
-                                )}
+                                {formatPeso(totalItemsSupplier)}
                               </p>
                               <span className="text-[9px] xl:text-xs">
                                 {supplier.items.length} item(s)
@@ -837,26 +941,51 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                       )}
                                     </div>
                                   }
-                                  renderActions={(row) =>
-                                    row.poItemStatus === "sent" ? (
+                                  renderActions={(row) => (
+                                    <div className="flex justify-center gap-2">
                                       <IconButton
-                                        icon={<PackageCheck size={18} />}
                                         onClick={() => {
-                                          if (!row.suppId) {
-                                            return;
-                                          }
-                                          handleAutoFill(
-                                            row.suppId,
-                                            row.poItemId,
-                                          );
+                                          setShowCompositeItem({
+                                            poId: row.poId,
+                                            itemId: row.itemId,
+                                            poItemId: row.poItemId,
+                                            poItemOrderedQty:
+                                              row.poItemOrderedQty,
+                                            poItemReceivedQty:
+                                              row.poItemReceivedQty,
+                                            unitPrice: row.supplierPrice ?? 0,
+                                            suppId: row.suppId,
+                                            suppliers: [],
+                                            selectedSupplierId: row.suppId,
+                                            poItemStatus: row.poItemStatus,
+                                            totalPrice: 0,
+                                            composite: row.composite,
+                                            itemName: row.itemName ?? "",
+                                            itemUnit: row.itemUnit ?? "",
+                                          });
                                         }}
-                                        label="Auto-Fill Received Qty"
-                                        bg="primary"
+                                        label="Composite Item"
+                                        icon={<Layers2 size={14} />}
+                                        bg="gray"
                                       />
-                                    ) : (
-                                      <></>
-                                    )
-                                  }
+                                      {row.poItemStatus === "sent" && (
+                                        <IconButton
+                                          icon={<PackageCheck size={14} />}
+                                          onClick={() => {
+                                            if (!row.suppId) {
+                                              return;
+                                            }
+                                            handleAutoFill(
+                                              row.suppId,
+                                              row.poItemId,
+                                            );
+                                          }}
+                                          label="Auto-Fill Received Qty"
+                                          bg="primary"
+                                        />
+                                      )}
+                                    </div>
+                                  )}
                                 />
                               ) : (
                                 <div className="flex flex-1 p-2 gap-4 overflow-auto-y">
@@ -1050,6 +1179,20 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         isShow={selectSupplierNotOrder !== null}
         isLoading={isSubmittingNotOrder}
       />
+      <Popup
+        title="Composite Items"
+        isOpen={showCompositeItem !== null}
+        onClose={function (): void {
+          setShowCompositeItem(null);
+        }}
+        background="bg-white-600"
+        closeOnClickOutside={!showComponent}
+      >
+        <ViewCompositePOItem
+          data={showCompositeItem}
+          setShowComponent={setShowComponent}
+        />
+      </Popup>
     </div>
   );
 };

@@ -11,6 +11,7 @@ import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropDown";
 import Input from "./Input";
 import DateRange from "./DateRange";
+import { createPortal } from "react-dom";
 export interface SelectOption {
   label: string;
   value: any;
@@ -628,11 +629,25 @@ const CustomSelect = ({
   options: any[];
   onChange: (v: string) => void;
 }) => {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   const selected = options.find((o) => String(o.value) === String(value));
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+
+  // Update position when open
+  useEffect(() => {
+    if (open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({
+        top: rect.bottom + window.scrollY,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      });
+    }
+  }, [open]);
 
   return (
-    <div className="relative w-full">
+    <div ref={triggerRef} className="relative w-full">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -642,30 +657,41 @@ const CustomSelect = ({
         {selected?.label ?? "Select"}
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              disabled={opt.disabled}
-              className={`w-full text-left px-2 py-1 text-[9px] xl:text-xs hover:bg-gray-100 
-                ${
-                  opt.disabled
-                    ? "text-gray-400 cursor-not-allowed"
-                    : opt.color || ""
-                }
-                ${value === opt.value ? "bg-blue-50" : ""}`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          <div
+            style={{
+              position: "absolute",
+              top: pos.top,
+              left: pos.left,
+              width: pos.width,
+              zIndex: 9999,
+            }}
+            className="bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto"
+          >
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                disabled={opt.disabled}
+                className={`w-full text-left px-2 py-1 text-[9px] xl:text-xs hover:bg-gray-100 
+                  ${
+                    opt.disabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : opt.color || ""
+                  }
+                  ${value === opt.value ? "bg-blue-50" : ""}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 };

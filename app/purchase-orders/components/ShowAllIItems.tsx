@@ -11,7 +11,15 @@ import { UserAuth } from "@/hooks/useSession";
 import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { ArrowLeft, Check, Clock, Edit, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  Edit,
+  Layers2,
+  Trash2,
+  X,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import AddItemToPoModal from "./_components/AddItemToPoModal";
@@ -23,10 +31,12 @@ import {
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { formatPeso } from "@/utils/formatPeso";
+import Popup from "@/components/shared/Popup";
+import ViewCompositePOItem from "./_components/ViewCompositePOItem";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
-    React.SetStateAction<"status" | "all" | "request">
+    React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
   data: PurchaseOrders | null;
   onSubmit: (data: UpdatePurchaseOrdersDto) => Promise<boolean>;
@@ -59,6 +69,7 @@ const ShowAllIItems = ({
   onUpdateItem,
   onRemoveItem,
 }: ShowAllIItemsProps) => {
+  const [showComponent, setShowComponent] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
   const {
     data: itemResponse = { data: [] },
@@ -67,6 +78,8 @@ const ShowAllIItems = ({
   } = useSWR<{
     data: any;
   }>(`/api/purchase-order/po-items/${data?.poId}`, fetcher);
+  const [showCompositeItem, setShowCompositeItem] =
+    useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>([]);
   const [isEditId, setIsEditId] = useState<number | null>(null);
   const [showDeleteItem, setShowDeleteItem] = useState(false);
@@ -167,6 +180,7 @@ const ShowAllIItems = ({
       key: "totalPrice",
 
       selector: (row) => {
+        const hasComposite = row.composite && row.composite.length > 0;
         const supplier = row.suppliers?.find(
           (s) => s.suppId === Number(row.suppId),
         );
@@ -174,6 +188,13 @@ const ShowAllIItems = ({
         const supplierPrice = Number(supplier?.suppItemPrice) || 0;
         const qty = Number(row.poItemOrderedQty) || 0;
 
+        if (hasComposite) {
+          const total = row.composite?.reduce((total, item) => {
+            const subtotal = item.ordComQuantity * item.itemPrice;
+            return (total += subtotal);
+          }, 0);
+          return `${formatPeso(total)}`;
+        }
         return `₱${(supplierPrice * qty).toFixed(2)}`;
       },
 
@@ -185,6 +206,59 @@ const ShowAllIItems = ({
         return (
           (Number(supplier?.suppItemPrice) || 0) *
           (Number(row.poItemOrderedQty) || 0)
+        );
+      },
+    },
+    {
+      key: "composite",
+      name: "Composite",
+      selector: (row) => {
+        const composite = row.composite || [];
+        return (
+          <div className="group relative">
+            {composite.length > 0 && (
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option value="">
+                  {composite.filter((s) => s !== null).length > 0 &&
+                    `Items (${composite.filter((s) => s !== null).length})`}
+                </option>
+              </select>
+            )}
+            {composite.filter((c) => c !== null).length > 0 && (
+              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
+                {composite
+                  .filter((c) => c !== null)
+                  .map((c, index) => {
+                    const total =
+                      Number(c.ordComQuantity) * Number(c.itemPrice);
+
+                    return (
+                      <div
+                        key={index}
+                        className="px-3 py-2 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default border-b last:border-b-0"
+                      >
+                        <div className="font-semibold text-gray-800">
+                          {c.itemName}
+                        </div>
+
+                        <div className="flex justify-between text-gray-600">
+                          <span>Qty: {c.ordComQuantity}</span>
+                          <span>Unit: {formatPeso(c.itemPrice)}</span>
+                        </div>
+
+                        <div className="flex justify-between font-semibold text-gray-800 mt-1">
+                          <span>Total</span>
+                          <span>{formatPeso(total)}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
         );
       },
     },
@@ -283,13 +357,25 @@ const ShowAllIItems = ({
   const totalAmount = poItems
     .filter((item) => item.poItemStatus !== "not_ordered")
     .reduce((total, item) => {
-      const totalPrice =
-        Number(
-          ["received", "completed"].includes(item.poItemStatus ?? "")
-            ? item.poItemReceivedQty
-            : item.poItemOrderedQty,
-        ) * Number(item.unitPrice);
-      return total + Number(totalPrice);
+      const hasComposite = item.composite && item.composite.length > 0;
+
+      // if composite, total = sum of composite subtotal
+      if (hasComposite) {
+        const totalComposite = item.composite?.reduce((sum, comp) => {
+          return sum + Number(comp.ordComQuantity) * Number(comp.itemPrice);
+        }, 0);
+
+        return total + Number(totalComposite);
+      }
+
+      // else normal item
+      const qty = ["received", "completed"].includes(item.poItemStatus ?? "")
+        ? Number(item.poItemReceivedQty)
+        : Number(item.poItemOrderedQty);
+
+      const subtotal = qty * Number(item.unitPrice);
+
+      return total + subtotal;
     }, 0);
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden p-4">
@@ -340,6 +426,14 @@ const ShowAllIItems = ({
                       }}
                       label="Edit Item"
                       icon={<Edit size={14} />}
+                      bg="gray"
+                    />
+                    <IconButton
+                      onClick={() => {
+                        setShowCompositeItem(row);
+                      }}
+                      label="Composite Item"
+                      icon={<Layers2 size={14} />}
                       bg="gray"
                     />
                     <IconButton
@@ -501,6 +595,20 @@ const ShowAllIItems = ({
         isShow={showDeleteItem}
         confirmLabel="Remove Item"
       />
+      <Popup
+        title="Composite Items"
+        isOpen={showCompositeItem !== null}
+        onClose={function (): void {
+          setShowCompositeItem(null);
+        }}
+        background="bg-white-600"
+        closeOnClickOutside={!showComponent}
+      >
+        <ViewCompositePOItem
+          data={showCompositeItem}
+          setShowComponent={setShowComponent}
+        />
+      </Popup>
     </div>
   );
 };

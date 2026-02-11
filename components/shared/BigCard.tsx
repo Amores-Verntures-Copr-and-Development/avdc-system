@@ -21,7 +21,7 @@ const BigCard = ({
 }: BigCardProps) => {
   return (
     <div
-      className={`border flex flex-col flex-1 overflow-hidden ${
+      className={`border flex flex-col flex-1 overflow-vissible ${
         isRounded ? "rounded-2xl" : ""
       } shadow-sm border-gray-200 bg-white h-full p-2 2xl:p-4 
   ${
@@ -46,7 +46,9 @@ const BigCard = ({
           </div>
         </div>
       </div>
-      <div className="flex flex-col flex-1 min-h-0">{children}</div>
+      <div className="flex flex-col flex-1 min-h-0 overflow-visible">
+        {children}
+      </div>
     </div>
   );
 };

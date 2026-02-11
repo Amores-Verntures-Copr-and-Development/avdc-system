@@ -45,19 +45,19 @@ const OwnerDashboard = () => {
   const { data: dailyStoreSales = { data: [] } } =
     useSWR<DailyStoreSalesResponse>(
       `/api/dashboard/store-daily-sales/`,
-      fetcher
+      fetcher,
     );
   const { data: dashboardStats = { data: [] } } = useSWR<any>(
     `/api/dashboard/owner`,
-    fetcher
+    fetcher,
   );
   const { data: salesChart = { data: [] } } = useSWR<any>(
     `/api/dashboard/owner/sales-chart/${year}`,
-    fetcher
+    fetcher,
   );
   const { data: purchaseOrderChart = { data: [] } } = useSWR<any>(
     `/api/dashboard/owner/sales-chart/${yearPO}/po-chart`,
-    fetcher
+    fetcher,
   );
   const { data: recentStoreSales = { data: [] } } = useSWR<
     ApiResponse<StoreRecentSales[]>

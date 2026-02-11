@@ -749,34 +749,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                           }}
                         />
                       </div>
-                      <div>
-                        {" "}
-                        <Button
-                          size="xs"
-                          label="All"
-                          color={
-                            categoryFilter === "all" ? "primary" : "outline"
-                          }
-                          onClick={() => {
-                            setCategoryFilter("all");
-                          }}
-                        />
-                      </div>
-                      {productCategoriesList.map((pc, index) => (
-                        <div key={index}>
-                          {" "}
-                          <Button
-                            size="xs"
-                            label={pc}
-                            color={
-                              categoryFilter === pc ? "primary" : "outline"
-                            }
-                            onClick={() => {
-                              setCategoryFilter(pc);
-                            }}
-                          />
-                        </div>
-                      ))}
                     </div>
                   </div>
                 </div>
@@ -829,6 +801,28 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 </div>
               </>
             )}
+          </div>
+          <div className="flex gap-2 mt-2 mb-2 items-center">
+            <h1 className="font-semibold">Categories:</h1>
+
+            <div className="flex min-w-0 overflow-x-auto whitespace-nowrap flex-nowrap gap-2">
+              <Button
+                size="sm"
+                label="All"
+                color={categoryFilter === "all" ? "primary" : "outline"}
+                onClick={() => setCategoryFilter("all")}
+              />
+
+              {productCategoriesList.map((pc, index) => (
+                <Button
+                  key={index}
+                  size="sm"
+                  label={pc}
+                  color={categoryFilter === pc ? "primary" : "outline"}
+                  onClick={() => setCategoryFilter(pc)}
+                />
+              ))}
+            </div>
           </div>
           {showProductView === "product" ? (
             selectedProduct ? (

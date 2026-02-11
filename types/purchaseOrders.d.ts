@@ -1,3 +1,4 @@
+import { DisplayOrderCompositeItemDto } from "@/app/purchase-orders/components/_components/ViewCompositePOItem";
 import { types } from "util";
 
 export type PurchaseOrderStatus =
@@ -53,4 +54,18 @@ export interface PurchaseOrderItems {
   isSent?: number;
   poItemStatus?: PurchaseOrderItemStatus;
   supplierPrice?: number;
+  composite?: DisplayOrderCompositeItemDto[];
+}
+
+export interface OrderCompositeItem {
+  ordComItemId: number;
+  itemId: number;
+  poItemId: number | null;
+  reqItemId: number;
+  ordComQuantity: number;
+  ordComPrice: number;
+  ordComCreatedBy: number;
+  ordComCreatedAt: string;
+  ordComUpdatedAt: string;
+  ordComDeletedAt: string;
 }

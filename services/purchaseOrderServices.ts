@@ -131,7 +131,7 @@ export async function findPOItemsSupplierById(poId: number) {
     const grouped = data.reduce((acc: any[], row) => {
       const supplierId = row.suppId || 0;
       let supplierGroup: DisplayPOItemsSupplier = acc.find(
-        (g) => g.suppId === supplierId
+        (g) => g.suppId === supplierId,
       );
 
       if (!supplierGroup) {
@@ -163,6 +163,7 @@ export async function findPOItemsSupplierById(poId: number) {
         poId: row.poId,
         suppId: row.suppId,
         isSent: row.isSent,
+        composite: row.composite,
       });
 
       return acc;
