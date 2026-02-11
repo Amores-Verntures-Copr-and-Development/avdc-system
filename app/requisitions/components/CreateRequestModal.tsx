@@ -93,6 +93,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         reqItemQuantity: Number(requestQty),
         invItem: data.inventoryItemId,
         requestId: 0,
+        reqItemStatus: "pending",
       },
     ]);
     handleClearSelected();

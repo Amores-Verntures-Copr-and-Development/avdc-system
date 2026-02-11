@@ -49,8 +49,7 @@ export async function GET(
   try {
     const slug = (await params).prodId;
     const prodId = Number(slug);
-    console.log("Agi here");
-    console.log({ prodId });
+
     const res = await getProductVariantController(
       prodId ? { keyFields: { prodId } } : {},
     );

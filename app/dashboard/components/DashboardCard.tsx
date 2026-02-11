@@ -21,12 +21,12 @@ const DashboardCard = ({
       {/* Top Section */}
       <div className="flex flex-row items-center gap-2 xs:gap-3 xl:gap-4">
         <div
-          className={`${bgColor} p-1.5 xs:p-2.5 xl:p-3 rounded-lg xl:rounded-xl flex items-center justify-center flex-shrink-0`}
+          className={`${bgColor} p-1.5 xs:p-2.5 2xl:p-3 rounded-lg xl:rounded-xl flex items-center justify-center flex-shrink-0`}
         >
-          <Icon className="text-white w-3 h-3 xs:w-5 xs:h-5 xl:w-5 xl:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
+          <Icon className="text-white w-3 h-3 xs:w-5 xs:h-5 xl:w-5 2xl:w-7 2xl:h-7" />
         </div>
         <div className="flex flex-col items-start min-w-0 flex-1">
-          <span className="block text-[10px]   lg:text-2xl font-bold text-gray-900 truncate w-full">
+          <span className="block text-[10px]  lg:text-sm  2xl:text-2xl font-bold text-gray-900 truncate w-full">
             {value.toLocaleString()}
           </span>
           <span className="text-[10px]  2xl:text-sm text-gray-500 truncate w-full mt-0.5 xs:mt-1">
@@ -43,7 +43,7 @@ const DashboardCard = ({
         className="flex items-center justify-between text-gray-600 hover:text-gray-900 cursor-pointer group"
         onClick={onClick}
       >
-        <span className="text-[10px]  xl:text-xs lg:text-sm font-medium truncate">
+        <span className="text-[10px]  xl:text-xs 2xl:lg:text-sm font-medium truncate">
           View details
         </span>
         <ArrowRight className="w-3 h-3 xs:w-4 xs:h-4 xl:w-4 xl:h-4 group-hover:translate-x-1 transition-transform duration-200" />

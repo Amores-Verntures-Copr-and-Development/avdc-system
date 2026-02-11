@@ -54,7 +54,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     key: "requestStatus",
     selector: (row) => {
       const { label, bg, color, border } = getRequestStatusOption(
-        row.requestStatus,
+        row.requestStatus ?? "",
       );
       return (
         <span

@@ -8,7 +8,7 @@ import { updateRequestItems } from "./update-request-items";
 import { RequestItems } from "@/types/request";
 
 export const processAddItemFromPOtoRequest = async (
-  data: POAddToRequestItemForm
+  data: POAddToRequestItemForm,
 ) => {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
@@ -43,7 +43,7 @@ export const processAddItemFromPOtoRequest = async (
 
         if (inventoryItem.data.length === 0) {
           throw new Error(
-            `No inventory item found for itemId ${poItem.itemId}`
+            `No inventory item found for itemId ${poItem.itemId}`,
           );
         }
         updateItems.push({
@@ -57,8 +57,9 @@ export const processAddItemFromPOtoRequest = async (
           invItem: inventoryItem.data[0].inventoryItemId,
           reqItemQuantity: 0,
           addedBy: data.addedBy,
+          reqItemStatus: "pending",
         };
-      })
+      }),
     );
     await createRequestItem({ data: requestItems, connection });
     await updateRequestItems({

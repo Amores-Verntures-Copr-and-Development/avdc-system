@@ -98,6 +98,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
         ...items,
         reqItemQuantity: Number(items.reqItemQuantity),
+        reqItemStatus: "pending",
       }));
       const requestData: CreateRequestFormDto = {
         storeId: user?.storeId ?? 0,

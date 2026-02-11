@@ -34,6 +34,7 @@ const AddItemROModal = ({
         reqItemQuantity: 0,
         requestId: requestId,
         invItem: 0,
+        reqItemStatus: "pending",
       });
       mutate();
     }
@@ -42,6 +43,7 @@ const AddItemROModal = ({
     reqItemQuantity: 0,
     requestId: requestId,
     invItem: 0,
+    reqItemStatus: "pending",
   });
   const handleItemChange = handleChange(formatData, setFormData);
   return (

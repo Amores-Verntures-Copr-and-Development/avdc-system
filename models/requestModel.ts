@@ -1,4 +1,8 @@
-import { CreateRequestDto, InsertItemsRequestDto } from "@/dtos/request.dto";
+import {
+  CreateRequestDto,
+  CreateRequestItemDto,
+  InsertItemsRequestDto,
+} from "@/dtos/request.dto";
 import { getDBConnection } from "@/lib/db";
 import { Request, RequestItems, RequestStatus } from "@/types/request";
 import { sq } from "date-fns/locale";
@@ -42,7 +46,7 @@ export const insertRequestItemsBulk = async ({
   data,
 }: {
   connection?: PoolConnection;
-  data: InsertItemsRequestDto[];
+  data: CreateRequestItemDto[];
 }) => {
   if (!data || data.length === 0) {
     throw new Error("No data provided for bulk insert");

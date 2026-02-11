@@ -64,7 +64,6 @@ export async function createProductVariants({
 
     // Commit transaction if we started it
     if (localConnection) {
-      console.log("Agi here");
       await newConnection.commit();
     }
   } catch (e) {

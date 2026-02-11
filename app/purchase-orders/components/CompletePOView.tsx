@@ -727,7 +727,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         <div className="flex flex-col gap-4 overflow-y-auto">
           {requestItems?.map((reqData) => {
             const { label, bg, color, border } = getRequestStatusOption(
-              reqData.requestStatus,
+              reqData.requestStatus ?? "",
             );
 
             const totalRequestItemPrice = reqData.requestItemsData
@@ -958,7 +958,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 <div className="flex border-t-1 p-2 bg-white rounded-b-lg justify-between border-gray-200 items-center">
                   {Boolean(
                     !["completed", "delivered", "received"].includes(
-                      reqData.requestStatus,
+                      reqData.requestStatus ?? "",
                     ) || hasPartial,
                   ) && (
                     <>

@@ -140,7 +140,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
         <div className="flex flex-col p-4 gap-4">
           {itemResponse.data.map((reqData) => {
             const { label, bg, color, border } = getRequestStatusOption(
-              reqData.requestStatus,
+              reqData.requestStatus ?? "",
             );
             const totalRequestItemPrice = reqData.requestItemsData.reduce(
               (total, item) => {

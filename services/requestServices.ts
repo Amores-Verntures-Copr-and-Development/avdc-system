@@ -38,6 +38,7 @@ export async function createRequest(data: CreateRequestFormDto) {
       requestId: newRequeStId,
       invItem: item.invItem,
       reqItemQuantity: item.reqItemQuantity,
+      reqItemStatus: "pending",
     }));
     await insertRequestItemsBulk({ connection, data: requestItemData });
     await connection.commit();

@@ -49,8 +49,7 @@ export async function GET(
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
-    console.log("Agi here");
-    console.log({ storeId });
+
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const statusParam = searchParams.get("status");
