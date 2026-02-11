@@ -9,6 +9,7 @@ import {
 } from "@/dtos/purchase.dto";
 import { useSession } from "@/hooks/useSession";
 import { ItemInterface } from "@/types/items";
+import { formatPeso } from "@/utils/formatPeso";
 import { handleChange } from "@/utils/handle-change";
 import { Trash } from "lucide-react";
 import React, { useState } from "react";
@@ -192,6 +193,9 @@ const AddCompositeItem = ({
                   <span className="text-xs font-medium">{item?.itemName}</span>
                   <span className="text-xs text-gray-500">
                     {item?.itemUnit}
+                  </span>
+                  <span className="text-xs text-gray-500 font-semibold">
+                    {formatPeso(item?.itemPrice)}
                   </span>
                 </div>
 

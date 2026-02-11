@@ -49,12 +49,13 @@ export const insertRequestItemsBulk = async ({
   }
   const pool = connection ? connection : await getDBConnection();
   console.log({ data });
-  const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity) 
-            VALUES ${data.map(() => "(?, ?, ?)").join(", ")}`;
+  const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity,reqItemStatus) 
+            VALUES ${data.map(() => "(?, ?, ?,?)").join(", ")}`;
   const values = data.flatMap((item) => [
     item.requestId,
     item.invItem,
     item.reqItemQuantity,
+    item.reqItemStatus || "pending",
   ]);
   const [results] = await pool.execute(sql, values);
   return results;

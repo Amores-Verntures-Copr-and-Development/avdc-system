@@ -12,7 +12,7 @@ interface AddItemPOModalProps {
   requestId: number | null;
   onSubmit: (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
   loading?: boolean;
 }
@@ -32,7 +32,7 @@ const AddItemPOModal = ({
     requestId
       ? `/api/purchase-order/po-request-order/requestId/${requestId}`
       : null,
-    fetcher
+    fetcher,
   );
   console.log({ itemResponse });
   const poData = itemResponse.data[0];

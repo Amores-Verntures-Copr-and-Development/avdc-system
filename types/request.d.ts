@@ -21,7 +21,7 @@ export interface Request {
   requestNo: string;
   storeId?: number | null;
   requestById: number;
-  requestStatus: RequestStatus;
+  requestStatus?: RequestStatus;
   requestCreatedAt: string;
   requestUpdatedAt: string;
   requestDeletedAt: string;

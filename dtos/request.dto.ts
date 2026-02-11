@@ -7,12 +7,12 @@ export type CreateRequestDto = Pick<
 >;
 export type CreateRequestItemDto = Pick<
   RequestItems,
-  "invItem" | "requestId" | "reqItemQuantity"
+  "invItem" | "requestId" | "reqItemQuantity" | "reqItemStatus"
 >;
 
 export type InsertItemsRequestDto = Pick<
   RequestItems,
-  "invItem" | "requestId" | "reqItemQuantity"
+  "invItem" | "requestId" | "reqItemQuantity" | "reqItemStatus"
 > & {
   itemName?: string;
 };

@@ -575,7 +575,16 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
   const handleAddItemRequest = async (data: CreateRequestItemDto) => {
     setIsAddingItem(true);
-    const arrayData = [data];
+    const status =
+      selectedReq?.requestStatus === "delivered" ||
+      selectedReq?.requestStatus === "received"
+        ? "delivered"
+        : "pending";
+    const requestItem: CreateRequestItemDto = {
+      ...data,
+      reqItemStatus: status,
+    };
+    const arrayData = [requestItem];
     try {
       const result = await fetch(
         `api/requests/request-items/${selectedReq?.requestId}`,
@@ -835,9 +844,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
-                {Boolean(
-                  selectedReq?.requestStatus === "pending" ||
-                  selectedReq?.requestStatus === "in_progress",
+                {!["completed", "received"].includes(
+                  selectedReq?.requestStatus ?? "",
                 ) && (
                   <div>
                     <Button
