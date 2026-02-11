@@ -8,6 +8,7 @@ export async function findItemsByFields({
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ItemInterface>;
+  arrayFields?: { [key: string]: any[] };
 }) {
   try {
     const data = await selectItemsByFields({ connection, keyFields });

@@ -4,7 +4,7 @@ import {
 } from "@/dtos/purchase.dto";
 import { getDBConnection } from "@/lib/db";
 import { OrderCompositeItem } from "@/types/purchaseOrders";
-import { PoolConnection, ResultSetHeader } from "mysql2/promise";
+import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertOrderCompositeItem = async ({
   connection,
@@ -57,6 +57,7 @@ export const selectOrderCompositeItem = async ({
       params.push(value);
     }
   }
-  const [rows] = await pool.execute(sql, params);
+  console.log({});
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

@@ -42,7 +42,7 @@ export async function handleUpdateItemPrice({
       updates: updateItemPrice,
       keyFields,
     });
-    console.log("[UPDATE PRICE]: ", { updateItemPrice });
+
     const itemPricesPromises = updates.map(async (item) => {
       // Your async logic here
 
@@ -61,7 +61,7 @@ export async function handleUpdateItemPrice({
     // Resolve all promises and filter out null values
     const itemPricesResults = await Promise.all(itemPricesPromises);
     const itemPrices: CreateItemPriceDto[] = itemPricesResults.filter(
-      (item): item is CreateItemPriceDto => item !== null
+      (item): item is CreateItemPriceDto => item !== null,
     );
 
     await insertItemPrice({ connection, data: itemPrices });

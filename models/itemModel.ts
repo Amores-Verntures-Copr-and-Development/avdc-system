@@ -166,16 +166,20 @@ export const updateItems = async ({
 export const selectItemsByFields = async ({
   connection,
   keyFields = {},
+  arrayFields = {},
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ItemInterface>;
+  arrayFields?: { [key: string]: any[] };
 }) => {
   const params: any[] = [];
   const pool = connection ? connection : await getDBConnection();
 
   let sql = `SELECT * FROM Items i
   LEFT JOIN Categories c ON c.categoryId = i.categoryId
-   WHERE 1=1`;
+  WHERE 1=1`;
+
+  // Handle single-value fields
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND ${key} IS NULL`;
@@ -184,6 +188,16 @@ export const selectItemsByFields = async ({
       params.push(value);
     }
   }
+
+  // Handle array-value fields
+  for (const [key, values] of Object.entries(arrayFields)) {
+    if (Array.isArray(values) && values.length > 0) {
+      const placeholders = values.map(() => "?").join(",");
+      sql += ` AND ${key} IN (${placeholders})`;
+      params.push(...values);
+    }
+  }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

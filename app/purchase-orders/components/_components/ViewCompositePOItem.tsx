@@ -190,6 +190,7 @@ const ViewCompositePOItem = ({
         title={`Add Composite to ${data?.itemName}`}
       >
         <AddCompositeItem
+          mutate={mutate}
           data={data}
           onCancel={() => {
             setShowAddComposite(false);

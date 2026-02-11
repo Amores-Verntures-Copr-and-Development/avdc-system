@@ -17,9 +17,14 @@ import toast from "react-hot-toast";
 interface AddCompositeItemProps {
   data: DisplayPurchaseOrderItemsDto | null;
   onCancel: () => void;
+  mutate: () => void;
 }
 
-const AddCompositeItem = ({ onCancel, data }: AddCompositeItemProps) => {
+const AddCompositeItem = ({
+  onCancel,
+  data,
+  mutate,
+}: AddCompositeItemProps) => {
   const { user } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectType, setSelectType] = useState<"search" | "conversion">(
@@ -100,6 +105,7 @@ const AddCompositeItem = ({ onCancel, data }: AddCompositeItemProps) => {
         throw new Error(res.error);
       }
       toast.success(res.message);
+      mutate();
       onCancel();
     } catch (e: any) {
       toast.error(e.message);

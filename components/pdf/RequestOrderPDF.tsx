@@ -197,7 +197,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                 : ""}
             </Text>
             <Text style={styles.colQty}>
-              {item.reqItemTransfer
+              {Number(item.reqItemTransfer) !== 0
                 ? formatQuantityByUnit(
                     item.reqItemTransfer,
                     item.itemUnit ?? "",
@@ -205,14 +205,16 @@ const RequestOrderPDF = ({ data }: RequestOrderPFGProps) => {
                 : ""}
             </Text>
             <Text style={styles.colQty}>
-              {item.reqItemReceived
+              {Number(item.reqItemReceived) !== 0
                 ? formatQuantityByUnit(
                     item.reqItemReceived,
                     item.itemUnit ?? "",
                   )
                 : ""}
             </Text>
-            <Text style={styles.colTotal}>{total}</Text>
+            <Text style={styles.colTotal}>
+              {Number(total) !== 0 ? total : ""}
+            </Text>
           </View>
         );
       })}
