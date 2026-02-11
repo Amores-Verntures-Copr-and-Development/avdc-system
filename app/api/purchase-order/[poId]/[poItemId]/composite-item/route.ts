@@ -46,7 +46,6 @@ export async function GET(
   { params }: { params: Promise<{ poId: string; poItemId: string }> },
 ) {
   try {
-    console.log("Agi here");
     const slug = (await params).poId;
     const poId = Number(slug);
     const slug2 = (await params).poItemId;
