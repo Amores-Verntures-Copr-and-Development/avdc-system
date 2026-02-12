@@ -10,6 +10,8 @@ import { getOrderCompositeServices } from "./get-order-composite";
 import { OrderCompositeItem } from "@/types/purchaseOrders";
 import { findPOItemsById } from "../purchaseOrderServices";
 import { findPurchaserOrder } from "../purchase/purchase-items/get-purchase-tems";
+import { updatePurchase } from "../purchase/update-purchase-order";
+import { updatePurchaseOrderItems } from "../purchase/purchase-items/update-purchase-items";
 
 export async function createOrderCompositeItems({
   connection,
@@ -54,6 +56,7 @@ export async function createOrderCompositeItems({
           connection: connection ? connection : newConnection,
           poItemId: hasPricesData[0].poItemId!,
         })) as OrderCompositeItem[];
+      console.log({ compositeItems });
       const validItems = compositeItems.filter((i) => i.ordComPrice !== 0);
 
       const totalPrice = validItems.reduce((sum, item) => {
@@ -62,6 +65,7 @@ export async function createOrderCompositeItems({
       const itemQty = validItems.length;
 
       const averageCompositedPrice = Number(totalPrice) / Number(itemQty);
+      const rounded = Number(averageCompositedPrice.toFixed(2));
 
       const fromCompositeItems = await findPurchaserOrder({
         connection: connection ? connection : newConnection,
@@ -72,12 +76,22 @@ export async function createOrderCompositeItems({
         const updateFromComposte: Partial<ItemInterface> = {
           itemAddedBy: hasPricesData[0].ordComCreatedBy,
           itemId: fromCompositeItems[0].itemId,
-          itemPrice: averageCompositedPrice,
+          itemPrice: rounded,
         };
+        console.log({ rounded });
         await handleUpdateItemPrice({
           connection: connection ? connection : newConnection,
           keyFields: ["itemId"],
           updates: [updateFromComposte],
+        });
+        await updatePurchaseOrderItems({
+          connection: connection ? connection : newConnection,
+          updates: [
+            {
+              poItemId: hasPricesData[0].poItemId!,
+              unitPrice: Number(rounded),
+            },
+          ],
         });
       }
     }

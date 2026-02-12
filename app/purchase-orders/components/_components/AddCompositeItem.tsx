@@ -35,7 +35,7 @@ const AddCompositeItem = ({
     CreateOrderCompositeItemDro[]
   >([]);
   const [selectedItem, setSelectedItem] = useState<ItemInterface[]>([]);
-  const addItem = (itemId: number) => {
+  const addItem = (itemId: number, price: number) => {
     setOrderCompItems((prev) => {
       const exist = orderCompItems.find((i) => i.itemId === itemId);
 
@@ -48,7 +48,7 @@ const AddCompositeItem = ({
         {
           itemId: itemId,
           ordComCreatedBy: user?.userId ?? 0,
-          ordComPrice: 0,
+          ordComPrice: Number(price),
           ordComQuantity: 0,
           poItemId: data?.poItemId ?? 0,
           reqItemId: 0,
@@ -161,7 +161,7 @@ const AddCompositeItem = ({
                       }
                       return [...prev, item];
                     });
-                    addItem(item.itemId);
+                    addItem(item.itemId, item.itemPrice);
                   }
                 }}
                 sizes="xs"
@@ -230,6 +230,7 @@ const AddCompositeItem = ({
                         Number(e.target.value),
                       )
                     }
+                    type="number"
                   />
                 </div>
 
