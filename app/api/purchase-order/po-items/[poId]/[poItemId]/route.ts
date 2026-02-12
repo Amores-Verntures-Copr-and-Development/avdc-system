@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ poId: string; poItemId: string }> }
+  { params }: { params: Promise<{ poId: string; poItemId: string }> },
 ) {
   try {
     const poItemData = (await request.json()) as Partial<PurchaseOrderItems>;
@@ -32,7 +32,7 @@ export async function PUT(
         success: true,
         message: res.message,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -41,14 +41,14 @@ export async function PUT(
         message: "Failed to update PO item",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ poId: string; poItemId: string }> }
+  { params }: { params: Promise<{ poId: string; poItemId: string }> },
 ) {
   try {
     const poItemData = (await request.json()) as Partial<PurchaseOrderItems>[];
@@ -73,7 +73,7 @@ export async function DELETE(
         success: true,
         message: res.message,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -82,7 +82,7 @@ export async function DELETE(
         message: "Failed to update PO item",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

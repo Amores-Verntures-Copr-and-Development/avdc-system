@@ -1,7 +1,7 @@
 import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
-import Popup from "@/components/shared/PopupModal";
+
 import Table, { Column } from "@/components/shared/Table";
 import {
   CreateRequestItemDto,
@@ -21,9 +21,11 @@ import {
   ChevronLeft,
   Clock,
   Download,
+  Eye,
   FileText,
   Pencil,
   Plus,
+  Trash,
   X,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
@@ -38,6 +40,8 @@ import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 import { formatPeso } from "@/utils/formatPeso";
 import DynamicCheckbox from "@/components/shared/CheckBox";
+import Popup from "@/components/shared/PopupModal";
+import IconButton from "@/components/shared/IconButton";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -51,6 +55,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   onBack,
   user,
 }) => {
+  const [isEditRow, setIsEditingRow] = useState<number | null>(null);
   const [isReceiving, setIsReceiving] = useState(false);
   const [isSelectingAddItemPO, setIsSelectingAddItemPO] = useState(false);
   const [showAddPOItem, setShowAddPOItem] = useState(false);
@@ -826,6 +831,31 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
         <div className="flex-1 overflow-y-auto pr-4 pl-4">
           <Table
+            showActions
+            renderActions={(row) => (
+              <div className="flex justify-center gap-2">
+                <IconButton
+                  onClick={() => {
+                    // handleEditRow(row);
+                    // setIsShowViewRequest(true);
+                    // setSelectedRow(row);
+                  }}
+                  label={"Edit"}
+                  bg={"gray"}
+                  icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                />
+                <IconButton
+                  onClick={() => {
+                    // handleEditRow(row);
+                    // setIsShowViewRequest(true);
+                    // setSelectedRow(row);
+                  }}
+                  label={"Remove from request"}
+                  bg={"red"}
+                  icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                />
+              </div>
+            )}
             localSearch
             renderTopActions={
               <div className="flex gap-2">

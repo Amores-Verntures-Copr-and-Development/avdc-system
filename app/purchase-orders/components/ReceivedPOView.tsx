@@ -25,6 +25,7 @@ import {
   Loader2,
   PackageMinus,
   Layers2,
+  Replace,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -46,6 +47,7 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import ViewCompositePOItem from "./_components/ViewCompositePOItem";
 import { createPortal } from "react-dom";
 import { PortalDropdown } from "@/components/shared/PortalDropDown";
+import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -110,6 +112,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   setShowAllItems,
   onMaskAsDeliverdSupplier,
 }) => {
+  const [showReplaceItem, setShowReplaceItem] =
+    useState<PurchaseOrderItems | null>(null);
   const [deliverPOItems, setDeliverPOItems] = useState<
     PurchaseOrderItems[] | null
   >(null);
@@ -147,10 +151,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier}`
       : null,
     fetcher,
-    {
-      keepPreviousData: false, // This keeps the data when the key becomes null
-      revalidateOnFocus: false, // Optional: prevent refetch on window focus
-    },
   );
   const columns: Column<PurchaseOrderItems>[] = [
     { name: "Item Name", key: "itemName" },
@@ -968,6 +968,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         icon={<Layers2 size={14} />}
                                         bg="gray"
                                       />
+
                                       {row.poItemStatus === "sent" && (
                                         <IconButton
                                           icon={<PackageCheck size={14} />}
@@ -984,6 +985,18 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           bg="primary"
                                         />
                                       )}
+                                      <IconButton
+                                        icon={<Replace size={14} />}
+                                        onClick={() => {
+                                          if (!row) {
+                                            return;
+                                          }
+
+                                          setShowReplaceItem(row);
+                                        }}
+                                        label="Replace Item"
+                                        bg="green"
+                                      />
                                     </div>
                                   )}
                                 />
@@ -1191,6 +1204,26 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         <ViewCompositePOItem
           data={showCompositeItem}
           setShowComponent={setShowComponent}
+        />
+      </Popup>
+      <Popup
+        isOpen={showReplaceItem !== null}
+        onClose={function (): void {
+          setShowReplaceItem(null);
+        }}
+        background="bg-white/20"
+        title={`Replace Item`}
+        closeOnClickOutside={false}
+      >
+        <ReplacePOItemComponent
+          data={showReplaceItem}
+          mutate={async () => {
+            mutateInventory();
+            mutate();
+          }}
+          onClose={() => {
+            setShowReplaceItem(null);
+          }}
         />
       </Popup>
     </div>

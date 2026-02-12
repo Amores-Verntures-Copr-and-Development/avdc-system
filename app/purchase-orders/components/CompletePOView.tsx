@@ -134,7 +134,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   const [originalData, setOriginalData] = useState<
     DisplayRequisitionWithItems[] | null
   >(null);
-
+  const validForCompletePO = data.every((i) => i.requestStatus === "completed");
   const columns: Column<RequestItemsCombine>[] = [
     {
       name: "#",
@@ -498,6 +498,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       JSON.stringify(transfersAndStatus),
     );
   };
+
   useEffect(() => {
     if (data && data.length > 0) {
       const hydratedData = data.map((req) => {
@@ -1061,7 +1062,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               className="font-semibold text-gray-700 text-xs px-2 py-2"
             />
           </div>
-          {poData?.poStatus !== "completed" && (
+          {validForCompletePO && poData?.poStatus !== "completed" && (
             <div>
               <Button
                 size="sm"
@@ -1069,7 +1070,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   handleCompletePO();
                 }}
                 label="Complete PO"
-                disabled={data.every((req) => req.requestStatus !== "received")}
+                disabled={!validForCompletePO}
                 icon={PackageCheckIcon}
                 className="font-semibold  text-xs px-2 py-2"
               />

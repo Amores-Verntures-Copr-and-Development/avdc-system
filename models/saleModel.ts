@@ -67,17 +67,17 @@ ${
               (
               SELECT JSON_ARRAYAGG(
                 JSON_OBJECT(
-                  'salesItemDiscId', vc.salesItemDiscId,
-                  'discountId', vc.discountId,
-                  'discountAmount', vc.discountAmount,
-                  'discountName', vc.discountName,
-                  'discountValue', ii.discountValue,
-                  'discountType',vc.discountType
+                  'salesItemDiscId', sid.salesItemDiscId,
+                  'discountId', d.discountId,
+                  'discountAmount', sid.discountAmount,
+                  'discountName', d.discountName,
+                  'discountValue', d.discountValue,
+                  'discountType',d.discountType
                   
                 )
               )
-              SELECT * FROM SalesItemsDiscount sid
-					LEFT JOIN Discounts d ON d.discountId = sid.discountId
+              FROM SalesItemsDiscount sid
+					    LEFT JOIN Discounts d ON d.discountId = sid.discountId
               WHERE sid.salesItemId = si.salesItemId
             )
   )
@@ -151,6 +151,7 @@ WHERE 1=1`;
     sql += ` AND s.customerId IS NOT NULL`;
   }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Sales[];
 };

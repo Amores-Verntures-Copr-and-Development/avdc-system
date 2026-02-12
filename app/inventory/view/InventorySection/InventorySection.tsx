@@ -149,6 +149,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     },
     { name: "Unit", key: "itemUnit" },
     { name: "Category", key: "categoryName" },
+    { name: "In Stock", key: "inStock" },
+    { name: "Out Stock", key: "outStock" },
     {
       name: "Status",
       key: "status",
@@ -325,7 +327,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       },
     },
   ];
-
   //
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
@@ -340,6 +341,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
     const limit = searchParams.get("limit") || "";
+    const movement = searchParams.get("movement") || "";
     const page = searchParams.get("page") || "1";
     const params = new URLSearchParams();
     if (search) params.append("search", search);
@@ -347,6 +349,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     if (category) params.append("category", category);
     if (unit) params.append("unit", unit);
     if (limit) params.append("limit", limit);
+    if (movement) params.append("movement", movement);
+
     params.append("page", page);
 
     return `${url}?${params.toString()}`;
@@ -727,6 +731,16 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         options: inventoryItemStatus,
       },
       {
+        id: "movement",
+        label: "Movement Type",
+        type: "checkbox" as const,
+        options: [
+          { label: "Fast", value: "fast" },
+          { label: "Slow", value: "slow" },
+          { label: "Sold", value: "sold" },
+        ],
+      },
+      {
         id: "category",
         label: "Category",
         type: "checkbox" as const,
@@ -797,6 +811,28 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       return prev.filter((item) => item.inventoryItemId !== id);
     });
   };
+  const handleDateRangeChange = useCallback(
+    (rangeData: { from: string; to: string }) => {
+      const { from, to } = rangeData;
+
+      const url = new URL(window.location.href);
+
+      if (from) {
+        url.searchParams.set("from", from);
+      } else {
+        url.searchParams.delete("from");
+      }
+
+      if (to) {
+        url.searchParams.set("to", to);
+      } else {
+        url.searchParams.delete("to");
+      }
+
+      router.push(url.toString());
+    },
+    [router],
+  );
   return (
     <>
       <Table
@@ -809,7 +845,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         searchUrl="/inventory"
         columns={columns}
         data={itemResponse?.data ?? []}
+        showDateRange
         showActions
+        onDateRangeChange={handleDateRangeChange}
         maxHeight="h-full"
         rowSize="h-10"
         textSize="xs"

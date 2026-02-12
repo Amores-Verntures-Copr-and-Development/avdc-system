@@ -50,7 +50,7 @@ export async function GET() {
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -60,7 +60,7 @@ export async function GET() {
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

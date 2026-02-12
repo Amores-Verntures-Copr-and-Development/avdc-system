@@ -30,7 +30,7 @@ const SalesReportModal = ({
       ? `${apiUrl}&includeSaleItems=true${
           showReportType === "Customer" ? `&customer=true` : ""
         }`
-      : `${apiUrl}`,
+      : `${apiUrl}${showReportType === "Customer" ? `&customer=true` : ""}`,
     500,
   );
   const { data: response, isLoading } = useSWR<ApiResponse<DisplaySalesDto[]>>(

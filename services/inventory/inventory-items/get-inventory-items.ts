@@ -18,6 +18,7 @@ export async function findInventoryItemsByField({
   connection,
   limit,
   offset,
+  movement,
 }: {
   keyFields?: Partial<InventoryItemInterface>;
   search?: string;
@@ -26,7 +27,9 @@ export async function findInventoryItemsByField({
   unit?: string;
   connection?: PoolConnection;
   limit?: number;
-  offset?: number; // dynamic filters like {inventoryId: 1, storeId: null}
+  offset?: number;
+  movement?: string;
+  // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
     const data = await selectInventoryItems({
@@ -38,6 +41,7 @@ export async function findInventoryItemsByField({
       limit,
       offset,
       connection,
+      movement,
     });
     const total = await selectInventoryItemsCount({
       keyFields,
@@ -46,6 +50,7 @@ export async function findInventoryItemsByField({
       category,
       unit,
       connection,
+      movement,
     });
     // console.log("total[0].totalItemsL ", total[0].totalItems);
     return {

@@ -10,6 +10,7 @@ export async function GET(
   { params }: { params: Promise<{ inventoryId: string }> },
 ) {
   try {
+    console.log("Agi here");
     const slug = (await params).inventoryId;
     const inventoryId = Number(slug);
     const { searchParams } = new URL(request.url);
@@ -19,6 +20,7 @@ export async function GET(
     const unit = searchParams.get("unit") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
+    const movement = searchParams.get("movement") || "";
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const res = await getInventoryItems({
@@ -29,6 +31,7 @@ export async function GET(
       unit,
       limit: limitNumber,
       offset: limitNumber * (pageNumber - 1),
+      movement: movement,
     });
 
     if (!res.success) {

@@ -32,6 +32,7 @@ import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import SalesReportModal from "./components/SalesReportModal";
+import { FilterConfig } from "@/components/shared/FilterDropDown";
 
 interface SalesPageProps {
   storeId: number;
@@ -422,6 +423,21 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
+
+  // const methodOptions
+
+  const salesFilterConfig: FilterConfig[] = [
+    {
+      id: "method",
+      label: "Payment Method",
+      options: [],
+    },
+    {
+      id: "customerType",
+      label: "Walk-in",
+      options: [],
+    },
+  ];
   return (
     <PageLayout className="p-2 gap-2">
       {isViewSales && seletectedSales ? (
@@ -477,11 +493,14 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   onDateRangeChange={handleDateRangeChange}
                   loading={isLoading}
                   showDateRange
-                  filterConfig={[]}
+                  filterConfig={salesFilterConfig}
                   showFilter
                   onRowSelection={(row) => {
                     setSelectedSales(row);
                     setIsViewSales(true);
+                  }}
+                  onSave={() => {
+                    console.log();
                   }}
                   renderTopActions={
                     <div className="flex gap-2">

@@ -8,7 +8,7 @@ interface FilterOption {
   value: string;
 }
 
-interface FilterConfig {
+export interface FilterConfig {
   id: string;
   label: string;
   options: FilterOption[];

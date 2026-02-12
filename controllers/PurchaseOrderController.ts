@@ -21,6 +21,7 @@ import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-i
 import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
 import { processNotOrderedItems } from "@/services/purchase/purchase-items/process-not-ordered-items";
 import { processSentPOItems } from "@/services/purchase/purchase-items/process-sent-purchase-items";
+import { replacePOItems } from "@/services/purchase/purchase-items/replace-purchase-items";
 import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 import {
   findAllPurchaseOrder,
@@ -34,6 +35,7 @@ import {
   PurchaseOrderRequest,
   PurchaseOrders,
 } from "@/types/purchaseOrders";
+import { error } from "console";
 
 export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
   try {
@@ -382,6 +384,35 @@ export const updatePurchaseOrderItemByPOId = async (
     return {
       success: false,
       message: "Failed to fetch Procurement history",
+      error: e,
+    };
+  }
+};
+
+export const replacePurchaseOrderitems = async ({
+  from,
+  to,
+  replacedBy,
+}: {
+  from: PurchaseOrderItems;
+  to: PurchaseOrderItems;
+  replacedBy: number;
+}) => {
+  try {
+    const res = await replacePOItems({ from, to, replacedBy });
+    console.log({ res });
+    return {
+      success: true,
+      message:
+        res === 0
+          ? "PO Item replace successfully!"
+          : "PO Item replace and added to supplier successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: true,
+      message: "Failed to replace PO Item!",
       error: e,
     };
   }

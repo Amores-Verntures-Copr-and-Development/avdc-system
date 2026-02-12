@@ -191,6 +191,7 @@ export const selectInventoryItems = async ({
   limit,
   offset,
   connection,
+  movement,
 }: {
   keyFields?: Partial<InventoryInterface>;
   search?: string;
@@ -200,6 +201,7 @@ export const selectInventoryItems = async ({
   limit?: number;
   offset?: number;
   connection?: PoolConnection;
+  movement?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
@@ -215,6 +217,8 @@ export const selectInventoryItems = async ({
   c.categoryName,
   it.itemPrice,
   it.itemId,
+  (SELECT SUM(iim.itemMovementQuantity) FROM InventoryItemMovements iim WHERE iim.itemMovementType = 'in' AND iim.inventoryItemId = ii.inventoryItemId) AS inStock,
+  (SELECT SUM(iim.itemMovementQuantity) FROM InventoryItemMovements iim WHERE iim.itemMovementType = 'out' AND iim.inventoryItemId = ii.inventoryItemId) AS outStock,
   COALESCE(
     JSON_ARRAYAGG(
       CASE 
@@ -326,6 +330,7 @@ export const selectInventoryItemsCount = async ({
   category,
   unit,
   connection,
+  movement,
 }: {
   keyFields?: Partial<InventoryInterface>;
   search?: string;
@@ -335,6 +340,7 @@ export const selectInventoryItemsCount = async ({
   limit?: number;
   offset?: number;
   connection?: PoolConnection;
+  movement?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
@@ -398,6 +404,29 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     if (status === "no") {
       sql += ` AND ii.inventoryItemQuantity = 0 `;
     }
+  }
+  if (movement === "fast") {
+    sql += ` AND ii.inventoryItemId IN (
+    SELECT inventoryItemId
+    FROM InventoryItemMovement
+    WHERE itemMovementType = 'out'
+      AND itemMovementCreatedAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY inventoryItemId
+    HAVING SUM(itemMovementQuantity) >= ?
+  ) `;
+    params.push(Number(movement)); // e.g., fast = 20
+  }
+
+  if (movement === "slow") {
+    sql += ` AND ii.inventoryItemId IN (
+    SELECT inventoryItemId
+    FROM InventoryItemMovement
+    WHERE itemMovementType = 'out'
+      AND itemMovementCreatedAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY inventoryItemId
+    HAVING SUM(itemMovementQuantity) <= ?
+  ) `;
+    params.push(Number(movement)); // e.g., slow = 5
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 

@@ -5,10 +5,8 @@ import React from "react";
 import { DropdownSearch } from "./DropDownSearch";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
-interface DisplaInventoryItems
-  extends ItemInterface,
-    InventoryItemInterface,
-    CategoryInterface {}
+export interface DisplaInventoryItems
+  extends ItemInterface, InventoryItemInterface, CategoryInterface {}
 interface SearchInventoryItemProps {
   onSelect: (item: DisplaInventoryItems) => void;
   selectedValue?: string;
@@ -40,10 +38,10 @@ export const SearchInventoryItem = ({
   inventoryId,
 }: SearchInventoryItemProps) => {
   const searchItems = async (
-    query: string
+    query: string,
   ): Promise<DisplaInventoryItems[]> => {
     const res = await fetch(
-      `/api/inventory/item/${inventoryId}?search=${encodeURIComponent(query)}`
+      `/api/inventory/item/${inventoryId}?search=${encodeURIComponent(query)}`,
     );
     const json = await res.json();
     return json.data || [];
@@ -59,8 +57,10 @@ export const SearchInventoryItem = ({
       onSelect={onSelect}
       renderItem={(item) => (
         <span>
-          <strong>{item.itemName}</strong> •
-          <span className="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded">
+          <strong>{item.itemName}</strong> <span>({item.itemUnit})</span> •
+          <span
+            className={`ml-1 px-1.5 py-0.5 ${Number(item.inventoryItemQuantity) !== 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}  text-xs font-medium rounded`}
+          >
             {formatQuantityByUnit(item.inventoryItemQuantity, item.itemUnit)}
           </span>
           <span className="text-gray-500 ml-1">in stock</span>
