@@ -16,13 +16,13 @@ interface StoreCardInSupplierProps {
 
 const StoreCardInSupplier = ({ data, onClick }: StoreCardInSupplierProps) => {
   const pendingCount = data.items.filter(
-    (item) => item.reqItemStatus === "pending"
+    (item) => item.reqItemStatus === "pending",
   ).length;
   const deliveredCount = data.items.filter(
-    (item) => item.reqItemStatus === "delivered"
+    (item) => item.reqItemStatus === "delivered",
   ).length;
   const receivedCount = data.items.filter(
-    (item) => item.reqItemStatus === "received"
+    (item) => item.reqItemStatus === "received",
   ).length;
   const totalItems = data.items.length;
   const getStatusInfo = () => {

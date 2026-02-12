@@ -39,10 +39,18 @@ export const getRequest = async ({
   storeId,
   userId,
   controller,
+  from,
+  to,
+  search,
+  store,
 }: {
   storeId?: number;
   userId?: number;
   controller?: "stock-room" | "store" | null;
+  from?: string;
+  to?: string;
+  search?: string;
+  store?: string;
 }) => {
   let data;
   try {
@@ -51,7 +59,7 @@ export const getRequest = async ({
     } else if (controller === "store") {
       data = await getRequestOrders({ storeId });
     } else {
-      data = await getRequestOrders({});
+      data = await getRequestOrders({ from, to, search, store });
     }
     return {
       success: true,

@@ -25,21 +25,13 @@ import { useStores } from "@/hooks/userStore";
 import { Option } from "@/components/shared/DropdownSelect";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import Popup from "@/components/shared/Popup";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
 
   { name: "Requested By", key: "requestedByName" },
-  {
-    name: "Date Requested",
-    key: "requestCreatedAt",
-    selector: (row) => formatDateToWords(row.requestCreatedAt),
-  },
-  {
-    name: "Date Updated",
-    key: "requestUpdatedAt",
-    selector: (row) => formatDateToWords(row.requestUpdatedAt),
-  },
+
   { name: "Store", key: "storeName" },
   { name: "Total Items", key: "totalItems" },
   {
@@ -65,6 +57,16 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
       );
     },
   },
+  {
+    name: "Date Updated",
+    key: "requestUpdatedAt",
+    selector: (row) => formatDateToWords(row.requestUpdatedAt),
+  },
+  {
+    name: "Date Requested",
+    key: "requestCreatedAt",
+    selector: (row) => formatDateToWords(row.requestCreatedAt),
+  },
 ];
 
 const AdminRequisitionPage = () => {
@@ -83,6 +85,9 @@ const AdminRequisitionPage = () => {
     useState<DisplayRequestOrderDto | null>();
   const url = `/api/requests/request-orders/`;
 
+  //Check first from if the user has StockRoom if not part of the store
+  //Check first if the purchase has a StockRoom
+  //Display it
   const getApiUrl = useMemo(() => {
     if (!user) return null;
 
@@ -106,9 +111,14 @@ const AdminRequisitionPage = () => {
 
     return `${url}?${params.toString()}`;
   }, [user, searchParams]);
-  const { data: itemResponse = { data: [] }, mutate } = useSWR<{
+  const apiDeounce = useDebounce(getApiUrl ?? "", 500);
+  const {
+    data: itemResponse = { data: [] },
+    mutate,
+    isLoading,
+  } = useSWR<{
     data: DisplayRequestOrderDto[];
-  }>(user ? getApiUrl : null, fetcher);
+  }>(user ? apiDeounce : null, fetcher);
 
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
@@ -174,118 +184,118 @@ const AdminRequisitionPage = () => {
             subtitle="Manage request orders from stores."
           />
           <div className="flex-1 min-h-0  flex flex-col">
-            {(itemResponse.data && itemResponse.data.length > 0) ||
-            user?.empPosition !== "purchaser" ? (
-              <Table<DisplayRequestOrderDto>
-                onDateRangeChange={handleDateRangeChange}
-                showDateRange
-                columns={requisitionColumns}
-                ref={tableRef}
-                data={itemResponse.data}
-                totalCount={10}
-                onRowSelection={(row) => {
-                  setSelectedRow(row);
-                }}
-                showFilter
-                onSave={() => {
-                  console.log({});
-                }}
-                addContentLeftTitle={
-                  !["supervisor", "staff"].includes(
-                    user?.empPosition ?? "",
-                  ) && (
-                    <div>
-                      <DynamicDropdown
-                        defaultValue={
-                          new URL(window.location.href).searchParams.get(
-                            "store",
-                          ) || ""
+            <Table<DisplayRequestOrderDto>
+              onDateRangeChange={handleDateRangeChange}
+              showDateRange
+              columns={requisitionColumns}
+              loading={isLoading}
+              ref={tableRef}
+              data={itemResponse.data}
+              totalCount={10}
+              onRowSelection={(row) => {
+                setSelectedRow(row);
+              }}
+              showFilter
+              filterConfig={[]}
+              onSave={() => {
+                console.log({});
+              }}
+              addContentLeftTitle={
+                !["supervisor", "staff"].includes(user?.empPosition ?? "") && (
+                  <div>
+                    <DynamicDropdown
+                      defaultValue={
+                        new URL(window.location.href).searchParams.get(
+                          "store",
+                        ) || ""
+                      }
+                      options={storeOptions}
+                      onChange={function (value: string | number): void {
+                        if (value) {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("store", String(value));
+                          router.push(url.toString());
+                        } else {
+                          const url = new URL(window.location.href);
+                          url.searchParams.delete("store"); // remove 'store'
+                          router.push(url.toString());
                         }
-                        options={storeOptions}
-                        onChange={function (value: string | number): void {
-                          if (value) {
-                            const url = new URL(window.location.href);
-                            url.searchParams.set("store", String(value));
-                            router.push(url.toString());
-                          } else {
-                            const url = new URL(window.location.href);
-                            url.searchParams.delete("store"); // remove 'store'
-                            router.push(url.toString());
-                          }
-                        }}
-                        placeholder={`Stores (${storeOptions.length})`}
-                        icon={<Store className="w-4 h-4" />}
-                        size="sm"
-                      />
-                    </div>
-                  )
-                }
-                showActions
-                showCheckBox
-                maxHeight="h-full"
-                uniqueIdKey="requestId"
-                onSelectionChange={handleSelectionChange}
-                renderTopActions={
-                  selectedtedRows &&
-                  selectedtedRows.length > 0 && (
-                    <div className="flex gap-4">
-                      <div>
-                        {" "}
-                        <Button
-                          icon={FileText}
-                          label="View Request"
-                          onClick={() => {
-                            // setShowCreatePO(true);
-                          }}
-                          size="xs"
-                          color="secondary"
-                        />
-                      </div>
-                      {selectedtedRows.every(
-                        (ro) => ro.requestStatus === "pending",
-                      ) && (
-                        <div>
-                          <Button
-                            icon={FileText}
-                            label="Convert to PO"
-                            onClick={() => {
-                              setShowCreatePO(true);
-                            }}
-                            size="xs"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )
-                }
-                searchUrl="/requisitions"
-                renderActions={(row) => (
-                  <div className="flex gap-2 justify-center">
-                    {/* View Button */}
-                    <IconButton
-                      onClick={() => {
-                        setSelectedRow(row);
-                        console.log(selectedtedRow);
                       }}
-                      label={"View"}
-                      bg={"gray"}
-                      icon={<Eye size={18} />}
-                    />
-                    <IconButton
-                      onClick={() => {}}
-                      label={"Print"}
-                      bg={"green"}
-                      icon={<Printer size={18} />}
-                    />
-                    <IconButton
-                      onClick={() => {}}
-                      label={"Convert to PO"}
-                      bg={"blue"}
-                      icon={<FileText size={18} />}
+                      placeholder={`Stores (${storeOptions.length})`}
+                      icon={<Store className="w-4 h-4" />}
+                      size="sm"
                     />
                   </div>
-                )}
-              />
+                )
+              }
+              showActions
+              showCheckBox
+              maxHeight="h-full"
+              uniqueIdKey="requestId"
+              onSelectionChange={handleSelectionChange}
+              renderTopActions={
+                selectedtedRows &&
+                selectedtedRows.length > 0 && (
+                  <div className="flex gap-4">
+                    <div>
+                      {" "}
+                      <Button
+                        icon={FileText}
+                        label="View Request"
+                        onClick={() => {
+                          // setShowCreatePO(true);
+                        }}
+                        size="xs"
+                        color="secondary"
+                      />
+                    </div>
+                    {selectedtedRows.every(
+                      (ro) => ro.requestStatus === "pending",
+                    ) && (
+                      <div>
+                        <Button
+                          icon={FileText}
+                          label="Convert to PO"
+                          onClick={() => {
+                            setShowCreatePO(true);
+                          }}
+                          size="xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+              searchUrl="/requisitions"
+              renderActions={(row) => (
+                <div className="flex gap-2 justify-center">
+                  {/* View Button */}
+                  <IconButton
+                    onClick={() => {
+                      setSelectedRow(row);
+                      console.log(selectedtedRow);
+                    }}
+                    label={"View"}
+                    bg={"gray"}
+                    icon={<Eye size={18} />}
+                  />
+                  <IconButton
+                    onClick={() => {}}
+                    label={"Print"}
+                    bg={"green"}
+                    icon={<Printer size={18} />}
+                  />
+                  <IconButton
+                    onClick={() => {}}
+                    label={"Convert to PO"}
+                    bg={"blue"}
+                    icon={<FileText size={18} />}
+                  />
+                </div>
+              )}
+            />
+            {/* {itemResponse.data && itemResponse.data.length > 0 ? (
+              
             ) : (
               <div className="flex flex-1 justify-center items-center">
                 <span>
@@ -293,7 +303,7 @@ const AdminRequisitionPage = () => {
                   stores to your stock room.
                 </span>
               </div>
-            )}
+            )} */}
           </div>
           <Modal
             className="bg-white h-[80%]"

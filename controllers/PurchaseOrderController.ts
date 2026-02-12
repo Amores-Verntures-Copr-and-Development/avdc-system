@@ -166,6 +166,8 @@ export const getStorePOItemsSupplierById = async (
 ) => {
   try {
     const data = await findStoreItemsBySupplierAndPOIds({ poId, suppId });
+    console.log("[Data IN controller: ]", data[0].items.length);
+
     return {
       success: true,
       message: "Purchase Order fetched successfully",

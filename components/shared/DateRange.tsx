@@ -48,6 +48,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     const today = new Date().toISOString().split("T")[0];
     setFromDate(today);
     setToDate(today);
+    setIsShow(false);
   };
 
   const setYesterday = () => {
@@ -56,6 +57,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     const dateStr = yesterday.toISOString().split("T")[0];
     setFromDate(dateStr);
     setToDate(dateStr);
+    setIsShow(false);
   };
 
   const setPastMonth = () => {
@@ -65,6 +67,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
 
     setFromDate(pastMonth.toISOString().split("T")[0]);
     setToDate(today.toISOString().split("T")[0]);
+    setIsShow(false);
   };
 
   const setPastThreeMonths = () => {
@@ -74,6 +77,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
 
     setFromDate(pastThreeMonths.toISOString().split("T")[0]);
     setToDate(today.toISOString().split("T")[0]);
+    setIsShow(false);
   };
 
   const clearDates = () => {
@@ -82,6 +86,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     if (onDateRangeChange) {
       onDateRangeChange({ from: "", to: "" });
     }
+    setIsShow(false);
   };
 
   // Get display text for the button

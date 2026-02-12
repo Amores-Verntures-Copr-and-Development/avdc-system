@@ -677,12 +677,19 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
       return false;
     }
   };
-
+  const totalPOAmount = requestItems.reduce((sum, req) => {
+    const totalAmountItems = (req.requestItemsData ?? [])
+      .filter((item) => item.reqItemStatus === "received")
+      .reduce((sumItem, item) => {
+        return sumItem + Number(item.reqItemReceived) * Number(item.itemPrice);
+      }, 0);
+    return sum + totalAmountItems;
+  }, 0);
   return (
     <div className="gap-5  h-full flex flex-col overflow-hidden">
       <div className="flex p-2 gap-2  flex-col h-full w-full overflow-y-auto">
         <div className="p-4 border-b-1 bg-white rounded border-gray-200 ">
-          <div className="flex justify-between  items-center">
+          <div className="flex justify-between items-center">
             <div className="flex flex-col">
               <h1 className="text-xs xl:text-md font-semibold">
                 Requisition Fulfillment
@@ -691,36 +698,46 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 Review and fulfill requisition requests
               </p>
             </div>
-            <div className="flex gap-2">
-              <div className="self-center">
-                <Button
-                  size="sm"
-                  label="Supplier View"
-                  onClick={() => {
-                    setShowAllItems("supplier");
-                  }}
-                  color="outline"
-                />
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <div className="self-center">
+                  <Button
+                    size="sm"
+                    label="Supplier View"
+                    onClick={() => {
+                      setShowAllItems("supplier");
+                    }}
+                    color="outline"
+                  />
+                </div>
+                <div className="self-center">
+                  <Button
+                    size="sm"
+                    label="All PO View"
+                    onClick={() => {
+                      setShowAllItems("all");
+                    }}
+                    color="outline"
+                  />
+                </div>
+                <div className="self-center">
+                  <Button
+                    size="sm"
+                    label="PO Request View"
+                    onClick={() => {
+                      setShowAllItems("request");
+                    }}
+                    color="outline"
+                  />
+                </div>
               </div>
-              <div className="self-center">
-                <Button
-                  size="sm"
-                  label="All PO View"
-                  onClick={() => {
-                    setShowAllItems("all");
-                  }}
-                  color="outline"
-                />
-              </div>
-              <div className="self-center">
-                <Button
-                  size="sm"
-                  label="PO Request View"
-                  onClick={() => {
-                    setShowAllItems("request");
-                  }}
-                  color="outline"
-                />
+              <div className="flex justify-end">
+                <span className="text-sm">
+                  Total Purchase:{" "}
+                  <span className="font-semibold text-lg">
+                    {formatPeso(totalPOAmount)}
+                  </span>
+                </span>
               </div>
             </div>
           </div>
@@ -1041,7 +1058,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           })}
         </div>
       </div>
-      <div className="border-t  border-gray-300  flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center">
+      <div className="border-t  border-gray-300  flex justify-between 2xl:pl-4 2xl:pr-4 2xl:pt-4 2xl:pb-4 gap-4 items-center">
         <span className="flex items-center">
           <Clock size={15} />{" "}
           <span className="text-[9px] md:text-xs ml-2">

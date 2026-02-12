@@ -14,11 +14,10 @@ export async function GET(request: NextRequest) {
     const store = searchParams.get("store") || "";
     // const limitNumber = Number(limit) || 100;
     // const pageNumber = Number(page) || 1;
-    console.log({ search, from, to, store });
-    const res = await getRequest({});
+
+    const res = await getRequest({ from, to, search, store });
     if (!res.success) {
-      console.log(res.error);
-      throw new Error(res.message || "Failed to create request");
+      throw new Error(res.message || "Failed to fetched request");
     }
 
     return NextResponse.json(
@@ -30,11 +29,10 @@ export async function GET(request: NextRequest) {
       { status: 201 },
     );
   } catch (err: any) {
-    console.error("POST /api/auth/users error:", err);
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create request",
+        message: err?.message || String(err),
         error: err?.message || String(err),
       },
       { status: 500 },

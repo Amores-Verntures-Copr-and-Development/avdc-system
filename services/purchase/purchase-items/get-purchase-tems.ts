@@ -35,8 +35,11 @@ export async function findStoreItemsBySupplierAndPOIds({
         const convertedItemsForStore = converted.filter(
           (c) => c.storeId === store.storeId,
         );
-        const notExistingInFirst = convertedItemsForStore.filter((item) =>
-          store.items.some((po) => po.reqItemId !== Number(item.reqItemId)),
+        const notExistingInFirst = convertedItemsForStore.filter(
+          (item) =>
+            !store.items.some(
+              (po) => Number(po.reqItemId) === Number(item.reqItemId),
+            ),
         );
         return {
           ...store,

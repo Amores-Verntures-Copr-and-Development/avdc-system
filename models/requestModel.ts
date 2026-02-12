@@ -67,8 +67,16 @@ export const insertRequestItemsBulk = async ({
 
 export const selectRequestOrders = async ({
   storeId,
+  from,
+  to,
+  search,
+  store,
 }: {
   storeId?: number;
+  from?: string;
+  to?: string;
+  search?: string;
+  store?: string;
 }) => {
   const pool = await getDBConnection();
   const whereClauses: string[] = [];
@@ -76,6 +84,20 @@ export const selectRequestOrders = async ({
   if (storeId !== null && storeId !== undefined) {
     whereClauses.push("ro.storeId = ?");
     values.push(storeId);
+  }
+
+  if (store) {
+    whereClauses.push("s.storeName LIKE ?");
+    values.push(`%${store}%`);
+  }
+  if (from && to) {
+    whereClauses.push("DATE(ro.requestCreatedAt) BETWEEN ? AND ?");
+    values.push(from);
+    values.push(to);
+  }
+  if (search) {
+    whereClauses.push("(ro.requestNo LIKE ?)");
+    values.push(`%${search}%`);
   }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
@@ -112,6 +134,7 @@ ORDER BY
     END,
     ro.requestCreatedAt DESC;`;
   const [rows] = await pool.execute(sql, values);
+  console.log({ rows });
   return rows;
 };
 
