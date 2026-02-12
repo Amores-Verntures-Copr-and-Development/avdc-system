@@ -19,6 +19,7 @@ import { formatPeso } from "@/utils/formatPeso";
 import IconButton from "@/components/shared/IconButton";
 import Popup from "@/components/shared/Popup";
 import VariantComponentPage from "./components/VariantComponentPage";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface ProductVariantPageProps {
   data: DisplayProductsDtos | null;
@@ -76,6 +77,9 @@ const ProductVariantPage = ({
   onBack,
   user,
 }: ProductVariantPageProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteComfirmation] =
+    useState<DisplaProductVariantsDtos | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddComponent, setShowAddComponent] = useState(false);
   const [selectedRow, setSelectedRow] =
@@ -144,6 +148,35 @@ const ProductVariantPage = ({
       setIsSubmitting(false);
     }
   };
+  const handleDeleteProductVariant = async (
+    deleteData: DisplaProductVariantsDtos,
+  ) => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/products/${data?.storeId}/product-variants/${deleteData.prodId}/${deleteData.prodVarId}/`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.success);
+      }
+      mutate();
+      toast.success(
+        `${showDeleteConfirmation?.prodVarName} is deleted successfully!`,
+      );
+      setShowDeleteComfirmation(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <>
       <div className="flex justify-between items-center">
@@ -184,7 +217,7 @@ const ProductVariantPage = ({
               />
               <IconButton
                 onClick={function (): void {
-                  console.log("Delete");
+                  setShowDeleteComfirmation(row);
                 }}
                 label={"Delete"}
                 bg={"red"}
@@ -249,6 +282,21 @@ const ProductVariantPage = ({
           <></>
         )}
       </Popup>
+      <ConfirmationModal
+        title={`Delete ${showDeleteConfirmation?.prodVarName}`}
+        onConfirm={() => {
+          if (showDeleteConfirmation) {
+            handleDeleteProductVariant(showDeleteConfirmation);
+          }
+        }}
+        confirmationInfo={`Are you sure you want to delete ${showDeleteConfirmation?.prodVarName}`}
+        isLoading={isDeleting}
+        onClose={function (): void {
+          setShowDeleteComfirmation(null);
+        }}
+        isShow={showDeleteConfirmation !== null}
+        confirmLabel="Delete"
+      />
     </>
   );
 };

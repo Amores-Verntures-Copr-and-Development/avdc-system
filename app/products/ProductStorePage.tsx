@@ -22,6 +22,7 @@ import {
   PhilippinePeso,
   Plus,
   Store,
+  Trash,
   Users,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
@@ -44,12 +45,14 @@ import { ApiResponse } from "@/types/api";
 import { ProductCategories } from "@/types/products";
 import Popup from "@/components/shared/Popup";
 import ProductVariantTable from "./components/ProductVariantTable";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
 }
 
 const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
+  const [isDeleting, setIsDeleting] = useState(false);
   const searchParams = useSearchParams();
   const [productView, setProductView] = useState<
     "product" | "product-variants"
@@ -66,6 +69,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [showEdit, setShowEdit] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
+  const [showDeleteConfirmation, setShowDeleteComfirmation] =
+    useState<DisplayProductsDtos | null>(null);
   const prodVarUrl = hasStore
     ? `/api/products/${storeId}/product-variants/`
     : `/api/products/${storeId}/product-variants/`;
@@ -342,7 +347,33 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     },
     [router, productConfig],
   );
-
+  const handleDeleteProduct = async (deleteData: DisplayProductsDtos) => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/products/${deleteData.storeId}/${deleteData.prodId}/`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.success);
+      }
+      mutate();
+      toast.success(
+        `${showDeleteConfirmation?.prodName} is deleted successfully!`,
+      );
+      setShowDeleteComfirmation(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
   return (
     <PageLayout className=" gap-2 2xl:gap-4 p-2">
       {selectedRow && showProductVariantPage ? (
@@ -459,6 +490,14 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                       label={"Edit"}
                       bg={"green"}
                       icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                    <IconButton
+                      onClick={() => {
+                        setShowDeleteComfirmation(row);
+                      }}
+                      label={"Delete"}
+                      bg={"red"}
+                      icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
                     />
                   </div>
                 )}
@@ -611,6 +650,26 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           }}
         />
       </Popup>
+      <ConfirmationModal
+        title={`Delete ${showDeleteConfirmation?.prodName}`}
+        onConfirm={() => {
+          if (showDeleteConfirmation) {
+            handleDeleteProduct(showDeleteConfirmation);
+          }
+        }}
+        confirmationInfo={
+          showDeleteConfirmation?.productVariants &&
+          showDeleteConfirmation?.productVariants?.length > 0
+            ? `Are you sure you want to delete  ${showDeleteConfirmation?.prodName} with ${showDeleteConfirmation.productVariants.length} variants?`
+            : `Are you sure you want to delete  ${showDeleteConfirmation?.prodName}?`
+        }
+        isLoading={isDeleting}
+        onClose={function (): void {
+          setShowDeleteComfirmation(null);
+        }}
+        isShow={showDeleteConfirmation !== null}
+        confirmLabel="Delete"
+      />
     </PageLayout>
   );
 };

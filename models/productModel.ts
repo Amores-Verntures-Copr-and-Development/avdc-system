@@ -261,18 +261,18 @@ export const selectProducts = async ({
               )
               FROM VariantComponents vc
               LEFT JOIN InventoryItems ii ON ii.inventoryItemId = vc.inventoryItemId
-              WHERE vc.prodVarId = pv.prodVarId
+              WHERE vc.prodVarId = pv.prodVarId 
               
             )
         )
       )
       FROM ProductVariants pv
-      WHERE pv.prodId = p.prodId
+      WHERE pv.prodId = p.prodId AND pv.prodVarDeletedAt IS NULL
     ) AS productVariants
   FROM Products p
   LEFT JOIN Stores s ON s.storeId = p.storeId
   LEFT JOIN ProductCategories pc ON pc.prodCatId = p.prodCatId
-  WHERE 1=1`;
+  WHERE 1=1 AND p.prodDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
@@ -348,7 +348,7 @@ SELECT
 FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
-WHERE 1=1`;
+WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {

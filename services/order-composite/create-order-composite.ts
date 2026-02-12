@@ -78,7 +78,6 @@ export async function createOrderCompositeItems({
           itemId: fromCompositeItems[0].itemId,
           itemPrice: rounded,
         };
-        console.log({ rounded });
         await handleUpdateItemPrice({
           connection: connection ? connection : newConnection,
           keyFields: ["itemId"],

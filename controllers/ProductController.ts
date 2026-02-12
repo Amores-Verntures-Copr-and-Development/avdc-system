@@ -9,6 +9,7 @@ import {
   createBulkProducts,
   createProducts,
 } from "@/services/products/create-products";
+import { deleteProducts } from "@/services/products/delete-product";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 import { createProductCategory } from "@/services/products/product-category/create-product-category";
@@ -17,6 +18,7 @@ import {
   createProductVariant,
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
+import { deleteProductVariants } from "@/services/products/product-variant/delete-product-variants";
 import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
 import { updateProductVariantServices } from "@/services/products/product-variant/update-product-variants";
 import { createVariantComponent } from "@/services/products/product-variant/variant-component/create-variant-component";
@@ -173,6 +175,48 @@ export const updateProductById = async (product: Partial<Products>) => {
     return {
       error: e,
       message: "Failed to update product!",
+      success: false,
+    };
+  }
+};
+
+export const deleteProductController = async (product: Partial<Products>) => {
+  try {
+    const res = await deleteProducts({
+      keyFields: ["prodId"],
+      updates: [product],
+    });
+    return {
+      data: res,
+      message: "Product deleted successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to deleted product!",
+      success: false,
+    };
+  }
+};
+
+export const deleteProductVariantController = async (
+  productVariants: Partial<ProductVariants>,
+) => {
+  try {
+    const res = await deleteProductVariants({
+      keyFields: ["prodVarId"],
+      updates: [productVariants],
+    });
+    return {
+      data: res,
+      message: "Product Variant deleted successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to deleted product variant!",
       success: false,
     };
   }
