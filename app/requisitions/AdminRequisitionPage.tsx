@@ -273,7 +273,7 @@ const AdminRequisitionPage = () => {
                   <IconButton
                     onClick={() => {
                       setSelectedRow(row);
-                      console.log(selectedtedRow);
+        
                     }}
                     label={"View"}
                     bg={"gray"}

@@ -52,7 +52,7 @@ const EditEmployeeModal = ({
     // Don't run if empFormData is still null
     if (!empFormData || !response.data.length) return;
 
-    console.log("🔄 Filtering stores with empFormData:", empFormData);
+
 
     const storeData = response.data.filter((store: StoreInterface) => {
       // Check if store is not already selected
@@ -79,7 +79,7 @@ const EditEmployeeModal = ({
         storeId: store.storeId ?? 0,
         storeEmpCreatedBy: 0,
       })) ?? [];
-    console.log({ storeEmployee });
+
     const success = await onSaveStoreEmployee(storeEmployee);
     if (success) {
       mutate();

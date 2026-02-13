@@ -13,11 +13,10 @@ import toast from "react-hot-toast";
 const Header = () => {
   const { user, hasStore, isAdmin, refreshSession } = useSession();
   const { stores } = useStores({ user, hasStore, isAdmin });
-  console.log({ stores });
+
   const [storeData, setStoreData] = useState<StoreInterface | null>(null);
   const isSuperVisor = user?.empPosition === "supervisor";
-  console.log("empPosition:", user?.empPosition);
-  console.log("empPosition:", user?.empPosition);
+
   const { data: response, isLoading } = useSWR<ApiResponse<StoreInterface[]>>(
     isSuperVisor ? `/api/stores/userId/${user?.userId}/store-employee/` : null,
     fetcher,

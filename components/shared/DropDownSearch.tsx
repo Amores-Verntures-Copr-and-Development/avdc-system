@@ -127,7 +127,6 @@ export function DropdownSearch<T>({
   }, []);
 
   const handleSelect = (item: T) => {
-    console.log({ item });
     const display = displayValue(item);
     setQuery(display);
     setHasSelected(true);

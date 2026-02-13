@@ -21,7 +21,7 @@ const ProductVariantCard = ({
   const hasOneVariant = data?.variantComponents?.length === 1;
   const left = hasOneVariant ? (data.variantComponents?.[0]?.left ?? 0) : 0;
   const hasNoAssignComponent = !data?.variantComponents?.length;
-  console.log({ hasNoAssignComponent });
+
   const hasMoreVariant =
     data?.variantComponents?.length && data?.variantComponents?.length > 1;
   const hasStock = hasMoreVariant
@@ -32,8 +32,6 @@ const ProductVariantCard = ({
       : true;
 
   const handleClick = () => {
-    console.log({ hasOneVariant });
-    console.log("Data: ", data);
     if (!data || !product || !hasStock) return;
 
     const variantName = data.prodVarName?.trim() || "";

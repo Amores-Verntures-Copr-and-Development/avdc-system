@@ -60,7 +60,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
           storeEmpCreatedBy: user?.userId ?? 0,
         })) ?? [],
     };
-    console.log({ submitData });
+
     const success = await onSubmit(submitData);
     if (success) {
       onCancel();
@@ -69,7 +69,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
   const { data: response = { data: [] } } = useSWR<{ data: StoreInterface[] }>(
     "/api/stores/",
-    fetcher
+    fetcher,
   );
   const [selectedStores, setSelectedStores] = useState<StoreInterface[]>([]);
   const handleSelectionChange = (selected: StoreInterface[]) => {
@@ -184,7 +184,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
       {Boolean(
         addUserFormData.empPosition === "supervisor" ||
-          addUserFormData.empPosition === "staff"
+        addUserFormData.empPosition === "staff",
       ) && (
         <div className="space-y-3">
           <h1 className="text-md font-semibold mb-3">Assign Stores</h1>

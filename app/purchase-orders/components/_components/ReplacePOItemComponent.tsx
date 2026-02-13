@@ -65,7 +65,7 @@ const ReplacePOItemComponent = ({
       to: validateForm,
       replacedBy: user?.userId,
     };
-    console.log(replaceFormData);
+
     setIsSubmitting(true);
     try {
       const res = await fetch(

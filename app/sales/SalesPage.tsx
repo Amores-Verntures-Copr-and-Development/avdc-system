@@ -336,7 +336,7 @@ const adminColumns: Column<DisplaySalesDto>[] = [
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  console.log({ hasStore, isAdmin });
+
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
     null,
   );
@@ -350,7 +350,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     isAdmin,
   });
 
-  console.log({ stores });
+
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -416,7 +416,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const totalCountSales = details?.totalCountSales ?? 0;
   const totalCustomer = details?.totalCustomer ?? 0;
   const todaySales = details?.todaySales ?? 0;
-  console.log({ user });
+
   const storeOptions = Array.isArray(stores)
     ? stores.map((store) => ({
         label: store.storeName, // or whatever you want to show
@@ -500,7 +500,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                     setIsViewSales(true);
                   }}
                   onSave={() => {
-                    console.log();
+                 
                   }}
                   renderTopActions={
                     <div className="flex gap-2">

@@ -200,9 +200,9 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
   const totalQuantity =
     data?.items?.reduce(
       (sum, item) => sum + (Number(item.poItemOrderedQty) || 0),
-      0
+      0,
     ) || 0;
-  console.log({ totalQuantity });
+
   const renderSingleColumnTable = (items: any[], startIndex: number = 0) => (
     <View>
       <View style={styles.tableHeader}>
@@ -255,7 +255,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
               <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
                   item.poItemOrderedQty,
-                  item.itemUnit ?? ""
+                  item.itemUnit ?? "",
                 )}
               </Text>
             </View>
@@ -286,7 +286,7 @@ const POSupplierItemsPDF = ({ data, poData }: POSupplierItemsProps) => {
               <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
                   item.poItemOrderedQty,
-                  item.itemUnit ?? ""
+                  item.itemUnit ?? "",
                 )}
               </Text>
             </View>

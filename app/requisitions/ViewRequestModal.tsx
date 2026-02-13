@@ -1005,22 +1005,38 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
                     />
                   )}
-                  {findOriginalData?.reqItemStatus === "delivered" ||
-                    (row.reqItemStatus === "delivered" && (
-                      <IconButton
-                        onClick={() => {
-                          if (Number(row.reqItemReceived) === 0) {
-                            toast.error("No quantity to receive!");
-                            return;
-                          }
-                          setSelectedRowItem(row);
-                          setShowReceivedOneItem(true);
-                        }}
-                        label={"Receive Item"}
-                        bg={"red"}
-                        icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
-                      />
-                    ))}
+                  {/* {(findOriginalData?.reqItemStatus === "delivered" ||
+                    row.reqItemStatus === "delivered") && (
+                    <IconButton
+                      onClick={() => {
+                        if (Number(row.reqItemReceived) === 0) {
+                          toast.error("No quantity to receive!");
+                          return;
+                        }
+                        setSelectedRowItem(row);
+                        setShowReceivedOneItem(true);
+                      }}
+                      label={"Receive Item"}
+                      bg={"red"}
+                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )} */}
+                  {(row.reqItemStatus === "delivered" ||
+                    row.reqItemStatus === "partial") && (
+                    <IconButton
+                      onClick={() => {
+                        if (Number(row.reqItemReceived) === 0) {
+                          toast.error("No quantity to receive!");
+                          return;
+                        }
+                        setSelectedRowItem(row);
+                        setShowReceivedOneItem(true);
+                      }}
+                      label={"Receive Item"}
+                      bg={"red"}
+                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )}
                 </div>
               );
             }}

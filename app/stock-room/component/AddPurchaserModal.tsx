@@ -15,9 +15,7 @@ interface AddStoreToStockRoomModalProps {
   user: UserAuth | null;
 }
 interface DisplayPurchasers
-  extends UserInterface,
-    EmployeeInterface,
-    StockPurchasers {}
+  extends UserInterface, EmployeeInterface, StockPurchasers {}
 const userColumn: Column<DisplayPurchasers>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
   {
@@ -43,7 +41,6 @@ const AddPurchaserModal = ({
     data: DisplayPurchasers[];
   }>(`/api/stock-room/${data.stockRoomId}/purchaser/not-in`, fetcher);
   const handleSelectionChange = (selected: DisplayPurchasers[]) => {
-    console.log("Selected rows:", selected);
     if (selected.length > 0) {
       setSelectedRows(selected);
     }

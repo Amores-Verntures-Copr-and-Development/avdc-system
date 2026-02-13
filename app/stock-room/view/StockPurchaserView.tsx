@@ -19,9 +19,7 @@ interface StockPurchaserViewProps {
   user: UserAuth | null;
 }
 interface DisplayPurchasers
-  extends StockPurchasers,
-    UserInterface,
-    EmployeeInterface {}
+  extends StockPurchasers, UserInterface, EmployeeInterface {}
 const purchaserColumns: Column<DisplayPurchasers>[] = [
   { key: "#", name: "#", selector: (row, index) => index + 1 },
   {
@@ -47,11 +45,10 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
     mutate,
   } = useSWR<{ data: DisplayPurchasers[] }>(
     `/api/stock-room/${data.stockRoomId}/purchaser`,
-    fetcher
+    fetcher,
   );
 
   const handleAddPurchaser = async (purchaserData: CreateStockPurchaser[]) => {
-    console.log("CreateStockPurchaser: ", purchaserData);
     try {
       const result = await fetch(
         `api/stock-room/${data.stockRoomId}/purchaser`,
@@ -61,7 +58,7 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(purchaserData),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {

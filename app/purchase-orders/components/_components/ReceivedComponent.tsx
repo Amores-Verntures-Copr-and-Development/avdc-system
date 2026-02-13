@@ -171,14 +171,12 @@ const ReceivedComponent = ({
   };
   // const isExpanded = expandedSupplier === supplier.suppId;
   const updateSupplierItems = (newItems: PurchaseOrderItems[]) => {
-    console.log({ newItems });
     setSupplierData((prev) => ({
       ...prev,
       items: newItems,
     }));
   };
   const handleAutoFillAll = () => {
-    console.log("Click");
     setSupplierData((prev) => ({
       ...prev,
       items: prev.items.map((item) => {

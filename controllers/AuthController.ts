@@ -14,7 +14,7 @@ export const logIn = async (data: UserAuthInterface) => {
     const isMatch = await compareValue(data.password, user.userPassword);
     if (!isMatch) return null;
     const hasOneStore = user?.storeEmployees?.length === 1;
-    console.log({ hasOneStore });
+    
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(
       user.userId,

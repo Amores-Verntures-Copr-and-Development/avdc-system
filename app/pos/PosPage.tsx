@@ -115,7 +115,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const { data: discountResponse = { data: [] } } = useSWR<{
     data: Discounts[];
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
-  console.log({ itemResponse });
+
   useEffect(() => {
     if (itemResponse.data && itemResponse.data.length > 0) {
       setProductList(itemResponse.data ?? []);
@@ -252,8 +252,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           quantity,
           item.discounts,
         );
-        console.log("Discounts: ", item.discounts);
-        console.log({ discount });
+
         return {
           ...item,
           quantity,
@@ -555,7 +554,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesPayments: paymentMethodData,
     };
     try {
-      console.log({ salesData });
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
         method: "POST",
         headers: {
@@ -632,7 +630,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       if (existing) {
         return prev;
       }
-      console.log({ newDisc });
+
       const discount =
         newDisc.discountType === "fixed"
           ? newDisc.discountValue

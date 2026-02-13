@@ -79,7 +79,7 @@ const SalesReportModal = ({
     },
     { from: null, to: null },
   );
-  console.log({ from, to, dateSummary });
+
   const handleExportData = () => {
     const formatData = salesData.map((sales) => ({
       Date: sales.salesCreatedAt,
@@ -95,7 +95,7 @@ const SalesReportModal = ({
       Customer: sales.customerName,
       Cashier: sales.salesCreatedByName,
     }));
-    console.log({ formatData });
+
     exportToExcel({
       data: formatData,
       fileName: "SalesReport",
