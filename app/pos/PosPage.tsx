@@ -670,9 +670,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   };
   return (
     <PageLayout>
-      <div className="flex flex-1 overflow-visible h-full">
+      <div className="flex flex-1 overflow-visible min-h-0 h-full">
         {/* Left section */}
-        <div className="flex flex-col flex-[0.75] h-full">
+        <div className="flex flex-col flex-[0.75]  min-w-0 h-full">
           <div className="bg-white min-h-20 border border-gray-200 flex justify-between items-center px-4 py-2 overflow-visible">
             {selectedProduct ? (
               <>
@@ -802,25 +802,30 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             )}
           </div>
-          <div className="flex gap-2 mt-2 mb-2 items-center">
-            <h1 className="font-semibold">Categories:</h1>
-
-            <div className="flex min-w-0 overflow-x-auto whitespace-nowrap flex-nowrap gap-2">
-              <Button
-                size="sm"
-                label="All"
-                color={categoryFilter === "all" ? "primary" : "outline"}
-                onClick={() => setCategoryFilter("all")}
-              />
+          <div className="flex flex-col w-full gap-2 mt-2">
+            <h2 className="text-sm 2xl:text-base font-semibold text-gray-800">
+              Categories
+            </h2>
+            <div className="flex overflow-x-auto gap-2 px-2 py-1 scrollbar-th scrollbar-thumb-gray-200 scrollbar-track-gray-100">
+              {/* Wrap each button in a div, but prevent it from shrinking */}
+              <div className="flex-shrink-0">
+                <Button
+                  size="sm"
+                  label="All"
+                  color={categoryFilter === "all" ? "primary" : "outline"}
+                  onClick={() => setCategoryFilter("all")}
+                />
+              </div>
 
               {productCategoriesList.map((pc, index) => (
-                <Button
-                  key={index}
-                  size="sm"
-                  label={pc}
-                  color={categoryFilter === pc ? "primary" : "outline"}
-                  onClick={() => setCategoryFilter(pc)}
-                />
+                <div key={index} className="flex-shrink-0">
+                  <Button
+                    size="sm"
+                    label={pc}
+                    color={categoryFilter === pc ? "primary" : "outline"}
+                    onClick={() => setCategoryFilter(pc)}
+                  />
+                </div>
               ))}
             </div>
           </div>

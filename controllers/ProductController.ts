@@ -13,7 +13,9 @@ import { deleteProducts } from "@/services/products/delete-product";
 import { getProducts } from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 import { createProductCategory } from "@/services/products/product-category/create-product-category";
+import { deleteProductCategoriesByFields } from "@/services/products/product-category/delete-product-category";
 import { getProductCategoryServices } from "@/services/products/product-category/get-product-category";
+import { updateProductCategoriesByFields } from "@/services/products/product-category/update-product-category";
 import {
   createProductVariant,
   createProductVariants,
@@ -296,6 +298,50 @@ export const getProductCategories = async ({
     return {
       error: e,
       message: "Failed to fetched product variants!",
+      success: false,
+    };
+  }
+};
+
+export const updateProductCategoriesController = async ({
+  data,
+}: {
+  data: Partial<ProductCategories>[];
+}) => {
+  try {
+    const res = await updateProductCategoriesByFields({ updates: data });
+    return {
+      data: res,
+      message: "Product categories edited successfully!",
+      success: true,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      error: e,
+      message: "Failed to edit product categories!",
+      success: false,
+    };
+  }
+};
+
+export const deleteProductCategoriesController = async ({
+  data,
+}: {
+  data: Partial<ProductCategories>[];
+}) => {
+  try {
+    const res = await deleteProductCategoriesByFields({ updates: data });
+    return {
+      data: res,
+      message: "Product categories deleted successfully!",
+      success: true,
+    };
+  } catch (e) {
+    console.log(e);
+    return {
+      error: e,
+      message: "Failed to delete product categories!",
       success: false,
     };
   }

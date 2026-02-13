@@ -48,6 +48,7 @@ import ViewCompositePOItem from "./_components/ViewCompositePOItem";
 import { createPortal } from "react-dom";
 import { PortalDropdown } from "@/components/shared/PortalDropDown";
 import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
+import UpdatePOItemStatus from "./_components/UpdatePOItemStatus";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -112,6 +113,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   setShowAllItems,
   onMaskAsDeliverdSupplier,
 }) => {
+  const [selectedPOItemRows, setSelectedPOItemRows] = useState<
+    PurchaseOrderItems[] | null
+  >(null);
   const [showReplaceItem, setShowReplaceItem] =
     useState<PurchaseOrderItems | null>(null);
   const [deliverPOItems, setDeliverPOItems] = useState<
@@ -370,6 +374,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         };
       }),
     );
+  };
+  const handleSelectionChange = (selected: PurchaseOrderItems[]) => {
+    // 👉 Here you can trigger bulk delete, bulk approve, etc.
+    setSelectedPOItemRows(selected);
   };
   const handleNotOrderedSupplier = async (data: DisplayPOItemsSupplier) => {
     const hasItemForUnordered = data.items.some(
@@ -834,6 +842,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                             {selectedStoreSupplier === null ? (
                               isView === "all" ? (
                                 <Table
+                                  showCheckBox={true}
+                                  onSelectionChange={handleSelectionChange}
                                   uniqueIdKey="itemId"
                                   localSearch={true}
                                   textSize="xs"
@@ -867,6 +877,18 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           />
                                         </div>
                                       )}
+                                      <div>
+                                        <Button
+                                          hasBorder
+                                          color="warning"
+                                          size="xs"
+                                          onClick={() => {
+                                            console.log({ selectedPOItemRows });
+                                          }}
+                                          label="Update Status"
+                                          icon={Package}
+                                        />
+                                      </div>
                                       {isSupplierItemsSent && (
                                         <div>
                                           <Button
@@ -1226,6 +1248,15 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           }}
         />
       </Popup>
+      <Modal
+        title="Update Status for PO Items"
+        isOpen={false}
+        onClose={function (): void {
+          throw new Error("Function not implemented.");
+        }}
+      >
+        <UpdatePOItemStatus data={selectedPOItemRows ?? []} />
+      </Modal>
     </div>
   );
 };

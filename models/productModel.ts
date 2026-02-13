@@ -136,6 +136,7 @@ export const updateProducts = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
+  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
   return result;
 };
@@ -217,6 +218,30 @@ export const insertVarianComponents = async ({
   return results.insertId;
 };
 
+export const selectProductModelOnly = async ({
+  connection,
+  keyFields = {},
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Products>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT * FROM Products WHERE 1=1 AND prodDeletedAt IS NULL`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else {
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  console.log({ sql, params });
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows as Products[];
+};
+
 export const selectProducts = async ({
   connection,
   keyFields = {},
@@ -229,7 +254,7 @@ export const selectProducts = async ({
   storeName?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  let sql = `SELECT 
+  let sql = `SELECT  
     p.*,
     s.*,
     pc.prodCatId,
@@ -396,7 +421,7 @@ export const selectProductCategories = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = ` SELECT * FROM ProductCategories pc
-  WHERE 1=1`;
+  WHERE 1=1 AND pc.prodCatDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
@@ -472,6 +497,73 @@ export const updateProductVariants = async ({
 
   const sql = `
     UPDATE ProductVariants
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
+};
+export const updateProductCategories = async ({
+  connection,
+  updates,
+  keyFields = ["prodCatId"],
+}: // 👈 optional per-field mode
+{
+  connection?: PoolConnection;
+  updates: Partial<ProductCategories>[];
+  keyFields?: (keyof ProductCategories)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof ProductCategories),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE ProductCategories
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;

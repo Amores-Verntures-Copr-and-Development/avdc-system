@@ -31,7 +31,6 @@ import {
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-
 import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
 import AddItemROModal from "./components/AddItemROModal";
 import AddItemPOModal from "./components/AddItemPOModal";
@@ -42,6 +41,7 @@ import { formatPeso } from "@/utils/formatPeso";
 import DynamicCheckbox from "@/components/shared/CheckBox";
 import Popup from "@/components/shared/PopupModal";
 import IconButton from "@/components/shared/IconButton";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -56,6 +56,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   user,
 }) => {
   const [isEditRow, setIsEditingRow] = useState<number | null>(null);
+  const [selectedRowItem, setSelectedRowItem] =
+    useState<DisplayRequestItems | null>(null);
+  const [showReceivedOneItem, setShowReceivedOneItem] = useState(false);
   const [isReceiving, setIsReceiving] = useState(false);
   const [isSelectingAddItemPO, setIsSelectingAddItemPO] = useState(false);
   const [showAddPOItem, setShowAddPOItem] = useState(false);
@@ -86,17 +89,30 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     fetcher,
   );
   useEffect(() => {
-    if (!itemResponse.data || itemResponse.data.length === 0) return;
+    if (!itemResponse.data?.length || !selectedReq?.requestNo) return;
 
-    const saved: DisplayRequestItems[] | null = JSON.parse(
-      localStorage.getItem(`${selectedReq?.requestNo}-request-item-draft`) ||
-        "null",
+    const saved: DisplayRequestItems[] = JSON.parse(
+      localStorage.getItem(`${selectedReq.requestNo}-request-item-draft`) ||
+        "[]",
     );
 
     const mergedData = itemResponse.data.map((item) => {
-      const savedItem = saved?.find((s) => s.reqItemId === item.reqItemId);
-      return savedItem
-        ? { ...item, reqItemReceived: savedItem.reqItemReceived }
+      const savedItem = saved.find((s) => s.reqItemId === item.reqItemId);
+
+      if (!savedItem) return item;
+
+      // ✅ Server wins if already delivered/received
+      const serverStatus = item.reqItemStatus;
+      const draftStatus = savedItem.reqItemStatus;
+
+      const shouldUseDraft = serverStatus === "pending";
+
+      return shouldUseDraft
+        ? {
+            ...item,
+            reqItemReceived: savedItem.reqItemReceived,
+            reqItemStatus: draftStatus,
+          }
         : item;
     });
 
@@ -107,7 +123,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   // Save draft on every change
   useEffect(() => {
     if (!requestItemData || requestItemData.length === 0) return;
-
+    console.log({ requestItemData });
     localStorage.setItem(
       `${selectedReq?.requestNo}-request-item-draft`,
       JSON.stringify(requestItemData),
@@ -251,17 +267,29 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       key: "reqItemReceived",
       editable: (row) => {
         const original = findOriginalData(row.reqItemId);
-        return (
-          // (original?.reqItemStatus === "delivered" ||
-          //   original?.reqItemStatus === "partial") &&
-          // (Number(row.receivedToFollow) === 0 ||
-          //   !Number(row.receivedToFollow)) &&
-          // Number(original.reqItemReceived) === 0
+        const isNotEditable =
+          original?.reqItemStatus === "not_ordered" ||
+          row.reqItemStatus === "not_ordered";
 
-          (original?.reqItemStatus === "delivered" ||
-            original?.reqItemStatus === "partial") &&
-          Number(original.reqItemReceived) === 0
-        );
+        const isEditableStatus =
+          original?.reqItemStatus === "delivered" ||
+          original?.reqItemStatus === "partial" ||
+          row.reqItemStatus === "delivered";
+
+        const isEditable = !isNotEditable && isEditableStatus;
+
+        return isEditable;
+        // return (
+        //   // (original?.reqItemStatus === "delivered" ||
+        //   //   original?.reqItemStatus === "partial") &&
+        //   // (Number(row.receivedToFollow) === 0 ||
+        //   //   !Number(row.receivedToFollow)) &&
+        //   // Number(original.reqItemReceived) === 0
+
+        //   (original?.reqItemStatus === "delivered" ||
+        //     original?.reqItemStatus === "partial") &&
+        //   Number(original.reqItemReceived) === 0
+        // );
       },
       inputType: "number",
       selector: (row) => {
@@ -293,48 +321,82 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       },
       editable: (row) => {
         const original = findOriginalData(row.reqItemId);
-        return (
-          (row.reqItemStatus === "delivered" ||
-            (selectedReq?.requestStatus === "delivered" &&
-              original?.reqItemStatus !== "not_ordered")) &&
-          original?.reqItemStatus !== "received"
-        );
+        const editableStatus = original?.reqItemStatus !== "not_ordered";
+
+        return editableStatus;
+        // return (
+        //   (row.reqItemStatus === "delivered" ||
+        //     (selectedReq?.requestStatus === "delivered" &&
+        //       original?.reqItemStatus !== "not_ordered")) &&
+        //   original?.reqItemStatus !== "received"
+        // );
       },
 
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
-      options: [
-        {
-          label: "Not Ordered",
-          value: "not_ordered",
-          bg: "bg-red-100",
-          color: "text-red-600",
-        },
-        {
-          label: "Partial",
-          value: "partial",
-          bg: "bg-blue-100",
-          color: "text-blue-700",
-        },
-        {
-          label: "Pending",
-          value: "pending",
-          bg: "bg-gray-100",
-          color: "text-gray-700",
-        },
-        {
-          label: "Delivered",
-          value: "delivered",
-          bg: "bg-yellow-100",
-          color: "text-yellow-700",
-        },
-        {
-          label: "Received",
-          value: "received",
-          bg: "bg-emerald-100",
-          color: "text-emerald-700",
-        },
-      ],
+      options: (row) => {
+        let options: [];
+        const original = findOriginalData(row.reqItemId);
+        if (original?.reqItemStatus === "pending") {
+          return [
+            {
+              label: "Not Ordered",
+              value: "not_ordered",
+              bg: "bg-red-100",
+              color: "text-red-600",
+            },
+            {
+              label: "Pending",
+              value: "pending",
+              bg: "bg-gray-100",
+              color: "text-gray-700",
+            },
+          ];
+        }
+        if (original?.reqItemStatus === "delivered") {
+          return [
+            {
+              label: "Not Ordered",
+              value: "not_ordered",
+              bg: "bg-red-100",
+              color: "text-red-600",
+            },
+            {
+              label: "Delivered",
+              value: "delivered",
+              bg: "bg-yellow-100",
+              color: "text-yellow-700",
+            },
+          ];
+        }
+        return [
+          {
+            label: "Not Ordered",
+            value: "not_ordered",
+            bg: "bg-red-100",
+            color: "text-red-600",
+          },
+
+          {
+            label: "Pending",
+            value: "pending",
+            bg: "bg-gray-100",
+            color: "text-gray-700",
+          },
+          {
+            label: "Delivered",
+            value: "delivered",
+            bg: "bg-yellow-100",
+            color: "text-yellow-700",
+          },
+          {
+            label: "Received",
+            value: "received",
+            bg: "bg-emerald-100",
+            color: "text-emerald-700",
+          },
+        ];
+      },
 
       value: (row) => row.reqItemStatus,
     },
@@ -485,6 +547,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       mutateRequest();
       mutate();
       setShowReceivedConfirmation(false);
+
       return true;
     } catch (_e) {
       console.log(_e);
@@ -688,6 +751,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const hasToFollowDelivered = requestItemData.some(
     (i) => i.reqItemStatus === "delivered" && Number(i.reqItemToFollow) !== 0,
   );
+  const hasItemDeliver = requestItemData.some(
+    (i) => i.reqItemStatus === "delivered",
+  );
   const handleSaveEditItem = async () => {
     setIsEditting(true);
     const requestItems: Partial<RequestItems>[] = requestItemData.map(
@@ -749,6 +815,84 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       0,
     );
   })();
+
+  const handleReceiveItem = async () => {
+    if (!selectedRowItem || !selectedReq) return;
+
+    setIsReceiving(true);
+
+    try {
+      const receiveItem: Partial<Request> = {
+        ...selectedReq,
+        requestItems: [{ ...selectedRowItem }],
+      };
+
+      const sendData = {
+        controller: "received",
+        data: [receiveItem],
+      };
+
+      const result = await fetch(`api/requests/`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sendData),
+      });
+
+      const res = await result.json();
+
+      if (!res.success) throw new Error(res.err);
+
+      // only call once
+      const updatedData = await mutate();
+
+      mutateRequest(); // refresh request list
+
+      if (updatedData?.data) {
+        const beforeItem = originalData.find(
+          (i) => i.reqItemId === selectedRowItem.reqItemId,
+        );
+
+        const afterItem = updatedData.data.find(
+          (i) => i.reqItemId === selectedRowItem.reqItemId,
+        );
+
+        const isStatusChanged =
+          beforeItem?.reqItemStatus !== afterItem?.reqItemStatus;
+
+        if (isStatusChanged && afterItem) {
+          const key = `${selectedReq.requestNo}-request-item-draft`;
+
+          const saved: DisplayRequestItems[] = JSON.parse(
+            localStorage.getItem(key) || "[]",
+          );
+
+          const updatedSaved = saved.map((item) =>
+            item.reqItemId === afterItem.reqItemId
+              ? { ...item, ...afterItem }
+              : item,
+          );
+
+          localStorage.setItem(key, JSON.stringify(updatedSaved));
+          setRequestItemData(updatedSaved);
+        }
+
+        setOriginalData(updatedData.data);
+      }
+      toast.success(
+        `Received ${selectedRowItem.reqItemReceived} ${selectedRowItem.itemName} successfully!`,
+      );
+      setShowReceivedOneItem(false);
+      setSelectedRowItem(null);
+
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to update Inventory.");
+      return false;
+    } finally {
+      setIsReceiving(false);
+    }
+  };
   return (
     <>
       <div className="flex justify-between">
@@ -832,30 +976,55 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         <div className="flex-1 overflow-y-auto pr-4 pl-4">
           <Table
             showActions
-            renderActions={(row) => (
-              <div className="flex justify-center gap-2">
-                <IconButton
-                  onClick={() => {
-                    // handleEditRow(row);
-                    // setIsShowViewRequest(true);
-                    // setSelectedRow(row);
-                  }}
-                  label={"Edit"}
-                  bg={"gray"}
-                  icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
-                />
-                <IconButton
-                  onClick={() => {
-                    // handleEditRow(row);
-                    // setIsShowViewRequest(true);
-                    // setSelectedRow(row);
-                  }}
-                  label={"Remove from request"}
-                  bg={"red"}
-                  icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
-                />
-              </div>
-            )}
+            renderActions={(row) => {
+              const findOriginalData = originalData.find(
+                (i) => (i.reqItemId = row.reqItemId),
+              );
+              return (
+                <div className="flex justify-center gap-2">
+                  {selectedReq?.requestStatus === "pending" && (
+                    <IconButton
+                      onClick={() => {
+                        // handleEditRow(row);
+                        // setIsShowViewRequest(true);
+                        // setSelectedRow(row);
+                      }}
+                      label={"Edit"}
+                      bg={"gray"}
+                      icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )}
+                  {selectedReq?.requestStatus === "pending" && (
+                    <IconButton
+                      onClick={() => {
+                        // handleEditRow(row);
+                        // setIsShowViewRequest(true);
+                        // setSelectedRow(row);
+                      }}
+                      label={"Remove from request"}
+                      bg={"red"}
+                      icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )}
+                  {findOriginalData?.reqItemStatus === "delivered" ||
+                    (row.reqItemStatus === "delivered" && (
+                      <IconButton
+                        onClick={() => {
+                          if (Number(row.reqItemReceived) === 0) {
+                            toast.error("No quantity to receive!");
+                            return;
+                          }
+                          setSelectedRowItem(row);
+                          setShowReceivedOneItem(true);
+                        }}
+                        label={"Receive Item"}
+                        bg={"red"}
+                        icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      />
+                    ))}
+                </div>
+              );
+            }}
             localSearch
             renderTopActions={
               <div className="flex gap-2">
@@ -900,7 +1069,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             columns={
               hasToFollowDelivered
                 ? columnToFollow
-                : hasPartialDelivered
+                : hasPartialDelivered || hasItemDeliver
                   ? column
                   : isRequestor
                     ? selectedReq?.requestStatus === "pending" ||
@@ -1104,30 +1273,32 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 )}
                 {(selectedReq?.requestStatus === "delivered" ||
                   hasPartialDelivered ||
-                  hasToFollowDelivered) && (
+                  hasToFollowDelivered ||
+                  hasItemDeliver) && (
                   <div>
                     <Button
                       icon={CheckLine}
                       onClick={() => {
-                        const hasNoQuantityReceived = requestItemData.some(
+                        const validReceivedData = requestItemData.filter(
+                          (i) =>
+                            i.reqItemStatus === "delivered" ||
+                            i.reqItemStatus === "partial",
+                        );
+                        const hasNoQuantityReceived = validReceivedData.some(
                           (item) =>
                             Number(item.reqItemReceived) === 0 &&
                             item.reqItemStatus !== "not_ordered",
                         );
-                        console.log({ requestItemData });
+
                         const hasNoQuantityToFollowReceived =
-                          requestItemData.some(
+                          validReceivedData.some(
                             (item) =>
                               (Number(item.receivedToFollow) === 0 ||
                                 item.receivedToFollow === undefined) &&
                               item.reqItemStatus === "delivered" &&
                               Number(item.reqItemToFollow) !== 0,
                           );
-                        const validReceivedData = requestItemData.filter(
-                          (i) =>
-                            i.reqItemStatus === "delivered" ||
-                            i.reqItemStatus === "partial",
-                        );
+
                         console.log({ validReceivedData });
                         if (hasNoQuantityToFollowReceived) {
                           toast.error(
@@ -1243,6 +1414,19 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           </div>
         </div>
       </Modal>
+      <ConfirmationModal
+        onConfirm={function (): void {
+          handleReceiveItem();
+        }}
+        confirmationInfo={`Are you sure you want to receive ${selectedRowItem?.reqItemReceived} ${selectedRowItem?.itemName}?`}
+        onClose={function (): void {
+          setShowReceivedOneItem(false);
+          setSelectedRowItem(null);
+        }}
+        isShow={showReceivedOneItem && selectedRowItem !== null}
+        title={`Received Item`}
+        isLoading={isReceiving}
+      />
     </>
   );
 };

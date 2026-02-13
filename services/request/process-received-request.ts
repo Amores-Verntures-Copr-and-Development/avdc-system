@@ -97,11 +97,6 @@ export async function processReceivedRequest(data: Request) {
       ...validFromPartialToReceivedItems,
       ...validReceivedToFollowRequestItems,
     ];
-    console.log({
-      validReceivedRequestItems,
-      validFromPartialToReceivedItems,
-      validReceivedToFollowRequestItems,
-    });
 
     const addInventoryQty: Partial<InventoryItemInterface>[] =
       validToAdd.map((item) => ({

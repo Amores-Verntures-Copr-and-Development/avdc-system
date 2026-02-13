@@ -52,6 +52,7 @@ interface ProductStorePageProps {
 }
 
 const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
+  const [showPopupComponent, setShowPopupComponent] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const searchParams = useSearchParams();
   const [productView, setProductView] = useState<
@@ -159,7 +160,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       selector: (row) => {
         const variants = row.productVariants || [];
         // Assuming your row has a suppliers array
-        console.log({ variants });
+
         return (
           <div className="group relative">
             <select
@@ -211,7 +212,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       selector: (row) => {
         const variants = row.productVariants || [];
         // Assuming your row has a suppliers array
-        console.log({ variants });
+
         return (
           <div className="group relative">
             <select
@@ -602,7 +603,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       <Modal
         className="min-h-0"
         title={`${selectedRow?.prodName}`}
-        subtitle="Edit products."
+        subtitle="Edit products"
         isOpen={showEdit}
         onClose={function (): void {
           setShowEdit(false);
@@ -642,12 +643,12 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           setShowCategory(false);
         }}
         title="Product Categories"
+        closeOnClickOutside={!showPopupComponent}
       >
         <ViewProductCategory
           storeId={storeId ?? 0}
-          onClose={() => {
-            setShowCategory(false);
-          }}
+          setShowPopupComponent={setShowPopupComponent}
+          mutateProduct={mutate}
         />
       </Popup>
       <ConfirmationModal
