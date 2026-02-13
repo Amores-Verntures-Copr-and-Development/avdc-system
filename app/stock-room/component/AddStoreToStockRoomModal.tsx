@@ -31,10 +31,9 @@ const AddStoreToStockRoomModal = ({
   const [selectedRows, setSelectedRows] = useState<StoreInterface[]>();
   const { data: response = { data: [] } } = useSWR<{ data: StoreInterface[] }>(
     `/api/stock-room/${data.stockRoomId}/search`,
-    fetcher
+    fetcher,
   );
   const handleSelectionChange = (selected: StoreInterface[]) => {
-    console.log("Selected rows:", selected);
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     if (selected.length > 0) {
       setSelectedRows(selected);

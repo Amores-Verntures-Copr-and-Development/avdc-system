@@ -168,7 +168,6 @@ export const updateRequest = async (
 
 export const addRequestItem = async (data: CreateRequestItemDto[]) => {
   try {
-    console.log("[addRequestItem]", { data });
     const res = await createRequestItem({ data });
     return {
       success: true,
@@ -186,12 +185,11 @@ export const addRequestItem = async (data: CreateRequestItemDto[]) => {
 
 export const addItemFromPOtoRequest = async (data: POAddToRequestItemForm) => {
   try {
-    console.log("[addItemFromPOtoRequest]", { data });
     const res = await processAddItemFromPOtoRequest(data);
     return {
       success: true,
       message: "Items added to request successfully",
-      // result: res,
+      result: res,
     };
   } catch (e) {
     return {

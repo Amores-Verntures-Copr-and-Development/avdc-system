@@ -123,7 +123,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   // Save draft on every change
   useEffect(() => {
     if (!requestItemData || requestItemData.length === 0) return;
-    console.log({ requestItemData });
+
     localStorage.setItem(
       `${selectedReq?.requestNo}-request-item-draft`,
       JSON.stringify(requestItemData),
@@ -522,7 +522,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         (i) => i.reqItemStatus === "delivered" || i.reqItemStatus === "partial",
       ),
     };
-    console.log({ validReceivedROI });
+
     const storageKey = `${selectedReq?.requestNo}-request-item-draft`;
     const sendData = {
       controller: "received",
@@ -763,7 +763,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       }),
     );
     try {
-      console.log({ requestItems });
       const result = await fetch(
         `/api/requests/request-items/${selectedReq?.requestId}/`,
         {
@@ -1299,7 +1298,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                               Number(item.reqItemToFollow) !== 0,
                           );
 
-                        console.log({ validReceivedData });
                         if (hasNoQuantityToFollowReceived) {
                           toast.error(
                             "Cannot received 0 quantity from to follow items.!",
