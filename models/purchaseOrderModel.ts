@@ -598,3 +598,21 @@ GROUP BY
   const [rows] = await pool.execute<RowDataPacket[]>(sql);
   return rows;
 };
+
+export const selectPurchaseOrderItemByRequesItemId = async ({
+  connection,
+  reqItemId,
+}: {
+  connection?: PoolConnection;
+  reqItemId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT poi.*,i.* FROM RequestItems ri
+LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+LEFT JOIN PurchaseOrderItems poi ON poi.itemId = ii.inventoryItemReferenceId
+LEFT JOIN Items i ON i.itemId = poi.itemId
+WHERE ri.reqItemId =  ?`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [reqItemId]);
+  return rows;
+};

@@ -6,12 +6,10 @@ export async function updateRequestItems({
   connection,
   updates,
   keyFields = ["invItem"],
-}: //   fieldModes = {}, // default primary key
-{
+}: {
   connection?: PoolConnection;
   updates: Partial<RequestItems>[];
   keyFields?: (keyof RequestItems)[];
-  //   fieldModes?: Partial<Record<keyof RequestItems, any>>;
 }) {
   try {
     await updateRequestItem({ connection, updates, keyFields });

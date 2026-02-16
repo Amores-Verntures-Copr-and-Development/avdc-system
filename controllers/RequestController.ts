@@ -10,6 +10,7 @@ import { processDeliveredPO } from "@/services/request/process-deliver-request";
 import { processReceivedRequest } from "@/services/request/process-received-request";
 import { createRequestItem } from "@/services/request/request-items/create-request-items";
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
+import { notOrderedRequestItems } from "@/services/request/request-items/not-ordered-requestItems";
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
 import { updateRequestItems } from "@/services/request/request-items/update-request-items";
 import {
@@ -200,7 +201,9 @@ export const addItemFromPOtoRequest = async (data: POAddToRequestItemForm) => {
   }
 };
 
-export const updateRequestItem = async (requestItem: RequestItems[]) => {
+export const updateRequestItem = async (
+  requestItem: Partial<RequestItems>[],
+) => {
   try {
     const res = await updateRequestItems({
       updates: requestItem,
@@ -211,6 +214,38 @@ export const updateRequestItem = async (requestItem: RequestItems[]) => {
       message: "Request Items updated successfully1",
       data: res,
     };
+  } catch (e) {
+    console.log({ e });
+    return {
+      success: false,
+      message: "Failed to update request items!",
+      error: e,
+    };
+  }
+};
+
+export const updateRequestItemByStatus = async ({
+  requestItems,
+  controller,
+}: {
+  requestItems: Partial<RequestItems>[];
+  controller: "received" | "not_ordered";
+}) => {
+  try {
+    if (controller === "not_ordered") {
+      const res = await notOrderedRequestItems({ requestItems });
+      return {
+        success: true,
+        message: "Request Items not ordered successfully1",
+        data: res,
+      };
+    } else {
+      return {
+        success: false,
+        message: "No controller found!",
+        data: [],
+      };
+    }
   } catch (e) {
     console.log({ e });
     return {

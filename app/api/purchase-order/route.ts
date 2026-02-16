@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         message: res.message,
         data: res,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         message: "Failed to create purchase order",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -49,7 +49,7 @@ export async function GET() {
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -58,7 +58,7 @@ export async function GET() {
         message: "Failed to fetch PO",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -67,6 +67,7 @@ export async function PUT(request: NextRequest) {
   try {
     const po = await request.json();
     const { data, controller } = po;
+    console.log({ data, controller });
     const res = await updatePurchaseOrder(controller, data);
     if (!res.success) {
       console.log(res.error);
@@ -77,7 +78,7 @@ export async function PUT(request: NextRequest) {
         success: true,
         message: res.message,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -86,7 +87,7 @@ export async function PUT(request: NextRequest) {
         message: "Failed to fetch PO",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

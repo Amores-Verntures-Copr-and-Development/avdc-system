@@ -64,6 +64,14 @@ export const requestStatusOptions: PurchaseStatusOption[] = [
     border: "border-red-1/50",
     dot: "bg-red-500",
   },
+  {
+    label: "Received Store",
+    value: "received_store",
+    bg: "bg-blue-100",
+    color: "text-blue-600",
+    border: "border-blue-1/50",
+    dot: "bg-blue-500",
+  },
 ];
 
 export function getPurchaseStatusOption(value: string): PurchaseStatusOption {

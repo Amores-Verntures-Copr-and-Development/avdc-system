@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         message: res.message,
         data: res,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         message: "Failed to create request",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest) {
         success: true,
         message: res.message,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
         message: "Failed to Update Request",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -26,6 +26,7 @@ import {
   PackageMinus,
   Layers2,
   Replace,
+  RefreshCw,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -126,6 +127,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmittingNotOrder, setIsSubmittingNotOrder] = useState(false);
   const [selectedSupplierToAdd, setSelectedSupplierToAdd] =
     useState<DisplayPOItemsSupplier | null>(null);
@@ -424,7 +426,44 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       ),
     );
   };
+  const handleUpdatePOStatus = async () => {
+    if (!showUpdateStatusButton) {
+      toast.error("Cannot update status base on po items!");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      if (!poData) {
+        return;
+      }
+      const poDataOrder: Partial<PurchaseOrders> = {
+        poId: poData?.poId,
+      };
+      const newData = {
+        data: poDataOrder,
+        controller: "received",
+      };
 
+      const result = await fetch(`/api/purchase-order/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(`${poData.poNumber} status updated successfully`);
+      mutate();
+      mutateInventory();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
   const handleDeliverItemStore = async (data: DeliverItemsToStore) => {
     try {
       const result = await fetch(`api/purchase-order/deliver/${data.storeId}`, {
@@ -481,6 +520,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       return false;
     }
   };
+  const showUpdateStatusButton = supplierData.flatMap((supp) =>
+    supp.items.flatMap(
+      (i) => !["pending", "sent"].includes(i.poItemStatus ?? ""),
+    ),
+  );
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-1  flex-col h-full w-full overflow-hidden">
@@ -545,7 +589,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               </div>
             ) : (
               <div className="space-y-2">
-                {supplierData.map((supplier) => {
+                {supplierData.map((supplier, index) => {
                   const isSupplierItemsSent = supplier.items.some(
                     (item) => item.poItemStatus === "sent",
                   );
@@ -609,7 +653,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     }, 0);
                   return (
                     <div
-                      key={supplier.suppId}
+                      key={index}
                       className="border border-gray-200 shadow  rounded-lg overflow-hidden flex flex-col"
                     >
                       <div className="bg-gradient-to-r flex flex-col gap-2  bg-white p-2 cursor-pointer hover:from-gray-100 transition overflow-visible">
@@ -877,18 +921,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                           />
                                         </div>
                                       )}
-                                      <div>
-                                        <Button
-                                          hasBorder
-                                          color="warning"
-                                          size="xs"
-                                          onClick={() => {
-                                            console.log({ selectedPOItemRows });
-                                          }}
-                                          label="Update Status"
-                                          icon={Package}
-                                        />
-                                      </div>
+
                                       {isSupplierItemsSent && (
                                         <div>
                                           <Button
@@ -1102,6 +1135,20 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
+            {showUpdateStatusButton && (
+              <div className="">
+                <Button
+                  size="sm"
+                  label={"Update Status"}
+                  loading={isUpdating}
+                  icon={RefreshCw}
+                  className="font-semibold text-gray-700 text-xs px-2 py-2"
+                  onClick={() => {
+                    handleUpdatePOStatus();
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

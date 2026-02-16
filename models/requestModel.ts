@@ -396,11 +396,11 @@ WHERE po.poNumber = ?`;
 export const updateRequestItem = async ({
   connection,
   updates,
-  keyFields = ["reqItemId"], // default primary key
+  keyFields = ["reqItemId"],
 }: {
   connection?: PoolConnection;
   updates: Partial<RequestItems>[];
-  keyFields?: (keyof RequestItems)[]; // which fields define the WHERE condition
+  keyFields?: (keyof RequestItems)[];
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
@@ -413,51 +413,28 @@ export const updateRequestItem = async ({
   if (updateFields.length === 0)
     throw new Error("No fields to update (all are key fields).");
 
-  const setClauses: string[] = [];
-  const params: any[] = [];
+  // Batch updates individually to avoid lock wait timeout
+  for (const row of updates) {
+    const setClauses: string[] = [];
+    const params: any[] = [];
 
-  // ✅ Build CASE WHEN for each update field
-  for (const field of updateFields) {
-    const caseParts: string[] = [];
-
-    for (const row of updates) {
-      // Build WHERE condition for each key (e.g., poItemId, itemId)
-      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
-      caseParts.push(`WHEN ${whenClause} THEN ?`);
-
-      // Add all key values + field value to params
-      keyFields.forEach((k) => params.push((row as any)[k]));
+    for (const field of updateFields) {
+      setClauses.push(`${field} = ?`);
       params.push((row as any)[field]);
     }
 
-    setClauses.push(`${field} = CASE ${caseParts.join(" ")} END`);
+    const whereClauses = keyFields.map((k) => {
+      params.push((row as any)[k]);
+      return `${k} = ?`;
+    });
+
+    const sql = `UPDATE RequestItems SET ${setClauses.join(
+      ", ",
+    )} WHERE ${whereClauses.join(" AND ")}`;
+
+    console.log({ sql, params });
+    await pool.execute(sql, params);
   }
-
-  // ✅ WHERE clause (unique combination of all key values)
-  const whereConditions: string[] = [];
-  const uniqueKeyCombinations = updates.map((row) =>
-    keyFields.map((k) => (row as any)[k]),
-  );
-
-  // Create `WHERE (key1, key2) IN ((?, ?), (?, ?))` if multiple keys
-  const whereSql =
-    keyFields.length > 1
-      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
-          .map((row) => `(${row.map(() => "?").join(",")})`)
-          .join(",")})`
-      : `${keyFields[0]} IN (${uniqueKeyCombinations
-          .map(() => "?")
-          .join(",")})`;
-
-  // Push all key values again for WHERE condition
-  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
-  const sql = `
-    UPDATE RequestItems
-    SET ${setClauses.join(", ")}
-    WHERE ${whereSql};
-  `;
-  const [result] = await pool.execute(sql, params);
-  return result;
 };
 
 export const selectRequestOrderItems = async ({

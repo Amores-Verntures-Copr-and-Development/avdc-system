@@ -188,7 +188,6 @@ export const updatePurchaseOrder = async (
 ) => {
   let message: string = "";
   try {
-    console.log(data);
     if (!controller) {
       throw new Error("No controller found!");
     }

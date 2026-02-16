@@ -15,7 +15,8 @@ export type RequestItemStatus =
   | "delivered"
   | "received"
   | "partial"
-  | "not_ordered";
+  | "not_ordered"
+  | "received_store";
 export interface Request {
   requestId: number;
   requestNo: string;

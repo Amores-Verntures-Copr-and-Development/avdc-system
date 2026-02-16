@@ -8,8 +8,14 @@ import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { findInventoryByFields } from "../inventory/get-inventory";
 import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
 import { getRequestItems, getRequestItemsByIds } from "../requestServices";
-import { getRequestOrderItems } from "./request-items/get-request-items";
+import {
+  findRequestItemsByPOItemId,
+  getRequestOrderItems,
+} from "./request-items/get-request-items";
 import { it } from "node:test";
+import { PurchaseOrderItems } from "@/types/purchaseOrders";
+import { findPurchaserOrderItemByReqItemId } from "../purchase/purchase-items/get-purchase-tems";
+import { updatePurchaseOrderItems } from "../purchase/purchase-items/update-purchase-items";
 
 export async function processReceivedRequest(data: Request) {
   const pool = await getDBConnection();
@@ -17,6 +23,7 @@ export async function processReceivedRequest(data: Request) {
   try {
     await connection.beginTransaction();
 
+    let updatePoItems: Partial<PurchaseOrderItems>[] = [];
     const validReceivedRequestItems: Partial<RequestItems>[] = data.requestItems
       .filter(
         (it) =>
@@ -76,11 +83,54 @@ export async function processReceivedRequest(data: Request) {
         }));
 
     if (validReceivedRequestItems && validReceivedRequestItems.length > 0) {
+      console.log({ validReceivedRequestItems });
       await updateRequestItems({
         connection,
         updates: validReceivedRequestItems,
         keyFields: ["reqItemId"],
       });
+
+      await Promise.all(
+        validReceivedRequestItems.map(async (reqItem) => {
+          if (reqItem.reqItemId) {
+            const poItems = await findPurchaserOrderItemByReqItemId({
+              connection,
+              reqItemId: reqItem.reqItemId,
+            });
+            console.log({ poItems });
+            //CHECK FIRST IF ONLY 1 itemId in request, if 1 update automatically, if more check if all item in request is delivered or complete before updating
+
+            const checkRequestItems = await findRequestItemsByPOItemId({
+              connection,
+              poItemId: [poItems[0].poItemId],
+            });
+            const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
+              ["received", "complete"].includes(req.reqItemStatus),
+            );
+
+            if (requestItemsIsAllDelivered) {
+              updatePoItems.push({
+                poItemId: poItems[0].poItemId,
+              });
+            }
+          }
+        }),
+      );
+
+      if (updatePoItems && updatePoItems.length > 0) {
+        console.log({ updatePoItems });
+        const updatePoItemsDeliveredToStore: Partial<PurchaseOrderItems>[] =
+          updatePoItems.map((i) => ({
+            poItemId: i.poItemId,
+            poItemStatus: "received_store",
+          }));
+        await updatePurchaseOrderItems({
+          connection,
+          updates: updatePoItemsDeliveredToStore,
+          keyFields: ["poItemId"],
+        });
+      }
+      //find same itemId in po Id
     }
     if (
       validReceivedToFollowRequestItems &&

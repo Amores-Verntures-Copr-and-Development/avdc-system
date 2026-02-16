@@ -1,5 +1,6 @@
 import { StoreSupplierDetails } from "@/app/purchase-orders/components/ApprovedPOView";
 import {
+  selectPurchaseOrderItemByRequesItemId,
   selectPurchaserOrderItems,
   selectStoreItemsBySupplierAndPOId,
   selectStoreItemsBySupplierAndPOIdConversion,
@@ -66,6 +67,24 @@ export async function findPurchaserOrder({
 }) {
   try {
     const data = await selectPurchaserOrderItems({ connection, keyfields });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findPurchaserOrderItemByReqItemId({
+  connection,
+  reqItemId,
+}: {
+  connection?: PoolConnection;
+  reqItemId: number;
+}) {
+  try {
+    const data = await selectPurchaseOrderItemByRequesItemId({
+      connection,
+      reqItemId,
+    });
     return data;
   } catch (e) {
     throw e;

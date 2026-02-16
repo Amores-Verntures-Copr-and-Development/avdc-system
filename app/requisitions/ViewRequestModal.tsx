@@ -38,7 +38,7 @@ import PageHeader from "@/components/shared/PageHeader";
 import { getStatusOption } from "../purchase-orders/components/CompletePOView";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 import { formatPeso } from "@/utils/formatPeso";
-import DynamicCheckbox from "@/components/shared/CheckBox";
+
 import Popup from "@/components/shared/PopupModal";
 import IconButton from "@/components/shared/IconButton";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
@@ -55,7 +55,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   onBack,
   user,
 }) => {
-  const [isEditRow, setIsEditingRow] = useState<number | null>(null);
   const [selectedRowItem, setSelectedRowItem] =
     useState<DisplayRequestItems | null>(null);
   const [showReceivedOneItem, setShowReceivedOneItem] = useState(false);
@@ -71,6 +70,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   );
   const [originalData, setOriginalData] = useState<DisplayRequestItems[]>([]);
   const [showReceivedConfirmation, setShowReceivedConfirmation] =
+    useState(false);
+  const [showNotOrderedConfirmation, setShowNotOrderedConfirmation] =
     useState(false);
   const [showROPDF, setShowROPDF] = useState(false);
   const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
@@ -322,8 +323,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       editable: (row) => {
         const original = findOriginalData(row.reqItemId);
         const editableStatus = original?.reqItemStatus !== "not_ordered";
-
-        return editableStatus;
+        const notEditableStatus = original?.reqItemStatus === "received";
+        const isEditable = !notEditableStatus && editableStatus;
+        return isEditable;
         // return (
         //   (row.reqItemStatus === "delivered" ||
         //     (selectedReq?.requestStatus === "delivered" &&
@@ -754,6 +756,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const hasItemDeliver = requestItemData.some(
     (i) => i.reqItemStatus === "delivered",
   );
+  const hasSomeNotOrdered = requestItemData.some(
+    (i) => i.reqItemStatus === "not_ordered",
+  );
   const handleSaveEditItem = async () => {
     setIsEditting(true);
     const requestItems: Partial<RequestItems>[] = requestItemData.map(
@@ -825,7 +830,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         ...selectedReq,
         requestItems: [{ ...selectedRowItem }],
       };
-
+      console.log(receiveItem);
       const sendData = {
         controller: "received",
         data: [receiveItem],
@@ -881,6 +886,81 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         `Received ${selectedRowItem.reqItemReceived} ${selectedRowItem.itemName} successfully!`,
       );
       setShowReceivedOneItem(false);
+      setSelectedRowItem(null);
+
+      return true;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to update Inventory.");
+      return false;
+    } finally {
+      setIsReceiving(false);
+    }
+  };
+
+  const handleNotOrderedItem = async () => {
+    if (!selectedRowItem || !selectedReq) return;
+
+    setIsReceiving(true);
+
+    try {
+      const receiveItem: Partial<RequestItems>[] = [selectedRowItem];
+
+      const sendData = {
+        controller: "not_ordered",
+        data: receiveItem,
+      };
+
+      const result = await fetch(`/api/requests/request-items/`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sendData),
+      });
+
+      const res = await result.json();
+
+      if (!res.success) throw new Error(res.err);
+
+      // only call once
+      const updatedData = await mutate();
+
+      mutateRequest(); // refresh request list
+
+      if (updatedData?.data) {
+        const beforeItem = originalData.find(
+          (i) => i.reqItemId === selectedRowItem.reqItemId,
+        );
+
+        const afterItem = updatedData.data.find(
+          (i) => i.reqItemId === selectedRowItem.reqItemId,
+        );
+
+        const isStatusChanged =
+          beforeItem?.reqItemStatus !== afterItem?.reqItemStatus;
+
+        if (isStatusChanged && afterItem) {
+          const key = `${selectedReq.requestNo}-request-item-draft`;
+
+          const saved: DisplayRequestItems[] = JSON.parse(
+            localStorage.getItem(key) || "[]",
+          );
+
+          const updatedSaved = saved.map((item) =>
+            item.reqItemId === afterItem.reqItemId
+              ? { ...item, ...afterItem }
+              : item,
+          );
+
+          localStorage.setItem(key, JSON.stringify(updatedSaved));
+          setRequestItemData(updatedSaved);
+        }
+
+        setOriginalData(updatedData.data);
+      }
+      toast.success(
+        `${selectedRowItem.itemName} mark as not ordered successfully!`,
+      );
+      setShowNotOrderedConfirmation(false);
       setSelectedRowItem(null);
 
       return true;
@@ -977,7 +1057,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             showActions
             renderActions={(row) => {
               const findOriginalData = originalData.find(
-                (i) => (i.reqItemId = row.reqItemId),
+                (i) => i.reqItemId === row.reqItemId,
               );
               return (
                 <div className="flex justify-center gap-2">
@@ -1005,26 +1085,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
                     />
                   )}
-                  {/* {(findOriginalData?.reqItemStatus === "delivered" ||
-                    row.reqItemStatus === "delivered") && (
-                    <IconButton
-                      onClick={() => {
-                        if (Number(row.reqItemReceived) === 0) {
-                          toast.error("No quantity to receive!");
-                          return;
-                        }
-                        setSelectedRowItem(row);
-                        setShowReceivedOneItem(true);
-                      }}
-                      label={"Receive Item"}
-                      bg={"red"}
-                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
-                  )} */}
+
                   {(row.reqItemStatus === "delivered" ||
                     row.reqItemStatus === "partial") && (
                     <IconButton
                       onClick={() => {
+                        console.log({ row });
+
+                        console.log({ findOriginalData });
                         if (Number(row.reqItemReceived) === 0) {
                           toast.error("No quantity to receive!");
                           return;
@@ -1033,10 +1101,26 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         setShowReceivedOneItem(true);
                       }}
                       label={"Receive Item"}
-                      bg={"red"}
+                      bg={"green"}
                       icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
                     />
                   )}
+                  {row.reqItemStatus === "not_ordered" &&
+                    findOriginalData?.reqItemStatus !== "not_ordered" && (
+                      <IconButton
+                        onClick={() => {
+                          console.log({ row });
+
+                          console.log({ findOriginalData });
+
+                          setSelectedRowItem(row);
+                          setShowNotOrderedConfirmation(true);
+                        }}
+                        label={"Not Order Item"}
+                        bg={"red"}
+                        icon={<X className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      />
+                    )}
                 </div>
               );
             }}
@@ -1084,7 +1168,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             columns={
               hasToFollowDelivered
                 ? columnToFollow
-                : hasPartialDelivered || hasItemDeliver
+                : hasPartialDelivered || hasItemDeliver || hasSomeNotOrdered
                   ? column
                   : isRequestor
                     ? selectedReq?.requestStatus === "pending" ||
@@ -1286,6 +1370,34 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
+                {hasSomeNotOrdered && (
+                  <div>
+                    <Button
+                      icon={X}
+                      color="danger"
+                      onClick={() => {
+                        const validNotOrderedData = requestItemData.filter(
+                          (reqItem) =>
+                            originalData.some(
+                              (origItem) =>
+                                origItem.itemId === reqItem.itemId &&
+                                origItem.reqItemStatus === "not_ordered",
+                            ),
+                        );
+
+                        if (!validNotOrderedData) {
+                          toast.error("No item to mark as not order");
+                          return;
+                        }
+
+                        setShowNotOrderedConfirmation(true);
+                      }}
+                      size="sm"
+                      label="Mark as not order"
+                      className="text-xs font-semibold"
+                    />
+                  </div>
+                )}
                 {(selectedReq?.requestStatus === "delivered" ||
                   hasPartialDelivered ||
                   hasToFollowDelivered ||
@@ -1438,6 +1550,19 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           setSelectedRowItem(null);
         }}
         isShow={showReceivedOneItem && selectedRowItem !== null}
+        title={`Received Item`}
+        isLoading={isReceiving}
+      />
+      <ConfirmationModal
+        onConfirm={function (): void {
+          handleNotOrderedItem();
+        }}
+        confirmationInfo={`Are you sure you want to mark as not order  ${selectedRowItem?.itemName} in your request?`}
+        onClose={function (): void {
+          setShowNotOrderedConfirmation(false);
+          setSelectedRowItem(null);
+        }}
+        isShow={showNotOrderedConfirmation && selectedRowItem !== null}
         title={`Received Item`}
         isLoading={isReceiving}
       />
