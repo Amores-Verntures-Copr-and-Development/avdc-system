@@ -3,6 +3,7 @@ import {
   findPendingRequestByUserId,
   getDashboardStats,
 } from "@/services/dashboard/purchaser/get-dashboard-stats";
+import { getStoreDashboard } from "@/services/dashboard/store/get-store-dashboard";
 
 export const getDashboardStatsByRole = async (
   position: "purchaser" | "admin",
@@ -90,7 +91,7 @@ export const getOwnerRecentStoreSales = async () => {
 
 export const getOwnerSalesChartData = async (year: string) => {
   try {
-    const data = await getOwnerDashboardServices.getSalesChartData(year);
+    const data = await getOwnerDashboardServices.getSalesChartData({ year });
     return {
       success: true,
       data: data,
@@ -120,5 +121,16 @@ export const getOwnerPurchaseOrderChartData = async (year: string) => {
       error: e,
       message: "Failed to fetched",
     };
+  }
+};
+
+export const StoreDashboardController = async (storeId: number) => {
+  try {
+    console.log({ storeId });
+    const data = await getStoreDashboard(storeId);
+    return { success: true, data: data, message: "Failed to fetched" };
+  } catch (e) {
+    console.log({ e });
+    return { success: false, error: e, message: "Failed to fetched" };
   }
 };

@@ -24,6 +24,8 @@ export const selectSales = async ({
   to,
   includeSaleItems,
   customer,
+  limit,
+  offset,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -33,6 +35,8 @@ export const selectSales = async ({
   to?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  limit?: number;
+  offset?: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -152,6 +156,12 @@ WHERE 1=1`;
   }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Sales[];
 };

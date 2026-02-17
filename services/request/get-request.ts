@@ -1,4 +1,5 @@
 import {
+  selectCountRequest,
   selectRequestOrderFromStockRoom,
   selectRequestOrders,
 } from "@/models/requestModel";
@@ -35,6 +36,15 @@ export async function getRequestOrderFromStockRoomByPurchaserFields(
 ) {
   try {
     const data = await selectRequestOrderFromStockRoom(userId);
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getRequestCount(storeId: number) {
+  try {
+    const data = await selectCountRequest({ keyFields: { storeId } });
     return data;
   } catch (e) {
     throw e;

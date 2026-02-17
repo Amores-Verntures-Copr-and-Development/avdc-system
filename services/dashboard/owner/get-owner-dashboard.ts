@@ -25,12 +25,18 @@ export const getOwnerDashboardServices = {
       throw e;
     }
   },
-  getSalesChartData: async (year: string) => {
+  getSalesChartData: async ({
+    year,
+    storeId,
+  }: {
+    year?: string;
+    storeId?: number;
+  }) => {
     try {
-      const monthlySales = await selectSalesChartData({ year });
+      const monthlySales = await selectSalesChartData({ year, storeId });
 
       const allMonths = Array.from({ length: 12 }, (_, i) =>
-        new Date(2000, i).toLocaleString("default", { month: "long" })
+        new Date(2000, i).toLocaleString("default", { month: "long" }),
       );
 
       const revenueMap = new Map<string, number>();
@@ -38,7 +44,7 @@ export const getOwnerDashboardServices = {
       (monthlySales ?? []).forEach((item) => {
         const monthName = new Date(2000, item.monthNumber - 1).toLocaleString(
           "default",
-          { month: "long" }
+          { month: "long" },
         );
 
         revenueMap.set(monthName, Number(item.totalSales));
@@ -57,7 +63,7 @@ export const getOwnerDashboardServices = {
     try {
       const monthlySales = await selectPurchaseOrderMonthlyData({ year });
       const allMonths = Array.from({ length: 12 }, (_, i) =>
-        new Date(2000, i).toLocaleString("default", { month: "long" })
+        new Date(2000, i).toLocaleString("default", { month: "long" }),
       );
 
       const revenueMap = new Map<string, number>();
@@ -65,7 +71,7 @@ export const getOwnerDashboardServices = {
       (monthlySales ?? []).forEach((item) => {
         const monthName = new Date(2000, item.monthNumber - 1).toLocaleString(
           "default",
-          { month: "long" }
+          { month: "long" },
         );
 
         revenueMap.set(monthName, Number(item.totalPurchase));

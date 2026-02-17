@@ -35,12 +35,14 @@ const BigCard = ({
         {" "}
         {/* Added margin to separate header */}
         <div className="flex flex-col">
-          <div className="flex justify-between">
+          <div className="flex justify-between mb-2">
             <div className="flex flex-col justify-between">
-              <h1 className="text-[9px] xl:text-sm font-semibold text-gray-900 mb-2 2xl:mb-4 flex items-center gap-2">
+              <h1 className="text-[9px] 2xl:text-sm font-semibold text-gray-900  flex items-center gap-2">
                 {title}
               </h1>
-              <span className="text-xs text-gray-400">{subtitle}</span>
+              <span className="text-[8px] 2xl:text-xs text-gray-400">
+                {subtitle}
+              </span>
             </div>
             {leftTitle}
           </div>

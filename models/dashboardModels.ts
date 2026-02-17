@@ -116,18 +116,37 @@ ORDER BY sl.salesCreatedAt DESC;`;
   return rows;
 };
 
-export const selectSalesChartData = async ({ year }: { year: string }) => {
+export const selectSalesChartData = async ({
+  year,
+  storeId,
+}: {
+  year?: string;
+  storeId?: number;
+}) => {
   const pool = await getDBConnection();
-  const sql = `SELECT 
-  MONTH(s.salesCreatedAt) AS monthNumber,
-  DATE_FORMAT(s.salesCreatedAt, '%M') AS monthName,
-  SUM(s.salesTotalAmount) AS totalSales
-  FROM Sales s
-  WHERE YEAR(s.salesCreatedAt) = ?
-  GROUP BY MONTH(s.salesCreatedAt),DATE_FORMAT(s.salesCreatedAt, '%M')
-  ORDER BY MONTH(s.salesCreatedAt);`;
 
-  const [rows] = await pool.execute<RowDataPacket[]>(sql, [year]);
+  let sql = `
+    SELECT 
+      MONTH(s.salesCreatedAt) AS monthNumber,
+      DATE_FORMAT(s.salesCreatedAt, '%M') AS monthName,
+      SUM(s.salesTotalAmount) AS totalSales
+    FROM Sales s
+    WHERE YEAR(s.salesCreatedAt) = ?
+  `;
+
+  const params: any[] = [year];
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  sql += `
+    GROUP BY MONTH(s.salesCreatedAt), DATE_FORMAT(s.salesCreatedAt, '%M')
+    ORDER BY MONTH(s.salesCreatedAt);
+  `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
 

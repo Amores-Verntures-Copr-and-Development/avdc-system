@@ -14,7 +14,10 @@ export async function processCreateRequest(data: CreateRequestFormDto) {
 
   try {
     await connection.beginTransaction();
-    const requestRows = await selectCountRequest({ connection });
+    const requestRows = await selectCountRequest({
+      connection,
+      keyFields: { storeId: data.storeId },
+    });
     const generateId = `REQ-${(requestRows.total + 1)
       .toString()
       .padStart(3, "0")}`;

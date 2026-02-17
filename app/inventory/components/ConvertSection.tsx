@@ -259,7 +259,6 @@ const ConvertSection = ({
                 onClick={() => {
                   setShowAddConversionModal(true);
                   if (setShowAddComponent) {
-                    console.log("agi here");
                     setShowAddComponent(true);
                   }
                 }}

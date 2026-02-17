@@ -14,9 +14,6 @@ import {
   selectRequestOrdersByPONumber,
   updateRequest,
 } from "@/models/requestModel";
-import { Request, RequestItems } from "@/types/request";
-
-import { InventoryItemInterface } from "@/types/inventory";
 
 export async function createRequest(data: CreateRequestFormDto) {
   const pool = await getDBConnection();
@@ -24,7 +21,10 @@ export async function createRequest(data: CreateRequestFormDto) {
 
   try {
     await connection.beginTransaction();
-    const requestRows = await selectCountRequest({ connection });
+    const requestRows = await selectCountRequest({
+      connection,
+      keyFields: { storeId: data.storeId },
+    });
     const generateId = `REQ-${(requestRows.total + 1)
       .toString()
       .padStart(3, "0")}`;

@@ -32,12 +32,23 @@ export const insertRequest = async ({
 
 export const selectCountRequest = async ({
   connection,
+  keyFields = {},
 }: {
   connection?: PoolConnection;
+  keyFields?: Partial<Request>;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `SELECT COUNT(*) as total FROM RequestOrders`;
-  const [rows] = await pool.execute<RowDataPacket[]>(sql);
+  const params: any[] = [];
+  let sql = `SELECT COUNT(*) as total FROM RequestOrders ro WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ro.${key} IS NULL`;
+    } else {
+      sql += ` AND ro.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows[0];
 };
 
