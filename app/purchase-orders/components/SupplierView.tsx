@@ -44,7 +44,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
           <LoaderComponent />
         ) : (
           itemResponse.data &&
-          itemResponse.data.map((s) => {
+          itemResponse.data.map((s, index) => {
             const totalCost = s.items.reduce((total, items) => {
               const hasComposite = items.composite && items.composite;
 
@@ -63,7 +63,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
               return total + itemTotal;
             }, 0);
             return (
-              <div key={s.suppId} className="shadow p-2 bg-white flex flex-col">
+              <div key={index} className="shadow p-2 bg-white flex flex-col">
                 <div className="flex justify-between">
                   <div>
                     <h3>{s.suppName}</h3>

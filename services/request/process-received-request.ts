@@ -99,11 +99,19 @@ export async function processReceivedRequest(data: Request) {
             });
             console.log({ poItems });
             //CHECK FIRST IF ONLY 1 itemId in request, if 1 update automatically, if more check if all item in request is delivered or complete before updating
-
+            //check if its delivered
+            const isDeliveredStatus = poItems[0].poItemStatus === "delivered";
             const checkRequestItems = await findRequestItemsByPOItemId({
               connection,
               poItemId: [poItems[0].poItemId],
             });
+
+            const sumOfOrderReceived = checkRequestItems.reduce(
+              (sumItems, i) => {
+                return sumItems + i.reqItemReceived;
+              },
+              0,
+            );
             const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
               ["received", "complete"].includes(req.reqItemStatus),
             );
@@ -111,6 +119,9 @@ export async function processReceivedRequest(data: Request) {
             if (requestItemsIsAllDelivered) {
               updatePoItems.push({
                 poItemId: poItems[0].poItemId,
+                poItemOrderedQty: isDeliveredStatus
+                  ? Number(sumOfOrderReceived)
+                  : poItems[0].poItemOrderedQty,
               });
             }
           }
@@ -118,10 +129,10 @@ export async function processReceivedRequest(data: Request) {
       );
 
       if (updatePoItems && updatePoItems.length > 0) {
-        console.log({ updatePoItems });
         const updatePoItemsDeliveredToStore: Partial<PurchaseOrderItems>[] =
           updatePoItems.map((i) => ({
             poItemId: i.poItemId,
+            poItemOrderedQty: i.poItemOrderedQty,
             poItemStatus: "received_store",
           }));
         await updatePurchaseOrderItems({
