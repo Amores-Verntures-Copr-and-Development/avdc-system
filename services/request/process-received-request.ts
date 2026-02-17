@@ -97,7 +97,7 @@ export async function processReceivedRequest(data: Request) {
               connection,
               reqItemId: reqItem.reqItemId,
             });
-            console.log({ poItems });
+
             //CHECK FIRST IF ONLY 1 itemId in request, if 1 update automatically, if more check if all item in request is delivered or complete before updating
             //check if its delivered
             const isDeliveredStatus = poItems[0].poItemStatus === "delivered";
@@ -108,10 +108,11 @@ export async function processReceivedRequest(data: Request) {
 
             const sumOfOrderReceived = checkRequestItems.reduce(
               (sumItems, i) => {
-                return sumItems + i.reqItemReceived;
+                return sumItems + Number(i.reqItemReceived);
               },
               0,
             );
+            console.log({ sumOfOrderReceived });
             const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
               ["received", "complete"].includes(req.reqItemStatus),
             );
@@ -119,9 +120,10 @@ export async function processReceivedRequest(data: Request) {
             if (requestItemsIsAllDelivered) {
               updatePoItems.push({
                 poItemId: poItems[0].poItemId,
-                poItemOrderedQty: isDeliveredStatus
-                  ? Number(sumOfOrderReceived)
-                  : poItems[0].poItemOrderedQty,
+                poItemOrderedQty:
+                  isDeliveredStatus && Number(sumOfOrderReceived) !== 0
+                    ? Number(sumOfOrderReceived)
+                    : poItems[0].poItemOrderedQty,
               });
             }
           }

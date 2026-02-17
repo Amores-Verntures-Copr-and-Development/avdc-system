@@ -23,7 +23,6 @@ export async function createRequest(data: CreateRequestFormDto) {
     await connection.beginTransaction();
     const requestRows = await selectCountRequest({
       connection,
-      keyFields: { storeId: data.storeId },
     });
     const generateId = `REQ-${(requestRows.total + 1)
       .toString()

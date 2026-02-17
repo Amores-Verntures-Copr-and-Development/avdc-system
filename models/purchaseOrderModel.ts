@@ -607,11 +607,24 @@ export const selectPurchaseOrderItemByRequesItemId = async ({
   reqItemId: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `SELECT poi.*,i.* FROM RequestItems ri
-LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
-LEFT JOIN PurchaseOrderItems poi ON poi.itemId = ii.inventoryItemReferenceId
-LEFT JOIN Items i ON i.itemId = poi.itemId
-WHERE ri.reqItemId =  ?`;
+  const sql = `SELECT * FROM PurchaseOrderItems poi
+    LEFT JOIN Items i ON i.itemId = poi.itemId WHERE poi.poItemId = (
+    SELECT COALESCE(poi1.poItemId,poi2.poItemId,poi3.poItemId) AS poId FROM PurchaseOrderRequest por
+    LEFT JOIN RequestItems ri ON ri.requestId = por.requestId
+    LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
+    LEFT JOIN PurchaseOrderItems poi1 ON poi.itemId = ii.inventoryItemReferenceId AND poi.poId = por.poId
+
+    LEFT JOIN ItemConversions ic1 ON ic1.toItemId = ii.inventoryItemReferenceId
+    LEFT JOIN Items i1 ON  i1.itemId = ic1.fromItemId
+    LEFT JOIN PurchaseOrderItems poi2 ON poi2.itemId = ic1.fromItemId AND poi2.poId = por.poId
+
+
+    LEFT JOIN ItemConversions ic2 ON ic2.toItemId = ii.inventoryItemReferenceId
+    LEFT JOIN Items i2 ON  i2.itemId = ic2.fromItemId
+    LEFT JOIN PurchaseOrderItems poi3 ON poi3.itemId = ic2.fromItemId AND poi3.poId = por.poId
+
+    WHERE ri.reqItemId = ?
+)`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [reqItemId]);
   return rows;
