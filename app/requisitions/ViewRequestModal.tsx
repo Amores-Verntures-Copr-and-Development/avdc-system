@@ -1435,34 +1435,37 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
-                {hasSomeNotOrdered && (
-                  <div>
-                    <Button
-                      icon={X}
-                      color="danger"
-                      onClick={() => {
-                        const validNotOrderedData = requestItemData.filter(
-                          (reqItem) =>
-                            originalData.some(
-                              (origItem) =>
-                                origItem.itemId === reqItem.itemId &&
-                                origItem.reqItemStatus === "not_ordered",
-                            ),
-                        );
+                {hasSomeNotOrdered &&
+                  !["completed", "received"].includes(
+                    selectedReq?.requestStatus ?? "",
+                  ) && (
+                    <div>
+                      <Button
+                        icon={X}
+                        color="danger"
+                        onClick={() => {
+                          const validNotOrderedData = requestItemData.filter(
+                            (reqItem) =>
+                              originalData.some(
+                                (origItem) =>
+                                  origItem.itemId === reqItem.itemId &&
+                                  origItem.reqItemStatus === "not_ordered",
+                              ),
+                          );
 
-                        if (!validNotOrderedData) {
-                          toast.error("No item to mark as not order");
-                          return;
-                        }
+                          if (!validNotOrderedData) {
+                            toast.error("No item to mark as not order");
+                            return;
+                          }
 
-                        setShowNotOrderedConfirmation(true);
-                      }}
-                      size="sm"
-                      label="Mark as not order"
-                      className="text-xs font-semibold"
-                    />
-                  </div>
-                )}
+                          setShowNotOrderedConfirmation(true);
+                        }}
+                        size="sm"
+                        label="Mark as not order"
+                        className="text-xs font-semibold"
+                      />
+                    </div>
+                  )}
                 {(selectedReq?.requestStatus === "delivered" ||
                   hasPartialDelivered ||
                   hasToFollowDelivered ||
