@@ -105,6 +105,11 @@ const ShowAllIItems = ({
       key: "itemUnit",
     },
     {
+      name: "Unit Price",
+      key: "unitPrice",
+      selector: (row) => formatPeso(row.unitPrice),
+    },
+    {
       name: "Ordered Qty",
       key: "poItemOrderedQty",
       editable: (row) => row.poItemId === isEditId,

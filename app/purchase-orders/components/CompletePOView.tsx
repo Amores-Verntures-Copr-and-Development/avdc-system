@@ -147,8 +147,8 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     },
     {
       name: "Price",
-      key: "itemPrice",
-      selector: (row) => formatPeso(row.itemPrice),
+      key: "unitPrice",
+      selector: (row) => formatPeso(row.unitPrice),
     },
     {
       name: "Unit",
@@ -207,7 +207,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       row.reqItemStatus === "completed"
                     ? row.reqItemReceived
                     : row.reqItemQuantity,
-              ) * row.itemPrice,
+              ) * Number(row?.unitPrice),
             ),
     },
     {
@@ -307,7 +307,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     },
     {
       name: "Price",
-      key: "itemPrice",
+      key: "unitPrice",
       selector: (row) => formatPeso(row.itemPrice),
     },
     {
@@ -384,7 +384,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       row.reqItemStatus === "completed"
                     ? row.reqItemReceived
                     : row.reqItemQuantity,
-              ) * row.itemPrice,
+              ) * Number(row.unitPrice),
             ),
     },
     {
@@ -678,12 +678,22 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     }
   };
   const totalPOAmount = requestItems.reduce((sum, req) => {
-    const totalAmountItems = (req.requestItemsData ?? [])
-      .filter((item) => item.reqItemStatus === "received")
-      .reduce((sumItem, item) => {
-        return sumItem + Number(item.reqItemReceived) * Number(item.itemPrice);
+    const totalRequestItemPrice = req.requestItemsData
+      .filter((item) => item.reqItemStatus !== "not_ordered")
+      .reduce((total, item) => {
+        const quantity = Number(
+          item.reqItemStatus === "delivered"
+            ? item.reqItemTransfer
+            : item.reqItemStatus === "received" ||
+                item.reqItemStatus === "completed"
+              ? item.reqItemReceived
+              : item.reqItemQuantity,
+        );
+        const price = Number(item.unitPrice || 0);
+        return total + quantity * price;
       }, 0);
-    return sum + totalAmountItems;
+
+    return sum + totalRequestItemPrice;
   }, 0);
   return (
     <div className="gap-5  h-full flex flex-col overflow-hidden">
@@ -759,7 +769,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                       ? item.reqItemReceived
                       : item.reqItemQuantity,
                 );
-                const price = Number(item.itemPrice || 0);
+                const price = Number(item.unitPrice || 0);
                 return total + quantity * price;
               }, 0);
             const statusOption = Array.from(

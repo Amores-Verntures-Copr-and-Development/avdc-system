@@ -86,7 +86,6 @@ export const getItemRequest = async ({ requestId }: { requestId?: number }) => {
       data: data ?? null,
     };
   } catch (e) {
-    console.log("E: ", e);
     return {
       success: false,
       message: "Failed to fetch request",

@@ -10,7 +10,6 @@ export const insertSalesDiscount = async ({
   data: CreateDiscountDto;
   connection?: PoolConnection;
 }) => {
-  console.log({ data });
   const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO Discounts(discountName,discountValue,discountCreatedBy,storeId,discountType)
   VALUES(?,?,?,?,?)`;

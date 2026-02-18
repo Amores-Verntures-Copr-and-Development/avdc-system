@@ -44,4 +44,5 @@ export interface RequestItems {
   reqItemToFollow?: number;
   receivedToFollow?: number;
   itemPrice?: number;
+  unitPrice?: number;
 }

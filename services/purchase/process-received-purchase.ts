@@ -15,6 +15,9 @@ import { SupplierItem } from "@/types/supplier";
 import { handleUpdateItemPrice } from "../items/update-items";
 import { ItemInterface } from "@/types/items";
 import { findSupplierById } from "../supplier/get-supplier";
+import { RequestItems } from "@/types/request";
+import { findRequestItemsByPoItemIdWithConverions } from "../request/request-items/get-request-items";
+import { updateRequestItems } from "../request/request-items/update-request-items";
 
 export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
   const pool = await getDBConnection();
@@ -107,7 +110,7 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
               };
             }),
           );
-        console.log("[createInventoryMovement]");
+
         await createInventoryMovement({ connection, data: inventoryMovement });
         const poItems = await findPurchaserOrder({
           connection,
@@ -162,11 +165,61 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
               unitPrice: item.supplierPrice,
             })) ?? [];
         if (updatePoItemUnitPrice && updatePoItemUnitPrice.length > 0) {
+          let updateRequestItemsPrice: Partial<RequestItems>[] = [];
           await updatePurchaseOrderItems({
             connection,
             keyFields: ["poItemId"],
             updates: updatePoItemUnitPrice,
           });
+
+          for (const i of updatePoItemUnitPrice) {
+            const reqItems = await findRequestItemsByPoItemIdWithConverions({
+              connection,
+              poItemId: i.poItemId!,
+            });
+
+            if (reqItems && reqItems.length > 0) {
+              const reqItemPrices = reqItems.map((req) => {
+                if (req.itemConId) {
+                  if (req.fromItemId === req.inventoryItemReferenceId) {
+                    const fromItemPrice =
+                      Number(req.fromQuantity) * Number(i.unitPrice);
+
+                    return {
+                      reqItemId: req.reqItemId,
+                      unitPrice: Number(fromItemPrice),
+                    };
+                  }
+                  if (req.toItemId === req.inventoryItemReferenceId) {
+                    const fromItemPrice =
+                      Number(i.unitPrice) / Number(req.toQuantity);
+
+                    return {
+                      reqItemId: req.reqItemId,
+                      unitPrice: Number(fromItemPrice),
+                    };
+                  }
+                  return {
+                    reqItemId: req.reqItemId,
+                    unitPrice: Number(i.unitPrice),
+                  };
+                }
+                return {
+                  reqItemId: req.reqItemId,
+                  unitPrice: Number(i.unitPrice),
+                };
+              });
+              updateRequestItemsPrice.push(...reqItemPrices);
+            }
+          }
+
+          if (updateRequestItemsPrice && updateRequestItemsPrice.length > 0) {
+            await updateRequestItems({
+              connection,
+              keyFields: ["reqItemId"],
+              updates: updateRequestItemsPrice,
+            });
+          }
         }
         if (updateSupplierItemPrice && updateSupplierItemPrice.length > 0) {
           await handleUpdateSupplierItemPrice({

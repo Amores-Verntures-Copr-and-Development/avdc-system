@@ -598,7 +598,7 @@ export const selectInventoryMovementItems = async ({
       params.push(value);
     }
   }
-  console.log({ search });
+
   if (search) {
     sql += ` AND i.itemName LIKE ?`;
     params.push(`%${search}%`);

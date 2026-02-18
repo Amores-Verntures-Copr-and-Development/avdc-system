@@ -174,9 +174,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     {
       name: "Unit Price",
       key: "itemPrice",
-      selector: (row) => (
-        <span className="font-semibold">{formatPeso(row.itemPrice)}</span>
-      ),
+      selector: (row) => <span>{formatPeso(row.itemPrice)}</span>,
     },
     {
       name: "Request Qty",
@@ -202,8 +200,20 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           row.reqItemTransfer
         ),
     },
-
-    { name: "Remarks", key: "reqItemRemarks" },
+    {
+      name: "To Follow Qty",
+      key: "reqItemToFollow",
+      selector: (row) =>
+        Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
+    },
+    {
+      name: "Received To Follow",
+      key: "receivedToFollow",
+      inputType: "number",
+      editable: (row) =>
+        row.reqItemStatus === "delivered" && Number(row.reqItemToFollow) !== 0,
+      value: (row) => row.receivedToFollow ?? "",
+    },
     {
       name: "Received",
       key: "reqItemReceived",
@@ -214,7 +224,34 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           row.reqItemReceived
         ),
     },
-    { name: "Total", key: "totalCost" },
+    {
+      name: "Total",
+      key: "uniPrice",
+      selector: (row) => {
+        if (row.reqItemStatus === "not_ordered") {
+          return <span className="font-semibold"></span>;
+        }
+        if (row.reqItemStatus === "delivered") {
+          return (
+            <span className="font-semibold">
+              {formatPeso(Number(row.unitPrice) * Number(row.reqItemTransfer))}
+            </span>
+          );
+        }
+        if (row.reqItemStatus === "received") {
+          return (
+            <span className="font-semibold">
+              {formatPeso(Number(row.unitPrice) * Number(row.reqItemReceived))}
+            </span>
+          );
+        }
+        return (
+          <span className="font-semibold">
+            {formatPeso(Number(row.unitPrice) * Number(row.reqItemQuantity))}
+          </span>
+        );
+      },
+    },
     {
       name: "Status",
       key: "reqItemStatus",
@@ -233,6 +270,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         );
       },
     },
+
+    { name: "Remarks", key: "reqItemRemarks" },
   ];
   const findOriginalData = (reqItemId: number) => {
     const find = originalData.find((i) => i.reqItemId === reqItemId);
@@ -263,6 +302,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       selector: (row) =>
         Number(row.reqItemToFollow) === 0 ? "" : row.reqItemToFollow,
     },
+
     {
       name: "Received",
       key: "reqItemReceived",
@@ -403,6 +443,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       value: (row) => row.reqItemStatus,
     },
   ];
+
   const columnToFollow: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },
@@ -744,6 +785,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       );
     }
   };
+
+  const isReceiver = user?.storeId;
   const { label, bg, color } = getRequestStatusOption(
     selectedReq?.requestStatus || "",
   );
@@ -797,7 +840,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     if (selectedReq.requestStatus === "delivered") {
       return requestItemData.reduce(
         (sum, item) =>
-          sum + Number(item.reqItemTransfer) * Number(item.itemPrice),
+          sum + Number(item.reqItemTransfer) * Number(item.unitPrice),
         0,
       );
     }
@@ -1004,45 +1047,53 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
       </div>
       <div className="bg-white h-full flex flex-col overflow-hidden">
-        <div className="flex justify-between p-2">
-          <div>
-            {" "}
-            {selectedReq?.requestStatus === "pending" ||
-            selectedReq?.requestStatus === "in_progress" ||
-            selectedReq?.requestStatus === "approved" ? (
-              <span className="text-[9px] xl:text-sm text-gray-600 font-medium ">
-                Note: Please wait for the order request to be delivered before
-                receiving it. If it takes longer than expected, kindly contact
-                your Purchasing Department.
-              </span>
-            ) : selectedReq?.requestStatus === "delivered" ? (
-              <span className="text-[9px] xl:text-sm text-blue-600 font-medium ">
-                Note: Please verify all delivered items and accurately input the
-                received quantities into the system to keep your inventory
-                records up to date.
-              </span>
-            ) : selectedReq?.requestStatus === "received" ? (
-              <span className="text-[9px] xl:text-sm text-blue-600 font-medium ">
-                Note: The request status is currently marked as Received. Please
-                complete the request to finalize the process, ensure that all
-                items are accurately recorded, and generate the corresponding
-                inventory report.
-              </span>
-            ) : selectedReq?.requestStatus === "completed" ? (
-              <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-4">
-                Note: This request order is completed.
-              </span>
-            ) : (
-              <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
-                Note: This request has been cancelled. No further action is
-                required.
-              </span>
-            )}
-          </div>
+        <div className=" grid grid-cols-1 p-2">
+          {/* Left note */}
+          {user?.storeId && (
+            <div className="flex-1 items-start">
+              {" "}
+              {/* flex-1 keeps it on left but allows right to stay */}
+              {selectedReq?.requestStatus === "pending" ||
+              selectedReq?.requestStatus === "in_progress" ||
+              selectedReq?.requestStatus === "approved" ? (
+                <span className="text-[9px] xl:text-sm text-gray-600 font-medium">
+                  Note: Please wait for the order request to be delivered before
+                  receiving it. If it takes longer than expected, kindly contact
+                  your Purchasing Department.
+                </span>
+              ) : selectedReq?.requestStatus === "delivered" ? (
+                <span className="text-[9px] xl:text-sm text-blue-600 font-medium">
+                  Note: Please verify all delivered items and accurately input
+                  the received quantities into the system to keep your inventory
+                  records up to date.
+                </span>
+              ) : selectedReq?.requestStatus === "received" ? (
+                <span className="text-[9px] xl:text-sm text-blue-600 font-medium">
+                  Note: The request status is currently marked as Received.
+                  Please complete the request to finalize the process, ensure
+                  that all items are accurately recorded, and generate the
+                  corresponding inventory report.
+                </span>
+              ) : selectedReq?.requestStatus === "completed" ? (
+                <span className="text-[9px] xl:text-sm text-blue-600 font-medium p-4">
+                  Note: This request order is completed.
+                </span>
+              ) : (
+                <span className="text-[10px] xl:text-sm text-red-600 font-medium p-4">
+                  Note: This request has been cancelled. No further action is
+                  required.
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Right total */}
           {Boolean(
             !["supervisor", "staff"].includes(user?.empPosition ?? ""),
           ) && (
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-end gap-1">
+              {" "}
+              {/* items-end to stick to right */}
               <span className="text-[9px] 2xl:text-sm text-gray-500">
                 Total
               </span>
@@ -1165,19 +1216,33 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             showCheckBox={isSelectingAddItemPO}
             isRounded={false}
             updateData={setRequestItemData}
+            // columns={
+            //   hasToFollowDelivered
+            //     ? columnToFollow
+            //     : hasPartialDelivered || hasItemDeliver || hasSomeNotOrdered
+            //       ? column
+            //       : isRequestor
+            //         ? selectedReq?.requestStatus === "pending" ||
+            //           selectedReq?.requestStatus === "in_progress"
+            //           ? columnPending
+            //           : selectedReq?.requestStatus === "delivered"
+            //             ? column
+            //             : column
+            //         : adminColumn
+            // }
             columns={
-              hasToFollowDelivered
-                ? columnToFollow
-                : hasPartialDelivered || hasItemDeliver || hasSomeNotOrdered
-                  ? column
-                  : isRequestor
-                    ? selectedReq?.requestStatus === "pending" ||
-                      selectedReq?.requestStatus === "in_progress"
+              isRequestor
+                ? hasToFollowDelivered
+                  ? columnToFollow
+                  : hasPartialDelivered || hasItemDeliver || hasSomeNotOrdered
+                    ? column
+                    : selectedReq?.requestStatus === "pending" ||
+                        selectedReq?.requestStatus === "in_progress"
                       ? columnPending
                       : selectedReq?.requestStatus === "delivered"
                         ? column
                         : column
-                    : adminColumn
+                : adminColumn
             }
             data={requestItemData}
             loading={loading}

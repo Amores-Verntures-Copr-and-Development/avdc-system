@@ -26,6 +26,7 @@ import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import ConvertSideModal from "./ConvertSideModal";
 import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
+import toast from "react-hot-toast";
 
 interface CreatePOModalPros {
   data: DisplayRequestOrderDto[];
@@ -184,7 +185,8 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     quantity: number,
     convertedFrom: DisplayTotalOrderItem | null,
   ) => {
-    console.log("TEST: ", { conversion, quantity, convertedFrom });
+    if (!convertedFrom) return;
+
     const convertOrderItem: DisplayTotalOrderItem = {
       itemId: conversion.toItemId,
       itemName: conversion.fromItemName ?? "",
@@ -196,13 +198,57 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
       poItemOrder: Number(quantity),
       orderNeed: Number(quantity),
     };
+
     setOrderItem((prev) => {
-      const items =
-        prev.filter((i) => i.itemId !== convertedFrom?.itemId) ?? [];
-      return [...items, convertOrderItem];
+      const findReplaceItems = prev.find(
+        (i) => i.itemId === convertedFrom.itemId,
+      );
+
+      const itemsWithoutConvertedFrom = prev.filter(
+        (i) => i.itemId !== convertedFrom.itemId,
+      );
+
+      const existing = itemsWithoutConvertedFrom.find(
+        (i) => i.itemId === convertOrderItem.itemId,
+      );
+
+      const conversionRate = Number(conversion.fromQuantity ?? 1);
+
+      if (existing && findReplaceItems) {
+        // create a new array with updated quantities
+        return itemsWithoutConvertedFrom.map((i) => {
+          if (i.itemId !== convertOrderItem.itemId) return i;
+
+          const updated: any = { ...i };
+
+          // dynamically update all *_Qty fields
+          Object.keys(findReplaceItems).forEach((key) => {
+            if (key.endsWith("_Qty")) {
+              const fromQty = Number((findReplaceItems as any)[key] ?? 0);
+              const existingQty = Number((i as any)[key] ?? 0);
+              updated[key] = (existingQty + fromQty / conversionRate).toFixed(
+                2,
+              );
+            }
+          });
+
+          // also update totalQuantity
+          updated.totalQuantity =
+            Number(i.totalQuantity) + Number(convertOrderItem.totalQuantity);
+
+          return updated;
+        });
+      }
+
+      // if not existing, add the new converted item
+      return [...itemsWithoutConvertedFrom, convertOrderItem];
     });
+
+    // ✅ Toast outside of setState updater
+
     setSelectedConvert(null);
   };
+
   return (
     <div className="flex flex-col h-full">
       {/* Scrollable Table Section */}

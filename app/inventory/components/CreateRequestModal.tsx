@@ -24,6 +24,7 @@ interface EditableItem {
   requestId: number;
   itemName: string;
   itemUnit: string;
+  itemPrice?: number;
   categoryName: string;
   inventoryItemQuantity: number;
 }
@@ -31,6 +32,7 @@ interface EditableItem {
 const columns: Column<EditableItem>[] = [
   { name: "ID", key: "#", selector: (_row, index) => index + 1 },
   { name: "Item Name", key: "itemName" },
+
   { name: "Unit", key: "itemUnit" },
   { name: "Category", key: "categoryName" },
   { name: "Stock Available", key: "inventoryItemQuantity" },
@@ -59,9 +61,10 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       itemUnit: items.itemUnit,
       categoryName: items.categoryName,
       inventoryItemQuantity: items.inventoryItemQuantity,
+      itemPrice: Number(items.itemPrice),
     })),
   );
-
+  console.log({ tableData });
   const updatedItemsRef = useRef<EditableItem[]>(tableData);
 
   const handleDataUpdate = (updatedData: EditableItem[]) => {
@@ -83,11 +86,18 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       toast.error("Please add at least one item to request.");
       return;
     }
-
-    const hasZeroQuantity = updatedItems.some(
-      (item) =>
-        Number(item.reqItemQuantity) <= 0 || item.reqItemQuantity === "",
-    );
+    console.log({ updatedItems });
+    const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
+      ...items,
+      reqItemQuantity: Number(items.reqItemQuantity),
+      reqItemStatus: "pending",
+      unitPrice: Number(items.itemPrice),
+    }));
+    const hasZeroQuantity = newItems.some((item) => {
+      const qty = Number(item.reqItemQuantity);
+      return qty <= 0 || isNaN(qty);
+    });
+    console.log({ hasZeroQuantity });
     if (hasZeroQuantity) {
       toast.error("Please enter a valid quantity for all items.");
       return;
@@ -95,17 +105,13 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
-        ...items,
-        reqItemQuantity: Number(items.reqItemQuantity),
-        reqItemStatus: "pending",
-      }));
       const requestData: CreateRequestFormDto = {
         storeId: user?.storeId ?? 0,
         requestById: user?.userId ?? 0,
         requestNo: "",
         items: newItems,
       };
+
       const success = await onSubmit(requestData);
       if (success) onCancel();
     } catch (error) {

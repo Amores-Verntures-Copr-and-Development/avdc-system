@@ -612,7 +612,7 @@ export const selectPurchaseOrderItemByRequesItemId = async ({
     SELECT COALESCE(poi1.poItemId,poi2.poItemId,poi3.poItemId) AS poId FROM PurchaseOrderRequest por
     LEFT JOIN RequestItems ri ON ri.requestId = por.requestId
     LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
-    LEFT JOIN PurchaseOrderItems poi1 ON poi.itemId = ii.inventoryItemReferenceId AND poi.poId = por.poId
+    LEFT JOIN PurchaseOrderItems poi1 ON poi1.itemId = ii.inventoryItemReferenceId AND poi1.poId = por.poId
 
     LEFT JOIN ItemConversions ic1 ON ic1.toItemId = ii.inventoryItemReferenceId
     LEFT JOIN Items i1 ON  i1.itemId = ic1.fromItemId

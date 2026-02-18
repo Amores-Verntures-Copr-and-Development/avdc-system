@@ -10,6 +10,7 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { getRequestItems, getRequestItemsByIds } from "../requestServices";
 import {
   findRequestItemsByPOItemId,
+  findRequestItemsByPoItemIdWithConverions,
   getRequestOrderItems,
 } from "./request-items/get-request-items";
 import { it } from "node:test";
@@ -97,34 +98,34 @@ export async function processReceivedRequest(data: Request) {
               connection,
               reqItemId: reqItem.reqItemId,
             });
+            if (poItems && poItems.length > 0) {
+              const isDeliveredStatus = poItems[0].poItemStatus === "delivered";
+              const checkRequestItems =
+                await findRequestItemsByPoItemIdWithConverions({
+                  connection,
+                  poItemId: poItems[0].poItemId,
+                });
 
-            //CHECK FIRST IF ONLY 1 itemId in request, if 1 update automatically, if more check if all item in request is delivered or complete before updating
-            //check if its delivered
-            const isDeliveredStatus = poItems[0].poItemStatus === "delivered";
-            const checkRequestItems = await findRequestItemsByPOItemId({
-              connection,
-              poItemId: [poItems[0].poItemId],
-            });
+              const sumOfOrderReceived = checkRequestItems.reduce(
+                (sumItems, i) => {
+                  return sumItems + Number(i.reqItemReceived);
+                },
+                0,
+              );
 
-            const sumOfOrderReceived = checkRequestItems.reduce(
-              (sumItems, i) => {
-                return sumItems + Number(i.reqItemReceived);
-              },
-              0,
-            );
-            console.log({ sumOfOrderReceived });
-            const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
-              ["received", "complete"].includes(req.reqItemStatus),
-            );
+              const requestItemsIsAllDelivered = checkRequestItems.every(
+                (req) => ["received", "complete"].includes(req.reqItemStatus),
+              );
 
-            if (requestItemsIsAllDelivered) {
-              updatePoItems.push({
-                poItemId: poItems[0].poItemId,
-                poItemOrderedQty:
-                  isDeliveredStatus && Number(sumOfOrderReceived) !== 0
-                    ? Number(sumOfOrderReceived)
-                    : poItems[0].poItemOrderedQty,
-              });
+              if (requestItemsIsAllDelivered) {
+                updatePoItems.push({
+                  poItemId: poItems[0].poItemId,
+                  poItemOrderedQty:
+                    isDeliveredStatus && Number(sumOfOrderReceived) !== 0
+                      ? Number(sumOfOrderReceived)
+                      : poItems[0].poItemOrderedQty,
+                });
+              }
             }
           }
         }),
@@ -134,7 +135,7 @@ export async function processReceivedRequest(data: Request) {
         const updatePoItemsDeliveredToStore: Partial<PurchaseOrderItems>[] =
           updatePoItems.map((i) => ({
             poItemId: i.poItemId,
-            poItemOrderedQty: i.poItemOrderedQty,
+            // poItemOrderedQty: i.poItemOrderedQty,
             poItemStatus: "received_store",
           }));
         await updatePurchaseOrderItems({

@@ -311,7 +311,7 @@ export const insertSaleItems = async ({
   ]);
 
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
-  console.log({ result });
+
   const insertId = result.insertId; // first inserted ID
   const affectedRows = result.affectedRows; // number of inserted rows
 
@@ -320,7 +320,7 @@ export const insertSaleItems = async ({
     { length: affectedRows },
     (_, i) => insertId + i,
   );
-  console.log({ insertedIds });
+
   return insertedIds;
 };
 

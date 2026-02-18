@@ -136,7 +136,7 @@ export const updateProducts = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-  console.log({ sql, params });
+
   const [result] = await pool.execute(sql, params);
   return result;
 };
@@ -205,7 +205,7 @@ export const insertVarianComponents = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   if (!data.length) return 0;
-  console.log({ data });
+
   const sql = `INSERT INTO VariantComponents(quantityRequired,prodVarId,inventoryItemId,isDeductVar)
                 VALUES ${data.map(() => "(?,?,?,?)").join(",")}`;
   const values = data.flatMap((item) => [
@@ -236,7 +236,7 @@ export const selectProductModelOnly = async ({
       params.push(value);
     }
   }
-  console.log({ sql, params });
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows as Products[];
@@ -400,7 +400,7 @@ export const insertProductCategories = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   if (!data.length) return 0;
-  console.log({ data });
+
   const sql = `INSERT INTO ProductCategories(prodCatName,prodCatCreatedBy,storeId)
                 VALUES ${data.map(() => "(?,?,?)").join(",")}`;
   const values = data.flatMap((item) => [

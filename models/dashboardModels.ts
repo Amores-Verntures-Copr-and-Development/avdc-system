@@ -54,7 +54,7 @@ WHERE u.userId = ?
   ) AS outOfStock;`;
 
   const [rows] = await pool.execute(sql, [userId, userId, userId, userId]);
-  console.log({ rows });
+
   return rows;
 };
 

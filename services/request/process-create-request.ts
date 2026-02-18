@@ -31,6 +31,7 @@ export async function processCreateRequest(data: CreateRequestFormDto) {
       invItem: item.invItem,
       requestId: requestId,
       reqItemStatus: "pending",
+      unitPrice: item.unitPrice,
     }));
     await createRequestItem({ connection, data: requestItemData });
     await connection.commit();

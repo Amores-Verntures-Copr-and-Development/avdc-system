@@ -209,7 +209,6 @@ export const insertItemConversion = async ({
   connection?: PoolConnection;
   data: CreateItemConversionDto;
 }) => {
-  console.log({ data });
   const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO ItemConversions(fromItemId,fromUnit,fromQuantity,toItemId,toUnit,toQuantity,itemConCreatedBy) VALUES(?,?,?,?,?,?,?)`;
   const [result] = await pool.execute(sql, [
@@ -278,7 +277,7 @@ export const selectItemConversionFromFields = async ({
       params.push(value);
     }
   }
-  console.log({});
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

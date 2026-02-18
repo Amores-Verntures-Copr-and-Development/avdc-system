@@ -57,7 +57,7 @@ export const selectOrderCompositeItem = async ({
       params.push(value);
     }
   }
-  console.log({});
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };

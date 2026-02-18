@@ -3,6 +3,7 @@ import {
   selectRequestItemsById,
   selectRequestItemsByPOId,
   selectRequetItemsByPOId,
+  selectRequetItemsByPOItemIdWithConversion,
 } from "@/models/requestModel";
 import { PoolConnection } from "mysql2/promise";
 
@@ -45,6 +46,24 @@ export async function findRequestItemsByPOItemId({
 }) {
   try {
     const data = await selectRequetItemsByPOId({ connection, poItemId });
+    return data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function findRequestItemsByPoItemIdWithConverions({
+  connection,
+  poItemId,
+}: {
+  connection: PoolConnection;
+  poItemId: number;
+}) {
+  try {
+    const data = await selectRequetItemsByPOItemIdWithConversion({
+      connection,
+      poItemId,
+    });
     return data;
   } catch (e) {
     throw e;

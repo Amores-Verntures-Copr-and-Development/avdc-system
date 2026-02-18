@@ -173,7 +173,7 @@ export const updateSupplierItemsByFields = async ({
 
   // Get the update fields (excluding key fields)
   const updateFields = Object.keys(data[0]).filter(
-    (field) => !keyFields.includes(field as keyof SupplierItem)
+    (field) => !keyFields.includes(field as keyof SupplierItem),
   );
 
   if (updateFields.length === 0) {
@@ -200,7 +200,7 @@ export const updateSupplierItemsByFields = async ({
 
     // Complete CASE statement for this field
     const caseStatement = `${field} = (CASE ${caseParts.join(
-      " "
+      " ",
     )} ELSE ${field} END)`;
     setClauses.push(caseStatement);
   }
@@ -222,7 +222,7 @@ export const updateSupplierItemsByFields = async ({
 
   // Build final SQL
   const sql = `UPDATE SupplierItems SET ${setClauses.join(
-    ", "
+    ", ",
   )} WHERE ${whereSql}`;
 
   try {

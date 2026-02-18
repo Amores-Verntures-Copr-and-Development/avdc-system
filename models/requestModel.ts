@@ -63,14 +63,15 @@ export const insertRequestItemsBulk = async ({
     throw new Error("No data provided for bulk insert");
   }
   const pool = connection ? connection : await getDBConnection();
-  console.log({ data });
-  const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity,reqItemStatus) 
-            VALUES ${data.map(() => "(?, ?, ?,?)").join(", ")}`;
+
+  const sql = `INSERT INTO RequestItems(requestId,invItem,reqItemQuantity,reqItemStatus,unitPrice) 
+            VALUES ${data.map(() => "(?, ?, ?,?,?)").join(", ")}`;
   const values = data.flatMap((item) => [
     item.requestId,
     item.invItem,
     item.reqItemQuantity,
     item.reqItemStatus || "pending",
+    item.unitPrice || 0,
   ]);
   const [results] = await pool.execute(sql, values);
   return results;
@@ -120,9 +121,9 @@ export const selectRequestOrders = async ({
     (
         SELECT SUM(
             CASE 
-                WHEN ro.requestStatus = 'delivered' THEN ri.reqItemTransfer * i.itemPrice
-                WHEN ro.requestStatus = 'received' OR ro.requestStatus = 'completed'  THEN ri.reqItemReceived * i.itemPrice
-                ELSE ri.reqItemQuantity * i.itemPrice
+                WHEN ro.requestStatus = 'delivered' THEN ri.reqItemTransfer * ri.unitPrice
+                WHEN ro.requestStatus = 'received' OR ro.requestStatus = 'completed'  THEN ri.reqItemReceived * ri.unitPrice
+                ELSE ri.reqItemQuantity * ri.unitPrice
             END
         )
         FROM RequestItems ri
@@ -145,7 +146,7 @@ ORDER BY
     END,
     ro.requestCreatedAt DESC;`;
   const [rows] = await pool.execute(sql, values);
-  console.log({ rows });
+
   return rows;
 };
 
@@ -163,10 +164,11 @@ export const selectRequestItems = async ({
     whereClauses.push("ri.requestId = ?");
     values.push(requestId);
   }
+
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const sql = `SELECT ri.requestId,ri.reqItemId, i.itemName,i.itemUnit,i.itemPrice,ri.reqItemId,ri.reqItemQuantity,i.itemId,
-  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer,ri.reqItemToFollow, ri.invItem, ri.reqItemStatus, ii.inventoryItemReferenceId,ii.inventoryId FROM RequestItems ri
+  ri.reqItemReceived,ri.reqItemRemarks,ri.reqItemTransfer,ri.reqItemToFollow, ri.invItem,ri.unitPrice, ri.reqItemStatus, ii.inventoryItemReferenceId,ii.inventoryId FROM RequestItems ri
   LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
   LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
@@ -368,6 +370,7 @@ export const selectRequestOrdersByPONumber = async (poNumber: string) => {
         'reqItemId', ri.reqItemId,
         'requestId', ri.requestId,
         'invItem', ri.invItem,
+        'unitPrice', ri.unitPrice,
         'reqItemRemarks', ri.reqItemRemarks,
         'reqItemQuantity', ri.reqItemQuantity,
         'reqItemTransfer', ri.reqItemTransfer,
@@ -443,7 +446,6 @@ export const updateRequestItem = async ({
       ", ",
     )} WHERE ${whereClauses.join(" AND ")}`;
 
-    console.log({ sql, params });
     await pool.execute(sql, params);
   }
 };
@@ -511,6 +513,48 @@ LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId
 WHERE poi.poItemId IN (${placeholders})`;
 
   const [rows] = await connection.execute<RowDataPacket[]>(sql, poItemId);
+  return rows;
+};
+
+export const selectRequetItemsByPOItemIdWithConversion = async ({
+  connection,
+  poItemId,
+}: {
+  connection: PoolConnection;
+  poItemId: number;
+}) => {
+  // Create placeholders for each item in the array
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT 
+ri.*,ic.*,ii.inventoryItemReferenceId
+FROM PurchaseOrderItems poi
+
+-- get request
+LEFT JOIN PurchaseOrderRequest por 
+    ON por.poId = poi.poId
+
+-- join ItemConversions to catch any conversions for this PO item
+LEFT JOIN ItemConversions ic 
+    ON ic.fromItemId = poi.itemId 
+    OR ic.toItemId = poi.itemId
+
+-- join InventoryItems: either direct PO item or via conversion
+LEFT JOIN InventoryItems ii 
+    ON ii.inventoryItemReferenceId = poi.itemId
+    OR ii.inventoryItemReferenceId = ic.fromItemId
+    OR ii.inventoryItemReferenceId = ic.toItemId
+
+-- join RequestItems linked to inventory
+LEFT JOIN RequestItems ri 
+    ON ri.requestId = por.requestId 
+    AND ri.invItem = ii.inventoryItemId
+
+-- join Items table if needed
+LEFT JOIN Items i 
+    ON i.itemId = ii.inventoryItemReferenceId
+WHERE poi.poItemId = ? AND ri.reqItemId IS NOT NULL`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [poItemId]);
   return rows;
 };
 

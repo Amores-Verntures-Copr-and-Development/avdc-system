@@ -44,8 +44,8 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
     },
     {
       name: "Price",
-      key: "itemPrice",
-      selector: (row) => formatPeso(row.itemPrice),
+      key: "unitPrice",
+      selector: (row) => formatPeso(row.unitPrice),
     },
     {
       name: "Unit",
@@ -58,6 +58,20 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
     {
       name: "Total",
       key: "total",
+
+      selector: (row) =>
+        row.reqItemStatus === "not_ordered"
+          ? 0
+          : formatPeso(
+              Number(
+                row.reqItemStatus === "delivered"
+                  ? row.reqItemTransfer
+                  : row.reqItemStatus === "received" ||
+                      row.reqItemStatus === "completed"
+                    ? row.reqItemReceived
+                    : row.reqItemQuantity,
+              ) * Number(row.unitPrice),
+            ),
     },
     {
       name: "Remarks",
@@ -82,15 +96,25 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
       },
     },
   ];
-  const totalAllRequestItemPrice = itemResponse.data
-    .map((req) =>
-      req.requestItemsData.reduce((total, item) => {
-        const quantity = Number(item.reqItemQuantity || 1);
-        const price = Number(item.itemPrice || 0);
+
+  const totalAllRequestItemPrice = itemResponse.data.reduce((sum, req) => {
+    const totalRequestItemPrice = req.requestItemsData
+      .filter((item) => item.reqItemStatus !== "not_ordered")
+      .reduce((total, item) => {
+        const quantity = Number(
+          item.reqItemStatus === "delivered"
+            ? item.reqItemTransfer
+            : item.reqItemStatus === "received" ||
+                item.reqItemStatus === "completed"
+              ? item.reqItemReceived
+              : item.reqItemQuantity,
+        );
+        const price = Number(item.unitPrice || 0);
         return total + quantity * price;
-      }, 0),
-    )
-    .reduce((sum, itemTotal) => sum + itemTotal, 0);
+      }, 0);
+
+    return sum + totalRequestItemPrice;
+  }, 0);
   return (
     <div className="flex flex-col h-full p-4 bg-white overflow-hidden">
       <div className="flex justify-between">
@@ -145,7 +169,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
             const totalRequestItemPrice = reqData.requestItemsData.reduce(
               (total, item) => {
                 const quantity = Number(item.reqItemQuantity || 1);
-                const price = Number(item.itemPrice || 0);
+                const price = Number(item.unitPrice || 0);
                 return total + quantity * price;
               },
               0,
@@ -266,7 +290,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
           </span>
           <div className="text-right">
             <span className="text-sm">
-              Total:
+              Total Purchase:
               <span className="font-semibold ml-1">
                 {formatPeso(totalAllRequestItemPrice ?? 0)}
               </span>

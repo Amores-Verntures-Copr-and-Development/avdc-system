@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 
 export const downloadExcelTemplate = (
   headers: string[],
-  filename: string = "template.xlsx"
+  filename: string = "template.xlsx",
 ) => {
   // Create template data with headers and one empty row
   const emptyRow: Record<string, string> = {};
