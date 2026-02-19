@@ -12,6 +12,7 @@ import { createRequestItem } from "@/services/request/request-items/create-reque
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
 import { notOrderedRequestItems } from "@/services/request/request-items/not-ordered-requestItems";
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
+import { receiveRequestItems } from "@/services/request/request-items/received-requset-Items";
 import { updateRequestItems } from "@/services/request/request-items/update-request-items";
 import {
   getRequestItems,
@@ -231,11 +232,19 @@ export const updateRequestItemByStatus = async ({
   controller: "received" | "not_ordered";
 }) => {
   try {
+    if (controller === "received") {
+      const res = await receiveRequestItems({ requestItems });
+      return {
+        success: true,
+        message: "Request Items received successfully!",
+        data: res,
+      };
+    }
     if (controller === "not_ordered") {
       const res = await notOrderedRequestItems({ requestItems });
       return {
         success: true,
-        message: "Request Items not ordered successfully1",
+        message: "Request Items not ordered successfully!",
         data: res,
       };
     } else {

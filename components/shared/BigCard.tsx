@@ -23,7 +23,7 @@ const BigCard = ({
     <div
       className={`border flex flex-col flex-1 overflow-vissible ${
         isRounded ? "rounded-2xl" : ""
-      } shadow-sm border-gray-200 bg-white h-full p-2 2xl:p-4 
+      } shadow-sm border-gray-200 bg-white h-full p-2 2xl:p-2 
   ${
     isHover
       ? `hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer`

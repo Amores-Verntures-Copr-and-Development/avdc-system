@@ -88,6 +88,9 @@ interface TableProps<T> {
   defaultLimit?: number;
   fetchMode?: boolean;
   localSearch?: boolean;
+  localFilter?: boolean;
+  localFilterKey?: keyof T;
+  localFilterValue?: any;
   showDateRange?: boolean;
   onDateRangeChange?: (range: { from: string; to: string }) => void;
 }
@@ -98,6 +101,9 @@ export interface TableHandle {
 
 const TableInner = <T extends Record<string, any>>(
   {
+    localFilter,
+    localFilterKey,
+    localFilterValue,
     onDateRangeChange,
     showFilter,
     showDateRange = false,
@@ -140,17 +146,39 @@ const TableInner = <T extends Record<string, any>>(
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   const filteredData = React.useMemo(() => {
-    if (!localSearchQuery) return editableData;
+    let rows = [...editableData];
 
-    return editableData.filter((row) =>
-      columns.some((col) => {
-        const value = row[col.key];
-        return String(value)
-          .toLowerCase()
-          .includes(localSearchQuery.toLowerCase());
-      }),
-    );
-  }, [localSearchQuery, editableData, columns]);
+    // ✅ Apply localFilter if enabled and value is not empty
+    if (
+      localFilter &&
+      localFilterKey !== undefined &&
+      localFilterValue !== undefined &&
+      localFilterValue !== "" // <-- only filter if value is not empty
+    ) {
+      rows = rows.filter((row) => row[localFilterKey] === localFilterValue);
+    }
+
+    // ✅ Apply local search
+    if (localSearchQuery) {
+      rows = rows.filter((row) =>
+        columns.some((col) => {
+          const value = row[col.key];
+          return String(value)
+            .toLowerCase()
+            .includes(localSearchQuery.toLowerCase());
+        }),
+      );
+    }
+
+    return rows;
+  }, [
+    editableData,
+    columns,
+    localSearchQuery,
+    localFilter,
+    localFilterKey,
+    localFilterValue,
+  ]);
   useEffect(() => {
     if (data && data.length > 0) {
       setEditableData(data);

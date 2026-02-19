@@ -23,8 +23,12 @@ import {
   Download,
   Eye,
   FileText,
+  Package,
+  PackageCheck,
+  PackageSearch,
   Pencil,
   Plus,
+  Repeat,
   Trash,
   X,
 } from "lucide-react";
@@ -42,6 +46,7 @@ import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/PopupModal";
 import IconButton from "@/components/shared/IconButton";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import ReceiveItemComponent from "./components/ReceiveItemComponent";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -55,6 +60,13 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   onBack,
   user,
 }) => {
+  const [filteredStatus, setFilteredStatus] = useState<
+    "" | "delivered" | "received" | "not_ordered"
+  >("");
+  const [selectedRow, setSelectedRow] = useState<DisplayRequestItems | null>(
+    null,
+  );
+  const [showReceiveItemModal, setShowReceiveItemModal] = useState(false);
   const [selectedRowItem, setSelectedRowItem] =
     useState<DisplayRequestItems | null>(null);
   const [showReceivedOneItem, setShowReceivedOneItem] = useState(false);
@@ -120,7 +132,21 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     setRequestItemData(mergedData);
     setOriginalData(itemResponse.data);
   }, [itemResponse.data, selectedReq?.requestNo]);
-
+  const status = [
+    { value: "", label: "All" },
+    {
+      value: "delivered",
+      label: `Delivered Items (${requestItemData?.filter((i) => i.reqItemStatus === "delivered").length})`,
+    },
+    {
+      value: "received",
+      label: `Received Items (${requestItemData?.filter((i) => i.reqItemStatus === "received").length})`,
+    },
+    {
+      value: "not_ordered",
+      label: `Not Ordered (${requestItemData?.filter((i) => i.reqItemStatus === "not_ordered").length})`,
+    },
+  ];
   // Save draft on every change
   useEffect(() => {
     if (!requestItemData || requestItemData.length === 0) return;
@@ -380,6 +406,28 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         let options: [];
         const original = findOriginalData(row.reqItemId);
         if (original?.reqItemStatus === "pending") {
+          if (hasItemDeliver) {
+            return [
+              {
+                label: "Not Ordered",
+                value: "not_ordered",
+                bg: "bg-red-100",
+                color: "text-red-600",
+              },
+              {
+                label: "Pending",
+                value: "pending",
+                bg: "bg-gray-100",
+                color: "text-gray-700",
+              },
+              {
+                label: "Delivered",
+                value: "delivered",
+                bg: "bg-yellow-100",
+                color: "text-yellow-700",
+              },
+            ];
+          }
           return [
             {
               label: "Not Ordered",
@@ -786,7 +834,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     }
   };
 
-  const isReceiver = user?.storeId;
   const { label, bg, color } = getRequestStatusOption(
     selectedReq?.requestStatus || "",
   );
@@ -795,6 +842,10 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   );
   const hasToFollowDelivered = requestItemData.some(
     (i) => i.reqItemStatus === "delivered" && Number(i.reqItemToFollow) !== 0,
+  );
+
+  const hasItemReceive = requestItemData.some(
+    (i) => i.reqItemStatus === "delivered",
   );
   const hasItemDeliver = requestItemData.some(
     (i) => i.reqItemStatus === "delivered",
@@ -1015,6 +1066,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setIsReceiving(false);
     }
   };
+
   return (
     <>
       <div className="flex justify-between">
@@ -1086,7 +1138,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
               )}
             </div>
           )}
-
           {/* Right total */}
           {Boolean(
             !["supervisor", "staff"].includes(user?.empPosition ?? ""),
@@ -1105,13 +1156,60 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
         <div className="flex-1 overflow-y-auto pr-4 pl-4">
           <Table
+            localFilterKey={"reqItemStatus"}
+            localFilterValue={filteredStatus}
+            localFilter={true}
             showActions
+            addContentLeftTitle={
+              <div className="flex gap-2">
+                {status.map((s, index) => (
+                  <div key={index}>
+                    <Button
+                      label={s.label}
+                      size="sm"
+                      color={
+                        s.value === filteredStatus
+                          ? s.value === ""
+                            ? "primary"
+                            : s.value === "delivered"
+                              ? "warning"
+                              : s.value === "received"
+                                ? "success"
+                                : "danger"
+                          : "secondary"
+                      }
+                      onClick={() => {
+                        setFilteredStatus(
+                          s.value as
+                            | ""
+                            | "delivered"
+                            | "received"
+                            | "not_ordered",
+                        );
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            }
             renderActions={(row) => {
               const findOriginalData = originalData.find(
                 (i) => i.reqItemId === row.reqItemId,
               );
               return (
                 <div className="flex justify-center gap-2">
+                  {row.reqItemStatus === "pending" && (
+                    <IconButton
+                      onClick={() => {
+                        // handleEditRow(row);
+                        setShowReceiveItemModal(true);
+                        setSelectedRow(row);
+                      }}
+                      label={"Receive Item"}
+                      bg={"green"}
+                      icon={<PackageCheck className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )}
                   {selectedReq?.requestStatus === "pending" && (
                     <IconButton
                       onClick={() => {
@@ -1139,22 +1237,41 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
                   {(row.reqItemStatus === "delivered" ||
                     row.reqItemStatus === "partial") && (
-                    <IconButton
-                      onClick={() => {
-                        console.log({ row });
+                    <>
+                      {" "}
+                      <IconButton
+                        onClick={() => {
+                          console.log({ row });
 
-                        console.log({ findOriginalData });
-                        if (Number(row.reqItemReceived) === 0) {
-                          toast.error("No quantity to receive!");
-                          return;
-                        }
-                        setSelectedRowItem(row);
-                        setShowReceivedOneItem(true);
-                      }}
-                      label={"Receive Item"}
-                      bg={"green"}
-                      icon={<CheckLine className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
+                          console.log({ findOriginalData });
+                          if (Number(row.reqItemReceived) === 0) {
+                            toast.error("No quantity to receive!");
+                            return;
+                          }
+                          setSelectedRowItem(row);
+                          setShowReceivedOneItem(true);
+                        }}
+                        label={"Receive Item"}
+                        bg={"green"}
+                        icon={<Package className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          console.log({ row });
+
+                          console.log({ findOriginalData });
+                          if (Number(row.reqItemReceived) === 0) {
+                            toast.error("No quantity to receive!");
+                            return;
+                          }
+                          setSelectedRowItem(row);
+                          setShowReceivedOneItem(true);
+                        }}
+                        label={"Convert and Receive"}
+                        bg={"primary"}
+                        icon={<Repeat className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      />
+                    </>
                   )}
                   {row.reqItemStatus === "not_ordered" &&
                     findOriginalData?.reqItemStatus !== "not_ordered" && (
@@ -1216,20 +1333,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             showCheckBox={isSelectingAddItemPO}
             isRounded={false}
             updateData={setRequestItemData}
-            // columns={
-            //   hasToFollowDelivered
-            //     ? columnToFollow
-            //     : hasPartialDelivered || hasItemDeliver || hasSomeNotOrdered
-            //       ? column
-            //       : isRequestor
-            //         ? selectedReq?.requestStatus === "pending" ||
-            //           selectedReq?.requestStatus === "in_progress"
-            //           ? columnPending
-            //           : selectedReq?.requestStatus === "delivered"
-            //             ? column
-            //             : column
-            //         : adminColumn
-            // }
             columns={
               isRequestor
                 ? hasToFollowDelivered
@@ -1238,7 +1341,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     ? column
                     : selectedReq?.requestStatus === "pending" ||
                         selectedReq?.requestStatus === "in_progress"
-                      ? columnPending
+                      ? hasItemReceive
+                        ? column
+                        : column
                       : selectedReq?.requestStatus === "delivered"
                         ? column
                         : column
@@ -1634,6 +1739,53 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         title={`Received Item`}
         isLoading={isReceiving}
       />
+      <ConfirmationModal
+        onConfirm={function (): void {
+          handleNotOrderedItem();
+        }}
+        confirmationInfo={`Are you sure you want to mark as not order  ${selectedRowItem?.itemName} in your request?`}
+        onClose={function (): void {
+          setShowNotOrderedConfirmation(false);
+          setSelectedRowItem(null);
+        }}
+        isShow={showNotOrderedConfirmation && selectedRowItem !== null}
+        title={`Received Item`}
+        isLoading={isReceiving}
+      />
+      {/* <Modal
+        title={`Receive ${selectedRow?.itemName}`}
+        isOpen={showReceiveItemModal}
+        onClose={function (): void {
+          setShowReceiveItemModal(false);
+
+          setSelectedRow(null);
+        }}
+      >
+        <div></div>
+      </Modal> */}
+      <Popup
+        title={`Receive ${selectedRow?.itemName}`}
+        isOpen={showReceiveItemModal}
+        onClose={function (): void {
+          setShowReceiveItemModal(false);
+
+          setSelectedRow(null);
+        }}
+        background="bg-white/20"
+      >
+        <ReceiveItemComponent
+          data={selectedRow}
+          mutate={() => {
+            mutate();
+            mutateRequest();
+          }}
+          onClose={function (): void {
+            setShowReceiveItemModal(false);
+
+            setSelectedRow(null);
+          }}
+        />
+      </Popup>
     </>
   );
 };

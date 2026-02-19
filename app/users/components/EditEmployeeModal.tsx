@@ -30,7 +30,7 @@ const EditEmployeeModal = ({
   onClose,
 }: EditEmployeeModalProps) => {
   const [empFormData, setEmpFormData] = useState<EmployeeInterface | null>(
-    null
+    null,
   );
   const {
     data: response = { data: [] },
@@ -46,19 +46,17 @@ const EditEmployeeModal = ({
 
   const [stores, setStores] = useState<StoreInterface[] | null>(null);
   const [selectedStores, setSelectedStores] = useState<StoreInterface[] | null>(
-    null
+    null,
   );
   useEffect(() => {
     // Don't run if empFormData is still null
     if (!empFormData || !response.data.length) return;
 
-
-
     const storeData = response.data.filter((store: StoreInterface) => {
       // Check if store is not already selected
       return !empFormData.storeEmployees?.some(
         (selectedStore: StoreInterface) =>
-          selectedStore.storeId === store.storeId
+          selectedStore.storeId === store.storeId,
       );
     });
 

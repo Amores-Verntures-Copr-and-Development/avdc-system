@@ -1227,6 +1227,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           setShowAddItem(false);
           setSelectedSupplierToAdd(null);
         }}
+        closeOnClickOutside={false}
       >
         <AddItemToPoSupplier
           poId={poId}
