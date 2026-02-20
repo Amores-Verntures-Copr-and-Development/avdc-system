@@ -13,7 +13,13 @@ import toast from "react-hot-toast";
 interface AddItemToPoSupplierProps {
   supplier: DisplayPOItemsSupplier | null;
   poId: number;
-  onSubmit: (data: CreatePurchaseOrderItemDto) => Promise<boolean>;
+  onSubmit: ({
+    dataItem,
+    item,
+  }: {
+    dataItem: CreatePurchaseOrderItemDto;
+    item: ItemInterface | null;
+  }) => Promise<boolean>;
 }
 
 const AddItemToPoSupplier = ({
@@ -23,6 +29,7 @@ const AddItemToPoSupplier = ({
 }: AddItemToPoSupplierProps) => {
   const [isAdding, setIsAdding] = useState(false);
   const [clearSignal, setClearSignal] = useState(0);
+  const [selectedItem, setSelectedItem] = useState<ItemInterface | null>();
   const [form, setForm] = useState<CreatePurchaseOrderItemDto>({
     poId: poId,
     itemId: 0,
@@ -34,13 +41,13 @@ const AddItemToPoSupplier = ({
   });
   const handleItemChange = handleChange(form, setForm);
   const handleSubmit = async () => {
-    if (form.itemId === 0) {
+    if (form.itemId === 0 || !selectedItem) {
       toast.error("Select item first!");
       return;
     }
     setIsAdding(true);
     try {
-      const success = await onSubmit(form);
+      const success = await onSubmit({ dataItem: form, item: selectedItem });
       if (success) {
         setClearSignal((prev) => prev + 1);
         setForm({
@@ -72,11 +79,13 @@ const AddItemToPoSupplier = ({
           clearSignal={clearSignal}
           onSelect={function (item: ItemInterface): void {
             if (item) {
+              setSelectedItem(item);
               setForm((prev) => ({
                 ...prev,
                 itemId: item.itemId,
               }));
             } else {
+              setSelectedItem(null);
               setForm((prev) => ({
                 ...prev,
                 itemId: 0,

@@ -15,7 +15,10 @@ import { processCreatePO } from "@/services/purchase/process-create-po";
 import { processDeliverItemToStore } from "@/services/purchase/process-deliver-po-store";
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
-import { createPurchaseOrderItem } from "@/services/purchase/purchase-items/create-purchase-items";
+import {
+  createPurchaseOrderItem,
+  createPurchaseOrderItemWithSupplier,
+} from "@/services/purchase/purchase-items/create-purchase-items";
 import { deletePurchaseOrderItems } from "@/services/purchase/purchase-items/delete-purchase-items";
 import { findStoreItemsBySupplierAndPOIds } from "@/services/purchase/purchase-items/get-purchase-tems";
 import { handleUpdatePurchaseItems } from "@/services/purchase/purchase-items/handle-update-purchaser-items";
@@ -57,10 +60,43 @@ export const createPurchaseOrderItemByPOId = async (
   data: CreatePurchaseOrderItemDto[],
 ) => {
   try {
-    await createPurchaseOrderItem({ data });
+    const res = await createPurchaseOrderItem({ data });
     return {
       success: true,
       message: "Purchase order item added successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to add purchase order item!",
+      error: e,
+    };
+  }
+};
+
+export const createPurchaseOrderItemByPOIAndSupplier = async ({
+  data,
+  poId,
+  secondSubmit,
+  continueInsert,
+}: {
+  data: CreatePurchaseOrderItemDto;
+  poId: number;
+  secondSubmit?: boolean;
+  continueInsert?: boolean;
+}) => {
+  try {
+    const res = await createPurchaseOrderItemWithSupplier({
+      data,
+      poId,
+      secondSubmit,
+      continueInsert,
+    });
+    return {
+      success: true,
+      message: "Purchase order item added successfully!",
+      data: res,
     };
   } catch (e) {
     return {

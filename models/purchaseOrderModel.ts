@@ -62,6 +62,7 @@ export const insertPurchaseOrderItems = async ({
   data: CreatePurchaseOrderItemDto[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
+  console.log({ data });
   if (!data.length) return 0;
   const sql = `INSERT INTO PurchaseOrderItems(poId,itemId,unitPrice,poItemOrderedQty,poItemStatus,suppId)
                 VALUES ${data.map(() => "(?, ?,?,?,?,?)").join(",")}`;
@@ -74,7 +75,12 @@ export const insertPurchaseOrderItems = async ({
     item.suppId || null,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
-  return results.insertId;
+  console.log({ results });
+  const count = results.affectedRows;
+  const firstId = results.insertId;
+  const insertedIds = Array.from({ length: count }, (_, i) => firstId + i);
+  console.log("insertedIds", { insertedIds });
+  return insertedIds;
 };
 
 export const selectCountPurchaseOrder = async ({

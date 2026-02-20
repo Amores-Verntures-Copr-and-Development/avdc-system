@@ -99,6 +99,7 @@ export async function POST(
       {
         success: true,
         message: res.message,
+        data: res.data,
       },
       { status: 201 },
     );

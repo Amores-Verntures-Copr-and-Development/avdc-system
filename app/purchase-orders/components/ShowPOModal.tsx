@@ -280,6 +280,76 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
+
+  const handleAddItemPoSupplier = async ({
+    data,
+    poId,
+    secondSubmit,
+    continueInsert,
+  }: {
+    data: CreatePurchaseOrderItemDto;
+    poId: number;
+    secondSubmit?: boolean;
+    continueInsert?: boolean;
+  }) => {
+    // console.log("Data: ", dataReq[0].requestItemsData);
+    console.log({ data });
+
+    const formData = {
+      data: data,
+      poId: poId,
+      secondSubmit: secondSubmit,
+      continueInsert: continueInsert,
+    };
+    console.log({ formData });
+    try {
+      const result = await fetch(
+        `api/purchase-order/po-items/${poId}/supplier/${data.suppId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        console.log("Res: ", res);
+        throw new Error(res.err);
+      }
+      console.log("res.data: ", res.data);
+
+      if (res.insertedUpdate) {
+        toast.success("PO Items added and updated to delivered successfully!");
+        return {
+          isSuccess: true,
+          isAllDelivered: res.data.isAlreadyDeliveredInRequest as boolean,
+        };
+      }
+      if (res.insertedUpdate) {
+        toast.success("PO Items added and updated to delivered successfully!");
+        return {
+          isSuccess: true,
+          isAllDelivered: res.data.isAlreadyDeliveredInRequest as boolean,
+        };
+      }
+      mutateInventory();
+      mutate();
+
+      return {
+        isSuccess: true,
+        isAllDelivered: res.data.isAlreadyDeliveredInRequest as boolean,
+      };
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add item in po.");
+      return {
+        isSuccess: true,
+        isAllDelivered: false,
+      };
+    }
+  };
   const handleUpdatePOItem = async (
     data: Partial<PurchaseOrderItems>,
     poId: number,
@@ -468,6 +538,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             onReceivePO={handleReceivePO}
             isLoading={isLoading}
             poId={data.poId}
+            onAddItemPOSupplier={handleAddItemPoSupplier}
           />
         ) : data?.poStatus === "received" ? (
           <CompletePOView

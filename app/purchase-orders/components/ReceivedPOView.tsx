@@ -50,6 +50,7 @@ import { createPortal } from "react-dom";
 import { PortalDropdown } from "@/components/shared/PortalDropDown";
 import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
 import UpdatePOItemStatus from "./_components/UpdatePOItemStatus";
+import { ItemInterface } from "@/types/items";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -92,6 +93,20 @@ interface ReceivedPOViewProps {
   setShowAllItems: React.Dispatch<
     React.SetStateAction<"status" | "all" | "request" | "supplier">
   >;
+  onAddItemPOSupplier: ({
+    data,
+    poId,
+    secondSubmit,
+    continueInsert,
+  }: {
+    data: CreatePurchaseOrderItemDto;
+    poId: number;
+    secondSubmit?: boolean;
+    continueInsert?: boolean;
+  }) => Promise<{
+    isSuccess: boolean;
+    isAllDelivered: boolean;
+  }>;
   onAddItem: (
     data: CreatePurchaseOrderItemDto[],
     poId: number,
@@ -109,11 +124,16 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   isLoading,
   poId,
   poData,
-  onAddItem,
+  onAddItemPOSupplier,
   mutateInventory,
   setShowAllItems,
   onMaskAsDeliverdSupplier,
 }) => {
+  const [addPoItem, setAddPOItem] = useState<{
+    poItem: CreatePurchaseOrderItemDto;
+    item: ItemInterface;
+  } | null>();
+  const [isShowContinueInsertPO, setIsShowContinueInsertPO] = useState(false);
   const [selectedPOItemRows, setSelectedPOItemRows] = useState<
     PurchaseOrderItems[] | null
   >(null);
@@ -495,9 +515,17 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   //   po.items.every((item) => item.poItemStatus === "delivered"),
   // );
 
-  const handleSubmitAddItemToSupplierPO = async (
-    dataItem: CreatePurchaseOrderItemDto,
-  ) => {
+  const handleSubmitAddItemToSupplierPO = async ({
+    dataItem,
+    item,
+    secondSubmit,
+    continueInsert,
+  }: {
+    dataItem: CreatePurchaseOrderItemDto;
+    item: ItemInterface | null;
+    secondSubmit?: boolean;
+    continueInsert?: boolean;
+  }) => {
     const existingSupplier = supplierData.find((supp) =>
       supp.items.some((item) => item.itemId === dataItem.itemId),
     );
@@ -508,16 +536,36 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       );
       return false;
     }
+    setIsSubmitting(true);
     try {
-      const success = await onAddItem([dataItem], poId);
-      if (success) {
-        return true;
+      const success = await onAddItemPOSupplier({
+        data: dataItem,
+        poId,
+        secondSubmit,
+        continueInsert,
+      });
+      console.log({ success });
+      if (success.isSuccess) {
+        if (success.isAllDelivered) {
+          setShowAddItem(false);
+          setSelectedSupplierToAdd(null);
+          setIsShowContinueInsertPO(true);
+          setAddPOItem({ poItem: dataItem, item: item! });
+          return true;
+        } else {
+          setShowAddItem(false);
+          setSelectedSupplierToAdd(null);
+          setIsShowContinueInsertPO(false);
+          return true;
+        }
       } else {
         return false;
       }
     } catch (e) {
       console.log(e);
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
   const showUpdateStatusButton = supplierData.flatMap((supp) =>
@@ -1304,6 +1352,64 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         }}
       >
         <UpdatePOItemStatus data={selectedPOItemRows ?? []} />
+      </Modal>
+      <Modal
+        title="Confirmation to automatic delivered item"
+        isOpen={isShowContinueInsertPO}
+        onClose={function (): void {
+          setIsShowContinueInsertPO(false);
+        }}
+      >
+        <div className="flex flex-col justify-center gap-2">
+          <span className="items-center text-center text-xs 2xl:text-sm">
+            ⚠️{" "}
+            <span className="font-semibold">{addPoItem?.item.itemName} </span>
+            has already been delivered or received to the stores. If you
+            continue, the system will automatically update to delivered its
+            status.
+          </span>
+          <div className="flex justify-end gap-2">
+            <div>
+              <Button
+                label="Insert only"
+                color="secondary"
+                size="sm"
+                onClick={() => {
+                  if (!addPoItem) {
+                    return;
+                  }
+                  handleSubmitAddItemToSupplierPO({
+                    dataItem: addPoItem?.poItem,
+                    item: addPoItem.item,
+                    secondSubmit: true,
+                    continueInsert: false,
+                  });
+                }}
+                loading={isSubmitting}
+              />
+            </div>
+            <div>
+              <Button
+                label="Continue and update"
+                color="primary"
+                size="sm"
+                onClick={() => {
+                  if (!addPoItem) {
+                    return;
+                  }
+                  handleSubmitAddItemToSupplierPO({
+                    dataItem: addPoItem?.poItem,
+                    item: addPoItem.item,
+                    secondSubmit: true,
+                    continueInsert: true,
+                  });
+                }}
+                loading={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
+        {/* <UpdatePOItemStatus data={selectedPOItemRows ?? []} /> */}
       </Modal>
     </div>
   );
