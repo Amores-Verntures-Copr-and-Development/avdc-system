@@ -12,6 +12,9 @@ import { findPOItemsById } from "../purchaseOrderServices";
 import { findPurchaserOrder } from "../purchase/purchase-items/get-purchase-tems";
 import { updatePurchase } from "../purchase/update-purchase-order";
 import { updatePurchaseOrderItems } from "../purchase/purchase-items/update-purchase-items";
+import { findRequestItemsByPoItemIdWithConverions } from "../request/request-items/get-request-items";
+import { updateRequestItems } from "../request/request-items/update-request-items";
+import { RequestItems } from "@/types/request";
 
 export async function createOrderCompositeItems({
   connection,
@@ -33,7 +36,7 @@ export async function createOrderCompositeItems({
       connection: connection ? connection : newConnection,
       data,
     });
-
+    console.log({ data });
     const hasPricesData = data.filter((i) => Number(i.ordComPrice) !== 0);
 
     if (hasPricesData && hasPricesData.length > 0) {
@@ -50,23 +53,23 @@ export async function createOrderCompositeItems({
         keyFields: ["itemId"],
         updates: updateItemPrice,
       });
-      //get all items first
       const compositeItems =
         (await getOrderCompositeServices.findOrderCompositeByPOId({
           connection: connection ? connection : newConnection,
           poItemId: hasPricesData[0].poItemId!,
         })) as OrderCompositeItem[];
-      console.log({ compositeItems });
       const validItems = compositeItems.filter((i) => i.ordComPrice !== 0);
 
-      const totalPrice = validItems.reduce((sum, item) => {
-        return sum + Number(item.ordComPrice);
+      const totalAmount = validItems.reduce((sum, item) => {
+        return sum + Number(item.ordComPrice) * Number(item.ordComQuantity);
       }, 0);
-      const itemQty = validItems.length;
 
-      const averageCompositedPrice = Number(totalPrice) / Number(itemQty);
-      const rounded = Number(averageCompositedPrice.toFixed(2));
-
+      const totalQuantity = validItems.reduce((sum, item) => {
+        return sum + Number(item.ordComQuantity);
+      }, 0);
+      const averagePrice = totalQuantity > 0 ? totalAmount / totalQuantity : 0;
+      const rounded = Number(averagePrice);
+      console.log({ rounded });
       const fromCompositeItems = await findPurchaserOrder({
         connection: connection ? connection : newConnection,
         keyfields: { poItemId: hasPricesData[0].poItemId! },
@@ -92,6 +95,31 @@ export async function createOrderCompositeItems({
             },
           ],
         });
+        const checkRequestItems =
+          await findRequestItemsByPoItemIdWithConverions({
+            connection: connection ? connection : newConnection,
+            poItemId: hasPricesData[0].poItemId!,
+          });
+        let updateRequest: Partial<RequestItems>[] = [];
+        if (checkRequestItems && checkRequestItems.length > 0) {
+          for (const req of checkRequestItems) {
+            if (!req.itemConId) {
+              updateRequest.push({
+                reqItemId: req.reqItemId,
+                unitPrice: averagePrice,
+              });
+            }
+          }
+        }
+        if (updateRequest && updateRequest.length) {
+          console.log({ updateRequest });
+          await updateRequestItems({
+            connection,
+            updates: updateRequest,
+            keyFields: ["reqItemId"],
+          });
+        }
+        //Find and update the unit price of requestItems too
       }
     }
     if (localConnection) {
