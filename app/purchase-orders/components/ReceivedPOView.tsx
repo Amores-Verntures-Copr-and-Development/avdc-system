@@ -27,6 +27,9 @@ import {
   Layers2,
   Replace,
   RefreshCw,
+  DollarSign,
+  BadgePercent,
+  PhilippinePeso,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -51,6 +54,7 @@ import { PortalDropdown } from "@/components/shared/PortalDropDown";
 import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
 import UpdatePOItemStatus from "./_components/UpdatePOItemStatus";
 import { ItemInterface } from "@/types/items";
+import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -133,6 +137,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     poItem: CreatePurchaseOrderItemDto;
     item: ItemInterface;
   } | null>();
+  const [isShowUpdateSuppPrice, setIsShowUpdateSuppPrice] =
+    useState<PurchaseOrderItems | null>(null);
+
   const [isShowContinueInsertPO, setIsShowContinueInsertPO] = useState(false);
   const [selectedPOItemRows, setSelectedPOItemRows] = useState<
     PurchaseOrderItems[] | null
@@ -207,6 +214,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     {
       name: "Supplier Price",
       key: "supplierPrice",
+      selector: (row) => row.supplierPrice,
       editable: (row) => row.poItemStatus === "sent",
       inputType: "number",
     },
@@ -1100,6 +1108,17 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         label="Replace Item"
                                         bg="green"
                                       />
+                                      <IconButton
+                                        icon={<Store size={14} />}
+                                        onClick={() => {
+                                          if (!row) {
+                                            return;
+                                          }
+                                          setIsShowUpdateSuppPrice(row);
+                                        }}
+                                        label="Update Supplier Price"
+                                        bg="tertiary"
+                                      />
                                     </div>
                                   )}
                                 />
@@ -1341,6 +1360,30 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           }}
           onClose={() => {
             setShowReplaceItem(null);
+          }}
+        />
+      </Popup>
+      <Popup
+        isOpen={isShowUpdateSuppPrice !== null}
+        onClose={function (): void {
+          setIsShowUpdateSuppPrice(null);
+        }}
+        background="bg-white/20"
+        title={`Update Supplier Price`}
+        closeOnClickOutside={false}
+      >
+        <UpdateSupplierPrice
+          data={isShowUpdateSuppPrice}
+          supplierName={
+            data.find((s) => s.suppId === isShowUpdateSuppPrice?.suppId)
+              ?.suppName ?? ""
+          }
+          onClose={function (): void {
+            setIsShowUpdateSuppPrice(null);
+          }}
+          mutate={() => {
+            mutate();
+            mutateInventory();
           }}
         />
       </Popup>

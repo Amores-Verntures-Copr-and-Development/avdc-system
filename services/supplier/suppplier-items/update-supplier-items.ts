@@ -8,6 +8,10 @@ import {
 } from "@/dtos/supplier.dto";
 import { getSupplierItem } from "./get-supplier-item";
 import { createSupplierItems } from "./create-supplier-items";
+import { PurchaseOrderItems } from "@/types/purchaseOrders";
+import { getDBConnection } from "@/lib/db";
+import { formatPeso } from "@/utils/formatPeso";
+import { ItemPrice } from "@/types/items";
 
 export async function handleDeleteSupplierItems(data: Partial<SupplierItem>[]) {
   const deletedData: Partial<SupplierItem>[] = data.map((item) => ({
@@ -57,9 +61,17 @@ export async function handleUpdateSupplierItemPrice({
   updates: Partial<SupplierItem>[];
   keyFields?: (keyof SupplierItem)[];
 }) {
+  let localConnection = false;
+  let newConnection: any;
+  if (!connection) {
+    localConnection = true;
+    const newPool = await getDBConnection();
+    newConnection = await newPool.getConnection();
+    await newConnection.beginTransaction();
+  }
   try {
     const result = await updateSupplierItemsByFields({
-      connection,
+      connection: connection ? connection : newConnection,
       keyFields: keyFields,
       data: updates,
     });
@@ -71,7 +83,7 @@ export async function handleUpdateSupplierItemPrice({
           (item) =>
             item.suppItemId !== undefined &&
             item.suppItemPrice !== undefined &&
-            item.suppItemCreatedBy !== undefined
+            item.suppItemCreatedBy !== undefined,
         )
         .map((item) => ({
           suppItemId: item.suppItemId!,
@@ -79,13 +91,18 @@ export async function handleUpdateSupplierItemPrice({
           sipCreatedBy: item.suppItemCreatedBy!,
         }));
 
-      // Use itemPrices instead of data
-      await createSupplierItemPrices({ connection, data: itemPrices });
+      await createSupplierItemPrices({
+        connection: connection ? connection : newConnection,
+        data: itemPrices,
+      });
+      if (localConnection) {
+        await newConnection.commit();
+      }
     } else {
       const itemPricesPromises = updates.map(async (item) => {
         console.log({ item });
         let suppItem = await getSupplierItem({
-          connection,
+          connection: connection ? connection : newConnection,
           keyfields: { suppId: item.suppId, itemId: item.itemId },
         });
 
@@ -96,9 +113,12 @@ export async function handleUpdateSupplierItemPrice({
             suppItemCreatedBy: item.suppItemCreatedBy!,
             suppId: item.suppId!,
           };
-          await createSupplierItems({ connection, data: [createSuppItem] });
+          await createSupplierItems({
+            connection: connection ? connection : newConnection,
+            data: [createSuppItem],
+          });
           suppItem = await getSupplierItem({
-            connection,
+            connection: connection ? connection : newConnection,
             keyfields: { suppId: item.suppId, itemId: item.itemId },
           });
         }
@@ -111,17 +131,71 @@ export async function handleUpdateSupplierItemPrice({
       });
 
       // Wait for all promises to resolve
-      const itemPrices: CreateSupplierItemPriceDto[] = await Promise.all(
-        itemPricesPromises
-      );
+      const itemPrices: CreateSupplierItemPriceDto[] =
+        await Promise.all(itemPricesPromises);
 
       // Now use itemPrices
-      await createSupplierItemPrices({ connection, data: itemPrices });
+      await createSupplierItemPrices({
+        connection: connection ? connection : newConnection,
+        data: itemPrices,
+      });
+      if (localConnection) {
+        await newConnection.commit();
+      }
     }
 
     return result;
   } catch (e) {
     console.log({ e });
+    if (localConnection) {
+      await newConnection.rollback();
+    }
     throw e;
+  } finally {
+    if (localConnection) {
+      await newConnection.release();
+    }
+  }
+}
+
+export async function updateSupplierPriceFromPO({
+  supplierItemPrice,
+  poItem,
+  isUpdateItem,
+}: {
+  supplierItemPrice: CreateSupplierItemPriceDto;
+  poItem: PurchaseOrderItems;
+  isUpdateItem: boolean;
+}) {
+  const pool = await getDBConnection();
+  const connection = await pool.getConnection();
+  await connection.beginTransaction();
+  try {
+    const supplierItem = await getSupplierItem({
+      keyfields: { itemId: poItem.itemId, suppId: poItem.suppId! },
+    });
+    if (supplierItem) {
+      const suppItemPricePartial: Partial<SupplierItem> = {
+        suppItemId: supplierItem[0].suppItemId,
+        suppItemPrice: Number(supplierItemPrice.sipAmount),
+        suppItemCreatedBy: supplierItemPrice.sipCreatedBy,
+      };
+      console.log({ suppItemPricePartial });
+      await handleUpdateSupplierItemPrice({
+        updates: [suppItemPricePartial],
+        keyFields: ["suppItemId"],
+      });
+    }
+
+    if (isUpdateItem) {
+      const itemPrice: Partial<ItemPrice> = {};
+    }
+    //update the unit price of po and request po
+    await connection.rollback();
+  } catch (e) {
+    await connection.rollback();
+    throw e;
+  } finally {
+    connection.release();
   }
 }

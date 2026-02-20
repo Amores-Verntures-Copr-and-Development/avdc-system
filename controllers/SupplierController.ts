@@ -1,10 +1,15 @@
-import { CreateSupplierDto, CreateSupplierItemDto } from "@/dtos/supplier.dto";
+import {
+  CreateSupplierDto,
+  CreateSupplierItemDto,
+  CreateSupplierItemPriceDto,
+} from "@/dtos/supplier.dto";
 import { getSupplierBySearch } from "@/services/supplier/get-supplier";
 import { createSupplierItems } from "@/services/supplier/suppplier-items/create-supplier-items";
 import { getSupplierItemPrice } from "@/services/supplier/suppplier-items/supplier-item-price/get-supplier-item-price";
 import {
   handleDeleteSupplierItems,
   handleUpdateSupplierItemPrice,
+  updateSupplierPriceFromPO,
 } from "@/services/supplier/suppplier-items/update-supplier-items";
 import {
   addItemSupplierByID,
@@ -12,6 +17,7 @@ import {
   findAllSuppliers,
   findSupplierItemById,
 } from "@/services/supplierServices";
+import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { SupplierItem, SupplierItemPrices } from "@/types/supplier";
 import { error } from "console";
 
@@ -182,6 +188,35 @@ export const getSupplierItemPrices = async ({
     return {
       success: false,
       message: "Supplier item fetched successfully",
+      error: e,
+    };
+  }
+};
+
+export const updateSupplierItemsFromPOItems = async ({
+  supplierItemPrice,
+  poItem,
+  isUpdateItem,
+}: {
+  supplierItemPrice: CreateSupplierItemPriceDto;
+  poItem: PurchaseOrderItems;
+  isUpdateItem: boolean;
+}) => {
+  try {
+    const data = await updateSupplierPriceFromPO({
+      supplierItemPrice,
+      poItem,
+      isUpdateItem,
+    });
+    return {
+      success: true,
+      message: "Supplier item updated successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Supplier item price failed to update",
       error: e,
     };
   }

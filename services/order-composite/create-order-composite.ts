@@ -59,11 +59,9 @@ export async function createOrderCompositeItems({
           poItemId: hasPricesData[0].poItemId!,
         })) as OrderCompositeItem[];
       const validItems = compositeItems.filter((i) => i.ordComPrice !== 0);
-
       const totalAmount = validItems.reduce((sum, item) => {
         return sum + Number(item.ordComPrice) * Number(item.ordComQuantity);
       }, 0);
-
       const totalQuantity = validItems.reduce((sum, item) => {
         return sum + Number(item.ordComQuantity);
       }, 0);
