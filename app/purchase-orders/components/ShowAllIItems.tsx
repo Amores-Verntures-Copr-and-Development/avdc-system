@@ -144,16 +144,6 @@ const ShowAllIItems = ({
           : "Select Supplier";
       },
       value: (row) => {
-        console.log("Supplier value function:", {
-          selectedSupplierId: row.selectedSupplierId,
-          suppId: row.suppId,
-          returnValue:
-            row.selectedSupplierId === null ||
-            row.selectedSupplierId === undefined ||
-            row.selectedSupplierId === ""
-              ? null
-              : (row.selectedSupplierId || row.suppId)?.toString() || null,
-        });
         // Return empty string if explicitly cleared, otherwise use existing value
         if (
           row.selectedSupplierId !== undefined ||
@@ -320,7 +310,6 @@ const ShowAllIItems = ({
   const handleUpdatePoItemSuppId = async (
     dataItem: Partial<PurchaseOrderItems>,
   ) => {
-    console.log({ data });
     if (!dataItem.poItemId) return;
     setIsUpdatingId(dataItem.poItemId);
     try {
@@ -329,7 +318,7 @@ const ShowAllIItems = ({
         ...dataItem,
         suppId: Number(dataItem.suppId) || null,
       };
-      console.log("Updating PO Item:", newData);
+
       const success = await onUpdateItem(newData, data.poId);
       if (success) {
         mutate();

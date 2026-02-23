@@ -43,7 +43,7 @@ const VariantComponentPage = ({
   const { user, hasStore } = useSession();
   const isAllowedShowCosting =
     !hasStore && !["supervisor", "staff"].includes(user?.empPosition ?? "");
-  console.log({ isAllowedShowCosting });
+
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteVariant, setShowDeleteVariant] =
     useState<DisplayVariantComponents | null>(null);
@@ -73,7 +73,7 @@ const VariantComponentPage = ({
       prodVarPrice: Number(form.prodVarPrice),
       isDeductInv: form.isDeductInv,
     };
-    console.log({ variantForm });
+
     try {
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${data?.prodId}/${data?.prodVarId}`,
@@ -109,7 +109,7 @@ const VariantComponentPage = ({
     ) ?? 0;
   const handleDeleteVariantComponent = async () => {
     setIsDeleting(true);
-    console.log({ selectedVariant });
+
     try {
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${showDeleteVariant?.prodVarId}/${data?.prodVarId}/variant-component/${showDeleteVariant?.varComId}`,
@@ -369,7 +369,6 @@ const VariantComponentPage = ({
                   </div>
                   <IconButton
                     onClick={function (): void {
-                      console.log({ comp });
                       setShowDeleteVariant(comp);
                       setShowComponent(true);
                     }}

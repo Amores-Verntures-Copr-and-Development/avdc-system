@@ -21,7 +21,6 @@ export const customerServices = {
       const id = await insertCustomer({ data, connection });
       return id;
     } catch (e) {
-      console.log({ e });
       throw e;
     }
   },
@@ -63,7 +62,7 @@ export const customerServices = {
           });
         });
       });
-      console.log(rowsToInsert.length);
+
       // Bulk insert with the same connection
 
       await insertCustomer({

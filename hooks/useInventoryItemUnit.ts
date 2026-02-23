@@ -25,7 +25,7 @@ export function useInventoryItemUnit({
       const stored = localStorage.getItem(localStorageKey);
       if (stored) {
         const storedData = JSON.parse(stored);
-        console.log("Using cached stock room data");
+
         return storedData;
       }
 
@@ -56,7 +56,7 @@ export function useInventoryItemUnit({
       shouldRetryOnError: (err) => {
         return !(err instanceof Error && err.message.includes("401"));
       },
-    }
+    },
   );
 
   const unitOptions = data?.data

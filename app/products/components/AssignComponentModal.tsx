@@ -42,7 +42,6 @@ const AssignComponentModal = ({
   });
   const handleChangeForm = handleChange(formData, setFormData);
   const handleAssignVariant = async () => {
-    console.log({ formData });
     if (!formData.inventoryItemId) {
       toast.error("No item from inventory selected!");
       return;

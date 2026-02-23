@@ -13,14 +13,13 @@ export function useInventoryItems({
     reference === "storeId"
       ? `api/inventory/store/${id}/items`
       : reference === "inventoryId"
-      ? `api/inventory/store/${id}`
-      : null;
+        ? `api/inventory/store/${id}`
+        : null;
 
   useEffect(() => {
     if (search) {
       baseUrl = `${baseUrl}?search=${search}`;
     }
-    console.log({ search });
   }, [search]);
   return;
 }

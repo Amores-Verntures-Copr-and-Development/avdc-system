@@ -35,7 +35,7 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
     });
   const handlePaymentMethodChange = handleChange(
     paymentMethodForm,
-    setPaymentMethodForm
+    setPaymentMethodForm,
   );
   const {
     data: itemResponse = { data: [] },
@@ -52,7 +52,7 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
       payMetHasRef: 0,
       payMetDesc: "",
     });
-  console.log({ itemResponse });
+
   const handleCreatePaymentMethod = async () => {
     if (!user || user.userId === 0) {
       toast.error("No user found!");
@@ -71,7 +71,7 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
       payMetCreatedBy: user?.userId,
       storeId: storeId,
     };
-    console.log({ createPaymentMethodForm });
+
     setIsAdding(true);
     try {
       const result = await fetch(
@@ -82,7 +82,7 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(createPaymentMethodForm),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {

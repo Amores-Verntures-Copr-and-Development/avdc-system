@@ -36,8 +36,7 @@ const EditProduct = ({
       prodCatId: Number(form.prodCatId) || null,
       prodName: form.prodName,
     };
-    console.log({ data });
-    console.log({ product });
+
     setIsSaving(true);
     try {
       const result = await fetch(

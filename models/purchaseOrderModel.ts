@@ -75,11 +75,11 @@ export const insertPurchaseOrderItems = async ({
     item.suppId || null,
   ]);
   const [results] = await pool.execute<ResultSetHeader>(sql, values);
-  console.log({ results });
+
   const count = results.affectedRows;
   const firstId = results.insertId;
   const insertedIds = Array.from({ length: count }, (_, i) => firstId + i);
-  console.log("insertedIds", { insertedIds });
+
   return insertedIds;
 };
 

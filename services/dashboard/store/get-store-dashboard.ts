@@ -7,7 +7,6 @@ import { getOwnerDashboardServices } from "../owner/get-owner-dashboard";
 
 export async function getStoreDashboard(storeId: number) {
   try {
-    console.log({ storeId });
     const todaysYear = new Date().getFullYear();
     const totalSales = await getSalesServices.findSalesTotalsByStoreId({
       storeId,

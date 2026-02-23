@@ -23,7 +23,7 @@ const AddItemSupplierModal = ({
   user,
 }: AddItemSupplierModalProps) => {
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
   const [itemData, setItemData] = useState<CreateSupplierItemDto[] | null>([]);
   useEffect(() => {
@@ -69,7 +69,6 @@ const AddItemSupplierModal = ({
     },
   ];
   const handleSubmit = async () => {
-    console.log(selectedSupplier);
     if (!itemData) {
       return;
     }
@@ -109,7 +108,7 @@ const AddItemSupplierModal = ({
                   ...item, // example field
                   suppId: supplier.suppId,
                   suppItemCreatedBy: user?.userId ?? 0, // assign same suppId here
-                })) ?? []
+                })) ?? [],
               );
             }
           }}

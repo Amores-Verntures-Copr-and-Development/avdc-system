@@ -106,7 +106,7 @@ const AddItemToProductModal = ({
       productVariant: products,
       storeId: storeId,
     };
-    console.log({ addProdct });
+
     const success = await onSubmit(addProdct);
     if (success) {
       onCancel();

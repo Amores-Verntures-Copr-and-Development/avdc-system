@@ -165,7 +165,6 @@ const InventoryPage = () => {
                     icon={ArrowLeft}
                     onClick={() => {
                       setSelectedInventory(null);
-                      console.log("Clicked");
                     }}
                   />
                 </div>

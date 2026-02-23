@@ -378,9 +378,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       ),
     );
   };
-  useEffect(() => {
-    console.log("asd");
-  }, [supplierData]);
+
   useEffect(() => {
     if (data && data.length > 0) {
       setOriginalData(data);
@@ -511,7 +509,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       toast.success(res.message);
       mutate();
       mutateInventory();
-      console.log({ data });
+
       setIsShowDeliverConfirmation(false);
       setSelectedStoreSupplier(null);
       return true;
@@ -554,7 +552,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         secondSubmit,
         continueInsert,
       });
-      console.log({ success });
+
       if (success.isSuccess) {
         if (success.isAllDelivered) {
           setShowAddItem(false);

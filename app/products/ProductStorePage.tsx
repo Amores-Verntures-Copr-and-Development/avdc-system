@@ -277,7 +277,6 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     }
   };
   const handleAddProduct = async (data: CreateProductDtos) => {
-    console.log({ data, storeId });
     setIsAddingProduct(true);
     if (!storeId || storeId === 0) {
       return false;
@@ -287,7 +286,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       storeId: storeId,
       prodCreatedBy: user?.userId ?? 0,
     };
-    console.log({ newData });
+
     try {
       const data = await fetch(`/api/products/${storeId}`, {
         method: "POST",
@@ -333,7 +332,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     ],
     [categoryOpions],
   );
-  console.log({ productConfig });
+
   const handleFilterSave = useCallback(
     (newFilters: Record<string, string[]>) => {
       console.log({ newFilters });

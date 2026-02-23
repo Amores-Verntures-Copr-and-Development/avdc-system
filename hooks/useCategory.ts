@@ -25,7 +25,7 @@ export function useCategories({
       const stored = localStorage.getItem(localStorageKey);
       if (stored) {
         const storedData = JSON.parse(stored);
-        console.log("Using cached stock room data");
+
         return storedData;
       }
 

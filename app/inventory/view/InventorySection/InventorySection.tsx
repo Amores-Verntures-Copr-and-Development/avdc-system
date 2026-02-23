@@ -379,7 +379,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       toast.success("Request created successfully!");
@@ -432,7 +431,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           isDeductInv: true,
           prodId: data.prodId || 0,
         }));
-        console.log({ productVariants });
+
         const result = await fetch(
           `api/products/${data.storeId}/${data.prodId}/product-variants/create-bulk`,
           {
@@ -476,7 +475,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               },
             ],
           })) ?? [];
-        console.log({ createProduct });
+
         const result = await fetch(`api/products/${user?.storeId}/bulk`, {
           method: "POST",
           headers: {
@@ -543,7 +542,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         inventoryItemCreatedBy: user?.userId ?? 0,
         inventoryId: inventoryId ?? 0,
       };
-      console.log("CreateFirstItem: ", newData);
+
       const result = await fetch(`api/inventory/item/${inventoryId}`, {
         method: "POST",
         headers: {
@@ -982,7 +981,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                         const hasItemsWithNoStock = selectedRows?.some(
                           (item) => Number(item.inventoryItemQuantity) === 0,
                         );
-                        console.log({ selectedRows });
+
                         if (hasItemsWithNoStock) {
                           toast.error("Cannot move out items with zero stock!");
                           return;
@@ -1046,7 +1045,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     label="Add Item to product"
                     onClick={() => {
                       setShowAddProductModal(true);
-                      console.log({ isAddingProduct });
                     }}
                     size="xs"
                     className="font-semibold"
@@ -1103,7 +1101,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                       return arr; // replace id with unique key
                     return [...arr, row];
                   });
-                  console.log({ selectedRequestRows });
                 }}
                 label={"Add To Request"}
                 bg={"green"}
@@ -1115,7 +1112,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               <IconButton
                 onClick={() => {
                   handleRemoveRequestItem(row.inventoryItemId);
-                  console.log({ selectedRequestRows });
                 }}
                 label={"Remove"}
                 bg={"red"}
@@ -1140,7 +1136,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               />
               <IconButton
                 onClick={function (): void {
-                  console.log("Delete");
                   setSelectedRow(row);
                   setShowDeleteModal(true);
                 }}

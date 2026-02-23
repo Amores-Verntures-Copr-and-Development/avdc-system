@@ -90,8 +90,6 @@ const CheckOutModal = ({
     }
   }, []);
 
-  console.log({ totalPaid, remaining, change, canComplete });
-
   const quickAmounts = [50, 100, 200, 500, 1000];
 
   const removePayment = (index: number) => {
@@ -125,14 +123,14 @@ const CheckOutModal = ({
   );
   const handleAddPayment = () => {
     if (!selectedMethod) return;
-    console.log({ selectedMethod });
+
     const paymentToAdd: CreateSalePaymentDto = {
       ...selectedMethod,
       salesPaymentAmount: Number(selectedMethod.salesPaymentAmount) || 0,
       salesId: 0,
     };
     addPayment(paymentToAdd);
-    console.log({ selectedPaymentMethod });
+
     setSelectedMethod({
       paymentReference: "",
       payMetId: 0,

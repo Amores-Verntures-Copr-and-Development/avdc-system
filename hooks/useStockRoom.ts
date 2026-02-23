@@ -12,7 +12,7 @@ export function useStockRoom(userId: number | null) {
       const stored = localStorage.getItem(localStorageKey);
       if (stored) {
         const storedData = JSON.parse(stored);
-        console.log("Using cached stock room data");
+
         return storedData;
       }
 
@@ -43,7 +43,7 @@ export function useStockRoom(userId: number | null) {
       shouldRetryOnError: (err) => {
         return !(err instanceof Error && err.message.includes("401"));
       },
-    }
+    },
   );
 
   return {

@@ -65,7 +65,7 @@ const DiscountList = ({ storeId, user }: DiscountListProps) => {
       discountCreatedBy: user?.userId,
       storeId: storeId,
     };
-    console.log({ discountNewForm });
+
     try {
       const result = await fetch(
         `/api/sales-discount/store/${discountNewForm.storeId}/`,
@@ -75,7 +75,7 @@ const DiscountList = ({ storeId, user }: DiscountListProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(discountNewForm),
-        }
+        },
       );
       const res = await result.json();
       if (!res.success) {

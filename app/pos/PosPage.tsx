@@ -486,9 +486,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const handleConfirmOrder = async () => {
     const totalAmount = getTotalAmount(); // total to pay
     let remaining = totalAmount;
-    console.log({ user });
+
     const token = getCookie("avdc_accessToken");
-    console.log({ token });
+
     if (!selectedOrder || selectedOrder.length === 0) {
       toast.error("No selected order!");
       return;
@@ -568,7 +568,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         throw new Error(res.err);
       }
       const sales = res.data as Sales[];
-      console.log({ sales });
+
       setRecentSales(sales[0]);
       toast.success(res.message);
       mutateProducts();
@@ -635,7 +635,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         newDisc.discountType === "fixed"
           ? newDisc.discountValue
           : subtotal * (Number(newDisc.discountValue) / 100);
-      console.log({ discount });
+
       return [
         ...(prev ?? []),
         {
@@ -756,7 +756,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <IconButton
                       onClick={() => {
                         setIsShowIcons("methods");
-                        console.log("Product list clicked");
                       }}
                       label="Payment Method List"
                       bg="green"
@@ -767,7 +766,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                       onClick={() => {
                         setIsShowIcons("discount");
                         // TODO: Implement product list functionality
-                        console.log("Product list clicked");
                       }}
                       label="Discount List"
                       bg="blue"
@@ -777,7 +775,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <IconButton
                       onClick={() => {
                         setIsShowIcons("product");
-                        console.log("Product list clicked");
                       }}
                       label="Product List"
                       bg="yellow"
@@ -788,7 +785,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <IconButton
                       onClick={() => {
                         setIsShowIcons("history");
-                        console.log("History clicked");
                       }}
                       label="History"
                       bg="primary"
@@ -980,7 +976,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               onClick={() => {
                 const hasNoOrder =
                   !selectedOrder || selectedOrder?.length === 0;
-                console.log({ hasNoOrder, selectedOrder });
+
                 if (hasNoOrder) {
                   toast.error("No order selected!");
                   return;

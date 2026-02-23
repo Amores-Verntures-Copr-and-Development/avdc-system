@@ -64,7 +64,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       itemPrice: Number(items.itemPrice),
     })),
   );
-  console.log({ tableData });
+
   const updatedItemsRef = useRef<EditableItem[]>(tableData);
 
   const handleDataUpdate = (updatedData: EditableItem[]) => {
@@ -86,7 +86,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       toast.error("Please add at least one item to request.");
       return;
     }
-    console.log({ updatedItems });
+
     const newItems: InsertItemsRequestDto[] = updatedItems.map((items) => ({
       ...items,
       reqItemQuantity: Number(items.reqItemQuantity),
@@ -97,7 +97,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
       const qty = Number(item.reqItemQuantity);
       return qty <= 0 || isNaN(qty);
     });
-    console.log({ hasZeroQuantity });
+
     if (hasZeroQuantity) {
       toast.error("Please enter a valid quantity for all items.");
       return;
