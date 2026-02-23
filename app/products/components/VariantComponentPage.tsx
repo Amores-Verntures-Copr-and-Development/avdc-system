@@ -104,7 +104,7 @@ const VariantComponentPage = ({
   };
   const totalCosting =
     data?.variantComponents?.reduce(
-      (sum, item) => sum + Number(item.itemPrice),
+      (sum, item) => sum + Number(item.itemPrice) * item.quantityRequired,
       0,
     ) ?? 0;
   const handleDeleteVariantComponent = async () => {
@@ -351,7 +351,8 @@ const VariantComponentPage = ({
                       {comp.itemName}
                     </span>
                     <span className="text-gray-500 text-[9px]  2xl:text-xs">
-                      {comp.quantityRequired} qty
+                      {comp.quantityRequired} qty (
+                      {formatPeso(comp.quantityRequired * comp.itemPrice)})
                     </span>
                   </div>
 

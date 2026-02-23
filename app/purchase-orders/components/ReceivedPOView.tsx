@@ -670,7 +670,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     (item) => item.poItemStatus === "delivered",
                   );
 
-                  const isExpanded = expandedSupplier === supplier.suppId;
+                  const isExpanded =
+                    expandedSupplier === supplier.suppId &&
+                    expandedSupplier !== null;
                   const totalItemsSupplier = supplier.items
                     .filter(
                       (i) =>

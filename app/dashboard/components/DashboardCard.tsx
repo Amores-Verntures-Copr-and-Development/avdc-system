@@ -17,7 +17,7 @@ const DashboardCard = ({
   onClick,
 }: DashboardCardProps) => {
   return (
-    <div className="flex flex-col justify-between p-3 xs:p-4 xl:p-5 border rounded-xl xl:rounded-2xl shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
+    <div className="flex flex-col justify-between p-3 xs:p-4 xl:p-5 border rounded-sm shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
       {/* Top Section */}
       <div className="flex flex-row items-center gap-2 xs:gap-3 xl:gap-4">
         <div
