@@ -14,7 +14,7 @@ export async function POST(
   const slug3 = (await params).poItemId;
   const poItemId = Number(slug3);
   const req = await request.json();
-  console.log({ req });
+
   const { supplierItemPrice, poItem, isUpdateItem } = req;
 
   if (!poId) {

@@ -247,7 +247,6 @@ const InventoryPage = () => {
                     data={inventory}
                     onClick={(row: DisplayAllInventory) => {
                       setSelectedInventory(row);
-                      console.log("Row: ", { row });
                     }}
                   />
                 ))}

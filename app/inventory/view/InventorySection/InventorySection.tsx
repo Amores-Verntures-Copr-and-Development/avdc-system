@@ -367,9 +367,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     setSelectedRows(selected);
   };
-  useEffect(() => {
-    console.log("Updated: ", showAddComponent);
-  }, [showAddComponent]);
+
   const handleCreateRequest = async (data: CreateRequestFormDto) => {
     try {
       const result = await fetch(`api/requests/`, {

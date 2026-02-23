@@ -238,7 +238,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             }
           >
             {filtered.map((c, index) => {
-              const total = Number(c.ordComQuantity) * Number(c.itemPrice);
+              const total = Number(c.ordComQuantity) * Number(c.ordComPrice);
               return (
                 <div
                   key={index}
@@ -249,7 +249,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>Qty: {c.ordComQuantity}</span>
-                    <span>Unit: {formatPeso(c.itemPrice)}</span>
+                    <span>Unit: {formatPeso(c.ordComPrice)}</span>
                   </div>
                   <div className="flex justify-between font-semibold text-gray-800 mt-1">
                     <span>Total</span>
@@ -274,7 +274,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           const total = row?.composite
             ?.filter((c) => c !== null)
             .reduce((sum, item) => {
-              return sum + Number(item.ordComQuantity) * Number(item.itemPrice);
+              return (
+                sum + Number(item.ordComQuantity) * Number(item.ordComPrice)
+              );
             }, 0);
 
           return formatPeso(total);
@@ -663,7 +665,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   const isNotOrderedAll = origData?.every(
                     (item) => item.poItemStatus === "not_ordered",
                   );
-
+                  const hasDelivered = origData?.some(
+                    (i) => i.poItemStatus === "delivered",
+                  );
                   const isSupplierItemsDelivered = supplier.items.every(
                     (item) => item.poItemStatus === "delivered",
                   );
@@ -672,7 +676,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   const totalItemsSupplier = supplier.items
                     .filter(
                       (i) =>
-                        i.poItemStatus === "sent" ||
                         i.poItemStatus === "received" ||
                         i.poItemStatus === "delivered",
                     )
@@ -682,19 +685,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
 
                       const hasComposite =
                         item.composite && item.composite.length > 0;
-
-                      if (hasComposite) {
-                        const compositeTotal = item.composite
-                          ?.filter((c) => c !== null)
-                          .reduce((sum, c) => {
-                            return (
-                              sum +
-                              Number(c.ordComQuantity) * Number(c.itemPrice)
-                            );
-                          }, 0);
-
-                        return total + Number(compositeTotal);
-                      }
 
                       const price =
                         Number(item.supplierPrice || item.unitPrice) || 0;

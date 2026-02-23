@@ -31,9 +31,19 @@ const UpdateSupplierPrice = ({
     suppItemId: 0,
     sipCreatedBy: user?.userId ?? 0,
   });
+  const [isUpdating, setIsUpdating] = useState(false);
   const onChangePrice = handleChange(form, setForm);
   const handleUpdateSupplierPrice = async () => {
     try {
+      setIsUpdating(true);
+      if (!form.sipAmount) {
+        toast.error("Amount is required!");
+        return;
+      }
+      if (!data) {
+        toast.error("No item is selected!");
+        return;
+      }
       const formData = {
         supplierItemPrice: form,
         poItem: data,
@@ -56,8 +66,11 @@ const UpdateSupplierPrice = ({
       }
       toast.success(`${data?.itemName} price updated successfully`);
       mutate();
+      onClose();
     } catch (e: any) {
       toast.error(e.message);
+    } finally {
+      setIsUpdating(false);
     }
   };
   return (
@@ -97,7 +110,12 @@ const UpdateSupplierPrice = ({
       <div className="flex justify-end gap-2">
         <div>
           {" "}
-          <Button label="Cancel" size="sm" color="secondary" />
+          <Button
+            label="Cancel"
+            size="sm"
+            color="secondary"
+            disabled={isUpdating}
+          />
         </div>
         <div>
           {" "}
@@ -105,6 +123,7 @@ const UpdateSupplierPrice = ({
             label="Update Price"
             size="sm"
             onClick={handleUpdateSupplierPrice}
+            loading={isUpdating}
           />
         </div>
       </div>

@@ -118,11 +118,12 @@ export const selectRequestOrders = async ({
     COUNT(ri.reqItemId) AS totalItems,
     CONCAT_WS('', u.userFname, u.userLname) AS requestedByName,
     s.storeName,
-    (
+(
         SELECT SUM(
             CASE 
                 WHEN ro.requestStatus = 'delivered' THEN ri.reqItemTransfer * ri.unitPrice
                 WHEN ro.requestStatus = 'received' OR ro.requestStatus = 'completed'  THEN ri.reqItemReceived * ri.unitPrice
+                 WHEN ro.requestStatus = 'in_progress' OR ro.requestStatus = 'delivered'  THEN ri.reqItemReceived * ri.unitPrice
                 ELSE ri.reqItemQuantity * ri.unitPrice
             END
         )
@@ -526,33 +527,35 @@ export const selectRequetItemsByPOItemIdWithConversion = async ({
   // Create placeholders for each item in the array
   const pool = connection ? connection : await getDBConnection();
   const sql = `SELECT 
-ri.*,ic.*,ii.inventoryItemReferenceId
+    ri.*,
+    ic.*,
+    ii.inventoryItemReferenceId
 FROM PurchaseOrderItems poi
 
--- get request
 LEFT JOIN PurchaseOrderRequest por 
     ON por.poId = poi.poId
 
--- join ItemConversions to catch any conversions for this PO item
-LEFT JOIN ItemConversions ic 
-    ON ic.fromItemId = poi.itemId 
-    OR ic.toItemId = poi.itemId
-
--- join InventoryItems: either direct PO item or via conversion
+-- Direct inventory match
 LEFT JOIN InventoryItems ii 
     ON ii.inventoryItemReferenceId = poi.itemId
-    OR ii.inventoryItemReferenceId = ic.fromItemId
-    OR ii.inventoryItemReferenceId = ic.toItemId
 
--- join RequestItems linked to inventory
 LEFT JOIN RequestItems ri 
     ON ri.requestId = por.requestId 
     AND ri.invItem = ii.inventoryItemId
 
--- join Items table if needed
+-- 🔥 Only attempt conversion if NO direct match
+LEFT JOIN ItemConversions ic 
+    ON ri.reqItemId IS NULL
+    AND (
+        ic.fromItemId = ii.inventoryItemReferenceId
+        OR ic.toItemId = ii.inventoryItemReferenceId
+    )
+
 LEFT JOIN Items i 
     ON i.itemId = ii.inventoryItemReferenceId
-WHERE poi.poItemId = ? AND ri.reqItemId IS NOT NULL`;
+
+WHERE poi.poItemId = ?
+  AND ri.reqItemId IS NOT NULL`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [poItemId]);
   return rows;

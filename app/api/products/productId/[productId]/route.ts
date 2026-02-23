@@ -6,11 +6,10 @@ export async function GET(_request: Request) {
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const store = searchParams.get("store") || "";
-    console.log({ search, store });
+
     const res = await getProduct({ search, storeName: store });
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 

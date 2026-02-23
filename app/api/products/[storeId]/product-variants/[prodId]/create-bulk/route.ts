@@ -17,10 +17,9 @@ export async function POST(
       throw new Error("No storeId found");
     }
     const data = (await _request.json()) as CreateProductVariantDto[];
-    console.log("ROUTE: ", { data });
+
     const res = await createProductVariantBulkController(data);
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 

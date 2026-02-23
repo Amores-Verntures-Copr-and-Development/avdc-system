@@ -347,7 +347,7 @@ export const selectPurchaseOrderItemsSupplier = async (poId: number) => {
 			          'poItemId', oc.poItemId,
 			          'reqItemId', oc.reqItemId,
 			          'itemName', i.itemName,
-			          'itemPrice', i.itemPrice,
+			          'ordComPrice', oc.ordComPrice,
 			          'itemUnit', i.itemUnit,
                 'ordComQuantity', oc.ordComQuantity
 			        )

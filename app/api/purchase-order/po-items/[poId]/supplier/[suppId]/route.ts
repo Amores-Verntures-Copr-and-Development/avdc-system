@@ -14,7 +14,8 @@ export async function POST(
     const poIdSlug = Number(slug);
     const slug1 = (await params).suppId;
     const suppIdSlug = Number(slug1);
-    if (poIdSlug) {
+
+    if (!poIdSlug) {
       throw new Error("No poId found!");
     }
     if (!suppIdSlug) {
@@ -27,7 +28,6 @@ export async function POST(
       continueInsert,
     });
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Add PO item");
     }
     return NextResponse.json(

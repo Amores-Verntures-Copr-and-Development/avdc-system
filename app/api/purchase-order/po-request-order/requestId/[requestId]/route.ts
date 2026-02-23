@@ -5,18 +5,18 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ requestId: string }> }
+  { params }: { params: Promise<{ requestId: string }> },
 ) {
   try {
     const slug = (await params).requestId;
-    console.log("Agi diri sa get");
+
     const res = await getPOByPORFields({
       keyfields: { requestId: Number(slug) },
     });
 
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
+
       throw new Error(`${res.error}`);
     }
 
@@ -26,7 +26,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -36,14 +36,14 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ requestId: string }> }
+  { params }: { params: Promise<{ requestId: string }> },
 ) {
   try {
     const addItemForm = (await request.json()) as POAddToRequestItemForm;
@@ -63,7 +63,7 @@ export async function POST(
         success: true,
         message: "Successfully added items to request",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -72,7 +72,7 @@ export async function POST(
         message: "Failed to fetch PO",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

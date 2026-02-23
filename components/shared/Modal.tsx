@@ -1,8 +1,10 @@
 import React, { ReactNode, useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom";
 import { LucideIcon, X } from "lucide-react";
+import LoaderComponent from "./LoaderComponent";
 
 interface ModalProps {
+  isLoading?: boolean;
   isOpen: boolean;
   onClose: () => void;
   title?: string;
@@ -28,6 +30,7 @@ const Modal: React.FC<ModalProps> = ({
   footer,
   children,
   subtitle,
+  isLoading = false,
   size = "md",
   showCloseButton = true,
   className = "",
@@ -231,7 +234,7 @@ const Modal: React.FC<ModalProps> = ({
             hasPadding ? "p-4" : ""
           }`}
         >
-          {children}
+          {isLoading ? <LoaderComponent title="Fetching data" /> : children}
         </div>
 
         {/* Footer */}

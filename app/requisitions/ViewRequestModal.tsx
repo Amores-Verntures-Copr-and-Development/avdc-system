@@ -61,11 +61,12 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   user,
 }) => {
   const [filteredStatus, setFilteredStatus] = useState<
-    "" | "delivered" | "received" | "not_ordered"
+    "" | "delivered" | "received" | "not_ordered" | "pending"
   >("");
   const [selectedRow, setSelectedRow] = useState<DisplayRequestItems | null>(
     null,
   );
+
   const [showReceiveItemModal, setShowReceiveItemModal] = useState(false);
   const [selectedRowItem, setSelectedRowItem] =
     useState<DisplayRequestItems | null>(null);
@@ -135,6 +136,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const status = [
     { value: "", label: "All" },
     {
+      value: "pending",
+      label: `Pending Items (${requestItemData?.filter((i) => i.reqItemStatus === "pending").length})`,
+    },
+
+    {
       value: "delivered",
       label: `Delivered Items (${requestItemData?.filter((i) => i.reqItemStatus === "delivered").length})`,
     },
@@ -199,8 +205,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     { name: "Unit", key: "itemUnit" },
     {
       name: "Unit Price",
-      key: "itemPrice",
-      selector: (row) => <span>{formatPeso(row.itemPrice)}</span>,
+      key: "unitPrice",
+      selector: (row) => <span>{formatPeso(row.unitPrice)}</span>,
     },
     {
       name: "Request Qty",
@@ -403,7 +409,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       inputType: "select",
       selectOptionVariant: "custom", // ✅ matches interface
       options: (row) => {
-        let options: [];
         const original = findOriginalData(row.reqItemId);
         if (original?.reqItemStatus === "pending") {
           if (hasItemDeliver) {
@@ -851,7 +856,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     (i) => i.reqItemStatus === "delivered",
   );
   const hasSomeNotOrdered = requestItemData.some(
-    (i) => i.reqItemStatus === "not_ordered",
+    (i) =>
+      i.reqItemStatus === "not_ordered" &&
+      findOriginalData(i.reqItemId)?.reqItemStatus !== "not_ordered",
   );
   const handleSaveEditItem = async () => {
     setIsEditting(true);
@@ -887,8 +894,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   };
   const getTotalCost = (() => {
     if (!selectedReq) return 1;
+    if (["rejected", "cancelled"].includes(selectedReq.requestStatus ?? "")) {
+      return 0;
+    }
 
-    if (selectedReq.requestStatus === "delivered") {
+    if (!["pending"].includes(selectedReq.requestStatus ?? "")) {
       return requestItemData.reduce(
         (sum, item) =>
           sum + Number(item.reqItemTransfer) * Number(item.unitPrice),
@@ -896,20 +906,9 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       );
     }
 
-    if (
-      selectedReq.requestStatus === "received" ||
-      selectedReq.requestStatus === "completed"
-    ) {
-      return requestItemData.reduce(
-        (sum, item) =>
-          sum + Number(item.reqItemReceived) * Number(item.itemPrice),
-        0,
-      );
-    }
-
     return requestItemData.reduce(
       (sum, item) =>
-        sum + Number(item.reqItemQuantity) * Number(item.itemPrice),
+        sum + Number(item.reqItemQuantity) * Number(item.unitPrice),
       0,
     );
   })();
@@ -1171,11 +1170,13 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         s.value === filteredStatus
                           ? s.value === ""
                             ? "primary"
-                            : s.value === "delivered"
-                              ? "warning"
-                              : s.value === "received"
-                                ? "success"
-                                : "danger"
+                            : s.value === "pending"
+                              ? "tertiary"
+                              : s.value === "delivered"
+                                ? "warning"
+                                : s.value === "received"
+                                  ? "success"
+                                  : "danger"
                           : "secondary"
                       }
                       onClick={() => {

@@ -13,9 +13,9 @@ import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const TWO_COLUMN_THRESHOLD = 30;
-const FIRST_PAGE_SINGLE = 60;
-const NEXT_PAGE_SINGLE = 70;
-const FIRST_PAGE_TWO = 60;
+const FIRST_PAGE_SINGLE = 30;
+const NEXT_PAGE_SINGLE = 50;
+const FIRST_PAGE_TWO = 30;
 const NEXT_PAGE_TWO = 80;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -24,9 +24,9 @@ const getQuantityByStatus = (item: any, status: string): number => {
     case "pending":
     case "approved":
     case "in_progress":
-      return item.reqItemQuantity ?? 0;
+      return item.reqItemReceived ?? 0;
     case "delivered":
-      return item.reqItemTransfer ?? 0;
+      return item.reqItemReceived ?? 0;
     case "received":
     case "completed":
       return item.reqItemReceived ?? 0;
@@ -201,7 +201,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
   }, []);
 
   const grandTotal = items.reduce((sum, item) => {
-    return sum + getQuantityByStatus(item, status) * Number(item.unitPrice);
+    return sum + item.reqItemReceived * Number(item.unitPrice);
   }, 0);
 
   const renderTableHeader = () => (
@@ -217,8 +217,23 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
     </View>
   );
 
-  const renderRows = (chunk: any[], startIndex: number) =>
-    chunk.map((item, i) => {
+  const renderRows = (chunk: any[], startIndex: number) => {
+    const sortedChunk = [...chunk].sort((a, b) => {
+      const aHasReceived = Number(a.reqItemReceived) !== 0;
+      const bHasReceived = Number(b.reqItemReceived) !== 0;
+
+      // First sort by received status
+      if (aHasReceived !== bHasReceived) {
+        return aHasReceived ? -1 : 1;
+      }
+
+      // Then alphabetical
+      return a.itemName.localeCompare(b.itemName, undefined, {
+        sensitivity: "base",
+        numeric: true,
+      });
+    });
+    return sortedChunk.map((item, i) => {
       const qty = getQuantityByStatus(item, status);
       const total = qty * Number(item.unitPrice);
       const isEven = i % 2 === 0;
@@ -232,7 +247,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit}</Text>
           <Text style={styles.colPrice}>
-            {Number(item.unitPrice).toFixed()}
+            {Number(item.unitPrice).toFixed(2)}
           </Text>
           <Text style={styles.colQty}>
             {item.reqItemQuantity
@@ -249,11 +264,13 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
               ? formatQuantityByUnit(item.reqItemReceived, item.itemUnit ?? "")
               : "—"}
           </Text>
-          <Text style={styles.colTotal}>{total !== 0 ? total : "—"}</Text>
+          <Text style={styles.colTotal}>
+            {total !== 0 ? total.toFixed(2) : "—"}
+          </Text>
         </View>
       );
     });
-
+  };
   return (
     <Document>
       {itemChunks.map((chunk, pageIndex) => {
@@ -329,7 +346,7 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
                   {items.length} item{items.length !== 1 ? "s" : ""}
                 </Text>
                 <Text style={styles.grandTotalValue}>
-                  Grand Total: {grandTotal}
+                  Grand Total: {grandTotal.toFixed(2)}
                 </Text>
               </View>
             )}

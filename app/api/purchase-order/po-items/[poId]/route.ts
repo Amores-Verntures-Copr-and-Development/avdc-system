@@ -17,7 +17,7 @@ export async function GET(
 
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
+
       throw new Error(`${res.error}`);
     }
 
@@ -30,7 +30,6 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
@@ -56,7 +55,6 @@ export async function PUT(
     }
     const res = await updatePurchaseOrderItem(controller, data);
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Update PO");
     }
     return NextResponse.json(
@@ -92,7 +90,6 @@ export async function POST(
     }
     const res = await createPurchaseOrderItemByPOId(poItemData);
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Add PO item");
     }
     return NextResponse.json(

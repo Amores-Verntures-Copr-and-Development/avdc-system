@@ -67,10 +67,9 @@ export async function PUT(request: NextRequest) {
   try {
     const po = await request.json();
     const { data, controller } = po;
-    console.log({ data, controller });
+
     const res = await updatePurchaseOrder(controller, data);
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Update PO");
     }
     return NextResponse.json(

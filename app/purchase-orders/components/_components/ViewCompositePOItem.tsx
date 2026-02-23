@@ -138,7 +138,6 @@ const ViewCompositePOItem = ({
             <span className="text-right">Total</span>
             <span className="text-right">Action</span>
           </div>
-
           {/* Body */}
           <div className="flex flex-col">
             {response?.data && response?.data?.length > 0 ? (
@@ -150,16 +149,14 @@ const ViewCompositePOItem = ({
                   <span className=" text-gray-800 text-xs font-semibold">
                     {c.itemName}
                   </span>
-
                   <span className="text-center text-xs text-gray-700">
                     {c.ordComQuantity}
                   </span>
-
                   <span className="text-right text-xs  text-gray-800">
-                    {formatPeso(c.itemPrice)}
+                    {formatPeso(c.ordComPrice)}
                   </span>
                   <span className="text-right text-xs font-semibold text-gray-800">
-                    {formatPeso(c.itemPrice * c.ordComQuantity)}
+                    {formatPeso(c.ordComPrice * c.ordComQuantity)}
                   </span>
                   <div className="text-right">
                     {" "}

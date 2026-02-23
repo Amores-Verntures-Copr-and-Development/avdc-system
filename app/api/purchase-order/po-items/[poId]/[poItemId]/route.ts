@@ -11,7 +11,7 @@ export async function PUT(
 ) {
   try {
     const poItemData = (await request.json()) as Partial<PurchaseOrderItems>;
-    console.log({ poItemData });
+
     const slug = (await params).poId;
     const slug2 = (await params).poItemId;
     const poId = Number(slug);
@@ -24,7 +24,6 @@ export async function PUT(
     }
     const res = await updatePurchaserOrderById(poItemData);
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Update PO item");
     }
     return NextResponse.json(
@@ -52,7 +51,7 @@ export async function DELETE(
 ) {
   try {
     const poItemData = (await request.json()) as Partial<PurchaseOrderItems>[];
-    console.log({ poItemData });
+
     const slug = (await params).poId;
     const slug2 = (await params).poItemId;
     const poId = Number(slug);
@@ -65,7 +64,6 @@ export async function DELETE(
     }
     const res = await updatePurchaseOrderItemByPOId(poId, poItemData, "delete");
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to Update PO item");
     }
     return NextResponse.json(

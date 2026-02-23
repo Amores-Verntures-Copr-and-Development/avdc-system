@@ -5,11 +5,21 @@ import IconButton from "@/components/shared/IconButton";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import Table, { Column, TableHandle } from "@/components/shared/Table";
-import { DisplayRequestOrderDto } from "@/dtos/request.dto";
+import {
+  DisplayRequestItems,
+  DisplayRequestOrderDto,
+  RequestOrderPdf,
+} from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import { Eye, FileText, Printer, Store } from "lucide-react";
-import React, { useState, useRef, useCallback, useMemo } from "react";
+import { ArrowRight, Eye, File, FileText, Printer, Store } from "lucide-react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react";
 import useSWR from "swr";
 import CreatePOModal from "./components/CreatePOModal";
 import { CreatePurchaseOrderFormDto } from "@/dtos/purchase.dto";
@@ -26,6 +36,8 @@ import { Option } from "@/components/shared/DropdownSelect";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import Popup from "@/components/shared/Popup";
 import { useDebounce } from "@/hooks/useDebounce";
+import { PDFViewer } from "@react-pdf/renderer";
+import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";
 
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order ID", key: "requestNo" },
@@ -71,12 +83,16 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
 
 const AdminRequisitionPage = () => {
   const tableRef = useRef<TableHandle>(null);
+  const [showROPDF, setShowROPDF] = useState(false);
+  const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
   const { user, hasStore, isAdmin } = useSession();
   const router = useRouter();
   const { stores } = useStores({ user, hasStore, isAdmin });
   const handleClear = () => {
     tableRef.current?.clearSelection();
   };
+  const [selectedShowPdf, setSelectedShowPdf] =
+    useState<DisplayRequestOrderDto | null>(null);
   const searchParams = useSearchParams();
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [selectedtedRows, setSelectedRows] =
@@ -123,6 +139,14 @@ const AdminRequisitionPage = () => {
   const handleSelectionChange = (selected: DisplayRequestOrderDto[]) => {
     setSelectedRows(selected);
   };
+  const { data: itemResponsePDF = { data: [] }, isLoading: loading } = useSWR<{
+    data: DisplayRequestItems[];
+  }>(
+    selectedShowPdf
+      ? `/api/requests/request-items/${selectedShowPdf?.requestId}`
+      : null,
+    fetcher,
+  );
   const handleCreatePurchaseOrder = async (
     data: CreatePurchaseOrderFormDto,
   ) => {
@@ -150,6 +174,28 @@ const AdminRequisitionPage = () => {
       return false;
     }
   };
+
+  useEffect(() => {
+    if (!selectedShowPdf || !itemResponsePDF.data.length) return;
+
+    const pdfData: RequestOrderPdf = {
+      requestItems: itemResponsePDF.data,
+      store: {
+        storeName: selectedShowPdf?.storeName,
+      },
+      requestOrder: {
+        requestId: selectedShowPdf?.requestId,
+        requestNo: selectedShowPdf?.requestNo,
+        requestCreatedAt: selectedShowPdf?.requestCreatedAt,
+        requestStatus: selectedShowPdf?.requestStatus,
+      },
+      requestedBy: selectedShowPdf?.requestedByName ?? "",
+    };
+
+    setPdfData(pdfData);
+    setShowROPDF(true);
+  }, [selectedShowPdf, itemResponsePDF.data]);
+
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
       const { from, to } = rangeData;
@@ -279,17 +325,19 @@ const AdminRequisitionPage = () => {
                     icon={<Eye size={18} />}
                   />
                   <IconButton
-                    onClick={() => {}}
-                    label={"Print"}
+                    onClick={() => {
+                      setSelectedShowPdf(row);
+                    }}
+                    label={"PDF"}
                     bg={"green"}
-                    icon={<Printer size={18} />}
+                    icon={<FileText size={18} />}
                   />
-                  <IconButton
+                  {/* <IconButton
                     onClick={() => {}}
                     label={"Convert to PO"}
                     bg={"blue"}
-                    icon={<FileText size={18} />}
-                  />
+                    icon={<ArrowRight size={18} />}
+                  /> */}
                 </div>
               )}
             />
@@ -340,6 +388,22 @@ const AdminRequisitionPage = () => {
           }}
         />
       )}
+      <Modal
+        className="h-[95%]"
+        isOpen={showROPDF}
+        size="xl"
+        onClose={function (): void {
+          setShowROPDF(false);
+          setSelectedShowPdf(null);
+        }}
+        isLoading={loading}
+        title="Request Order PDF"
+      >
+        {" "}
+        <PDFViewer width="100%" height="100%">
+          <RequestOrderPDF data={pdfData ?? null} />
+        </PDFViewer>
+      </Modal>
     </PageLayout>
   );
 };

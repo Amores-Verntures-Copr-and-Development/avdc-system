@@ -67,7 +67,7 @@ export async function createOrderCompositeItems({
       }, 0);
       const averagePrice = totalQuantity > 0 ? totalAmount / totalQuantity : 0;
       const rounded = Number(averagePrice);
-      console.log({ rounded });
+
       const fromCompositeItems = await findPurchaserOrder({
         connection: connection ? connection : newConnection,
         keyfields: { poItemId: hasPricesData[0].poItemId! },

@@ -11,7 +11,12 @@ import { createSupplierItems } from "./create-supplier-items";
 import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { getDBConnection } from "@/lib/db";
 import { formatPeso } from "@/utils/formatPeso";
-import { ItemPrice } from "@/types/items";
+import { ItemInterface, ItemPrice } from "@/types/items";
+import { handleUpdateItemPrice } from "@/services/items/update-items";
+import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
+import { findRequestItemsByPoItemIdWithConverions } from "@/services/request/request-items/get-request-items";
+import { RequestItems } from "@/types/request";
+import { updateRequestItems } from "@/services/request/request-items/update-request-items";
 
 export async function handleDeleteSupplierItems(data: Partial<SupplierItem>[]) {
   const deletedData: Partial<SupplierItem>[] = data.map((item) => ({
@@ -173,25 +178,80 @@ export async function updateSupplierPriceFromPO({
   try {
     const supplierItem = await getSupplierItem({
       keyfields: { itemId: poItem.itemId, suppId: poItem.suppId! },
+      connection,
     });
-    if (supplierItem) {
-      const suppItemPricePartial: Partial<SupplierItem> = {
-        suppItemId: supplierItem[0].suppItemId,
-        suppItemPrice: Number(supplierItemPrice.sipAmount),
-        suppItemCreatedBy: supplierItemPrice.sipCreatedBy,
-      };
-      console.log({ suppItemPricePartial });
-      await handleUpdateSupplierItemPrice({
-        updates: [suppItemPricePartial],
-        keyFields: ["suppItemId"],
-      });
+
+    await updatePurchaseOrderItems({
+      connection: connection,
+      updates: [
+        {
+          poItemId: poItem.poItemId,
+          unitPrice: Number(supplierItemPrice.sipAmount),
+        },
+      ],
+    });
+    if (!supplierItem) {
+      await connection.rollback();
+      throw new Error("No supplier found for this item!");
     }
+    const suppItemPricePartial: Partial<SupplierItem> = {
+      suppItemId: supplierItem[0].suppItemId,
+      suppItemPrice: Number(supplierItemPrice.sipAmount),
+      suppItemCreatedBy: supplierItemPrice.sipCreatedBy,
+    };
+    console.log({ suppItemPricePartial });
+    await handleUpdateSupplierItemPrice({
+      updates: [suppItemPricePartial],
+      keyFields: ["suppItemId"],
+      connection,
+    });
 
     if (isUpdateItem) {
-      const itemPrice: Partial<ItemPrice> = {};
+      const itemPrice: Partial<ItemInterface> = {
+        itemId: poItem.itemId,
+        itemPrice: supplierItemPrice.sipAmount,
+        itemAddedBy: supplierItemPrice.sipCreatedBy,
+      };
+      await handleUpdateItemPrice({ connection, updates: [itemPrice] });
+    }
+
+    const reqItems = await findRequestItemsByPoItemIdWithConverions({
+      connection,
+      poItemId: poItem.poItemId,
+    });
+    let updateRequestItemUnitPrice: Partial<RequestItems>[] = [];
+    console.log({ reqItems });
+    for (const req of reqItems) {
+      let computedPrice = supplierItemPrice.sipAmount;
+
+      if (req.itemConId) {
+        const isFrom = req.fromItemId === req.inventoryItemReferenceId;
+        const isTo = req.toItemId === req.inventoryItemReferenceId;
+
+        if (isFrom) {
+          computedPrice = supplierItemPrice.sipAmount / req.conversionRate;
+        } else if (isTo) {
+          computedPrice = supplierItemPrice.sipAmount * req.conversionRate;
+        }
+      } else {
+        computedPrice = supplierItemPrice.sipAmount;
+      }
+
+      updateRequestItemUnitPrice.push({
+        reqItemId: req.reqItemId,
+        unitPrice: Number(computedPrice),
+      });
+    }
+    if (updateRequestItemUnitPrice && updateRequestItemUnitPrice.length) {
+      console.log({ updateRequestItemUnitPrice });
+      await updateRequestItems({
+        connection: connection,
+        updates: updateRequestItemUnitPrice,
+        keyFields: ["reqItemId"],
+      });
     }
     //update the unit price of po and request po
-    await connection.rollback();
+    await connection.commit();
   } catch (e) {
     await connection.rollback();
     throw e;
