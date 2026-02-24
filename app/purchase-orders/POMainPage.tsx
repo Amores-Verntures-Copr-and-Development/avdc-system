@@ -21,7 +21,7 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
 
   { name: "Created By", key: "poCreatedByName" },
   {
-    name: "Create At",
+    name: "Created At",
     key: "poCreatedAt",
     selector: (row) => formatDateToWords(row.poCreatedAt),
   },
@@ -30,7 +30,7 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
     key: "poStatus",
     selector: (row) => {
       const { status, bgClass, textClass, borderClass } = getPOStatusInfo(
-        row.poStatus
+        row.poStatus,
       );
       return (
         <span
