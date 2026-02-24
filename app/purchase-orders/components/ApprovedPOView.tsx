@@ -164,7 +164,6 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
 
   const handleReceivePO = async (items: DisplayPOItemsSupplier[]) => {
     try {
-      console.log({ items });
       const itemData = items.flatMap((i) =>
         i.items.filter(
           (item) =>

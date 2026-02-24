@@ -5,7 +5,7 @@ export async function PUT(
   request: Request,
   {
     params,
-  }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> }
+  }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> },
 ) {
   try {
     const { inventoryItemData, itemData } = await request.json();
@@ -20,7 +20,7 @@ export async function PUT(
     if (!inventoryItemIderId) {
       throw new Error("No inventoyr item Id Found!");
     }
-    console.log({ inventoryItemData, itemData });
+
     const res = await updateItemOrInventory({
       inventoryData: [inventoryItemData],
       itemData: [itemData],
@@ -37,7 +37,7 @@ export async function PUT(
         message: "res.message",
         // data: res, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -46,7 +46,7 @@ export async function PUT(
         message: "Failed to update item",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -68,6 +68,7 @@ const SupervisorPage = () => {
       <BigCard
         title={"Sales Chart"}
         subtitle="Latest Transaction from your store"
+        isRounded={false}
       >
         {" "}
         <div className="flex-1 mt-2 min-h-30">
@@ -80,6 +81,7 @@ const SupervisorPage = () => {
         <BigCard
           title="Recent Sales"
           subtitle="Latest Transaction from your store"
+          isRounded={false}
         >
           <div className="flex-1 flex flex-col gap-2 overflow-y-auto max-h-96">
             {recentSales?.map((item, index) => (
@@ -118,6 +120,7 @@ const SupervisorPage = () => {
         {/* Low Stock */}
         <BigCard
           title="Low Stock Alert"
+          isRounded={false}
           subtitle="Products running low on inventory"
         >
           <div className="flex flex-col justify-center items-center flex-1">

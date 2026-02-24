@@ -30,7 +30,7 @@ export async function PUT(
       throw new Error("No prodVarId found");
     }
     const data = (await _request.json()) as Partial<VariantComponents>;
-    console.log({ data });
+
     const res = await updateVariantComponentController([data]);
 
     if (!res.success) {

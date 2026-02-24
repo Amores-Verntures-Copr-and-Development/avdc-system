@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ suppId: string }> }
+  { params }: { params: Promise<{ suppId: string }> },
 ) {
   try {
     const slug = (await params).suppId;
@@ -20,7 +20,7 @@ export async function GET(
     // const category = searchParams.get("category") || "";
     // const unit = searchParams.get("unit") || "";
     const res = await getSupplierItemById({ suppId, search });
-    console.log({ search });
+
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);
@@ -32,7 +32,7 @@ export async function GET(
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -41,7 +41,7 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
         message: res.message,
         data: res,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         message: "Failed to add item in supplier",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -90,7 +90,7 @@ export async function PUT(request: NextRequest) {
         message: res.message,
         data: res,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -99,7 +99,7 @@ export async function PUT(request: NextRequest) {
         message: "Failed to add item in supplier",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

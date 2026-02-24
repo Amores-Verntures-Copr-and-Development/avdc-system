@@ -40,7 +40,6 @@ export async function GET(_request: Request) {
     const type = searchParams.get("type") || "";
     const store = searchParams.get("store") || "";
 
-    console.log({ search });
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const res = await getCustomer({

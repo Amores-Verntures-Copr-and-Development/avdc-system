@@ -137,7 +137,7 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
       poItems: modifyPoItems,
       updatedBy: user?.userId ?? 0,
     };
-    console.log({ modifyPoItems });
+
     const success = await onSubmit(newData);
     if (success) {
       onClose();

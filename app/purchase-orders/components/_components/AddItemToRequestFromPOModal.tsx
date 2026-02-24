@@ -49,16 +49,15 @@ const AddItemToRequestFromPOModal = ({
     [],
   );
 
-  console.log({ itemResponse });
   const reqItemIds = reqData?.requestItemsData.map((item) => item.itemId) || [];
-  console.log({ reqItemIds });
+
   useEffect(() => {
     if (itemResponse.data && itemResponse.data.length > 0) {
       // deep clone
       const filteredItems = itemResponse.data.filter((poItem) => {
         return !reqItemIds.includes(poItem.itemId);
       });
-      console.log({ filteredItems });
+
       setPoItems(filteredItems);
     }
   }, [itemResponse.data]);
@@ -210,7 +209,6 @@ const AddItemToRequestFromPOModal = ({
                       },
                     ];
                   });
-                  console.log({ selectedPoItems });
                 }}
                 label={"Add to Request List"}
                 bg={"green"}

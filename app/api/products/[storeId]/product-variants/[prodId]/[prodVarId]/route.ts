@@ -31,7 +31,7 @@ export async function PUT(
       console.log(res.message);
       throw new Error(`${res.error}`);
     }
-    console.log({ data });
+
     return NextResponse.json(
       {
         success: true,

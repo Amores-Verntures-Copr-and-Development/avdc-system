@@ -614,7 +614,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         item.reqItemStatus !== "not_ordered" &&
         Number(item.reqItemTransfer) === 0,
     );
-    console.log({ hasNoFulFillQty });
+
     if (hasNoFulFillQty) {
       toast.error("Failed to deliver. Cannot deliver 0 quantity");
       return;
@@ -627,7 +627,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
           requestItems: newRequestItems,
         },
       ];
-      console.log({ newRequest });
+
       if (onMarkDelivered) {
         const success = await onMarkDelivered(newRequest);
         if (success) {
@@ -1034,7 +1034,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                                   item.reqItemStatus === "partial" &&
                                   Number(item.reqItemToFollow) === 0,
                               );
-                            console.log({ hasNoToFollowQty, hasPartial });
+
                             if (hasNoToFollowQty && hasPartial) {
                               toast.error(
                                 "Failed to deliver. Cannot deliver 0 to follow quantity",
@@ -1049,7 +1049,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                             }
                             setIsShowDeliverConfirm(true);
                             setDeliverRequestData(reqData);
-                            console.log({ reqData });
                           }}
                           label={
                             isProcessing === reqData.requestNo
@@ -1149,7 +1148,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 (i) => i.reqItemStatus !== "delivered",
               ),
             };
-            console.log({ filter });
+
             handleMarkPaid(filter);
           }
         }}

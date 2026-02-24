@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ type: string }> }
+  { params }: { params: Promise<{ type: string }> },
 ) {
   try {
     const type = (await params).type;
-    console.log({ type });
+
     const res = await getCategories({ controller: null });
 
     if (!res.success) {
@@ -22,7 +22,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -31,7 +31,7 @@ export async function GET(
         message: "User add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

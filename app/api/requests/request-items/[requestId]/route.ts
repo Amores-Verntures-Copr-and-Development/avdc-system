@@ -97,7 +97,7 @@ export async function PUT(
       throw new Error("No requestId found!");
     }
     const data = (await request.json()) as RequestItems[];
-    console.log({ data });
+
     const res = await updateRequestItem(data);
     if (!res.success) {
       throw new Error(res.message);

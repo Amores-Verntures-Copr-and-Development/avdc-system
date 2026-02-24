@@ -384,7 +384,6 @@ const EditItemDetails: React.FC<
         onClose?.();
         setSelectedButton?.("");
       }
-      console.log({ submitData });
     } catch (error) {
       console.error("Error updating item:", error);
     }
@@ -619,7 +618,7 @@ const StockAdjustment: React.FC<
       itemMovementReferenceId: null,
       itemMovementReference: "adjustment",
     };
-    console.log({ adjustData });
+
     if (onSubmitStockAdjustment) {
       const success = await onSubmitStockAdjustment(adjustData);
       if (success && mutate) {

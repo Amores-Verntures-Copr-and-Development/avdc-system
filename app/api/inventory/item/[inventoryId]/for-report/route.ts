@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ inventoryId: string }> }
+  { params }: { params: Promise<{ inventoryId: string }> },
 ) {
   try {
     const slug = (await params).inventoryId;
@@ -12,7 +12,6 @@ export async function GET(
     const { searchParams } = new URL(_request.url);
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
-    console.log({ inventoryId, from, to });
 
     const res = await getInventoryItemsByDate({
       inventoryId,
@@ -31,7 +30,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -41,7 +40,7 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

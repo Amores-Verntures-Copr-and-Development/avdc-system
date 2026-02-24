@@ -149,7 +149,6 @@ const AddCompositeItem = ({
             <div className="flex">
               <DropDownSearchItem
                 onSelect={function (item: ItemInterface): void {
-                  console.log({ item });
                   if (item) {
                     setSelectedItem((prev) => {
                       const exist = selectedItem.find(

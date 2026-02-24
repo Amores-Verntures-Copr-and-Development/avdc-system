@@ -7,12 +7,12 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
-    console.log({ storeId });
+
     const res = await getInventory({
       controller: "store",
       keyStoreFields: { storeId: storeId },
@@ -28,7 +28,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -38,14 +38,14 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
@@ -56,7 +56,7 @@ export async function POST(
           success: false,
           message: "No storeId found!",
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
     const data = (await request.json()) as AddItemToStoreDto;
@@ -73,7 +73,7 @@ export async function POST(
         message: "Store added successfully!",
         data: res, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -82,7 +82,7 @@ export async function POST(
         message: err?.message || "Store add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

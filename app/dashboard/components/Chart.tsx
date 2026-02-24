@@ -25,7 +25,6 @@ const formaToPeso = (value: number) => {
   return `₱${value.toFixed(0)}`;
 };
 const Chart = ({ data, tooltipLabel }: ChartProps) => {
-  console.log({ data });
   return (
     <div className="w-full h-full flex flex-col">
       <ResponsiveContainer width="100%" height="100%">

@@ -16,7 +16,6 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store ID found!");
     }
-    console.log({ storeId });
 
     const res = await StoreDashboardController(storeId);
 
@@ -34,7 +33,6 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log({ err });
     return NextResponse.json(
       {
         success: false,

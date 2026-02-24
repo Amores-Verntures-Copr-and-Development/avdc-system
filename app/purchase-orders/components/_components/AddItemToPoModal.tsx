@@ -15,7 +15,7 @@ interface AddItemToPoModalProps {
   currentItemId: number[];
   onAddItem: (
     data: CreatePurchaseOrderItemDto[],
-    poId: number
+    poId: number,
   ) => Promise<boolean>;
   mutate: () => void;
 }
@@ -35,8 +35,6 @@ const AddItemToPoModal = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleAddItemToPo = async () => {
-    console.log({ form });
-    console.log({ currentItemId });
     setIsSubmitting(true);
 
     try {

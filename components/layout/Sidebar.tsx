@@ -24,10 +24,11 @@ import {
   Menu,
   Warehouse,
   Weight,
+  ShieldUser,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
-import { useEffect, useState } from "react";
+import { Profiler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "@/hooks/useSession";
 
@@ -235,6 +236,21 @@ const sideMenu = [
         name: "Store",
         href: "/stores",
         icon: Building2,
+        roles: [
+          "superadmin",
+          "admin",
+          "purchaser",
+          "supervisor",
+          "accounting",
+          "hr",
+          "staff",
+          "owner",
+        ],
+      },
+      {
+        name: "Account",
+        href: "/account",
+        icon: ShieldUser,
         roles: [
           "superadmin",
           "admin",

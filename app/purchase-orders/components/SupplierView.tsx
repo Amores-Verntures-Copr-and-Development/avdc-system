@@ -26,7 +26,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
     `/api/purchase-order/po-items-supplier/${data?.poId}`,
     fetcher,
   );
-  console.log({ itemResponse });
+
   return (
     <div className="flex-col flex gap-2 mt-2 h-full">
       <div className="flex justify-between shadow bg-white p-2">

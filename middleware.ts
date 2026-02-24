@@ -35,6 +35,7 @@ export function middleware(request: NextRequest) {
     "/users",
     "/store-selection",
     "/pos",
+    "/account",
   ];
 
   const isProtectedPage = protectedPages.some((route) =>
@@ -91,5 +92,6 @@ export const config = {
     "/suppliers/:path*",
     "/api/:path*",
     "/pos/:path*",
+    "/account/:path*",
   ],
 };

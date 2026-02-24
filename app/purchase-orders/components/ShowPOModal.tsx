@@ -256,7 +256,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     poId: number,
   ) => {
     // console.log("Data: ", dataReq[0].requestItemsData);
-    console.log({ data });
+
     try {
       const result = await fetch(`api/purchase-order/po-items/${poId}`, {
         method: "POST",
@@ -293,7 +293,6 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     continueInsert?: boolean;
   }) => {
     // console.log("Data: ", dataReq[0].requestItemsData);
-    console.log({ data });
 
     const formData = {
       data: data,
@@ -301,7 +300,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       secondSubmit: secondSubmit,
       continueInsert: continueInsert,
     };
-    console.log({ formData });
+
     try {
       const result = await fetch(
         `api/purchase-order/po-items/${poId}/supplier/${data.suppId}`,

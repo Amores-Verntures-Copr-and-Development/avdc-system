@@ -1065,7 +1065,11 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setIsReceiving(false);
     }
   };
-
+  const isReadyToCompleteRequest =
+    originalData
+      .filter((i) => i.reqItemStatus !== "not_ordered")
+      .every((i) => i.reqItemStatus === "received") &&
+    !["completed"].includes(selectedReq?.requestStatus ?? "");
   return (
     <>
       <div className="flex justify-between">
@@ -1517,7 +1521,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                 )}
 
                 {/* Conditional buttons based on status */}
-                {selectedReq?.requestStatus === "received" && (
+                {(selectedReq?.requestStatus === "received" ||
+                  isReadyToCompleteRequest) && (
                   <div>
                     <Button
                       icon={CheckLine}

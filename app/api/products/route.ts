@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const data = (await request.json()) as CreateProductDtos[];
-    console.log({ data });
+
     // const res = await createProducts(data);
     // if (!res.success) {
     //   console.log(res.error);
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         message: "res.message",
         data: "res",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         message: "Failed to add item in product",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -36,7 +36,7 @@ export async function GET(_request: Request) {
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const store = searchParams.get("store") || "";
-    console.log({ search, store });
+
     const res = await getProduct({ search, storeName: store });
 
     if (!res.success) {
@@ -50,7 +50,7 @@ export async function GET(_request: Request) {
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -59,7 +59,7 @@ export async function GET(_request: Request) {
         message: "Failed to fetched products!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
