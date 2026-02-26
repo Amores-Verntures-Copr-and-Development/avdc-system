@@ -677,7 +677,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     .filter(
                       (i) =>
                         i.poItemStatus === "received" ||
-                        i.poItemStatus === "delivered",
+                        i.poItemStatus === "delivered" ||
+                        i.poItemStatus === "received_store",
                     )
                     .reduce((total, item) => {
                       // skip not_ordered (extra safety)
