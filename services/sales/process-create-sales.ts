@@ -48,7 +48,9 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesTotalAmount: data.salesTotalAmount,
       salesTotalPaid: data.salesTotalPaid,
       salesCreatedBy: data.salesCreatedBy,
+      salesRemarks: data.salesRemarks,
     };
+    console.log({ salesData });
 
     //insert into sale table
     const salesId = await createSale({ connection, data: salesData });
@@ -99,7 +101,6 @@ export async function processCreateSales(data: CreateSaleDto) {
     const needDeductInventory = saleItemData.filter(
       (i) => i.components?.length !== 0,
     );
-    console.log({ needDeductInventory });
     const salesDiscounts: CreateSalesDiscount[] =
       data.saleDiscounts?.map((dis) => ({
         ...dis,
@@ -113,7 +114,6 @@ export async function processCreateSales(data: CreateSaleDto) {
         keyFields: { storeId: data.storeId },
         connection,
       });
-      console.log({ needDeductInventory });
       const componentVar: Partial<InventoryItemInterface>[] =
         needDeductInventory.flatMap(
           (item) =>

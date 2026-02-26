@@ -35,6 +35,7 @@ export interface Sales {
   salesTotalPaid: number;
   salesSubTotal: number;
   salesStatus: SalesStatus;
+  salesRemarks: string;
   salesCreatedAt: string;
   salesUpdatedAt: string;
   salesDeletedAt: string;

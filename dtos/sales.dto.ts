@@ -26,6 +26,7 @@ export type CreateSaleDto = Pick<
   | "salesTotalAmount"
   | "storeId"
   | "salesStatus"
+  | "salesRemarks"
 > & {
   salesItems?: CreateSaleItemDto[];
   salesPayments?: CreateSalePaymentDto[];

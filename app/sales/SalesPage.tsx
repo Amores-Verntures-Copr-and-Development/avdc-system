@@ -350,7 +350,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     isAdmin,
   });
 
-
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -380,13 +379,41 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
     return `${url}?${params.toString()}`;
   }, [storeId, searchParams]);
-  const debounceApi = useDebounce(apiUrl, 600);
-  const { data: responseDetails } = useSWR(
+  const detailsUrl =
     user && storeId
       ? `/api/sales/${storeId}/details`
-      : user && selectedStoreId
-        ? `/api/sales/${selectedStoreId}/details`
-        : `/api/sales/details/`,
+      : user
+        ? `/api/sales/details/`
+        : null;
+  console.log({ detailsUrl });
+  const apiDetailsUrl = useMemo(() => {
+    const search = searchParams.get("search") || "";
+    const status = searchParams.get("status") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
+
+    const store = searchParams.get("store");
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (status) params.append("status", status);
+    if (category) params.append("category", category);
+    if (unit) params.append("unit", unit);
+
+    if (store) params.append("store", store);
+    if (to) params.append("to", to);
+    if (from) params.append("from", from);
+
+    return `${detailsUrl}?${params.toString()}`;
+  }, [storeId, searchParams, user]);
+  console.log({ apiDetailsUrl });
+  const debounceApi = useDebounce(apiUrl, 600);
+  const debounceDetailsApi = useDebounce(apiDetailsUrl, 600);
+
+  const { data: responseDetails } = useSWR(
+    user ? debounceDetailsApi : null,
     fetcher,
   );
 
@@ -460,7 +487,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
           <div className="flex h-full overflow-hidden gap-2">
             <div className="flex flex-1 flex-col min-h-0 gap-2">
-              <div className="grid grid-cols-4 gap-2 h-20">
+              <div className="grid grid-cols-4 gap-2 h-12 2xl:h-20">
                 <SalesCard
                   icon={PhilippinePeso}
                   title="Total Sales"
@@ -499,9 +526,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                     setSelectedSales(row);
                     setIsViewSales(true);
                   }}
-                  onSave={() => {
-                 
-                  }}
+                  onSave={() => {}}
                   renderTopActions={
                     <div className="flex gap-2">
                       <DynamicDropdown
@@ -596,13 +621,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   }
                 />
               </div>
-            </div>
-            <div className="w-[20%] flex flex-col gap-2 min-h-0">
-              <BigCard title={"Today's Sold Products"} isRounded={false}>
-                <div className="flex flex-col">
-                  <SellingProductCard />
-                </div>
-              </BigCard>
             </div>
           </div>
         </>

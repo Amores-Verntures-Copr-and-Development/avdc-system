@@ -174,7 +174,7 @@ export const insertSales = async ({
   data: CreateSaleDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus) VALUES(?,?,?,?,?,?,?,?,?)`;
+  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus,salesRemarks) VALUES(?,?,?,?,?,?,?,?,?,?)`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.salesNo,
     data.salesInvoice,
@@ -185,6 +185,7 @@ export const insertSales = async ({
     data.storeId,
     data.customerId || null,
     data.salesStatus,
+    data.salesRemarks || "",
   ]);
   return results.insertId;
 };
@@ -405,55 +406,148 @@ WHERE 1=1
   return rows as DisplaySalesItems[];
 };
 
-export const selectSalesTotalDetails = async (storeId?: number) => {
+export const selectSalesTotalDetails = async ({
+  storeId,
+  store,
+  from,
+  to,
+}: {
+  storeId?: number;
+  store?: string;
+  from?: string;
+  to?: string;
+}) => {
   const pool = await getDBConnection();
-  let sql;
+
+  let totalSaleConditions: string[] = [];
+  let totalSalesparams: any[] = [];
+
+  let totalCountSalesconditions: string[] = [];
+  let totalCountSalesparams: any[] = [];
+
+  let todaySalesConditions: string[] = [];
+  let todaySalesparams: any[] = [];
+
+  let totalCustomerConditions: string[] = [];
+  let totalCustomeparams: any[] = [];
 
   if (storeId) {
-    sql = `SELECT 
-(SELECT SUM(s.salesTotalAmount) FROM Sales s WHERE s.storeId = ?) AS totalSales,
-(SELECT COUNT(DISTINCT(c.customerId)) FROM Customers c LEFT JOIN Sales s ON s.customerId = c.customerId AND s.storeId = ?) AS totalCustomer, 
-  (SELECT SUM(s.salesTotalAmount)
-   FROM Sales s
-   WHERE s.storeId = ?
-     AND s.salesCreatedAt >= CURDATE()
-     AND s.salesCreatedAt < CURDATE() + INTERVAL 1 DAY
-  ) AS todaySales,
-    (SELECT COUNT(*)
-   FROM Sales s
-   WHERE s.storeId = ?
-  ) AS totalCountSales;`;
-  } else {
-    sql = `SELECT 
-  (SELECT SUM(s.salesTotalAmount)
-   FROM Sales s
-  ) AS totalSales,
+    totalSaleConditions.push("s.storeId = ?");
+    totalSalesparams.push(storeId);
 
-  (SELECT COUNT(DISTINCT c.customerId)
-   FROM Customers c
-   LEFT JOIN Sales s 
-     ON s.customerId = c.customerId
-  ) AS totalCustomer,
+    totalCountSalesconditions.push("s.storeId = ?");
+    totalCountSalesparams.push(storeId);
 
-  (SELECT SUM(s.salesTotalAmount)
-   FROM Sales s
-   WHERE s.salesCreatedAt >= CURDATE()
-     AND s.salesCreatedAt < CURDATE() + INTERVAL 1 DAY
-  ) AS todaySales,
+    todaySalesConditions.push("s.storeId = ?");
+    todaySalesparams.push(storeId);
 
-  (SELECT COUNT(*)
-   FROM Sales s
-  ) AS totalCountSales;
-`;
+    totalCustomerConditions.push("s.storeId = ?");
+    totalCustomeparams.push(storeId);
   }
 
-  const [rows] = await pool.execute(
-    sql,
-    storeId ? [storeId, storeId, storeId, storeId] : [],
-  );
-  return rows;
-};
+  if (store) {
+    totalSaleConditions.push("st.storeName LIKE ?");
+    totalSalesparams.push(`%${store}%`);
 
+    totalCountSalesconditions.push("st.storeName LIKE ?");
+    totalCountSalesparams.push(`%${store}%`);
+
+    todaySalesConditions.push("st.storeName LIKE ?");
+    todaySalesparams.push(`%${store}%`);
+
+    totalCustomerConditions.push("st.storeName LIKE ?");
+    totalCustomeparams.push(`%${store}%`);
+  }
+
+  if (from && to) {
+    totalSaleConditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalSalesparams.push(from, to);
+
+    totalCountSalesconditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalCountSalesparams.push(from, to);
+
+    totalCustomerConditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalCustomeparams.push(from, to);
+  }
+
+  const totalSalesWhereClause =
+    totalSaleConditions.length > 0
+      ? `WHERE ${totalSaleConditions.join(" AND ")}`
+      : "";
+  const totalCountSaleWhereClause =
+    totalCountSalesconditions.length > 0
+      ? `WHERE ${totalCountSalesconditions.join(" AND ")}`
+      : "";
+  const todaySalesWhereClause =
+    todaySalesConditions.length > 0
+      ? `WHERE ${todaySalesConditions.join(" AND ")}`
+      : "";
+  const totalCustomerWhereClause =
+    totalCustomerConditions.length > 0
+      ? `WHERE ${totalCustomerConditions.join(" AND ")}`
+      : "";
+
+  // 1️⃣ Total Sales
+  const totalSalesSql = `
+    SELECT COALESCE(SUM(s.salesTotalAmount), 0) AS totalSales
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    ${totalSalesWhereClause};
+  `;
+
+  // 2️⃣ Total Count of Sales
+  const totalCountSalesSql = `
+    SELECT COUNT(*) AS totalCountSales
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    ${totalCountSaleWhereClause};
+  `;
+
+  // 3️⃣ Today Sales (CURDATE)
+  const todaySalesSql = `
+    SELECT COALESCE(SUM(
+      CASE WHEN DATE(s.salesCreatedAt) = CURDATE()
+      THEN s.salesTotalAmount ELSE 0 END
+    ), 0) AS todaySales
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    ${todaySalesWhereClause};
+  `;
+
+  // 4️⃣ Total Customers
+  const totalCustomerSql = `
+    SELECT COUNT(DISTINCT s.customerId) AS totalCustomer
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    ${totalCustomerWhereClause};
+  `;
+
+  // Execute all queries
+  const [totalSalesRows]: any = await pool.query(
+    totalSalesSql,
+    totalSalesparams,
+  );
+  const [totalCountRows]: any = await pool.query(
+    totalCountSalesSql,
+    totalCountSalesparams,
+  );
+  const [todaySalesRows]: any = await pool.query(
+    todaySalesSql,
+    todaySalesparams,
+  );
+  const [totalCustomerRows]: any = await pool.query(
+    totalCustomerSql,
+    totalCustomeparams,
+  );
+  return [
+    {
+      totalSales: totalSalesRows[0].totalSales,
+      totalCountSales: totalCountRows[0].totalCountSales,
+      todaySales: todaySalesRows[0].todaySales,
+      totalCustomer: totalCustomerRows[0].totalCustomer,
+    },
+  ];
+};
 export const insertSaleDiscounts = async ({
   connection,
   data,

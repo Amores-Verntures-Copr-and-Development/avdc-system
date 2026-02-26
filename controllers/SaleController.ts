@@ -29,11 +29,17 @@ export const getSalesByStoreId = async ({
   search,
   includeSaleItems,
   customer,
+  from,
+  to,
+  keyFields,
 }: {
   storeId: number;
   search?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  from?: string;
+  to?: string;
+  keyFields?: Partial<Sales>;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -41,6 +47,8 @@ export const getSalesByStoreId = async ({
       search,
       includeSaleItems,
       customer,
+      from,
+      to,
     });
     return {
       success: true,
@@ -130,9 +138,28 @@ export const getSalesItemBySalesId = async (salesId: number) => {
   }
 };
 
-export const getTotalSalesDetails = async (storeId?: number) => {
+export const getTotalSalesDetails = async ({
+  storeId,
+  search,
+  customer,
+  from,
+  to,
+  store,
+}: {
+  storeId?: number;
+  search?: string;
+  customer?: boolean;
+  from?: string;
+  to?: string;
+  store?: string;
+}) => {
   try {
-    const data = await getSalesServices.findSalesTotalsByStoreId({ storeId });
+    const data = await getSalesServices.findSalesTotalsByStoreId({
+      storeId,
+      from,
+      to,
+      store,
+    });
     return {
       success: true,
       message: "Sales Items fetched",

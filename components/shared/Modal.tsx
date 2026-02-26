@@ -215,7 +215,7 @@ const Modal: React.FC<ModalProps> = ({
                   className="p-1 rounded-full hover:bg-gray-700 transition-color"
                   aria-label="Close modal"
                 >
-                  <X className="w-3 h-3 xl:w-6 xl:h-6 text-black hover:text-white" />
+                  <X className="w-5 h-5 xl:w-6 xl:h-6 text-black hover:text-white" />
                 </button>
               )}
             </div>

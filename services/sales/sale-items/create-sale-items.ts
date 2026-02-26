@@ -13,7 +13,6 @@ export async function createSaleItems({
   try {
     // Insert sale items
     const insertedIds = await insertSaleItems({ connection, data });
-    console.log({ insertedIds });
 
     // Filter items with discounts
     const itemsWithDiscounts = data

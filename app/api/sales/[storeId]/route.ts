@@ -16,6 +16,8 @@ export async function GET(
     const search = searchParams.get("search") || "";
     // const limit = searchParams.get("limit") || "";
     // const page = searchParams.get("page") || "";
+    const from = searchParams.get("from") || "";
+    const to = searchParams.get("to") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
 
@@ -24,6 +26,8 @@ export async function GET(
       search,
       includeSaleItems: includeSaleItems === "true",
       customer: customer === "true",
+      from,
+      to,
     });
 
     if (!res.success) {

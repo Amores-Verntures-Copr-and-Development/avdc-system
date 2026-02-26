@@ -1225,7 +1225,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           }
           onRemoveItem={handleRemoveRequestItem}
           onCancel={() => {
-            setShowAddItemModal(false);
+            setShowCreateRequestModal(false);
           }}
           onSubmit={handleCreateRequest}
           user={user}

@@ -18,6 +18,7 @@ import { CreateSalePaymentDto, CreateSalesDiscount } from "@/dtos/sales.dto";
 import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
 import { SalesPaymentStatus } from "@/types/sales";
+import Textarea from "@/components/shared/TextArea";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;
@@ -28,7 +29,7 @@ interface CheckOutModalProps {
   setSelectedPaymentMethod: React.Dispatch<
     React.SetStateAction<CreateSalePaymentDto[] | null>
   >;
-  handleCompleteSale: () => void;
+  handleCompleteSale: (remarks?: string) => void;
   totalPaid: number;
   subtotal: number;
   remaining: number;
@@ -51,6 +52,8 @@ const CheckOutModal = ({
   canComplete,
   isConfirming,
 }: CheckOutModalProps) => {
+  const [remarks, setRemarks] = useState<string>("");
+  const handleRemarkChange = handleChange(remarks, setRemarks);
   const [selectedMethod, setSelectedMethod] =
     useState<CreateSalePaymentDto | null>({
       paymentReference: "",
@@ -406,6 +409,18 @@ const CheckOutModal = ({
                 })}
             </div>
           </div>
+          <div className="flex flex-col gap-2 mt-5">
+            <label className="text-gray-600 font-semibold text-xs xl:text-sm">
+              Add Order Remarks
+            </label>
+            <Textarea
+              label={""}
+              sizes="sm"
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              name="remarks"
+            />
+          </div>
           <div className="mt-auto">
             <Button
               label={
@@ -415,7 +430,10 @@ const CheckOutModal = ({
               }
               size={"md"}
               className="w-full"
-              onClick={handleCompleteSale}
+              onClick={() => {
+                console.log({ remarks });
+                handleCompleteSale(remarks);
+              }}
               icon={Check}
               disabled={!canComplete}
               loading={isConfirming}

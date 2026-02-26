@@ -78,11 +78,26 @@ export const getSalesServices = {
       throw e;
     }
   },
-  findSalesTotalsByStoreId: async ({ storeId }: { storeId?: number }) => {
+  findSalesTotalsByStoreId: async ({
+    storeId,
+    search,
+    customer,
+    from,
+    to,
+    store,
+  }: {
+    storeId?: number;
+    search?: string;
+    customer?: boolean;
+    from?: string;
+    to?: string;
+    store?: string;
+  }) => {
     try {
-      const data = await selectSalesTotalDetails(storeId);
+      const data = await selectSalesTotalDetails({ storeId, from, to, store });
       return data;
     } catch (e) {
+      console.log({ e });
       throw e;
     }
   },

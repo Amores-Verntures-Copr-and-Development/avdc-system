@@ -31,7 +31,7 @@ import Popup from "@/components/shared/Popup";
 import DiscountList from "./components/sidebar/DiscountList";
 import PaymentMethodList from "./components/sidebar/PaymentMethodList";
 import ProductList from "./components/sidebar/ProductList";
-import SalesHistory from "./components/sidebar/SalesHistory";
+import SalesHistory from "./components/sidebar/SalesOrder";
 import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import {
@@ -53,6 +53,7 @@ import { Customer } from "@/types/customer";
 import SearchBar from "@/components/shared/SearchBar";
 import ProductVariantCard from "./components/ProductVariantCard";
 import ViewEditAmountItemOrder from "./components/ViewEditAmountItemOrder";
+import SalesOrder from "./components/sidebar/SalesOrder";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -483,7 +484,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return null;
   }
   const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
-  const handleConfirmOrder = async () => {
+  const handleConfirmOrder = async (remarks?: string) => {
     const totalAmount = getTotalAmount(); // total to pay
     let remaining = totalAmount;
 
@@ -552,6 +553,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       saleDiscounts: selectedDiscount ?? [],
       salesItems: saleItems,
       salesPayments: paymentMethodData,
+      salesRemarks: remarks ?? "",
     };
     try {
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
@@ -749,48 +751,51 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                       </div>
                     </div>
                   </div>
-                </div>
+                  <div className="flex flex-col gap-2 items-end justify-start h-full">
+                    <div className="flex gap-2">
+                      <IconButton
+                        onClick={() => {
+                          setIsShowIcons("methods");
+                        }}
+                        label="Payment Method List"
+                        bg="green"
+                        icon={
+                          <CreditCard className="w-5 h-5 2xl:w-7 2xl:h-5" />
+                        }
+                        isRounded={false}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          setIsShowIcons("discount");
+                          // TODO: Implement product list functionality
+                        }}
+                        label="Discount List"
+                        bg="blue"
+                        icon={
+                          <TicketPercent className="w-5 h-5 2xl:w-7 2xl:h-5" />
+                        }
+                        isRounded={false}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          setIsShowIcons("product");
+                        }}
+                        label="Product List"
+                        bg="yellow"
+                        icon={<Files className="w-5 h-5 2xl:w-7 2xl:h-5" />}
+                        isRounded={false}
+                      />
 
-                <div className="flex flex-col gap-2 items-end justify-start h-full">
-                  <div className="flex gap-2">
-                    <IconButton
-                      onClick={() => {
-                        setIsShowIcons("methods");
-                      }}
-                      label="Payment Method List"
-                      bg="green"
-                      icon={<CreditCard size={15} />}
-                      isRounded={false}
-                    />
-                    <IconButton
-                      onClick={() => {
-                        setIsShowIcons("discount");
-                        // TODO: Implement product list functionality
-                      }}
-                      label="Discount List"
-                      bg="blue"
-                      icon={<TicketPercent size={15} />}
-                      isRounded={false}
-                    />
-                    <IconButton
-                      onClick={() => {
-                        setIsShowIcons("product");
-                      }}
-                      label="Product List"
-                      bg="yellow"
-                      icon={<Files size={15} />}
-                      isRounded={false}
-                    />
-
-                    <IconButton
-                      onClick={() => {
-                        setIsShowIcons("history");
-                      }}
-                      label="History"
-                      bg="primary"
-                      icon={<History size={15} />}
-                      isRounded={false}
-                    />
+                      <IconButton
+                        onClick={() => {
+                          setIsShowIcons("history");
+                        }}
+                        label="Todays Order"
+                        bg="primary"
+                        icon={<History className="w-6 h-5 2xl:w-7 2xl:h-5" />}
+                        isRounded={false}
+                      />
+                    </div>
                   </div>
                 </div>
               </>
@@ -997,7 +1002,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 : isShowIcons === "product"
                   ? "Product List"
                   : isShowIcons === "history"
-                    ? "Sales History"
+                    ? "Sales Order"
                     : ""
           }
           isOpen={isShowIcons !== null}
@@ -1013,7 +1018,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           ) : isShowIcons === "product" ? (
             <ProductList />
           ) : isShowIcons === "history" ? (
-            <SalesHistory />
+            <SalesOrder storeId={storeId} user={user} />
           ) : (
             ""
           )}
