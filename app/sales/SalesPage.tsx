@@ -336,7 +336,6 @@ const adminColumns: Column<DisplaySalesDto>[] = [
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
-
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
     null,
   );
@@ -523,7 +522,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 min-h-10 2xl:h-20 ">
+            <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 min-h-10">
               <SalesCard
                 icon={PhilippinePeso}
                 title="Total Sales"
@@ -532,7 +531,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
                   <div
                     className={`
-        grid gap-y-2 gap-x-3
+        grid gap-y-1 gap-x-2
         ${
           Object.keys(paymentMethodsTotal ?? {}).length <= 3
             ? "grid-cols-3"
@@ -548,10 +547,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           key={method}
                           className="flex flex-col items-center text-center"
                         >
-                          <span className="font-medium text-[9px] text-gray-400 2xl:text-xs truncate w-full">
+                          <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
                             {method}
                           </span>
-                          <span className="text-[11px] 2xl:text-xs truncate w-full">
+                          <span className="text-[11px] 2xl:text-[10px] truncate w-full">
                             {formatPeso(amount)}
                           </span>
                         </div>
@@ -584,7 +583,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
                   <div
                     className={`
-        grid gap-y-2 gap-x-3
+        grid gap-y-1 gap-x-2
         ${
           Object.keys(todaysPaymentMethodsTotal ?? {}).length <= 3
             ? "grid-cols-3"
@@ -600,10 +599,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           key={method}
                           className="flex flex-col items-center text-center"
                         >
-                          <span className="font-medium text-[9px] text-gray-400 2xl:text-xs truncate w-full">
+                          <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
                             {method}
                           </span>
-                          <span className="text-[11px] 2xl:text-xs truncate w-full">
+                          <span className="text-[11px] 2xl:text-[10px] truncate w-full">
                             {formatPeso(amount)}
                           </span>
                         </div>

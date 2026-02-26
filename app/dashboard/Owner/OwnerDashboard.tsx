@@ -139,7 +139,7 @@ const OwnerDashboard = () => {
 
         {/* Charts - Stack on mobile, side by side on larger screens */}
         <div className="grid grid-cols-1 xl:grid-cols-1 gap-4">
-          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
             <div className="flex justify-between">
               <h1 className="font-semibold mb-2">Sales Chart</h1>
               <div>
@@ -164,7 +164,7 @@ const OwnerDashboard = () => {
               <Chart data={salesData} />
             </div>
           </div>
-          <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+          <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
             <div className="flex justify-between">
               <h1 className="font-semibold mb-2">Purchase Order Chart</h1>
               <div>
