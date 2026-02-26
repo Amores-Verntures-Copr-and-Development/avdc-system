@@ -385,7 +385,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       : user
         ? `/api/sales/details/`
         : null;
-  console.log({ detailsUrl });
   const apiDetailsUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -408,7 +407,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
     return `${detailsUrl}?${params.toString()}`;
   }, [storeId, searchParams, user]);
-  console.log({ apiDetailsUrl });
   const debounceApi = useDebounce(apiUrl, 600);
   const debounceDetailsApi = useDebounce(apiDetailsUrl, 600);
 
@@ -465,8 +463,47 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       options: [],
     },
   ];
+  const paymentMethodsTotal = response?.data.reduce(
+    (acc, sale) => {
+      sale.paymentMethods?.forEach((pm) => {
+        const method = pm.payMetName;
+        const amount = Number(pm.salesPaymentAmount);
+        if (acc[method]) {
+          acc[method] += amount;
+        } else {
+          acc[method] = amount;
+        }
+      });
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // start of today
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  const todaysPaymentMethodsTotal = response?.data
+    ?.filter((sale) => {
+      const saleDate = new Date(sale.salesCreatedAt);
+      return saleDate >= today && saleDate < tomorrow;
+    })
+    .reduce(
+      (acc, sale) => {
+        sale.paymentMethods?.forEach((pm) => {
+          const method = pm.payMetName;
+          const amount = Number(pm.salesPaymentAmount);
+
+          acc[method] = (acc[method] || 0) + amount;
+        });
+
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
   return (
-    <PageLayout className="p-2 gap-2">
+    <PageLayout className="p-2 gap-1 2xl:gap-2">
       {isViewSales && seletectedSales ? (
         <>
           <div className="flex-1 overflow-y-auto">
@@ -483,144 +520,202 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         <>
           <div className="flex justify-between">
             <PageHeader title={"Sales"} subtitle="Manage sales" />
-            <div className="p-2  w-[35%]"></div>
           </div>
-          <div className="flex h-full overflow-hidden gap-2">
-            <div className="flex flex-1 flex-col min-h-0 gap-2">
-              <div className="grid grid-cols-4 gap-2 h-12 2xl:h-20">
-                <SalesCard
-                  icon={PhilippinePeso}
-                  title="Total Sales"
-                  value={`${formatPeso(totalSales)}`}
-                />
-                <SalesCard
-                  icon={CalendarCheck}
-                  title="Total Orders"
-                  value={totalCountSales}
-                  bgColor="bg-green-500/40"
-                  textColor="text-green-600"
-                />
-                <SalesCard
-                  icon={Users}
-                  title="Total Customer"
-                  value={totalCustomer}
-                  bgColor="bg-yellow-500/40"
-                  textColor="text-yellow-600"
-                />
-                <SalesCard
-                  icon={Calendar}
-                  title="Today's Sales"
-                  value={`${formatPeso(todaySales)}`}
-                  bgColor="bg-blue-500/40"
-                  textColor="text-blue-600"
-                />
-              </div>
-              <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-                <Table
-                  onDateRangeChange={handleDateRangeChange}
-                  loading={isLoading}
-                  showDateRange
-                  filterConfig={salesFilterConfig}
-                  showFilter
-                  onRowSelection={(row) => {
-                    setSelectedSales(row);
-                    setIsViewSales(true);
-                  }}
-                  onSave={() => {}}
-                  renderTopActions={
-                    <div className="flex gap-2">
+
+          <div className="flex flex-1 flex-col min-h-0 gap-2">
+            <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 min-h-10 2xl:h-20 ">
+              <SalesCard
+                icon={PhilippinePeso}
+                title="Total Sales"
+                value={`${formatPeso(totalSales)}`}
+              >
+                <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
+                  <div
+                    className={`
+        grid gap-y-2 gap-x-3
+        ${
+          Object.keys(paymentMethodsTotal ?? {}).length <= 3
+            ? "grid-cols-3"
+            : Object.keys(paymentMethodsTotal ?? {}).length <= 6
+              ? "grid-cols-2"
+              : "grid-cols-1"
+        }
+      `}
+                  >
+                    {Object.entries(paymentMethodsTotal ?? {}).map(
+                      ([method, amount]) => (
+                        <div
+                          key={method}
+                          className="flex flex-col items-center text-center"
+                        >
+                          <span className="font-medium text-[9px] text-gray-400 2xl:text-xs truncate w-full">
+                            {method}
+                          </span>
+                          <span className="text-[11px] 2xl:text-xs truncate w-full">
+                            {formatPeso(amount)}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </SalesCard>
+              <SalesCard
+                icon={CalendarCheck}
+                title="Total Orders"
+                value={totalCountSales}
+                bgColor="bg-green-500/40"
+                textColor="text-green-600"
+              />
+              <SalesCard
+                icon={Users}
+                title="Total Customer"
+                value={totalCustomer}
+                bgColor="bg-yellow-500/40"
+                textColor="text-yellow-600"
+              />
+              <SalesCard
+                icon={Calendar}
+                title="Today's Sales"
+                value={`${formatPeso(todaySales)}`}
+                bgColor="bg-blue-500/40"
+                textColor="text-blue-600"
+              >
+                <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
+                  <div
+                    className={`
+        grid gap-y-2 gap-x-3
+        ${
+          Object.keys(todaysPaymentMethodsTotal ?? {}).length <= 3
+            ? "grid-cols-3"
+            : Object.keys(todaysPaymentMethodsTotal ?? {}).length <= 6
+              ? "grid-cols-2"
+              : "grid-cols-1"
+        }
+      `}
+                  >
+                    {Object.entries(todaysPaymentMethodsTotal ?? {}).map(
+                      ([method, amount]) => (
+                        <div
+                          key={method}
+                          className="flex flex-col items-center text-center"
+                        >
+                          <span className="font-medium text-[9px] text-gray-400 2xl:text-xs truncate w-full">
+                            {method}
+                          </span>
+                          <span className="text-[11px] 2xl:text-xs truncate w-full">
+                            {formatPeso(amount)}
+                          </span>
+                        </div>
+                      ),
+                    )}
+                  </div>
+                </div>
+              </SalesCard>
+            </div>
+            <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+              <Table
+                onDateRangeChange={handleDateRangeChange}
+                loading={isLoading}
+                showDateRange
+                filterConfig={salesFilterConfig}
+                showFilter
+                onRowSelection={(row) => {
+                  setSelectedSales(row);
+                  setIsViewSales(true);
+                }}
+                onSave={() => {}}
+                renderTopActions={
+                  <div className="flex gap-2">
+                    <DynamicDropdown
+                      options={[
+                        { label: "Sales", value: "Sales" },
+                        { label: "Customer", value: "Customer" },
+                      ]}
+                      onChange={function (value: string | number): void {
+                        if (value) {
+                          setIsReport(value as "Customer" | "Sales");
+                          setShowModal("report");
+                        } else {
+                          setIsReport(null);
+                          setShowModal(null);
+                        }
+                      }}
+                      placeholder={"Report"}
+                      icon={<FileText className="w-3.5 h-3.5 font-semibold" />}
+                      size="sm"
+                    />
+                    <div>
+                      <Button
+                        size="sm"
+                        hasBorder={false}
+                        color="outline"
+                        label="Export"
+                        icon={Download}
+                        onClick={() => {
+                          setShowModal("export");
+                        }}
+                      />
+                    </div>
+                  </div>
+                }
+                searchUrl="/sales"
+                isRounded={false}
+                columns={
+                  user?.empPosition === "supervisor" ||
+                  user?.empPosition === "staff"
+                    ? columns
+                    : adminColumns
+                }
+                data={response?.data ?? []}
+                maxHeight="h-full"
+                showActions
+                renderActions={(row) => (
+                  <div className="flex justify-center">
+                    <IconButton
+                      onClick={function (): void {
+                        setSelectedSales(row);
+                        setIsViewSales(true);
+                      }}
+                      label={"View"}
+                      bg={"gray"}
+                      icon={<Eye className="w-4 h-4" />}
+                    />
+                  </div>
+                )}
+                totalCount={100}
+                addContentLeftTitle={
+                  !hasStore || isAdmin ? (
+                    <div>
                       <DynamicDropdown
-                        options={[
-                          { label: "Sales", value: "Sales" },
-                          { label: "Customer", value: "Customer" },
-                        ]}
+                        size="sm"
+                        options={storeOptions}
+                        value={defaultStoreFromUrl}
                         onChange={function (value: string | number): void {
                           if (value) {
-                            setIsReport(value as "Customer" | "Sales");
-                            setShowModal("report");
+                            const findStore = Array.isArray(stores)
+                              ? stores.find((i) => i.storeName === value)
+                              : undefined;
+                            setSelectedStoreId(findStore?.storeId ?? null);
+                            const url = new URL(window.location.href);
+                            url.searchParams.set("store", String(value));
+                            router.push(url.toString());
                           } else {
-                            setIsReport(null);
-                            setShowModal(null);
+                            const url = new URL(window.location.href);
+                            setSelectedStoreId(null);
+                            url.searchParams.delete("store"); // remove 'store'
+                            router.push(url.toString());
                           }
                         }}
-                        placeholder={"Report"}
-                        icon={
-                          <FileText className="w-3.5 h-3.5 font-semibold" />
-                        }
-                        size="sm"
-                      />
-                      <div>
-                        <Button
-                          size="sm"
-                          hasBorder={false}
-                          color="outline"
-                          label="Export"
-                          icon={Download}
-                          onClick={() => {
-                            setShowModal("export");
-                          }}
-                        />
-                      </div>
-                    </div>
-                  }
-                  searchUrl="/sales"
-                  isRounded={false}
-                  columns={
-                    user?.empPosition === "supervisor" ||
-                    user?.empPosition === "staff"
-                      ? columns
-                      : adminColumns
-                  }
-                  data={response?.data ?? []}
-                  maxHeight="h-full"
-                  showActions
-                  renderActions={(row) => (
-                    <div className="flex justify-center">
-                      <IconButton
-                        onClick={function (): void {
-                          setSelectedSales(row);
-                          setIsViewSales(true);
-                        }}
-                        label={"View"}
-                        bg={"gray"}
-                        icon={<Eye className="w-4 h-4" />}
+                        placeholder={`Store (${storeOptions.length})`}
+                        icon={<Store className="w-4 h-4" />}
                       />
                     </div>
-                  )}
-                  totalCount={100}
-                  addContentLeftTitle={
-                    !hasStore || isAdmin ? (
-                      <div>
-                        <DynamicDropdown
-                          size="sm"
-                          options={storeOptions}
-                          value={defaultStoreFromUrl}
-                          onChange={function (value: string | number): void {
-                            if (value) {
-                              const findStore = Array.isArray(stores)
-                                ? stores.find((i) => i.storeName === value)
-                                : undefined;
-                              setSelectedStoreId(findStore?.storeId ?? null);
-                              const url = new URL(window.location.href);
-                              url.searchParams.set("store", String(value));
-                              router.push(url.toString());
-                            } else {
-                              const url = new URL(window.location.href);
-                              setSelectedStoreId(null);
-                              url.searchParams.delete("store"); // remove 'store'
-                              router.push(url.toString());
-                            }
-                          }}
-                          placeholder={`Store (${storeOptions.length})`}
-                          icon={<Store className="w-4 h-4" />}
-                        />
-                      </div>
-                    ) : (
-                      <></>
-                    )
-                  }
-                />
-              </div>
+                  ) : (
+                    <></>
+                  )
+                }
+              />
             </div>
           </div>
         </>

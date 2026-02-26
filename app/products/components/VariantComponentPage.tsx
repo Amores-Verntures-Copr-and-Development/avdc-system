@@ -389,7 +389,7 @@ const VariantComponentPage = ({
       </BigCard>
       <Modal
         size="lg"
-        className="h-[50%]"
+        className="min-h-[50%]"
         title="Assign Component"
         isOpen={showAddComponent}
         onClose={function (): void {

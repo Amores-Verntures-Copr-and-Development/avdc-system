@@ -673,19 +673,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       <div className="flex flex-1 overflow-visible min-h-0 h-full">
         {/* Left section */}
         <div className="flex flex-col flex-[0.75]  min-w-0 h-full">
-          <div className="bg-white min-h-20 border border-gray-200 flex justify-between items-center px-4 py-2 overflow-visible">
+          <div className="bg-white min-h-10 border border-gray-200 flex justify-between items-center px-2 2xl:px-4 py-1 2xl:py-2 overflow-visible">
             {selectedProduct ? (
               <>
                 {/* Product Detail Header */}
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-gradient-to-br from-primary-1 to-primary-1/50 rounded-lg shadow-sm">
-                    <Package className="text-white w-5 h-5" />
+                    <Package className="text-white w-3 h-3 2xl:w-5 2xl:h-5" />
                   </div>
                   <div>
-                    <h1 className="text-lg font-semibold text-gray-900">
+                    <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900">
                       {selectedProduct.prodName}
                     </h1>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-[10px] 2xl:text-xs text-gray-500">
                       {selectedProduct.productVariants?.length || 0} variant
                       {selectedProduct.productVariants?.length !== 1 ? "s" : ""}
                     </p>
@@ -801,8 +801,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             )}
           </div>
-          <div className="flex flex-col w-full gap-2 mt-2">
-            <h2 className="text-sm 2xl:text-base font-semibold text-gray-800">
+          <div className="flex flex-col w-full 2xl:gap-2 2xl:mt-2">
+            <h2 className="text-xs 2xl:text-base font-semibold text-gray-800 px-2">
               Categories
             </h2>
             <div className="flex overflow-x-auto gap-2 px-2 py-1 scrollbar-th scrollbar-thumb-gray-200 scrollbar-track-gray-100">
@@ -869,7 +869,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </div>
 
-        <div className="flex-[.40] lg:flex-[0.30] 2xl:flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
+        <div className="flex-[.50] lg:flex-[0.30] 2xl:flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
             <h1 className="font-semibold text-xs 2xl:text-sm">Order Details</h1>
             <span className="text-[9px] 2xl:text-sm font-semibold">
@@ -898,8 +898,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             </div>
           </div>
-
-          <div className="flex-1 p-2 overflow-auto">
+          <div className="flex-1 p-2 overflow-auto border-b border-gray-300">
             <OrderDetails
               setEditOrderAmount={setEditOrderAmount}
               data={selectedOrder}
@@ -908,8 +907,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               removeProduct={removeProduct}
             />
           </div>
-          <div className="flex-[0.25] p-5 border-gray-200 flex flex-col gap-1 2xl:gap-4">
-            <div className="flex items-center gap-3 pb-2 border-b-2 border-gray-200 justify-between">
+          <div className="flex-[0.25] p-2 2xl:p-5 border-gray-200 flex flex-col gap-1 2xl:gap-4">
+            <div className="flex items-center gap-3 pb-2  border-gray-200 justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 2xl:w-7 2xl:h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
                   <Receipt className="w-2 h-2 2xl:w-4 2xl:h-4 text-white" />
@@ -963,7 +962,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             )}
 
             {/* Total */}
-            <div className="flex justify-between border-t border-gray-200 pt-2">
+            <div className="flex justify-between  pt-2">
               <span className=" font-semibold text-[9px] 2xl:text-sm">
                 Total
               </span>

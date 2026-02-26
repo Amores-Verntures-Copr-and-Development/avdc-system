@@ -6,6 +6,7 @@ interface SalesCardProps {
   value: string;
   textColor?: string;
   bgColor?: string;
+  children?: React.ReactNode;
 }
 const SalesCard = ({
   icon: Icon,
@@ -13,9 +14,10 @@ const SalesCard = ({
   value = "0",
   textColor = "text-primary-1",
   bgColor = "bg-primary-1/20",
+  children,
 }: SalesCardProps) => {
   return (
-    <div className="flex w-full items-center gap-2 2xl:gap-4  bg-white p-2 2xl:p-4 shadow-sm">
+    <div className="flex flex-1 w-full items-center gap-2 2xl:gap-4  bg-white p-2 2xl:p-4 shadow-sm">
       <div
         className={`${bgColor} flex h-5 w-5 2xl:h-10 2xl:w-10 items-center justify-center rounded-md`}
       >
@@ -23,13 +25,14 @@ const SalesCard = ({
       </div>
 
       <div className="flex flex-col">
-        <span className="text-xs 2xl:text-sm font-medium text-gray-500">
+        <span className="text-[10px] lg:text-xs 2xl:text-sm font-medium text-gray-500">
           {title}
         </span>
-        <span className="text-sm 2xl:text-lg font-semibold text-gray-900">
+        <span className="text-xs lg:text-sm 2xl:text-lg font-semibold text-gray-900">
           {value}
         </span>
       </div>
+      {children}
     </div>
   );
 };
