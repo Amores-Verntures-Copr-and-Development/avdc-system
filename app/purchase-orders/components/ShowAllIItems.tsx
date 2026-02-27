@@ -5,6 +5,7 @@ import Table, { Column } from "@/components/shared/Table";
 import {
   CreatePurchaseOrderItemDto,
   DisplayPurchaseOrderItemsDto,
+  SupplierItemDetails,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { UserAuth } from "@/hooks/useSession";
@@ -36,6 +37,7 @@ import Popup from "@/components/shared/Popup";
 import ViewCompositePOItem from "./_components/ViewCompositePOItem";
 import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
 import { ApiResponse } from "@/types/api";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -60,6 +62,10 @@ interface ShowAllIItemsProps {
     poId: number,
   ) => Promise<boolean>;
 }
+type SupplierOption = {
+  label: string;
+  value: number;
+};
 
 const ShowAllIItems = ({
   setShowAllItems,
@@ -84,6 +90,9 @@ const ShowAllIItems = ({
     `/api/purchase-order/po-items/${data?.poId}`,
     fetcher,
   );
+  const [filteredStatus, setFilteredStatus] = useState<
+    "" | "delivered" | "received" | "not_ordered" | "pending" | "received_store"
+  >("");
   const [showCompositeItem, setShowCompositeItem] =
     useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>([]);
@@ -93,6 +102,7 @@ const ShowAllIItems = ({
     useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [isUpdatingId, setIsUpdatingId] = useState<number | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [supplierFilter, setSupplierFilter] = useState<number | "">("");
   const [originalPoItems, setOriginalPoItems] = useState<
     DisplayPurchaseOrderItemsDto[]
   >([]);
@@ -282,6 +292,7 @@ const ShowAllIItems = ({
       options: requestStatusOptions,
     },
   ];
+
   useEffect(() => {
     if (itemResponse.data && itemResponse.data.length > 0) {
       const cloned = structuredClone(itemResponse.data); // deep clone
@@ -289,6 +300,23 @@ const ShowAllIItems = ({
       setOriginalPoItems(structuredClone(cloned));
     }
   }, [itemResponse.data]);
+  const supplierOptions: SupplierOption[] = itemResponse.data
+    .map((poItem) => {
+      // Find the supplier matching poItem.suppId
+      const supplier = poItem.suppliers?.find(
+        (s) => s.suppId === poItem.suppId,
+      );
+      return supplier
+        ? { label: supplier.suppName, value: supplier.suppId }
+        : null;
+    })
+    .filter(Boolean) // remove nulls
+    // Remove duplicates by value
+    .filter(
+      (option, index, self) =>
+        index === self.findIndex((o) => o?.value === option!.value),
+    ) as SupplierOption[];
+  console.log({ supplierOptions });
   const handleApprovedPo = async () => {
     const newData: UpdatePurchaseOrdersDto = {
       ...data,
@@ -377,6 +405,60 @@ const ShowAllIItems = ({
 
       return total + subtotal;
     }, 0);
+  const status = [
+    { value: "", label: "All" },
+    {
+      value: "pending",
+      label: `Pending  (${
+        poItems?.filter(
+          (i) =>
+            i.poItemStatus === "pending" &&
+            (supplierFilter !== "" ? i.suppId === supplierFilter : true),
+        ).length
+      })`,
+    },
+
+    {
+      value: "delivered",
+      label: `Delivered  (${
+        poItems?.filter(
+          (i) =>
+            i.poItemStatus === "delivered" &&
+            (supplierFilter !== "" ? i.suppId === supplierFilter : true),
+        ).length
+      })`,
+    },
+    {
+      value: "received",
+      label: `Received  (${
+        poItems?.filter(
+          (i) =>
+            i.poItemStatus === "received" &&
+            (supplierFilter !== "" ? i.suppId === supplierFilter : true),
+        ).length
+      })`,
+    },
+    {
+      value: "received_store",
+      label: `Received From Store (${
+        poItems?.filter(
+          (i) =>
+            i.poItemStatus === "received_store" &&
+            (supplierFilter !== "" ? i.suppId === supplierFilter : true),
+        ).length
+      })`,
+    },
+    {
+      value: "not_ordered",
+      label: `Not Ordered (${
+        poItems?.filter(
+          (i) =>
+            i.poItemStatus === "not_ordered" &&
+            (supplierFilter !== "" ? i.suppId === supplierFilter : true),
+        ).length
+      })`,
+    },
+  ];
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden p-4">
       <div className="flex justify-between items-center ">
@@ -410,6 +492,70 @@ const ShowAllIItems = ({
             </div>
           }
           showActions
+          addContentLeftTitle={
+            <div className="flex gap-2 items-center ">
+              <div>
+                {" "}
+                <DynamicDropdown
+                  options={supplierOptions}
+                  onChange={function (value: string | number): void {
+                    if (value) {
+                      setSupplierFilter(Number(value));
+                    } else {
+                      setSupplierFilter("");
+                    }
+                  }}
+                  placeholder={`Supplier (${supplierOptions.length})`}
+                  icon={<Store className="w-3 h-3" />}
+                  size="sm"
+                />
+              </div>
+              <div className="flex gap-2 items-center">
+                {status.map((s, index) => (
+                  <div key={index}>
+                    <Button
+                      label={s.label}
+                      size="xs"
+                      color={
+                        s.value === filteredStatus
+                          ? s.value === ""
+                            ? "primary"
+                            : s.value === "pending"
+                              ? "tertiary"
+                              : s.value === "delivered"
+                                ? "warning"
+                                : s.value === "received"
+                                  ? "success"
+                                  : s.value === "received_store"
+                                    ? "tertiary"
+                                    : "danger"
+                          : "secondary"
+                      }
+                      onClick={() => {
+                        console.log(s.value);
+                        setFilteredStatus(
+                          s.value as
+                            | ""
+                            | "delivered"
+                            | "received"
+                            | "not_ordered"
+                            | "received_store",
+                        );
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          }
+          localFilter={{
+            keys: ["suppId", "poItemStatus"],
+            values: {
+              suppId:
+                Number(supplierFilter) !== 0 ? Number(supplierFilter) : null,
+              poItemStatus: filteredStatus || "pending",
+            },
+          }}
           renderActions={(row) => {
             const showSave = isRowChanged(row);
             return (

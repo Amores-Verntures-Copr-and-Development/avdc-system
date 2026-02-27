@@ -19,6 +19,10 @@ export interface SelectOption {
   bg?: string;
   disabled?: boolean;
 }
+type LocalFilter<T> = {
+  keys?: (keyof T)[];
+  values?: Partial<T>; // object containing the values to match
+};
 export interface Column<T = any> {
   name: string;
   key: string;
@@ -88,9 +92,7 @@ interface TableProps<T> {
   defaultLimit?: number;
   fetchMode?: boolean;
   localSearch?: boolean;
-  localFilter?: boolean;
-  localFilterKey?: keyof T;
-  localFilterValue?: any;
+  localFilter?: LocalFilter<T>;
   showDateRange?: boolean;
   onDateRangeChange?: (range: { from: string; to: string }) => void;
 }
@@ -102,8 +104,6 @@ export interface TableHandle {
 const TableInner = <T extends Record<string, any>>(
   {
     localFilter,
-    localFilterKey,
-    localFilterValue,
     onDateRangeChange,
     showFilter,
     showDateRange = false,
@@ -148,14 +148,30 @@ const TableInner = <T extends Record<string, any>>(
   const filteredData = React.useMemo(() => {
     let rows = [...editableData];
 
-    // ✅ Apply localFilter if enabled and value is not empty
+    // ✅ Apply localFilter only if it has NON-empty values
     if (
-      localFilter &&
-      localFilterKey !== undefined &&
-      localFilterValue !== undefined &&
-      localFilterValue !== "" // <-- only filter if value is not empty
+      localFilter?.keys &&
+      localFilter.values &&
+      Object.values(localFilter.values).some(
+        (v) => v !== "" && v !== null && v !== undefined,
+      )
     ) {
-      rows = rows.filter((row) => row[localFilterKey] === localFilterValue);
+      rows = rows.filter((row) =>
+        localFilter.keys!.every((key) => {
+          const filterValue = localFilter.values![key];
+
+          // If this specific key has empty value → ignore it
+          if (
+            filterValue === "" ||
+            filterValue === null ||
+            filterValue === undefined
+          ) {
+            return true;
+          }
+
+          return row[key] === filterValue;
+        }),
+      );
     }
 
     // ✅ Apply local search
@@ -171,14 +187,7 @@ const TableInner = <T extends Record<string, any>>(
     }
 
     return rows;
-  }, [
-    editableData,
-    columns,
-    localSearchQuery,
-    localFilter,
-    localFilterKey,
-    localFilterValue,
-  ]);
+  }, [editableData, columns, localSearchQuery, localFilter]);
   useEffect(() => {
     if (data && data.length > 0) {
       setEditableData(data);
@@ -463,7 +472,7 @@ const TableInner = <T extends Record<string, any>>(
 
               {localSearch && (
                 <div
-                  className="w-25 xl:w-40 items-center align-middle"
+                  className="min-w-35 xl:w-40 items-center align-middle"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}

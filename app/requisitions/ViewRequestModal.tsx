@@ -1159,9 +1159,12 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
         <div className="flex-1 overflow-y-auto pr-4 pl-4">
           <Table
-            localFilterKey={"reqItemStatus"}
-            localFilterValue={filteredStatus}
-            localFilter={true}
+            // localFilterKey={"reqItemStatus"}
+            // localFilterValue={filteredStatus}
+            localFilter={{
+              keys: ["reqItemStatus"],
+              values: { reqItemStatus: filteredStatus || "pending" },
+            }}
             showActions
             addContentLeftTitle={
               <div className="flex gap-2">
