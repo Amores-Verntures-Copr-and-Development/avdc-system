@@ -17,6 +17,7 @@ import {
   Clock,
   Edit,
   Layers2,
+  Store,
   Trash2,
   X,
 } from "lucide-react";
@@ -33,6 +34,8 @@ import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/Popup";
 import ViewCompositePOItem from "./_components/ViewCompositePOItem";
+import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
+import { ApiResponse } from "@/types/api";
 
 interface ShowAllIItemsProps {
   setShowAllItems: React.Dispatch<
@@ -71,13 +74,16 @@ const ShowAllIItems = ({
 }: ShowAllIItemsProps) => {
   const [showComponent, setShowComponent] = useState(false);
   const [showAddItem, setShowAddItem] = useState(false);
+  const [isShowUpdateSuppPrice, setIsShowUpdateSuppPrice] =
+    useState<PurchaseOrderItems | null>(null);
   const {
     data: itemResponse = { data: [] },
     isLoading: loadingData,
     mutate,
-  } = useSWR<{
-    data: any;
-  }>(`/api/purchase-order/po-items/${data?.poId}`, fetcher);
+  } = useSWR<ApiResponse<DisplayPurchaseOrderItemsDto[]>>(
+    `/api/purchase-order/po-items/${data?.poId}`,
+    fetcher,
+  );
   const [showCompositeItem, setShowCompositeItem] =
     useState<DisplayPurchaseOrderItemsDto | null>(null);
   const [poItems, setPoItems] = useState<DisplayPurchaseOrderItemsDto[]>([]);
@@ -432,6 +438,14 @@ const ShowAllIItems = ({
                     />
                     <IconButton
                       onClick={() => {
+                        setIsShowUpdateSuppPrice(row);
+                      }}
+                      label="Update Supplier Price"
+                      icon={<Store size={14} />}
+                      bg="gray"
+                    />
+                    <IconButton
+                      onClick={() => {
                         setShowDeleteItem(true);
                         setSelectedItem(row);
                       }}
@@ -601,6 +615,32 @@ const ShowAllIItems = ({
         <ViewCompositePOItem
           data={showCompositeItem}
           setShowComponent={setShowComponent}
+        />
+      </Popup>
+      <Popup
+        isOpen={isShowUpdateSuppPrice !== null}
+        onClose={function (): void {
+          setIsShowUpdateSuppPrice(null);
+        }}
+        background="bg-white/20"
+        title={`Update Supplier Price`}
+        closeOnClickOutside={false}
+      >
+        <UpdateSupplierPrice
+          data={isShowUpdateSuppPrice}
+          supplierName={
+            itemResponse.data
+              ?.find((s) => s.suppId === isShowUpdateSuppPrice?.suppId)
+              ?.suppliers?.find(
+                (sl) => sl.suppId === isShowUpdateSuppPrice?.suppId,
+              )?.suppName || ""
+          }
+          onClose={function (): void {
+            setIsShowUpdateSuppPrice(null);
+          }}
+          mutate={() => {
+            mutate();
+          }}
         />
       </Popup>
     </div>
