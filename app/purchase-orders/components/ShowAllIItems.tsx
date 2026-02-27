@@ -553,7 +553,7 @@ const ShowAllIItems = ({
             values: {
               suppId:
                 Number(supplierFilter) !== 0 ? Number(supplierFilter) : null,
-              poItemStatus: filteredStatus || "pending",
+              poItemStatus: filteredStatus,
             },
           }}
           renderActions={(row) => {
