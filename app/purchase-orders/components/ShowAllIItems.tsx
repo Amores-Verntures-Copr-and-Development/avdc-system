@@ -192,11 +192,7 @@ const ShowAllIItems = ({
 
       selector: (row) => {
         const hasComposite = row.composite && row.composite.length > 0;
-        const supplier = row.suppliers?.find(
-          (s) => s.suppId === Number(row.suppId),
-        );
 
-        const supplierPrice = Number(supplier?.suppItemPrice) || 0;
         const qty = ["received", "received_store"].includes(
           row.poItemStatus ?? "",
         )
@@ -205,12 +201,12 @@ const ShowAllIItems = ({
 
         if (hasComposite) {
           const total = row.composite?.reduce((total, item) => {
-            const subtotal = item.ordComQuantity * item.itemPrice;
+            const subtotal = item.ordComQuantity * item.ordComPrice;
             return (total += subtotal);
           }, 0);
           return `${formatPeso(total)}`;
         }
-        return `₱${(supplierPrice * qty).toFixed(2)}`;
+        return `₱${(row.unitPrice * qty).toFixed(2)}`;
       },
 
       value: (row) => {
@@ -248,7 +244,7 @@ const ShowAllIItems = ({
                   .filter((c) => c !== null)
                   .map((c, index) => {
                     const total =
-                      Number(c.ordComQuantity) * Number(c.itemPrice);
+                      Number(c.ordComQuantity) * Number(c.ordComPrice);
 
                     return (
                       <div
@@ -261,7 +257,7 @@ const ShowAllIItems = ({
 
                         <div className="flex justify-between text-gray-600">
                           <span>Qty: {c.ordComQuantity}</span>
-                          <span>Unit: {formatPeso(c.itemPrice)}</span>
+                          <span>Unit: {formatPeso(c.ordComPrice)}</span>
                         </div>
 
                         <div className="flex justify-between font-semibold text-gray-800 mt-1">
@@ -394,7 +390,7 @@ const ShowAllIItems = ({
       // if composite, total = sum of composite subtotal
       if (hasComposite) {
         const totalComposite = item.composite?.reduce((sum, comp) => {
-          return sum + Number(comp.ordComQuantity) * Number(comp.itemPrice);
+          return sum + Number(comp.ordComQuantity) * Number(comp.ordComPrice);
         }, 0);
 
         return total + Number(totalComposite);
