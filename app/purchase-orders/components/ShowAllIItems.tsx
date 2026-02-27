@@ -197,7 +197,11 @@ const ShowAllIItems = ({
         );
 
         const supplierPrice = Number(supplier?.suppItemPrice) || 0;
-        const qty = Number(row.poItemOrderedQty) || 0;
+        const qty = ["received", "received_store"].includes(
+          row.poItemStatus ?? "",
+        )
+          ? Number(row.poItemReceivedQty) || Number(row.poItemOrderedQty)
+          : 0;
 
         if (hasComposite) {
           const total = row.composite?.reduce((total, item) => {
@@ -397,8 +401,10 @@ const ShowAllIItems = ({
       }
 
       // else normal item
-      const qty = ["received", "completed"].includes(item.poItemStatus ?? "")
-        ? Number(item.poItemReceivedQty)
+      const qty = ["received", "completed", "received_store"].includes(
+        item.poItemStatus ?? "",
+      )
+        ? Number(item.poItemReceivedQty) || Number(item.poItemOrderedQty)
         : Number(item.poItemOrderedQty);
 
       const subtotal = qty * Number(item.unitPrice);

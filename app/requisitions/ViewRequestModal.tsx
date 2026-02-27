@@ -1163,7 +1163,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             // localFilterValue={filteredStatus}
             localFilter={{
               keys: ["reqItemStatus"],
-              values: { reqItemStatus: filteredStatus || "pending" },
+              values: { reqItemStatus: filteredStatus || "" },
             }}
             showActions
             addContentLeftTitle={
