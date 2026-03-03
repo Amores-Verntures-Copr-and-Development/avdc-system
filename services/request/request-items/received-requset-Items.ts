@@ -64,7 +64,7 @@ export const receiveRequestItems = async ({
         if (isAllRequestDeliveredOrReceived) {
           const updatePoItem: Partial<PurchaseOrderItems> = {
             poItemId: poItems[0].poItemId,
-            poItemStatus: "delivered",
+            poItemStatus: "received_store",
           };
           updatePoItems.push(updatePoItem);
         }

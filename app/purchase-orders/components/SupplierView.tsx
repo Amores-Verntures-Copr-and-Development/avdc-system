@@ -1,10 +1,14 @@
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import { PortalDropdown } from "@/components/shared/PortalDropDown";
+import Table, { Column } from "@/components/shared/Table";
 import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
 import { ApiResponse } from "@/types/api";
-import { PurchaseOrders } from "@/types/purchaseOrders";
+import { PurchaseOrderItems, PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
+import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import { ChevronDown, ChevronUp, Package } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
@@ -18,6 +22,159 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
   const [isExpandedSupplier, setIsExpandedSupplier] = useState<number | null>(
     null,
   );
+  const columns: Column<PurchaseOrderItems>[] = [
+    { name: "Item Name", key: "itemName" },
+    { name: "Unit", key: "itemUnit" },
+    {
+      name: "Ordered Qty",
+      key: "poItemOrderedQty",
+      selector: (row) =>
+        formatQuantityByUnit(row.poItemOrderedQty, row.itemUnit ?? ""),
+    },
+    {
+      name: "Received Qty",
+      key: "poItemReceivedQty",
+      editable: (row) => row.poItemStatus === "sent",
+      inputType: "number",
+      selector: (row) =>
+        row.poItemStatus === "not_ordered" ? 0 : row.poItemReceivedQty,
+      value: (row) =>
+        row.poItemStatus === "not_ordered"
+          ? 0
+          : Number(row.poItemReceivedQty) || "",
+    },
+    {
+      name: "Price",
+      key: "unitPrice",
+      selector: (row) => formatPeso(row.unitPrice),
+    },
+    {
+      name: "Supplier Price",
+      key: "supplierPrice",
+      selector: (row) => row.supplierPrice,
+      editable: (row) => row.poItemStatus === "sent",
+      inputType: "number",
+    },
+    {
+      key: "composite",
+      name: "Composite",
+      selector: (row) => {
+        const composite = row.composite || [];
+        const filtered = composite.filter((c) => c !== null);
+
+        if (filtered.length === 0) return null;
+        return (
+          <PortalDropdown
+            trigger={
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option>{`Items (${filtered.length})`}</option>
+              </select>
+            }
+          >
+            {filtered.map((c, index) => {
+              const total = Number(c.ordComQuantity) * Number(c.ordComPrice);
+              return (
+                <div
+                  key={index}
+                  className="px-3 py-2 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default border-b last:border-b-0"
+                >
+                  <div className="font-semibold text-gray-800">
+                    {c.itemName}
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>Qty: {c.ordComQuantity}</span>
+                    <span>Unit: {formatPeso(c.ordComPrice)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-gray-800 mt-1">
+                    <span>Total</span>
+                    <span>{formatPeso(total)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </PortalDropdown>
+        );
+      },
+    },
+    {
+      name: "Total",
+      key: "total",
+      selector: (row) => {
+        const hasComposite = row.composite && row.composite.length > 0;
+
+        if (row.poItemStatus === "not_ordered") return formatPeso(0);
+
+        if (hasComposite) {
+          const total = row?.composite
+            ?.filter((c) => c !== null)
+            .reduce((sum, item) => {
+              return (
+                sum + Number(item.ordComQuantity) * Number(item.ordComPrice)
+              );
+            }, 0);
+
+          return formatPeso(total);
+        }
+
+        const qty =
+          row.poItemReceivedQty > 0
+            ? row.poItemReceivedQty
+            : row.poItemOrderedQty;
+
+        const price = row.supplierPrice || row.unitPrice;
+
+        return formatPeso(Number(price) * Number(qty));
+      },
+      compute: (row) => {
+        const hasComposite = row.composite && row.composite.length > 0;
+        if (hasComposite) {
+          const total = row.composite?.reduce((total, item) => {
+            const subtotal = item.ordComQuantity * item.itemPrice;
+            return (total += subtotal);
+          }, 0);
+          return `${formatPeso(total)}`;
+        }
+        return row.poItemReceivedQty * (row.supplierPrice || row.unitPrice);
+      },
+      dependsOn: ["poItemOrderedQty", "unitPrice", "supplierPrice"],
+    },
+    {
+      name: "Status",
+      key: "poItemStatus",
+
+      selector: (row) => {
+        const { bg, color, label } = getPurchaseStatusOption(
+          row.poItemStatus ?? "",
+        );
+        return (
+          <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
+            <span>{label}</span>
+          </div>
+        );
+      },
+      inputType: "select",
+      selectOptionVariant: "custom", // ✅ matches interface
+      options: (row) => {
+        const { label, value, bg, color, border, dot } =
+          getPurchaseStatusOption(row.poItemStatus ?? "");
+        return [
+          { label, value, bg, color, border, dot },
+          {
+            label: "Not Ordered",
+            value: "not_ordered",
+            bg: "bg-red-100",
+            color: "text-red-600",
+            border: "border-red-1/50",
+            dot: "bg-red-500",
+          },
+        ];
+      },
+      value: (row) => row.poItemStatus,
+    },
+  ];
   const {
     data: itemResponse = { data: [] },
     isLoading: loadingData,
@@ -55,7 +212,8 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
                 (i) =>
                   i.poItemStatus === "sent" ||
                   i.poItemStatus === "received" ||
-                  i.poItemStatus === "delivered",
+                  i.poItemStatus === "delivered" ||
+                  i.poItemStatus === "received_store",
               )
               .reduce((total, item) => {
                 // skip not_ordered (extra safety)
@@ -132,8 +290,10 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
                       }}
                       className="inline-flex items-center px-1 py-.5 xl:px-3 xl:py-1.5 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      {isExpandedSupplier ? "Hide Details" : "View Details"}
-                      {isExpandedSupplier ? (
+                      {isExpandedSupplier === s.suppId
+                        ? "Hide Details"
+                        : "View Details"}
+                      {isExpandedSupplier === s.suppId ? (
                         <ChevronUp className="w-4 h-4 ml-2" />
                       ) : (
                         <ChevronDown className="w-4 h-4 ml-2" />
@@ -141,6 +301,169 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
                     </button>
                   </div>
                 </div>
+                {isExpandedSupplier === s.suppId && (
+                  <div className="p-2 flex flex-col h-full gap-2 bg-gray-100/30">
+                    <Table
+                      uniqueIdKey="itemId"
+                      localSearch={true}
+                      textSize="xs"
+                      columns={columns}
+                      data={s.items}
+                      isRounded={false}
+                      showActions
+                      loading={loadingData}
+                      // renderTopActions={
+                      //   <div className="flex gap-2">
+                      //     {!isAllNotOrdered && (
+                      //       <div>
+                      //         <Button
+                      //           hasBorder
+                      //           color="neutral"
+                      //           size="xs"
+                      //           onClick={() => {
+                      //             setShowAddItem(true);
+                      //             setSelectedSupplierToAdd(supplier);
+                      //           }}
+                      //           label="Add Item"
+                      //           icon={Package}
+                      //         />
+                      //       </div>
+                      //     )}
+
+                      //     {isSupplierItemsSent && (
+                      //       <div>
+                      //         <Button
+                      //           color="success"
+                      //           hasBorder
+                      //           size="xs"
+                      //           onClick={() =>
+                      //             handleAutoFillAll(supplier.suppId)
+                      //           }
+                      //           label="Auto-Fill All"
+                      //           icon={PackageCheck}
+                      //           className="font-semibold text-white text-xs"
+                      //         />
+                      //       </div>
+                      //     )}
+                      //     {validForReceived && (
+                      //       <div>
+                      //         <Button
+                      //           color="danger"
+                      //           hasBorder
+                      //           size="xs"
+                      //           onClick={() =>
+                      //             // handleNotOrderedSupplier(supplier)
+                      //             setSelectSupplierNotOrder(supplier)
+                      //           }
+                      //           label="Mark as Unordered"
+                      //           icon={PackageMinus}
+                      //           className="font-semibold text-white text-xs"
+                      //         />
+                      //       </div>
+                      //     )}
+                      //     {validForReceived && (
+                      //       <div>
+                      //         {" "}
+                      //         <Button
+                      //           size="xs"
+                      //           hasBorder
+                      //           onClick={() => {
+                      //             // handleReceivePO([supplier]);
+                      //             const hasNoQuantityDelivered =
+                      //               supplier.items.some(
+                      //                 (item) =>
+                      //                   item.poItemStatus !== "not_ordered" &&
+                      //                   Number(item.poItemReceivedQty) === 0,
+                      //               );
+
+                      //             if (hasNoQuantityDelivered) {
+                      //               toast.error(
+                      //                 "There are items to be received with no quantity!",
+                      //               );
+                      //               return;
+                      //             }
+
+                      //             if (supplier) {
+                      //               setIsShowReceivedConfirm(true);
+                      //               setSupplierReceivedData([supplier]);
+                      //             }
+                      //           }}
+                      //           color="primary"
+                      //           label="Receive PO"
+                      //           icon={Package}
+                      //           className="font-semibold"
+                      //         />
+                      //       </div>
+                      //     )}
+                      //   </div>
+                      // }
+                      // renderActions={(row) => (
+                      //   <div className="flex justify-center gap-2">
+                      //     <IconButton
+                      //       onClick={() => {
+                      //         setShowCompositeItem({
+                      //           poId: row.poId,
+                      //           itemId: row.itemId,
+                      //           poItemId: row.poItemId,
+                      //           poItemOrderedQty: row.poItemOrderedQty,
+                      //           poItemReceivedQty: row.poItemReceivedQty,
+                      //           unitPrice: row.supplierPrice ?? 0,
+                      //           suppId: row.suppId,
+                      //           suppliers: [],
+                      //           selectedSupplierId: row.suppId,
+                      //           poItemStatus: row.poItemStatus,
+                      //           totalPrice: 0,
+                      //           composite: row.composite,
+                      //           itemName: row.itemName ?? "",
+                      //           itemUnit: row.itemUnit ?? "",
+                      //         });
+                      //       }}
+                      //       label="Composite Item"
+                      //       icon={<Layers2 size={14} />}
+                      //       bg="gray"
+                      //     />
+
+                      //     {row.poItemStatus === "sent" && (
+                      //       <IconButton
+                      //         icon={<PackageCheck size={14} />}
+                      //         onClick={() => {
+                      //           if (!row.suppId) {
+                      //             return;
+                      //           }
+                      //           handleAutoFill(row.suppId, row.poItemId);
+                      //         }}
+                      //         label="Auto-Fill Received Qty"
+                      //         bg="primary"
+                      //       />
+                      //     )}
+                      //     <IconButton
+                      //       icon={<Replace size={14} />}
+                      //       onClick={() => {
+                      //         if (!row) {
+                      //           return;
+                      //         }
+
+                      //         setShowReplaceItem(row);
+                      //       }}
+                      //       label="Replace Item"
+                      //       bg="green"
+                      //     />
+                      //     <IconButton
+                      //       icon={<Store size={14} />}
+                      //       onClick={() => {
+                      //         if (!row) {
+                      //           return;
+                      //         }
+                      //         setIsShowUpdateSuppPrice(row);
+                      //       }}
+                      //       label="Update Supplier Price"
+                      //       bg="tertiary"
+                      //     />
+                      //   </div>
+                      // )}
+                    />
+                  </div>
+                )}
               </div>
             );
           })
