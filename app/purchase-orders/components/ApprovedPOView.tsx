@@ -158,10 +158,6 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
       ? `/api/purchase-order/${poData?.poId}/suppliers/${expandedSupplier.suppId}`
       : null,
     fetcher,
-    {
-      keepPreviousData: true, // This keeps the data when the key becomes null
-      revalidateOnFocus: false, // Optional: prevent refetch on window focus
-    },
   );
   const handleSendBySupplier = async (
     poItems: PurchaseOrderItems[],
