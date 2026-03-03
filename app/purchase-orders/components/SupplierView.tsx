@@ -227,7 +227,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
                     ?.filter((c) => c !== null)
                     .reduce((sum, c) => {
                       return (
-                        sum + Number(c.ordComQuantity) * Number(c.itemPrice)
+                        sum + Number(c.ordComQuantity) * Number(c.ordComPrice)
                       );
                     }, 0);
 
