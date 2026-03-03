@@ -19,6 +19,7 @@ import { Checkbox, pdf, PDFViewer } from "@react-pdf/renderer";
 import {
   CheckLine,
   ChevronLeft,
+  ClipboardCheck,
   Clock,
   Download,
   Eye,
@@ -1540,7 +1541,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   hasPartialDelivered) && (
                   <div>
                     <Button
-                      icon={CheckLine}
+                      icon={ClipboardCheck}
                       onClick={handleFillUpAll}
                       size="sm"
                       label="Fill up received"

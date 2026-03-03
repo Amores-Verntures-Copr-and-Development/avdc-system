@@ -42,6 +42,7 @@ export interface Sales {
   salesCreatedBy: number;
   customerId: number | null;
   storeId: number;
+  saleItems?: SaleItems[];
 }
 
 export interface SaleItems {

@@ -30,7 +30,6 @@ export interface Request {
   requestItems: RequestItems[];
   requestItemsData?: RequestItems[];
 }
-
 export interface RequestItems {
   reqItemId: number;
   requestId: number;

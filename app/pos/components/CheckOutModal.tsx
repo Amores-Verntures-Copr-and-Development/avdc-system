@@ -17,8 +17,8 @@ import {
 import { CreateSalePaymentDto, CreateSalesDiscount } from "@/dtos/sales.dto";
 import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
-import { SalesPaymentStatus } from "@/types/sales";
 import Textarea from "@/components/shared/TextArea";
+import { SalesPaymentStatus } from "@/types/sales";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;

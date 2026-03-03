@@ -7,19 +7,25 @@ import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import React, { useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import { formatDiscountValue } from "../pos/components/sidebar/DiscountList";
 import RefundPage from "./components/RefundPage";
+import EditSalesPage from "./components/EditSalesPage";
 
 interface SelectedSalesPageProps {
   salesData: DisplaySalesDto | null;
   onBack: () => void;
+  mutateSales: () => void;
 }
-const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
-  const [showRefund, setShowRefund] = useState(false);
+const SelectedSalesPage = ({
+  mutateSales,
+  salesData,
+  onBack,
+}: SelectedSalesPageProps) => {
+  const [showViews, setShowViews] = useState<null | "refund" | "edit">(null);
   const {
     data: response,
-
+    mutate,
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesItems[]>>(
     salesData?.salesId
@@ -27,11 +33,16 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
       : null,
     fetcher,
   );
+
+  const updateDataSales = async () => {
+    await mutateSales();
+    await mutate();
+  };
   console.log({ response });
   if (isLoading) return <LoaderComponent />;
   return (
     <div className="min-h-screen overflow-auto-y">
-      {!showRefund ? (
+      {!showViews ? (
         <div className="max-w-4xl mx-auto">
           <button
             onClick={onBack}
@@ -84,6 +95,9 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
                       size="sm"
                       color="outline"
                       hasBorder={false}
+                      onClick={() => {
+                        setShowViews("edit");
+                      }}
                     />
                   </div>
                   <div>
@@ -92,7 +106,7 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
                       size="sm"
                       hasBorder={false}
                       onClick={() => {
-                        setShowRefund(true);
+                        setShowViews("refund");
                       }}
                     />
                   </div>
@@ -352,8 +366,16 @@ const SelectedSalesPage = ({ salesData, onBack }: SelectedSalesPageProps) => {
             </div>
           </div>
         </div>
+      ) : showViews === "refund" ? (
+        <RefundPage salesData={salesData} onBack={() => setShowViews(null)} />
+      ) : showViews === "edit" ? (
+        <EditSalesPage
+          salesData={salesData}
+          onBack={() => setShowViews(null)}
+          mutateSales={updateDataSales}
+        />
       ) : (
-        <RefundPage salesData={salesData} onBack={() => setShowRefund(false)} />
+        <div></div>
       )}
     </div>
   );

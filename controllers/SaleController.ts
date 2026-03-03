@@ -5,6 +5,7 @@ import {
 } from "@/services/sales/get-sales";
 import { processCreateSales } from "@/services/sales/process-create-sales";
 import { getSalesItemServices } from "@/services/sales/sale-items/get-sale-items";
+import { updateSalesBySalesId } from "@/services/sales/update-sales";
 import { Sales } from "@/types/sales";
 
 export const createSale = async (data: CreateSaleDto) => {
@@ -19,6 +20,34 @@ export const createSale = async (data: CreateSaleDto) => {
     return {
       success: false,
       message: "Failed to process order!",
+      error: e,
+    };
+  }
+};
+
+export const updateSalesController = async ({
+  data,
+}: {
+  data: Partial<Sales>;
+}) => {
+  try {
+    console.log({ data });
+    if (!data.salesId) {
+      throw new Error("No sales ID found!");
+    }
+    const res = await updateSalesBySalesId({
+      salesId: data.salesId,
+      data: data,
+    });
+    return {
+      success: true,
+      message: "Sales updated successfully!",
+      data: res ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to update sales!",
       error: e,
     };
   }

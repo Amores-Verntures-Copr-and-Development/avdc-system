@@ -2,7 +2,7 @@ import { DisplaySalesDto, DisplaySalesItems } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
@@ -56,7 +56,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
   const [refundItems, setRefundItems] = useState<RefundItem[]>([]);
 
   // Populate refund items once data loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (response?.data) {
       setRefundItems(
         response.data.map((item) => ({
@@ -345,7 +345,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto py-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3">
         <button
           onClick={onBack}
           className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors"

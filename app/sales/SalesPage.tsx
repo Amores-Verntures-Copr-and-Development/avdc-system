@@ -416,12 +416,21 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
   const {
     data: response,
-
+    mutate: mutateSales,
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     user ? debounceApi : null,
     fetcher,
   );
+  const updateDataSelected = async () => {
+    const data = await mutateSales();
+    const findSales = data?.data.find(
+      (s) => s.salesId === seletectedSales?.salesId,
+    );
+    if (findSales) {
+      setSelectedSales(findSales);
+    }
+  };
   const handleDateRangeChange = useCallback(
     (rangeData: { from: string; to: string }) => {
       const { from, to } = rangeData;
@@ -512,6 +521,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 setSelectedSales(null);
                 setIsViewSales(false);
               }}
+              mutateSales={updateDataSelected}
             />
           </div>
         </>

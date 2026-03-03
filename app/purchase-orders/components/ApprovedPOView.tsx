@@ -70,6 +70,7 @@ const columns: Column<PurchaseOrderItems>[] = [
   {
     name: "Price",
     key: "unitPrice",
+    selector: (row) => formatPeso(row.unitPrice),
   },
   {
     name: "itemUnit",

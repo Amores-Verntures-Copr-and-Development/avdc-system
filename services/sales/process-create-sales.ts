@@ -25,7 +25,7 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 import { updateSalesByFields } from "./update-sales";
-import { SalesPaymentStatus } from "@/types/sales";
+import { SalesPaymentStatus } from "../../types/sales";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
