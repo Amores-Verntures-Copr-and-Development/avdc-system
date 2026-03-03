@@ -32,6 +32,7 @@ import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
 import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
 import ReceivedComponent from "./_components/ReceivedComponent";
 import { useSession } from "@/hooks/useSession";
+import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -81,6 +82,39 @@ const columns: Column<PurchaseOrderItems>[] = [
     key: "poItemOrderedQty",
     selector: (row) =>
       formatQuantityByUnit(row.poItemOrderedQty, row.itemUnit ?? ""),
+  },
+  {
+    name: "Status",
+    key: "poItemStatus",
+    selector: (row) => {
+      const { bg, color, label } = getPurchaseStatusOption(
+        row.poItemStatus ?? "",
+      );
+      return (
+        <div className={`${bg} ${color} text-center py-1 px-.5 rounded-sm`}>
+          <span>{label}</span>
+        </div>
+      );
+    },
+    inputType: "select",
+    selectOptionVariant: "custom", // ✅ matches interface
+    options: (row) => {
+      const { label, value, bg, color, border, dot } = getPurchaseStatusOption(
+        row.poItemStatus ?? "",
+      );
+      return [
+        { label, value, bg, color, border, dot },
+        {
+          label: "Not Ordered",
+          value: "not_ordered",
+          bg: "bg-red-100",
+          color: "text-red-600",
+          border: "border-red-1/50",
+          dot: "bg-red-500",
+        },
+      ];
+    },
+    value: (row) => row.poItemStatus,
   },
   {
     name: "Total",
@@ -515,12 +549,19 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               </span>
                               <p className="font-bold text-primary-1 text-sm">
                                 {formatPeso(
-                                  data.items.reduce((total, item) => {
-                                    const price = Number(item.unitPrice) || 0;
-                                    const qty =
-                                      Number(item.poItemOrderedQty) || 0;
-                                    return total + price * qty;
-                                  }, 0),
+                                  data.items
+                                    .filter(
+                                      (i) => i.poItemStatus !== "not_ordered",
+                                    )
+                                    .reduce((total, item) => {
+                                      const price = Number(item.unitPrice) || 0;
+                                      const quantity =
+                                        item.poItemStatus === "received"
+                                          ? item.poItemReceivedQty
+                                          : item.poItemOrderedQty;
+                                      const qty = Number(quantity) || 0;
+                                      return total + price * qty;
+                                    }, 0),
                                 )}
                               </p>
                             </div>
