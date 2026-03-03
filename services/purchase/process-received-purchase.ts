@@ -121,8 +121,6 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
             item.poItemStatus !== "not_ordered" &&
             item.poItemStatus !== "removed",
         );
-        console.log({ poItems });
-        console.log({ filterDelivered });
         const isAllDeliverd = filterDelivered.every(
           (item) => item.poItemStatus === "received",
         );

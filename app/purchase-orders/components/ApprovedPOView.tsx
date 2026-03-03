@@ -17,6 +17,7 @@ import {
   Package,
   PackageCheck,
   PackageOpen,
+  RefreshCw,
   Send,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -132,6 +133,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   mutate,
   setShowAllItems,
 }) => {
+  const [isUpdating, setIsUpdating] = useState(false);
   const { user } = useSession();
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number | null;
@@ -283,6 +285,53 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
       return false;
     }
   };
+  const handleUpdatePOStatus = async () => {
+    if (!showUpdateStatusButton) {
+      toast.error("Cannot update status base on po items!");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      if (!poData) {
+        return;
+      }
+      const poDataOrder: Partial<PurchaseOrders> = {
+        poId: poData?.poId,
+      };
+      const newData = {
+        data: poDataOrder,
+        controller: "sent",
+      };
+
+      const result = await fetch(`/api/purchase-order/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(`${poData.poNumber} status updated successfully`);
+      mutate();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+  const showUpdateStatusButton = data.flatMap((s) =>
+    s.items
+      .filter((i) => i.poItemStatus !== "not_ordered")
+      .every(
+        (i) =>
+          i.poItemStatus === "received" ||
+          i.poItemStatus === "delivered" ||
+          i.poItemStatus === "received_store",
+      ),
+  );
   return (
     <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
       <div className="flex p-2 flex-col h-full w-full overflow-hidden">
@@ -765,6 +814,20 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
+            {showUpdateStatusButton && (
+              <div className="">
+                <Button
+                  size="sm"
+                  label={"Update Status"}
+                  loading={isUpdating}
+                  icon={RefreshCw}
+                  className="font-semibold text-gray-700 text-xs px-2 py-2"
+                  onClick={() => {
+                    handleUpdatePOStatus();
+                  }}
+                />
+              </div>
+            )}
             {/* {data.some((supp) => supp.suppId) && (
               <div>
                 <Button
