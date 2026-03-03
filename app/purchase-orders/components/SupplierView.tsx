@@ -28,7 +28,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
   );
 
   return (
-    <div className="flex-col flex gap-2 mt-2 h-full">
+    <div className="flex flex-col h-full min-h-0">
       <div className="flex justify-between shadow bg-white p-2">
         <h1 className="font-semibold text-sm 2xl:text-md">
           Overview of Suppliers
@@ -43,7 +43,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
           />
         </div>
       </div>
-      <div className="flex flex-1 gap-2 flex-col">
+      <div className="flex-1 space-y-5 overflow-y-auto min-h-0">
         {loadingData ? (
           <LoaderComponent />
         ) : (

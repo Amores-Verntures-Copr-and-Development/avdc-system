@@ -495,99 +495,99 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           ))}
         </div>
       </div>
-      {/* <PendingPOView data={itemResponse.data} /> */}
-      {/* Step instruction */}
-      {isLoading ? (
-        <LoaderComponent />
-      ) : showPage === "status" ? (
-        data?.poStatus === "pending" ? (
-          <PendingPOView
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {isLoading ? (
+          <LoaderComponent />
+        ) : showPage === "status" ? (
+          data?.poStatus === "pending" ? (
+            <PendingPOView
+              setShowAllItems={setShowPage}
+              onClose={onClose}
+              data={itemResponse.data}
+              poData={data}
+              onSubmit={handleApprovedPO}
+              isLoading={isLoading}
+              mutate={mutate}
+              user={user}
+            />
+          ) : data?.poStatus === "approved" ? (
+            <ApprovedPOView
+              setShowAllItems={setShowPage}
+              mutate={handleUpdateData}
+              onClose={onClose}
+              poData={data}
+              data={itemResponse.data}
+              onSendPO={handleSendPO}
+              onSendPOItem={handleSendPOItem}
+              loading={isLoading}
+            />
+          ) : data?.poStatus === "sent" ? (
+            <ReceivedPOView
+              mutateInventory={() => {
+                mutate();
+                mutateInventory();
+              }}
+              onMaskAsDeliverdSupplier={handleNotOrderedSupplierItem}
+              onAddItem={handleAddItemPo}
+              setShowAllItems={setShowPage}
+              onClose={onClose}
+              poData={data}
+              data={itemResponse.data}
+              onReceivePO={handleReceivePO}
+              isLoading={isLoading}
+              poId={data.poId}
+              onAddItemPOSupplier={handleAddItemPoSupplier}
+            />
+          ) : data?.poStatus === "received" ? (
+            <CompletePOView
+              setShowAllItems={setShowPage}
+              mutate={() => {
+                mutateInventory();
+                mutate();
+              }}
+              poData={data}
+              data={itemResponse.data}
+              onMarkDelivered={handleDeliveredRO}
+              onCompleteRequest={handleCompleteRO}
+              isLoading={isLoading}
+              onClose={onClose}
+              // onReceivePO={handleReceivePO}
+            />
+          ) : (
+            <CompletePOView
+              setShowAllItems={setShowPage}
+              mutate={() => {
+                mutateInventory();
+                mutate();
+              }}
+              poData={data}
+              onClose={onClose}
+              onCompleteRequest={handleCompleteRO}
+              data={itemResponse.data}
+              onMarkDelivered={handleDeliveredRO}
+              isLoading={isLoading}
+              // poData={data}
+              // onSubmit={handleApprovedPO}
+            />
+          )
+        ) : showPage === "all" ? (
+          <ShowAllIItems
             setShowAllItems={setShowPage}
-            onClose={onClose}
-            data={itemResponse.data}
-            poData={data}
+            data={data}
             onSubmit={handleApprovedPO}
-            isLoading={isLoading}
+            onClose={onClose}
             mutate={mutate}
             user={user}
-          />
-        ) : data?.poStatus === "approved" ? (
-          <ApprovedPOView
-            setShowAllItems={setShowPage}
-            mutate={handleUpdateData}
-            onClose={onClose}
-            poData={data}
-            data={itemResponse.data}
-            onSendPO={handleSendPO}
-            onSendPOItem={handleSendPOItem}
-            loading={isLoading}
-          />
-        ) : data?.poStatus === "sent" ? (
-          <ReceivedPOView
-            mutateInventory={() => {
-              mutate();
-              mutateInventory();
-            }}
-            onMaskAsDeliverdSupplier={handleNotOrderedSupplierItem}
             onAddItem={handleAddItemPo}
-            setShowAllItems={setShowPage}
-            onClose={onClose}
-            poData={data}
-            data={itemResponse.data}
-            onReceivePO={handleReceivePO}
-            isLoading={isLoading}
-            poId={data.poId}
-            onAddItemPOSupplier={handleAddItemPoSupplier}
+            onUpdateItem={handleUpdatePOItem}
+            onRemoveItem={handleRemoveItem}
           />
-        ) : data?.poStatus === "received" ? (
-          <CompletePOView
-            setShowAllItems={setShowPage}
-            mutate={() => {
-              mutateInventory();
-              mutate();
-            }}
-            poData={data}
-            data={itemResponse.data}
-            onMarkDelivered={handleDeliveredRO}
-            onCompleteRequest={handleCompleteRO}
-            isLoading={isLoading}
-            onClose={onClose}
-            // onReceivePO={handleReceivePO}
-          />
+        ) : showPage === "supplier" ? (
+          <SupplierView data={data} setShowAllItems={setShowPage} />
         ) : (
-          <CompletePOView
-            setShowAllItems={setShowPage}
-            mutate={() => {
-              mutateInventory();
-              mutate();
-            }}
-            poData={data}
-            onClose={onClose}
-            onCompleteRequest={handleCompleteRO}
-            data={itemResponse.data}
-            onMarkDelivered={handleDeliveredRO}
-            isLoading={isLoading}
-            // poData={data}
-            // onSubmit={handleApprovedPO}
-          />
-        )
-      ) : showPage === "all" ? (
-        <ShowAllIItems
-          setShowAllItems={setShowPage}
-          data={data}
-          onSubmit={handleApprovedPO}
-          onClose={onClose}
-          mutate={mutate}
-          user={user}
-          onAddItem={handleAddItemPo}
-          onUpdateItem={handleUpdatePOItem}
-          onRemoveItem={handleRemoveItem}
-        />
-      ) : showPage === "supplier" ? (
-        <SupplierView data={data} setShowAllItems={setShowPage} />
-      ) : (
-        <ShowPOByRequest setShowAllItems={setShowPage} data={data} />
-      )}
+          <ShowPOByRequest setShowAllItems={setShowPage} data={data} />
+        )}
+      </div>
     </div>
   );
 };
