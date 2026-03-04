@@ -12,13 +12,19 @@ import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
 import { Customer } from "@/types/customer";
-import { Sales } from "@/types/sales";
+import { SalePayments, Sales } from "@/types/sales";
+import { PaymentMethods } from "@/types/payment-methods";
+import { DropdownOption } from "@/components/shared/DynamicDropdown";
+import { handleArrayItemChange } from "@/utils/handle-change";
+import toast from "react-hot-toast";
 
 interface EditSalesPageProps {
   salesData: DisplaySalesDto | null;
   onBack: () => void;
   mutateSales: () => void;
 }
+
+interface EditablePaymentMethods extends SalePayments {}
 
 interface EditableItem {
   salesItemId: string | number;
@@ -44,6 +50,9 @@ const EditSalesPage = ({
 }: EditSalesPageProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [editablePaymentMethods, setEditablePaymentMethods] = useState<
+    EditablePaymentMethods[]
+  >([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [clearSignal, setClearSignal] = useState(0);
   const handleClearCustomerComponent = () => {
@@ -72,7 +81,15 @@ const EditSalesPage = ({
       : null,
     fetcher,
   );
-
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
+    data: PaymentMethods[];
+  }>(
+    salesData ? `/api/payment-method/store/${salesData.storeId}/` : null,
+    fetcher,
+  );
+  const paymentMethodOptions: DropdownOption[] = paymentMethodResponse.data.map(
+    (p) => ({ label: p.payMetName, value: p.payMetId }),
+  );
   useEffect(() => {
     if (response?.data) {
       setSalesNote(salesData?.salesRemarks || "");
@@ -91,10 +108,29 @@ const EditSalesPage = ({
     }
   }, [response]);
 
+  useEffect(() => {
+    if (salesData) {
+      setEditablePaymentMethods(
+        salesData.paymentMethods.map((py) => ({
+          payMetId: py.payMetId,
+          paymentReference: py.paymentReference,
+          salesPaymentAmount: py.salesPaymentAmount,
+          salesPaymentId: py.salesPaymentId,
+          salesId: py.salesId,
+          salesPaymentStatus: py.salesPaymentStatus,
+          paymentDate: py.paymentDate,
+        })),
+      );
+    }
+  }, [salesData]);
   if (isLoading) return <LoaderComponent />;
 
   const activeItems = editableItems.filter((i) => !i.removed);
-
+  const paymentChange = handleArrayItemChange(
+    "salesPaymentId",
+    editablePaymentMethods,
+    setEditablePaymentMethods,
+  );
   const recalcItem = (item: EditableItem): EditableItem => {
     const subtotal = item.salesItemPrice * item.salesItemQuantity;
     const totalDiscount = item.salesItemsDiscount.reduce(
@@ -107,7 +143,24 @@ const EditSalesPage = ({
       salesItemTotal: subtotal - totalDiscount,
     };
   };
+  const getEditedPayments = () => {
+    if (!salesData?.paymentMethods) return [];
 
+    return editablePaymentMethods.filter((edited) => {
+      const original = salesData.paymentMethods.find(
+        (p) => p.salesPaymentId === edited.salesPaymentId,
+      );
+
+      if (!original) return true; // new row case
+
+      return (
+        original.payMetId !== edited.payMetId ||
+        original.paymentReference !== edited.paymentReference ||
+        original.salesPaymentAmount !== edited.salesPaymentAmount ||
+        original.salesPaymentStatus !== edited.salesPaymentStatus
+      );
+    });
+  };
   const handleItemChange = (
     id: string | number,
     field: "salesItemPrice" | "salesItemQuantity",
@@ -142,21 +195,19 @@ const EditSalesPage = ({
     (sum, i) => sum + i.salesItemSubtotal,
     0,
   );
-  const computedTotal = activeItems.reduce(
-    (sum, i) => sum + i.salesItemTotal,
-    0,
-  );
 
   const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(false);
     try {
+      const salePayments = getEditedPayments();
       const updateSales: Partial<Sales> = {
         salesId: salesData?.salesId,
         customerId: customerName?.customerId || null,
         salesRemarks: salesNote || "",
         storeId: salesData?.storeId,
+        salePayments: salePayments,
       };
 
       const res = await fetch(
@@ -175,6 +226,8 @@ const EditSalesPage = ({
 
       setSaveSuccess(true);
       mutateSales();
+      toast.success("Changes saved successfully.");
+      onBack();
     } catch (err: any) {
       console.log({ err });
       setSaveError(err.message ?? "Something went wrong.");
@@ -195,7 +248,7 @@ const EditSalesPage = ({
         {/* Back */}
         <button
           onClick={onBack}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-2 2xl:mb-4 transition-colors"
         >
           <svg
             className="w-4 h-4"
@@ -214,46 +267,32 @@ const EditSalesPage = ({
         </button>
 
         {/* Header Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
-          <div className="flex justify-between items-center mb-6">
+        <div className="bg-white rounded-lg border border-gray-200 p-4 2xl:p-6 mb-2 2xl:mb-4">
+          <div className="flex justify-between items-center mb-3 2xl:mb-6">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              <h1 className="text-sm 2xl:text-2xl font-semibold text-gray-900 mb-1">
                 Edit Sale
               </h1>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs 2xl:text-sm text-gray-500">
                 {salesData?.salesInvoice} · Order #{salesData?.salesNo}
               </p>
             </div>
-            {/* <div className="flex items-center gap-2">
-              <Button
-                label="Cancel"
-                color="outline"
-                size="sm"
-                onClick={onBack}
-              />
-              <Button
-                label={isSaving ? "Saving..." : "Save Changes"}
-                size="sm"
-                onClick={handleSave}
-                disabled={isSaving}
-              />
-            </div> */}
           </div>
 
           {/* Feedback */}
           {saveError && (
-            <div className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-4 py-2">
+            <div className="mb-2 2xl:mb-4 text-xs 2xl:text-sm text-red-600 bg-red-50 border border-red-200 rounded px-4 py-2">
               {saveError}
             </div>
           )}
           {saveSuccess && (
-            <div className="mb-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded px-4 py-2">
+            <div className="mb-2 2xl:mb-4 text-xs 2xl:text-sm text-green-700 bg-green-50 border border-green-200 rounded px-4 py-2">
               Changes saved successfully.
             </div>
           )}
 
           {/* Editable Fields */}
-          <div className="grid grid-cols-3 gap-6 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
             <div>
               <DropdownSearch<Customer>
                 sizes="xs"
@@ -320,33 +359,33 @@ const EditSalesPage = ({
         </div>
 
         {/* Items Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
-          <h2 className="font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4">
+          <h2 className="text-sm 2xl:text-2xl font-semibold text-gray-900 mb-2 2xl:mb-4">
             Items ({activeItems.length})
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-left text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Description
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-right text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Price
                   </th>
-                  <th className="text-center text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-center text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Qty
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-right text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Subtotal
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-right text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Discount
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase tracking-wider pb-3">
+                  <th className="text-right text-[9px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-widerpb-1.5 2xl:pb-3">
                     Total
                   </th>
-                  <th className="pb-3" />
+                  <th className="pb-1.5 2xl:pb-3" />
                 </tr>
               </thead>
               <tbody>
@@ -365,22 +404,22 @@ const EditSalesPage = ({
                         key={item.salesItemId}
                         className={`${isLast ? "border-b border-gray-100" : ""} bg-red-50 opacity-60`}
                       >
-                        <td className="py-2 text-sm text-gray-400 line-through">
+                        <td className="py-2 text-xs 2xl:text-sm text-gray-400 line-through">
                           {modifyName}
                         </td>
-                        <td className="py-2 text-right text-sm text-gray-400 line-through">
+                        <td className="py-2 text-xs 2xl:text-sm text-gray-400 line-through">
                           {formatPeso(item.salesItemPrice)}
                         </td>
-                        <td className="py-2 text-center text-sm text-gray-400 line-through">
+                        <td className="py-2 text-center text-xs 2xl:text-sm text-gray-400 line-through">
                           {item.salesItemQuantity}
                         </td>
-                        <td className="py-2 text-right text-sm text-gray-400 line-through">
+                        <td className="py-2 text-right text-xs 2xl:text-sm text-gray-400 line-through">
                           {formatPeso(item.salesItemSubtotal)}
                         </td>
-                        <td className="py-2 text-right text-sm text-gray-400">
+                        <td className="py-2 text-right text-xs 2xl:text-sm text-gray-400">
                           —
                         </td>
-                        <td className="py-2 text-right text-sm text-gray-400 line-through">
+                        <td className="py-2 text-right text-xs 2xl:text-sm text-gray-400 line-through">
                           {formatPeso(item.salesItemTotal)}
                         </td>
                         <td className="py-2 text-right">
@@ -401,10 +440,10 @@ const EditSalesPage = ({
                       className={isLast ? "border-b border-gray-100" : ""}
                     >
                       <td className="py-2">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-xs 2xl:text-sm font-medium text-gray-900">
                           {modifyName}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-[9px] 2xl:text-xs text-gray-500">
                           {item.prodName}
                         </div>
                       </td>
@@ -421,7 +460,7 @@ const EditSalesPage = ({
                               parseFloat(e.target.value) || 0,
                             )
                           }
-                          className="w-24 text-sm text-right border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          className="w-20 2xl:w-24 text-xs 2xl:text-sm text-right border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-400"
                         />
                       </td>
                       <td className="py-2 text-center">
@@ -437,13 +476,13 @@ const EditSalesPage = ({
                               parseInt(e.target.value) || 1,
                             )
                           }
-                          className="w-16 text-sm text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          className="w-12 2xl:w-16 text-xs 2xl:text-sm text-center border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-400"
                         />
                       </td>
-                      <td className="py-2 text-right text-sm text-gray-900">
+                      <td className="py-2 text-right text-xs 2xl:text-sm text-gray-900">
                         {formatPeso(item.salesItemSubtotal)}
                       </td>
-                      <td className="py-2 text-right text-sm text-gray-700">
+                      <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
                         {item.salesItemsDiscount?.map((dis, i) => {
                           const formatDiscount =
                             dis.discountType === "percent"
@@ -457,7 +496,7 @@ const EditSalesPage = ({
                           );
                         })}
                       </td>
-                      <td className="py-2 text-right text-sm font-medium text-gray-900">
+                      <td className="py-2 text-right text-xs 2xl:text-sm font-medium text-gray-900">
                         {formatPeso(item.salesItemTotal)}
                       </td>
                       <td className="py-2 text-right">
@@ -478,8 +517,8 @@ const EditSalesPage = ({
           {/* Totals */}
           <div className="mt-6 pt-4 border-t border-gray-200 w-full">
             <div className="flex justify-between mb-2">
-              <div className="text-sm text-gray-600">Subtotal</div>
-              <div className="text-sm text-gray-900">
+              <div className="text-xs 2xl:text-sm text-gray-600">Subtotal</div>
+              <div className="text-xs 2xl:text-sm text-gray-900">
                 {formatPeso(computedSubtotal)}
               </div>
             </div>
@@ -487,12 +526,14 @@ const EditSalesPage = ({
             {salesData?.salesDiscounts &&
               salesData.salesDiscounts.length > 0 && (
                 <div className="flex justify-between mb-3">
-                  <div className="text-sm text-gray-600">Discounts</div>
+                  <div className="text-xs 2xl:text-sm text-gray-600">
+                    Discounts
+                  </div>
                   <div className="flex flex-col items-end gap-1">
                     {salesData.salesDiscounts.map((disc) => (
                       <div
                         key={disc.salesDiscountId}
-                        className="flex justify-between w-full text-sm text-gray-500"
+                        className="flex justify-between w-full text-xs 2xl:text-sm text-gray-500"
                       >
                         <span className="truncate text-right">
                           {disc.discountName}{" "}
@@ -510,10 +551,108 @@ const EditSalesPage = ({
               )}
 
             <div className="flex justify-between pt-3 border-t border-gray-200">
-              <div className="text-base font-semibold text-gray-900">Total</div>
-              <div className="text-base font-semibold text-gray-900">
-                {formatPeso(computedTotal)}
+              <div className=" text-sm 2xl:text-base font-semibold text-gray-900">
+                Total
               </div>
+              <div className="text-sm 2xl:text-base font-semibold text-gray-900">
+                {formatPeso(salesData?.salesTotalAmount)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4 w-full">
+          <h2 className="text-sm 2xl:text-2xl font-semibold text-gray-900 mb-2 2xl:mb-4">
+            Payment Methods
+          </h2>
+          {/* Summary Section */}
+          <div className=" pt-2 2xl:pt-4 mt-4 border-t border-gray-200 space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="text-xs 2xl:text-sm font-medium text-gray-900">
+                Amount Due
+              </div>
+              <div className="text-xs 2xl:text-base font-semibold text-gray-900">
+                {formatPeso(salesData?.salesTotalAmount ?? 0)}
+              </div>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="text-xs 2xl:text-sm text-gray-600">
+                Total Paid
+              </div>
+              <div className="text-xs 2xl:text-sm text-gray-900">
+                {formatPeso(salesData?.salesTotalPaid ?? 0)}
+              </div>
+            </div>
+
+            {Number(salesData?.salesTotalPaid) >
+              Number(salesData?.salesTotalAmount) && (
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                <div className="text-xs 2xl:text-sm text-gray-600">Change</div>
+                <div className="text-xs 2xl:text-sm font-medium text-green-600">
+                  {formatPeso(
+                    Number(salesData?.salesTotalPaid ?? 0) -
+                      Number(salesData?.salesTotalAmount ?? 0),
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Payment Methods Details */}
+          {editablePaymentMethods && editablePaymentMethods.length > 0 && (
+            <div className="mt-2 2xl:mt-4 pt-2 2xl:pt-4 border-t border-gray-200 space-y-2">
+              <h3 className="text-xs 2xl:text-sm font-medium text-gray-900 mb-2">
+                Payment Details
+              </h3>
+              {editablePaymentMethods.map((pay) => {
+                const findMethods = paymentMethodResponse.data.find(
+                  (pm) => Number(pm.payMetId) === Number(pay.payMetId),
+                );
+                return (
+                  <div
+                    key={pay.salesPaymentId}
+                    className="flex justify-between items-center text-sm text-gray-700 px-1 py-1 bg-gray-50 rounded"
+                  >
+                    <div className="flex  gap-2">
+                      <DropdownSelect
+                        label="Method"
+                        name={"payMetId"}
+                        value={String(pay.payMetId) ?? undefined}
+                        options={paymentMethodOptions}
+                        sizes="xs"
+                        onChange={(e) => {
+                          paymentChange(pay.salesPaymentId, e);
+                        }}
+                      />
+                      {Boolean(findMethods?.payMetHasRef) && (
+                        <span className="text-gray-500 text-xs truncate">
+                          Ref:{" "}
+                          <Input
+                            label={""}
+                            sizes={"xs"}
+                            name="paymentReference"
+                            value={pay.paymentReference}
+                            onChange={(e) => {
+                              paymentChange(pay.salesPaymentId, e);
+                            }}
+                          />
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-semibold text-gray-900">
+                      {formatPeso(pay.salesPaymentAmount)}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Final Total Paid */}
+          <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-200">
+            <div className="text-sm font-medium text-gray-900">Total Paid</div>
+            <div className="text-base font-semibold text-gray-900">
+              {formatPeso(salesData?.salesTotalPaid ?? 0)}
             </div>
           </div>
         </div>

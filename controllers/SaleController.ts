@@ -31,7 +31,6 @@ export const updateSalesController = async ({
   data: Partial<Sales>;
 }) => {
   try {
-    console.log({ data });
     if (!data.salesId) {
       throw new Error("No sales ID found!");
     }

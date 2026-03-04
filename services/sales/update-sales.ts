@@ -1,7 +1,8 @@
 import { getDBConnection } from "@/lib/db";
 import { updateSales } from "@/models/saleModel";
-import { Sales } from "@/types/sales";
+import { SalePayments, Sales } from "@/types/sales";
 import { PoolConnection } from "mysql2/promise";
+import { updateSalePaymentsByFields } from "./sale-payments/update-sale-payments";
 
 export async function updateSalesByFields({
   connection,
@@ -30,17 +31,40 @@ export async function updateSalesBySalesId({
   const connection = await pool.getConnection();
   await connection.beginTransaction();
   try {
+    console.log({ data });
     const salesData: Partial<Sales> = {
-      ...data,
+      salesId: data.salesId,
+      customerId: data.customerId,
+      salesRemarks: data.salesRemarks,
+      storeId: data.storeId,
     };
     if (!salesData) {
       throw new Error("No sales data!");
     }
+
     await updateSales({
       keyFields: ["salesId", "storeId"],
       updates: [salesData],
       connection: connection,
     });
+    if (data.salePayments && data.salePayments.length > 0) {
+      console.log("salesData.salePayments: ", data.salePayments);
+      const updateSalePaymentData: Partial<SalePayments>[] =
+        data.salePayments.map((sp) => ({
+          salesPaymentId: sp.salesPaymentId,
+          salesPaymentAmount: sp.salesPaymentAmount,
+          paymentReference: sp.paymentReference,
+          payMetId: Number(sp.payMetId),
+        }));
+      await updateSalePaymentsByFields({
+        connection: connection,
+        updates: updateSalePaymentData,
+        keyFields: ["salesPaymentId"],
+      });
+    }
+    if (data.saleItems && data.saleItems.length > 0) {
+      //upad
+    }
     //update the sales
     //update saleItems
     //update saleItemMethods
@@ -48,7 +72,9 @@ export async function updateSalesBySalesId({
     //update salesDiscounts
     await connection.commit();
   } catch (e) {
+    console.error("Failed to update sales:", e);
     await connection.rollback();
+    throw e;
   } finally {
     connection.release();
   }

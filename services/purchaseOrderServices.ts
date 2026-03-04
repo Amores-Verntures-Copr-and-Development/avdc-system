@@ -198,7 +198,6 @@ export async function findPOItemsSupplierById(poId: number) {
 //       keyFields: ["poId"],
 //       updates: updateItems,
 //     });
-//     console.log("Agi here");
 //     //update PO items to sent
 //     await connection.commit();
 //   } catch (e) {

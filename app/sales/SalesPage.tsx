@@ -33,6 +33,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 import SalesReportModal from "./components/SalesReportModal";
 import { FilterConfig } from "@/components/shared/FilterDropDown";
+import { PaymentMethods } from "@/types/payment-methods";
 
 interface SalesPageProps {
   storeId: number;

@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log("Agi here");
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const store = searchParams.get("store") || "";

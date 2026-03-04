@@ -43,6 +43,7 @@ export interface Sales {
   customerId: number | null;
   storeId: number;
   saleItems?: SaleItems[];
+  salePayments?: SalePayments[];
 }
 
 export interface SaleItems {
