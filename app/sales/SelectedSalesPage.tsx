@@ -82,7 +82,9 @@ const SelectedSalesPage = ({
                     Total Amount
                   </div>
                   <div className="text-sm 2xl:text-2xl font-semibold text-gray-900">
-                    {formatPeso(salesData?.salesTotalAmount)}
+                    {formatPeso(
+                      Number(salesData?.salesTotalAmount) - Number(refundTotal),
+                    )}
                   </div>
                 </div>
               </div>
@@ -291,7 +293,7 @@ const SelectedSalesPage = ({
                     </div>
 
                     <div className="flex flex-col  items-end gap-1">
-                      {salesData.salesDiscounts.map((disc) => (
+                      {salesData.salesDiscounts?.map((disc) => (
                         <div
                           key={disc.salesDiscountId}
                           className="flex justify-between w-full text-xs 2xl:text-sm text-gray-500"
@@ -385,7 +387,7 @@ const SelectedSalesPage = ({
                   <h3 className="text-xs 2xl:text-sm font-medium text-gray-900 mb-2">
                     Payment Details
                   </h3>
-                  {salesData.paymentMethods.map((pay) => {
+                  {salesData.paymentMethods?.map((pay) => {
                     // Calculate refunded amount per payment method if needed
                     const refundedForMethod =
                       salesData.salesPaymentRefunds
