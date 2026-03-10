@@ -26,6 +26,8 @@ import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 import { updateSalesByFields } from "./update-sales";
 import { SalesPaymentStatus } from "../../types/sales";
+import { CreateTransactionDto } from "@/dtos/transaction.dto";
+import { createTransactions } from "../transaction/create-transaction";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -50,7 +52,6 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesCreatedBy: data.salesCreatedBy,
       salesRemarks: data.salesRemarks,
     };
-    console.log({ salesData });
 
     //insert into sale table
     const salesId = await createSale({ connection, data: salesData });
@@ -123,7 +124,6 @@ export async function processCreateSales(data: CreateSaleDto) {
                 comp.quantityRequired * item.salesItemQuantity,
             })) ?? [],
         ) ?? [];
-      console.log({ componentVar });
 
       const inventoryMovement: CreateInventoryMovementDto[] =
         componentVar.map((item) => ({
@@ -144,6 +144,18 @@ export async function processCreateSales(data: CreateSaleDto) {
       });
       await createInventoryMovement({ connection, data: inventoryMovement });
     }
+    const createSalesTransaction: CreateTransactionDto = {
+      referenceId: salesId,
+      transactionAmount: data.salesTotalAmount,
+      transactionCreatedBy: data.salesCreatedBy,
+      transactionRef: "sale",
+      transactionType: "in",
+      storeId: data.storeId,
+    };
+    await createTransactions({
+      connection: connection,
+      data: createSalesTransaction,
+    });
     //check if there is items can be deducted
     //if exist deduct inventory
     //check if there is discounts

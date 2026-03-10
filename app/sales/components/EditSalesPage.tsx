@@ -7,7 +7,6 @@ import { formatPeso } from "@/utils/formatPeso";
 import React, { useEffect, useState } from "react";
 import useSWR from "swr";
 import { formatDiscountValue } from "../../pos/components/sidebar/DiscountList";
-import SearchBar from "@/components/shared/SearchBar";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
@@ -23,8 +22,6 @@ interface EditSalesPageProps {
   onBack: () => void;
   mutateSales: () => void;
 }
-
-interface EditablePaymentMethods extends SalePayments {}
 
 interface EditableItem {
   salesItemId: string | number;
@@ -51,7 +48,7 @@ const EditSalesPage = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editablePaymentMethods, setEditablePaymentMethods] = useState<
-    EditablePaymentMethods[]
+    SalePayments[]
   >([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [clearSignal, setClearSignal] = useState(0);

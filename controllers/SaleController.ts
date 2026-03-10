@@ -1,4 +1,7 @@
+import { CreateSalesRefundDto } from "@/dtos/sales-refund.dto";
 import { CreateSaleDto } from "@/dtos/sales.dto";
+import { UserAuth } from "@/hooks/useSession";
+import { processCreateSaleRefund } from "@/services/sales-refund/process-create-sales-refund";
 import {
   getDailyStoreSales,
   getSalesServices,
@@ -47,6 +50,44 @@ export const updateSalesController = async ({
     return {
       success: false,
       message: "Failed to update sales!",
+      error: e,
+    };
+  }
+};
+
+export const refundSalesController = async ({
+  data,
+  decoded,
+  password,
+}: {
+  data: CreateSalesRefundDto;
+  password: string;
+  decoded: {
+    userId: number;
+    userRole: string;
+    userFullName: string;
+    empPosition: string;
+    storeId: number | null;
+  };
+}) => {
+  try {
+    if (!data.salesId) {
+      throw new Error("No sales ID found!");
+    }
+    const res = await processCreateSaleRefund({
+      data: data,
+      decoded: decoded,
+      password,
+    });
+    return {
+      success: true,
+      message: "Sales refunded successfully!",
+      data: res ?? null,
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: e.message,
       error: e,
     };
   }

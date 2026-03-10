@@ -14,7 +14,7 @@ export const logIn = async (data: UserAuthInterface) => {
     const isMatch = await compareValue(data.password, user.userPassword);
     if (!isMatch) return null;
     const hasOneStore = user?.storeEmployees?.length === 1;
-    
+
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(
       user.userId,
@@ -22,7 +22,7 @@ export const logIn = async (data: UserAuthInterface) => {
       user.userLname,
       user.userRole,
       user.empPosition,
-      hasOneStore ? user?.storeEmployees[0].storeId : null
+      hasOneStore ? user?.storeEmployees[0].storeId : null,
     );
     // Return structured response
     return {

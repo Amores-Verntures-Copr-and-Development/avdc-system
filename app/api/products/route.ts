@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(request: NextRequest) {
   try {
     const data = (await request.json()) as CreateProductDtos[];
-
+    console.log({ data });
     // const res = await createProducts(data);
     // if (!res.success) {
     //   console.log(res.error);

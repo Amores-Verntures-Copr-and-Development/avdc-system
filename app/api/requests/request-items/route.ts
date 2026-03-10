@@ -1,9 +1,7 @@
 import {
   getItemRequest,
-  updateRequestItem,
   updateRequestItemByStatus,
 } from "@/controllers/RequestController";
-import { RequestItems } from "@/types/request";
 
 import { NextRequest, NextResponse } from "next/server";
 

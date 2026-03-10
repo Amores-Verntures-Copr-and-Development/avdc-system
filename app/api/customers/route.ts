@@ -48,6 +48,7 @@ export async function GET(_request: Request) {
       offset: limitNumber * (pageNumber - 1),
       search,
       type,
+      store,
     });
 
     if (!res.success) {

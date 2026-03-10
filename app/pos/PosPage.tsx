@@ -488,7 +488,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     const totalAmount = getTotalAmount(); // total to pay
     let remaining = totalAmount;
 
-    const token = getCookie("avdc_accessToken");
+    // const token = getCookie("avdc_accessToken");
 
     if (!selectedOrder || selectedOrder.length === 0) {
       toast.error("No selected order!");
@@ -633,10 +633,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         return prev;
       }
 
-      const discount =
-        newDisc.discountType === "fixed"
-          ? newDisc.discountValue
-          : subtotal * (Number(newDisc.discountValue) / 100);
+      // const discount =
+      //   newDisc.discountType === "fixed"
+      //     ? newDisc.discountValue
+      //     : subtotal * (Number(newDisc.discountValue) / 100);
 
       return [
         ...(prev ?? []),

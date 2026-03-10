@@ -8,7 +8,7 @@ import {
   ConvertInventoryItemsDto,
   DisplayInventoryItems,
 } from "@/dtos/inventory.dto";
-import { ItemConversions } from "@/types/items";
+
 import React, { useEffect, useState } from "react";
 import AddConversionModal from "./AddConversionModal";
 import { handleChange } from "@/utils/handle-change";

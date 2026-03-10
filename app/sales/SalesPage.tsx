@@ -21,19 +21,22 @@ import {
 import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import SalesCard from "./components/SalesCard";
-import BigCard from "@/components/shared/BigCard";
-import SellingProductCard from "./components/SellingProductCard";
+
 import SelectedSalesPage from "./SelectedSalesPage";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import { useSearchParams, useRouter } from "next/navigation";
-import DynamicDropdown from "@/components/shared/DynamicDropdown";
+import DynamicDropdown, {
+  DropdownOption,
+} from "@/components/shared/DynamicDropdown";
 import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import SalesReportModal from "./components/SalesReportModal";
-import { FilterConfig } from "@/components/shared/FilterDropDown";
+import { FilterConfig, FilterOption } from "@/components/shared/FilterDropDown";
 import { PaymentMethods } from "@/types/payment-methods";
+import SalesStatusBadge from "./components/SalesStatusBadge";
+import { SalesStatus } from "@/types/sales";
 
 interface SalesPageProps {
   storeId: number;
@@ -60,6 +63,7 @@ const columns: Column<DisplaySalesDto>[] = [
       <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
     ),
   },
+
   {
     key: "salesDiscount ",
     name: "Discount",
@@ -117,11 +121,46 @@ const columns: Column<DisplaySalesDto>[] = [
     },
   },
   {
+    key: "refund ",
+    name: "Refund",
+    selector: (row) => {
+      const totalRefunds = row.salesRefunds?.reduce(
+        (total, sr) => Number(total) + Number(sr.salesRefAmount),
+        0,
+      );
+      console.log({ totalRefunds });
+      return (
+        <span
+          className={`text-[11px] ${
+            totalRefunds !== undefined && Number(totalRefunds) !== 0
+              ? `text-red-800`
+              : "text-gray-800"
+          }`}
+        >
+          {totalRefunds !== undefined && Number(totalRefunds) !== 0
+            ? formatPeso(totalRefunds)
+            : "-"}
+        </span>
+      );
+    },
+  },
+  {
     key: "salesTotalAmount",
     name: "Total Amount",
-    selector: (row) => (
-      <span className="font-semibold">{formatPeso(row.salesTotalAmount)}</span>
-    ),
+    selector: (row) => {
+      const totalRefunds = Array.isArray(row.salesRefunds)
+        ? row.salesRefunds.reduce(
+            (total, sr) => total + Number(sr.salesRefAmount),
+            0,
+          )
+        : 0;
+
+      return (
+        <span className="font-semibold">
+          {formatPeso(Number(row.salesTotalAmount) - totalRefunds)}
+        </span>
+      );
+    },
   },
   { key: "totalItem", name: "Total Item" },
   {
@@ -183,6 +222,13 @@ const columns: Column<DisplaySalesDto>[] = [
     key: "salesCreatedAt",
     name: "Date",
     selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
+  },
+  {
+    key: "salesStatus",
+    name: "Status",
+    selector: (row) => (
+      <SalesStatusBadge status={row.salesStatus as SalesStatus} />
+    ),
   },
 ];
 const adminColumns: Column<DisplaySalesDto>[] = [
@@ -349,7 +395,15 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     hasStore,
     isAdmin,
   });
-
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
+    data: PaymentMethods[];
+  }>(
+    selectedStoreId ? `/api/payment-method/store/${selectedStoreId}/` : null,
+    fetcher,
+  );
+  const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
+    (p) => ({ label: p.payMetName, value: String(p.payMetId) }),
+  );
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -464,7 +518,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     {
       id: "method",
       label: "Payment Method",
-      options: [],
+      options: paymentMethodOptions ?? [],
     },
     {
       id: "customerType",
@@ -533,7 +587,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="grid grid-cols-2 2xl:grid-cols-4 gap-2 min-h-10">
+            <div className="grid grid-cols-4 2xl:grid-cols-4 gap-2 min-h-10">
               <SalesCard
                 icon={PhilippinePeso}
                 title="Total Sales"
@@ -561,7 +615,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
                             {method}
                           </span>
-                          <span className="text-[11px] 2xl:text-[10px] truncate w-full">
+                          <span className="text-[8px] 2xl:text-[10px] truncate w-full">
                             {formatPeso(amount)}
                           </span>
                         </div>

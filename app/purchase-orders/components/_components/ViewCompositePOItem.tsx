@@ -28,11 +28,9 @@ const ViewCompositePOItem = ({
   const findSupplier = data?.suppliers?.find(
     (supp) => supp.suppId === data.suppId,
   );
-  const {
-    data: response,
-    mutate,
-    isLoading,
-  } = useSWR<ApiResponse<DisplayOrderCompositeItemDto[]>>(
+  const { data: response, mutate } = useSWR<
+    ApiResponse<DisplayOrderCompositeItemDto[]>
+  >(
     data
       ? `/api/purchase-order/${data?.poId}/${data?.poItemId}/composite-item/`
       : null,

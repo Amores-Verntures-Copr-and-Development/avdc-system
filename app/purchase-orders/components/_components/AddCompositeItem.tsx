@@ -10,7 +10,7 @@ import {
 import { useSession } from "@/hooks/useSession";
 import { ItemInterface } from "@/types/items";
 import { formatPeso } from "@/utils/formatPeso";
-import { handleChange } from "@/utils/handle-change";
+
 import { Trash } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";

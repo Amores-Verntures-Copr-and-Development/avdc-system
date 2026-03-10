@@ -27,11 +27,8 @@ import {
   Layers2,
   Replace,
   RefreshCw,
-  DollarSign,
-  BadgePercent,
-  PhilippinePeso,
 } from "lucide-react";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DeliverItemStoreModal from "./_components/DeliverItemStoreModal";
 import Popup from "@/components/shared/Popup";
@@ -49,7 +46,7 @@ import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import ViewCompositePOItem from "./_components/ViewCompositePOItem";
-import { createPortal } from "react-dom";
+
 import { PortalDropdown } from "@/components/shared/PortalDropDown";
 import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
 import UpdatePOItemStatus from "./_components/UpdatePOItemStatus";
@@ -663,9 +660,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   const isNotOrderedAll = origData?.every(
                     (item) => item.poItemStatus === "not_ordered",
                   );
-                  const hasDelivered = origData?.some(
-                    (i) => i.poItemStatus === "delivered",
-                  );
+
                   const isSupplierItemsDelivered = supplier.items.every(
                     (item) => item.poItemStatus === "delivered",
                   );
@@ -683,9 +678,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     .reduce((total, item) => {
                       // skip not_ordered (extra safety)
                       if (item.poItemStatus === "not_ordered") return total;
-
-                      const hasComposite =
-                        item.composite && item.composite.length > 0;
 
                       const price =
                         Number(item.supplierPrice || item.unitPrice) || 0;

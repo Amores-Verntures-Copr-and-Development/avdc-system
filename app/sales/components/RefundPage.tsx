@@ -2,18 +2,25 @@ import { DisplaySalesDto, DisplaySalesItems } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import {
+  CreateSaleItemRefundDto,
+  CreateSalePaymentRefundDto,
+  CreateSalesRefundDto,
+} from "@/dtos/sales-refund.dto";
+import { useSession } from "@/hooks/useSession";
+import { PaymentMethods } from "@/types/payment-methods";
+import toast from "react-hot-toast";
 
 interface RefundPageProps {
   salesData: DisplaySalesDto | null;
   onBack: () => void;
 }
 
-interface RefundItem {
-  salesItemId: string | number;
+interface RefundItem extends CreateSaleItemRefundDto {
   prodName: string;
   prodVarName?: string;
   salesItemPrice: number;
@@ -22,6 +29,9 @@ interface RefundItem {
   selectedQty: number;
   selected: boolean;
 }
+
+interface RefundPaymentItem
+  extends CreateSalePaymentRefundDto, PaymentMethods {}
 
 type RefundReason =
   | "damaged"
@@ -39,9 +49,16 @@ const REFUND_REASONS: { value: RefundReason; label: string }[] = [
 ];
 
 const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
+  const { user } = useSession();
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [reason, setReason] = useState<RefundReason | "">("");
   const [notes, setNotes] = useState("");
-  const [step, setStep] = useState<"select" | "confirm" | "success">("select");
+  const [step, setStep] = useState<
+    "select" | "confirm" | "password" | "success"
+  >("select");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: response, isLoading } = useSWR<
@@ -52,8 +69,17 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
       : null,
     fetcher,
   );
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
+    data: PaymentMethods[];
+  }>(
+    salesData ? `/api/payment-method/store/${salesData.storeId}/` : null,
+    fetcher,
+  );
 
   const [refundItems, setRefundItems] = useState<RefundItem[]>([]);
+  const [refundPayments, setRefundPayments] = useState<
+    CreateSalePaymentRefundDto[]
+  >([]);
 
   // Populate refund items once data loads
   useEffect(() => {
@@ -68,10 +94,19 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
           salesItemTotal: item.salesItemTotal,
           selectedQty: item.salesItemQuantity,
           selected: false,
+          salesRefId: 0,
+          salesRefItemPrice: item.salesItemPrice,
+          salesRefItemQty: item.salesItemQuantity,
         })),
       );
     }
   }, [response]);
+
+  useEffect(() => {});
+  useEffect(() => {
+    const selectedRefund = refundItems.find((i) => i.selected);
+    console.log({ selectedRefund });
+  }, [refundItems]);
 
   const toggleItem = (id: string | number) => {
     setRefundItems((prev) =>
@@ -94,39 +129,87 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
     );
   };
 
+  const totalPaymentMethodAmount = refundPayments.reduce(
+    (sum, i) => sum + i.salesPayRefAmount,
+    0,
+  );
+
   const selectedItems = refundItems.filter((i) => i.selected);
 
   const refundTotal = selectedItems.reduce(
     (sum, item) => sum + item.salesItemPrice * item.selectedQty,
     0,
   );
-
-  const canProceed = selectedItems.length > 0 && reason !== "";
-
+  const exceedPaymentAmount = totalPaymentMethodAmount > refundTotal;
+  const belowRefundAmount = totalPaymentMethodAmount < refundTotal;
+  const correctAmount = totalPaymentMethodAmount === refundTotal;
+  console.log({ exceedPaymentAmount, belowRefundAmount, correctAmount });
+  useEffect(() => {
+    if (refundPayments && refundPayments.length === 1) {
+      setRefundPayments((prev) =>
+        prev.map((p) => ({
+          ...p,
+          salesPayRefAmount: refundTotal, // update amount to total refund
+        })),
+      );
+    }
+  }, [refundTotal, refundPayments.length]);
+  const canProceed = selectedItems.length > 0 && reason !== "" && correctAmount;
+  const handlePasswordSubmit = async () => {};
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    const salesItemRefundData: CreateSaleItemRefundDto[] = refundItems
+      .filter((i) => i.selected)
+      .map((i) => ({
+        salesItemId: i.salesItemId,
+        salesRefId: 0,
+        salesRefItemPrice: i.salesItemPrice,
+        salesRefItemQty: i.selectedQty,
+      }));
+    const salesPaymentRefundData: CreateSalePaymentRefundDto[] =
+      refundPayments.map((rp) => ({
+        salesRefId: 0,
+        salesPayRefAmount: refundTotal,
+        salesPayRefReference: rp.salesPayRefReference,
+        payMetId: rp.payMetId,
+      }));
+    const salesRefundData: CreateSalesRefundDto = {
+      salesId: salesData?.salesId ?? 0,
+      salesRefAmount: totalPaymentMethodAmount, //add from salesItemRefund
+      salesRefCreatedBy: user?.userId ?? 0,
+      salesRefCreatedAt: new Date().toISOString(),
+      storeId: salesData?.storeId ?? 0,
+      salesItemRefunds: salesItemRefundData,
+      salesPaymentRefunds: salesPaymentRefundData,
+      salesRefReason: reason || notes,
+    };
+
     try {
+      const refundData = {
+        data: salesRefundData,
+        password: password,
+      };
       // Replace with your actual API call
       await new Promise((res) => setTimeout(res, 1200));
-      /*
-      await fetch(`/api/sales/${salesData?.storeId}/${salesData?.salesId}/refund`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reason,
-          notes,
-          items: selectedItems.map((i) => ({
-            salesItemId: i.salesItemId,
-            quantity: i.selectedQty,
-            amount: i.salesItemPrice * i.selectedQty,
-          })),
-          totalRefundAmount: refundTotal,
-        }),
-      });
-      */
+
+      const res = await fetch(
+        `/api/sales/${salesData?.storeId}/${salesData?.salesId}/refund`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(refundData),
+        },
+      );
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message || result.error);
+      }
+      toast.success(result.message);
       setStep("success");
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      toast.error(e.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -248,6 +331,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
 
         {/* Summary */}
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          {/* Items Summary */}
           <div className="px-5 py-4 border-b border-gray-100">
             <h3 className="font-semibold text-gray-800">Refund Summary</h3>
             <p className="text-sm text-gray-500">
@@ -274,6 +358,35 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
               </div>
             ))}
           </div>
+
+          {/* Payment Refund Summary */}
+          {refundPayments.length > 0 && (
+            <div className="px-5 py-4 border-t border-gray-100">
+              <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                Refunded via
+              </h4>
+              <div className="space-y-1">
+                {refundPayments.map((p, idx) => {
+                  const method = paymentMethodResponse.data.find(
+                    (m) => m.payMetId === p.payMetId,
+                  );
+                  return (
+                    <div
+                      key={idx}
+                      className="flex justify-between items-center text-sm text-gray-800"
+                    >
+                      <span>{method?.payMetName ?? "Unknown"}</span>
+                      <span className="font-medium text-red-600">
+                        {formatPeso(p.salesPayRefAmount)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Total Refund */}
           <div className="px-5 py-4 bg-gray-50 flex justify-between items-center">
             <span className="font-semibold text-gray-700">Total Refund</span>
             <span className="text-lg font-bold text-red-600">
@@ -305,7 +418,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
             Go Back
           </button>
           <button
-            onClick={handleSubmit}
+            onClick={() => setStep("password")}
             disabled={isSubmitting}
             className="flex-1 bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
@@ -334,6 +447,243 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
               </>
             ) : (
               "Confirm Refund"
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === "password") {
+    return (
+      <div className="flex flex-col gap-6 max-w-2xl mx-auto py-6">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setStep("confirm")}
+            className="text-sm text-gray-500 hover:text-gray-800 flex items-center gap-1 transition-colors"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Back
+          </button>
+          <h2 className="text-xl font-bold text-gray-800">Authorize Refund</h2>
+        </div>
+
+        {/* Lock Icon + Prompt */}
+        <div className="flex flex-col items-center gap-3 py-4">
+          <div className="w-16 h-16 rounded-full bg-red-50 border border-red-100 flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-red-500"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.8}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold text-gray-800">
+              Supervisor or Manager Authorization Required
+            </p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Enter your password to authorize this{" "}
+              <span className="font-medium text-red-600">
+                {formatPeso(refundTotal)}
+              </span>{" "}
+              refund.
+            </p>
+          </div>
+        </div>
+
+        {/* Refund snapshot */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 flex items-center justify-between text-sm">
+          <div className="text-gray-500 space-y-1">
+            <p>
+              Invoice:{" "}
+              <span className="font-medium text-gray-700">
+                {salesData?.salesInvoice}
+              </span>
+            </p>
+            <p>
+              Items:{" "}
+              <span className="font-medium text-gray-700">
+                {selectedItems.length} item
+                {selectedItems.length > 1 ? "s" : ""}
+              </span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-gray-400">Total Refund</p>
+            <p className="text-xl font-bold text-red-600">
+              {formatPeso(refundTotal)}
+            </p>
+          </div>
+        </div>
+
+        {/* Password Input */}
+        <div className="bg-white border border-gray-200 rounded-xl px-5 py-5 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                ref={passwordInputRef}
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (passwordError) setPasswordError("");
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isSubmitting) {
+                    handlePasswordSubmit();
+                  }
+                }}
+                placeholder="Enter your password"
+                className={`w-full border rounded-lg px-4 py-2.5 pr-10 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors ${
+                  passwordError
+                    ? "border-red-400 focus:ring-red-300 bg-red-50"
+                    : "border-gray-200 focus:ring-blue-500 focus:border-transparent"
+                }`}
+              />
+              {/* Show/hide password toggle */}
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Error message */}
+            {passwordError && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <svg
+                  className="w-4 h-4 text-red-500 flex-shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-xs text-red-600">{passwordError}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => setStep("confirm")}
+            disabled={isSubmitting}
+            className="flex-1 border border-gray-300 text-gray-700 rounded-lg py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || !password.trim()}
+            className="flex-1 bg-red-600 text-white rounded-lg py-2.5 text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              <>
+                <svg
+                  className="w-4 h-4 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+                Processing…
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                  />
+                </svg>
+                Authorize &amp; Process Refund
+              </>
             )}
           </button>
         </div>
@@ -473,7 +823,126 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
           </div>
         )}
       </section>
+      <section className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex justify-between">
+          <div className="flex flex-col">
+            <h3 className="font-semibold text-gray-800">
+              Payment Method for Refund
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Select how the refund will be returned to the customer.
+            </p>
+          </div>
+          <div className="flex flex-col items-center">
+            <h3
+              className={`font-semibold  ${exceedPaymentAmount ? `text-red-800` : belowRefundAmount ? `text-red-800` : `text-green-800`}`}
+            >
+              {formatPeso(totalPaymentMethodAmount)}
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">Total Payment Refund</p>
+          </div>
+        </div>
 
+        <div className="px-5 py-4 space-y-3">
+          {refundPayments.map((payment, index) => {
+            return (
+              <div
+                key={index}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                {/* Payment Method Dropdown */}
+                <select
+                  value={payment.payMetId}
+                  onChange={(e) => {
+                    const newPayMetId = Number(e.target.value);
+                    setRefundPayments((prev) =>
+                      prev.map((p, i) =>
+                        i === index ? { ...p, payMetId: newPayMetId } : p,
+                      ),
+                    );
+                  }}
+                  className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                >
+                  {paymentMethodResponse.data
+                    .filter(
+                      (method) =>
+                        !refundPayments.some(
+                          (p, idx) =>
+                            p.payMetId === method.payMetId && idx !== index,
+                        ),
+                    )
+                    .map((method) => (
+                      <option key={method.payMetId} value={method.payMetId}>
+                        {method.payMetName}
+                      </option>
+                    ))}
+                </select>
+
+                {/* Refund Amount Input */}
+                <input
+                  type="number"
+                  value={
+                    payment.salesPayRefAmount === 0
+                      ? ""
+                      : payment.salesPayRefAmount
+                  }
+                  min={0}
+                  max={refundTotal}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setRefundPayments((prev) =>
+                      prev.map((p, i) =>
+                        i === index ? { ...p, salesPayRefAmount: val } : p,
+                      ),
+                    );
+                  }}
+                  className="w-24 text-right text-sm border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+
+                {/* Remove button */}
+                {refundPayments.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRefundPayments((prev) =>
+                        prev.filter((_, i) => i !== index),
+                      );
+                    }}
+                    className="text-red-500 hover:text-red-700 text-sm font-semibold"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Add New Payment Method */}
+          {refundPayments.length < paymentMethodResponse.data.length && (
+            <button
+              type="button"
+              onClick={() => {
+                const availableMethod = paymentMethodResponse.data.find(
+                  (m) => !refundPayments.some((p) => p.payMetId === m.payMetId),
+                );
+                if (!availableMethod) return;
+                setRefundPayments((prev) => [
+                  ...prev,
+                  {
+                    payMetId: availableMethod.payMetId,
+                    salesPayRefAmount: 0,
+                    salesRefId: 0,
+                    salesPayRefReference: "",
+                  },
+                ]);
+              }}
+              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+            >
+              + Add Payment Method
+            </button>
+          )}
+        </div>
+      </section>
       {/* Step 2 — Reason */}
       <section className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">

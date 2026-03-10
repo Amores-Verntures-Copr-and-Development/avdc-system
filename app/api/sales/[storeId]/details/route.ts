@@ -14,7 +14,7 @@ export async function GET(
     // const page = searchParams.get("page") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
-    const includeSaleItems = searchParams.get("includeSaleItems") || "";
+    // const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
     console.log({ customer, from, to });
     if (!storeId) {

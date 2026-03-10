@@ -15,6 +15,12 @@ export async function PUT(
   const slug1 = (await params).reqItemId;
   const reqItemId = Number(slug1);
   const req = (await request.json()) as Partial<RequestItems>;
+  if (!requestId) {
+    throw new Error("No request id!");
+  }
+  if (!reqItemId) {
+    throw new Error("No reqItem id!");
+  }
   try {
     const res = await updateRequestItemByStatus({
       controller: "received",

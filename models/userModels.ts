@@ -124,3 +124,32 @@ WHERE u.userId = ?`;
   const [rows] = await pool.execute(sql, [userId]);
   return rows;
 };
+
+export const selectStoreSuperVisorWithHasPassword = async ({
+  storeId,
+  connection,
+}: {
+  storeId: number;
+  connection: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT u.userId,u.userPassword FROM StoreEmployees se
+  LEFT JOIN Employees e ON e.empId = se.empId
+  LEFT JOIN Users u ON u.userId = e.userId
+  WHERE se.storeId = ? AND e.empPosition = 'supervisor'`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
+  return rows;
+};
+
+export const selectUserWithUserId = async ({
+  userId,
+  connection,
+}: {
+  userId: number;
+  connection: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT * FROM Users WHERE userId = ? `;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [userId]);
+  return rows;
+};

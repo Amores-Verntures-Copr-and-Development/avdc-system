@@ -121,8 +121,35 @@ WHERE si.salesId = s.salesId
     FROM SalesDiscounts sd
     LEFT JOIN Discounts d ON d.discountId = sd.discountId
 	 WHERE sd.saleId = s.salesId
-	 ) AS salesDiscounts
+	 ) AS salesDiscounts,
+    	     (
+  SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'salesRefId',sr.salesRefId,
+        'salesId',sr.salesId,
+        'storeId',sr.storeId,
+        'salesRefAmount', sr.salesRefAmount
+      )
+    )
+    FROM SalesRefunds sr
+	 WHERE sr.salesId = s.salesId
+	 ) AS salesRefunds,
+	  (
+  SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'salesPayRefId',spr.salesPayRefId,
+        'salesRefId',spr.salesRefId,
+        'paymetId',spr.paymetId,
+        'salesPayRefAmount', spr.salesPayRefAmount,
+        'salesPayRefReference', spr.salesPayRefReference
+      )
+    )
+    FROM SalesPaymentRefunds spr
+    LEFT JOIN SalesRefunds srs ON srs.salesRefId = spr.salesRefId
+	 WHERE srs.salesId = s.salesId
+	 ) AS salesPaymentRefunds
 FROM Sales s
+LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
 LEFT JOIN Customers c ON c.customerId = s.customerId
 LEFT JOIN Users u ON u.userId = s.salesCreatedBy
 LEFT JOIN Stores st ON st.storeId = s.storeId
@@ -455,7 +482,19 @@ SELECT *, (
   FROM SalesItemsDiscount sid
   LEFT JOIN Discounts d ON d.discountId = sid.discountId
   WHERE sid.salesItemId = si.salesItemId
-) AS salesItemsDiscount
+) AS salesItemsDiscount, (
+  SELECT JSON_ARRAYAGG(
+    JSON_OBJECT(
+      'salesItemRefId', sr.salesItemRefId,
+      'salesRefId', sr.salesRefId,
+      'salesItemId', sr.salesItemId,
+      'salesRefItemQty', sr.salesRefItemQty,
+      'salesRefItemPrice', sr.salesRefItemPrice
+    )
+  )
+  FROM SalesItemRefunds sr
+  WHERE sr.salesItemId = si.salesItemId
+) AS salesItemsRefunds
 FROM SalesItems si
 LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
 LEFT JOIN Products p ON p.prodId = pv.prodId
@@ -469,6 +508,7 @@ WHERE 1=1
       params.push(value);
     }
   }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as DisplaySalesItems[];
 };
@@ -556,9 +596,10 @@ export const selectSalesTotalDetails = async ({
 
   // 1️⃣ Total Sales
   const totalSalesSql = `
-    SELECT COALESCE(SUM(s.salesTotalAmount), 0) AS totalSales
+    SELECT COALESCE(SUM(s.salesTotalAmount) - SUM(sr.salesRefAmount), 0) AS totalSales
     FROM Sales s
     LEFT JOIN Stores st ON s.storeId = st.storeId
+    LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
     ${totalSalesWhereClause};
   `;
 
@@ -572,12 +613,23 @@ export const selectSalesTotalDetails = async ({
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `
-    SELECT COALESCE(SUM(
-      CASE WHEN DATE(s.salesCreatedAt) = CURDATE()
-      THEN s.salesTotalAmount ELSE 0 END
-    ), 0) AS todaySales
-    FROM Sales s
-    LEFT JOIN Stores st ON s.storeId = st.storeId
+    SELECT COALESCE(
+      SUM(
+          CASE WHEN DATE(s.salesCreatedAt) = CURDATE()
+              THEN s.salesTotalAmount
+              ELSE 0
+          END
+      ) 
+      - SUM(
+          CASE WHEN DATE(sr.salesRefCreatedAt) = CURDATE()
+              THEN sr.salesRefAmount
+              ELSE 0
+          END
+      ),
+  0) AS todaySales
+  FROM Sales s
+  LEFT JOIN Stores st ON s.storeId = st.storeId
+  LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
     ${todaySalesWhereClause};
   `;
 

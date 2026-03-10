@@ -5,7 +5,6 @@ import Table, { Column } from "@/components/shared/Table";
 import {
   CreatePurchaseOrderItemDto,
   DisplayPurchaseOrderItemsDto,
-  SupplierItemDetails,
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { UserAuth } from "@/hooks/useSession";

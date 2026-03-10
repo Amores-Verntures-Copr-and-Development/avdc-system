@@ -1,4 +1,3 @@
-import { DisplayAllInventory } from "@/app/inventory/InventoryPage";
 import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
@@ -11,13 +10,11 @@ import { CreatePurchaseOrderItemDto } from "@/dtos/purchase.dto";
 import { useUserInventory } from "@/hooks/useInventory";
 import { useSession } from "@/hooks/useSession";
 import { PurchaseOrderItems } from "@/types/purchaseOrders";
-import { StockRoom } from "@/types/stockRoom";
-import { fetcher } from "@/utils/fetcher";
+
 import { formatPeso } from "@/utils/formatPeso";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import useSWR from "swr";
 
 interface ReplacePOItemComponentProps {
   data: PurchaseOrderItems | null;
@@ -34,10 +31,7 @@ const ReplacePOItemComponent = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSameStatus, setIsSameStatus] = useState(true);
   const [isSameSupplier, setIsSameSupplier] = useState(true);
-  const { inventory, inventoryLoading, stockRoomId, error } = useUserInventory(
-    user,
-    hasStore,
-  );
+  const { inventory, inventoryLoading } = useUserInventory(user, hasStore);
 
   const [replaceForm, setReplaceForm] = useState<CreatePurchaseOrderItemDto>({
     poId: data?.poId ?? 0,

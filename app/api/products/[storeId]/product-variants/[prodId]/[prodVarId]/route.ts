@@ -1,5 +1,4 @@
 import {
-  deleteProductController,
   deleteProductVariantController,
   updateProductVariantController,
 } from "@/controllers/ProductController";

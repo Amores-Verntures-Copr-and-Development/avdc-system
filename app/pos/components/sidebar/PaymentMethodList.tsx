@@ -8,6 +8,7 @@ import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { PaymentMethods } from "@/types/payment-methods";
 import { fetcher } from "@/utils/fetcher";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -24,6 +25,8 @@ const paymentMethodColumns: Column<PaymentMethods>[] = [
 ];
 
 const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
+  const [selectedPaymentMethod, setSelectedPaymentMethhod] =
+    useState<PaymentMethods | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [paymentMethodForm, setPaymentMethodForm] =
     useState<CreatePaymentMethodDto>({
@@ -104,68 +107,137 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
 
   return (
     <div className="flex flex-col gap-2">
-      <BigCard title={"Create Payment Method"} isRounded={false}>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Input
-              label="Name"
-              sizes={"xs"}
-              value={paymentMethodForm.payMetName}
-              name="payMetName"
-              onChange={handlePaymentMethodChange}
-            />
-            <Textarea
-              label="Description"
-              sizes={"xs"}
-              value={paymentMethodForm.payMetDesc}
-              name="payMetDesc"
-              onChange={handlePaymentMethodChange}
-            />
-            <Toggle
-              label="Has Reference"
-              sizes={"xs"}
-              initial={paymentMethodForm.payMetHasRef === 1 ? true : false}
-              onToggle={(state) => {
-                setPaymentMethodForm((prev) => ({
-                  ...prev,
-                  payMetHasRef: state === true ? 1 : 0,
-                }));
-              }}
-            />
-          </div>
-          <div className="flex mt-auto justify-end gap-4">
-            <div>
-              <Button
-                label="Clear"
-                size="xs"
-                color="secondary"
-                hasBorder
-                onClick={handleClearForm}
-                disabled={isAdding}
-              />
-            </div>
-            <div>
-              <Button
-                label="Create"
-                size="xs"
-                color="primary"
-                hasBorder
-                onClick={handleCreatePaymentMethod}
-                loading={isAdding}
-              />
-            </div>
-          </div>
-        </div>
-      </BigCard>
-      <BigCard title={"Payment Method List"} isRounded={false}>
+      {!selectedPaymentMethod ? (
         <div className="flex flex-col gap-2">
-          <Table
-            columns={paymentMethodColumns}
-            data={itemResponse.data}
-            loading={loading}
-          />
+          <BigCard title={"Create Payment Method"} isRounded={false}>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <Input
+                  label="Name"
+                  sizes={"xs"}
+                  value={paymentMethodForm.payMetName}
+                  name="payMetName"
+                  onChange={handlePaymentMethodChange}
+                />
+                <Textarea
+                  label="Description"
+                  sizes={"xs"}
+                  value={paymentMethodForm.payMetDesc}
+                  name="payMetDesc"
+                  onChange={handlePaymentMethodChange}
+                />
+                <Toggle
+                  label="Has Reference"
+                  sizes={"xs"}
+                  initial={paymentMethodForm.payMetHasRef === 1 ? true : false}
+                  onToggle={(state) => {
+                    setPaymentMethodForm((prev) => ({
+                      ...prev,
+                      payMetHasRef: state === true ? 1 : 0,
+                    }));
+                  }}
+                />
+              </div>
+              <div className="flex mt-auto justify-end gap-4">
+                <div>
+                  <Button
+                    label="Clear"
+                    size="xs"
+                    color="secondary"
+                    hasBorder
+                    onClick={handleClearForm}
+                    disabled={isAdding}
+                  />
+                </div>
+                <div>
+                  <Button
+                    label="Create"
+                    size="xs"
+                    color="primary"
+                    hasBorder
+                    onClick={handleCreatePaymentMethod}
+                    loading={isAdding}
+                  />
+                </div>
+              </div>
+            </div>
+          </BigCard>
+          <BigCard title={"Payment Method List"} isRounded={false}>
+            <div className="flex flex-col gap-2">
+              <Table
+                columns={paymentMethodColumns}
+                data={itemResponse.data}
+                loading={loading}
+                onRowSelection={(row) => setSelectedPaymentMethhod(row)}
+              />
+            </div>
+          </BigCard>
         </div>
-      </BigCard>
+      ) : (
+        <BigCard title={selectedPaymentMethod.payMetName} isRounded={false}>
+          <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Name</span>
+                <span className="text-sm font-semibold">
+                  {selectedPaymentMethod.payMetName}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Name</span>
+                <span className="text-sm font-semibold">
+                  {selectedPaymentMethod.payMetName}
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Has Reference?</span>
+                <span className="text-sm font-semibold">
+                  {selectedPaymentMethod.payMetHasRef === 1 ? "true" : "false"}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Description</span>
+                <span className="text-sm font-semibold">
+                  {selectedPaymentMethod.payMetDesc || "-"}
+                </span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Updated</span>
+                <span className="text-sm font-semibold">
+                  {formatDateToWords(selectedPaymentMethod.payMetUpdatedAt)}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">Created At</span>
+                <span className="text-sm font-semibold">
+                  {formatDateToWords(selectedPaymentMethod.payMetCreatedAt)}
+                </span>
+              </div>
+            </div>
+            <div className="flex mt-auto justify-end gap-2">
+              <div>
+                {" "}
+                <Button
+                  label="Cancel"
+                  color="secondary"
+                  size="xs"
+                  onClick={() => {
+                    setSelectedPaymentMethhod(null);
+                  }}
+                />
+              </div>
+              <div>
+                {" "}
+                <Button label="Save" color="primary" size="xs" />
+              </div>
+            </div>
+          </div>
+        </BigCard>
+      )}
     </div>
   );
 };

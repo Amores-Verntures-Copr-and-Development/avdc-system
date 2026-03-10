@@ -3,17 +3,17 @@ import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import IconButton from "@/components/shared/IconButton";
 import Input from "@/components/shared/Input";
 import Modal from "@/components/shared/Modal";
-import Table, { Column } from "@/components/shared/Table";
+
 import { ApiResponse } from "@/types/api";
 import { ProductCategories } from "@/types/products";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { handleChange } from "@/utils/handle-change";
-import { formatDate } from "date-fns";
-import { Pencil, PencilLineIcon, Trash } from "lucide-react";
+
+import { Pencil, Trash } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 
 interface ViewProductCategoryProps {
   storeId: number;

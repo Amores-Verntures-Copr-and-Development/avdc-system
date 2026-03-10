@@ -8,6 +8,9 @@ export async function PUT(
   try {
     const slug = (await params).poId;
     const poId = Number(slug);
+    if (!poId) {
+      throw new Error("No poid!");
+    }
     const po = await request.json();
     const { data, controller } = po;
 

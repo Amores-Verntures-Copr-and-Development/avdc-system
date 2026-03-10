@@ -15,18 +15,16 @@ import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
-import { Checkbox, pdf, PDFViewer } from "@react-pdf/renderer";
+import { pdf, PDFViewer } from "@react-pdf/renderer";
 import {
   CheckLine,
   ChevronLeft,
   ClipboardCheck,
   Clock,
   Download,
-  Eye,
   FileText,
   Package,
   PackageCheck,
-  PackageSearch,
   Pencil,
   Plus,
   Repeat,
@@ -166,40 +164,40 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
 
   const isRequestor =
     user?.empPosition === "staff" || user?.empPosition === "supervisor";
-  const columnPending: Column<DisplayRequestItems>[] = [
-    { key: "#", name: "#", selector: (_row, index) => index + 1 },
-    { name: "Name", key: "itemName" },
-    { name: "Unit", key: "itemUnit" },
-    {
-      name: "Request Qty",
-      key: "reqItemQuantity",
-      selector: (row) => (
-        <span className="font-semibold">
-          {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
-        </span>
-      ),
-      editable: showEditMode,
-      inputType: "number",
-    },
-    {
-      name: "Status",
-      key: "reqItemStatus",
-      selector: (row) => {
-        const { label, bg, color } = getStatusOption(row.reqItemStatus);
-        return (
-          <div
-            className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
-          >
-            <span
-              className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
-            >
-              {label}
-            </span>
-          </div>
-        );
-      },
-    },
-  ];
+  // const columnPending: Column<DisplayRequestItems>[] = [
+  //   { key: "#", name: "#", selector: (_row, index) => index + 1 },
+  //   { name: "Name", key: "itemName" },
+  //   { name: "Unit", key: "itemUnit" },
+  //   {
+  //     name: "Request Qty",
+  //     key: "reqItemQuantity",
+  //     selector: (row) => (
+  //       <span className="font-semibold">
+  //         {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
+  //       </span>
+  //     ),
+  //     editable: showEditMode,
+  //     inputType: "number",
+  //   },
+  //   {
+  //     name: "Status",
+  //     key: "reqItemStatus",
+  //     selector: (row) => {
+  //       const { label, bg, color } = getStatusOption(row.reqItemStatus);
+  //       return (
+  //         <div
+  //           className={`${bg} w-full px-2 py-1 rounded border border-gray-300 text-left`}
+  //         >
+  //           <span
+  //             className={` ${color} px-2 py-1 text-[9px] xl:text-xs items-center`}
+  //           >
+  //             {label}
+  //           </span>
+  //         </div>
+  //       );
+  //     },
+  //   },
+  // ];
   const adminColumn: Column<DisplayRequestItems>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { name: "Name", key: "itemName" },

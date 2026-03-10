@@ -3,7 +3,7 @@ import { Filter } from "lucide-react";
 import { useSearchParams } from "next/navigation"; // or useRouter for Pages Router
 import Button from "./Button";
 
-interface FilterOption {
+export interface FilterOption {
   label: string;
   value: string;
 }

@@ -1,5 +1,5 @@
 import React from "react";
-import DashboardCard from "../components/DashboardCard";
+
 import Chart from "../components/Chart";
 import {
   Calendar,

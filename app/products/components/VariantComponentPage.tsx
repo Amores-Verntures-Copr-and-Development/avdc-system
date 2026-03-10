@@ -41,8 +41,6 @@ const VariantComponentPage = ({
   storeId,
 }: VariantComponentPageProps) => {
   const { user, hasStore } = useSession();
-  const isAllowedShowCosting =
-    !hasStore && !["supervisor", "staff"].includes(user?.empPosition ?? "");
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteVariant, setShowDeleteVariant] =

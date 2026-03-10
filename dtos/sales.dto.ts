@@ -14,6 +14,11 @@ import {
   SalesItemDiscounts,
 } from "@/types/sales";
 import { SalesDiscounts } from "@/types/sales-discounts";
+import {
+  SalesItemRefund,
+  SalesPaymentRefund,
+  SalesRefund,
+} from "@/types/sales-refund";
 
 export type CreateSaleDto = Pick<
   Sales,
@@ -38,9 +43,11 @@ export interface DisplaySalesDto extends Sales {
   salesCreatedByName: string;
   storeName: string;
   saleItems: DisplaySalesItems[];
+  salesRefunds: SalesRefund[];
   paymentMethods: SalePaymentMethods[];
   totalItem: number;
   salesDiscounts: SaleDiscountExtends[];
+  salesPaymentRefunds: SalesPaymentRefund[];
 }
 
 interface SalePaymentMethods extends SalePayments, PaymentMethods {}
@@ -50,6 +57,7 @@ export interface DisplaySalesItems
   extends SaleItems, Products, ProductVariants {
   saleItemName?: string;
   salesItemsDiscount?: DisplaySaleItemDiscounts[];
+  salesItemsRefunds: SalesItemRefund[];
 }
 
 export type CreateSaleItemDto = Pick<
@@ -85,3 +93,5 @@ export type CreateSaleItemDisc = Pick<
 > & {
   discountType?: DiscountType;
 };
+
+// export type CreateSaleRefundPayment = Pick<Sa>

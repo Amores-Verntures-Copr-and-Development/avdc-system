@@ -1,6 +1,5 @@
 import { createCustomer, getCustomer } from "@/controllers/CustomerController";
 import { CreateCustomerDto } from "@/dtos/customer.dto";
-import { count } from "console";
 import { NextResponse } from "next/server";
 
 export async function POST(

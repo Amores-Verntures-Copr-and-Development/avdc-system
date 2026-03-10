@@ -12,7 +12,7 @@ import {
 } from "@/dtos/request.dto";
 import { useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
-import { ArrowRight, Eye, File, FileText, Printer, Store } from "lucide-react";
+import { Eye, FileText, Store } from "lucide-react";
 import React, {
   useState,
   useRef,
@@ -32,9 +32,9 @@ import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 import { formatPeso } from "@/utils/formatPeso";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStores } from "@/hooks/userStore";
-import { Option } from "@/components/shared/DropdownSelect";
+
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
-import Popup from "@/components/shared/Popup";
+
 import { useDebounce } from "@/hooks/useDebounce";
 import { PDFViewer } from "@react-pdf/renderer";
 import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";

@@ -38,7 +38,15 @@ const SelectedSalesPage = ({
     await mutateSales();
     await mutate();
   };
-  console.log({ response });
+
+  const refundTotal =
+    Array.isArray(salesData?.salesRefunds) && salesData.salesRefunds.length > 0
+      ? salesData.salesRefunds.reduce(
+          (total, s) => Number(total) + Number(s.salesRefAmount),
+          0,
+        )
+      : 0;
+
   if (isLoading) return <LoaderComponent />;
   return (
     <div className="min-h-screen overflow-auto-y">
@@ -163,6 +171,12 @@ const SelectedSalesPage = ({
                     <th className="text-center text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
                       Qty
                     </th>
+                    {salesData?.salesRefunds && (
+                      <th className="text-center text-[10px] 2xl:text-xs font-medium text-red-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
+                        Refund Qty
+                      </th>
+                    )}
+
                     <th className="text-right text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
                       Subtotal
                     </th>
@@ -171,6 +185,9 @@ const SelectedSalesPage = ({
                     </th>
                     <th className="text-right text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
                       Total
+                    </th>
+                    <th className="text-right text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
+                      Status
                     </th>
                   </tr>
                 </thead>
@@ -204,6 +221,21 @@ const SelectedSalesPage = ({
                         <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
                           {item.salesItemQuantity}
                         </td>
+                        {item.salesItemsRefunds &&
+                        item.salesItemsRefunds.length > 0 ? (
+                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                            {item.salesItemsRefunds?.reduce(
+                              (count, i) => i.salesRefItemQty + count,
+                              0,
+                            )}
+                          </td>
+                        ) : salesData?.salesRefunds ? (
+                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                            -
+                          </td>
+                        ) : (
+                          <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700"></td>
+                        )}
                         <td className="py-2 text-right text-xs 2xl:text-sm font-normal text-gray-900">
                           {formatPeso(item.salesItemSubtotal)}
                         </td>
@@ -219,6 +251,9 @@ const SelectedSalesPage = ({
 
                         <td className="py-2 text-right text-xs 2xl:text-sm font-medium text-gray-900">
                           {formatPeso(item.salesItemTotal)}
+                        </td>
+                        <td className="py-2 text-right text-xs 2xl:text-sm font-medium text-gray-900">
+                          {item.salesItemStatus === "active" ? "completed" : ""}
                         </td>
                       </tr>
                     );
@@ -236,6 +271,16 @@ const SelectedSalesPage = ({
                   {formatPeso(salesData?.salesSubTotal ?? 0)}
                 </div>
               </div>
+              {Boolean(refundTotal && refundTotal !== 0) && (
+                <div className="flex justify-between mb-2">
+                  <div className="text-xs 2xl:text-sm text-red-600 w-32">
+                    Refund
+                  </div>
+                  <div className="text-xs 2xl:text-sm text-red-900 w-24 text-right">
+                    {formatPeso(refundTotal ?? 0)}
+                  </div>
+                </div>
+              )}
 
               {/* Discounts */}
               {salesData?.salesDiscounts &&
@@ -272,7 +317,11 @@ const SelectedSalesPage = ({
                   Total
                 </div>
                 <div className="text-xs 2xl:text-sm font-semibold text-gray-900 w-24 text-right">
-                  {formatPeso(salesData?.salesTotalAmount ?? 0)}
+                  {formatPeso(
+                    Number(
+                      Number(salesData?.salesTotalAmount) - Number(refundTotal),
+                    ) ?? 0,
+                  )}
                 </div>
               </div>
             </div>
@@ -297,20 +346,32 @@ const SelectedSalesPage = ({
                   Total Paid
                 </div>
                 <div className="text-xs 2xl:text-sm text-gray-900">
-                  {formatPeso(salesData?.salesTotalPaid ?? 0)}
+                  {formatPeso(salesData?.salesTotalAmount ?? 0)}
                 </div>
               </div>
 
-              {Number(salesData?.salesTotalPaid) >
-                Number(salesData?.salesTotalAmount) && (
-                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                  <div className="text-xs 2xl:text-sm text-gray-600">
-                    Change
+              {/* Refund Total */}
+              {Boolean(refundTotal && refundTotal !== 0) && (
+                <div className="flex justify-between items-center">
+                  <div className="text-xs 2xl:text-sm text-red-600">
+                    Refunded
                   </div>
-                  <div className="text-xs 2xl:text-sm font-medium text-green-600">
+                  <div className="text-xs 2xl:text-sm text-red-900">
+                    - {formatPeso(refundTotal)}
+                  </div>
+                </div>
+              )}
+
+              {/* Adjusted Paid */}
+              {Boolean(refundTotal && refundTotal !== 0) && (
+                <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                  <div className="text-xs 2xl:text-sm font-medium text-gray-900">
+                    Net Paid
+                  </div>
+                  <div className="text-sm 2xl:text-base font-semibold text-gray-900">
                     {formatPeso(
-                      Number(salesData?.salesTotalPaid ?? 0) -
-                        Number(salesData?.salesTotalAmount ?? 0),
+                      Number(salesData?.salesTotalAmount ?? 0) -
+                        Number(refundTotal),
                     )}
                   </div>
                 </div>
@@ -325,6 +386,18 @@ const SelectedSalesPage = ({
                     Payment Details
                   </h3>
                   {salesData.paymentMethods.map((pay) => {
+                    // Calculate refunded amount per payment method if needed
+                    const refundedForMethod =
+                      salesData.salesPaymentRefunds
+                        ?.filter((r) => r.payMetId === pay.payMetId)
+                        .reduce(
+                          (sum, r) => sum + Number(r.salesPayRefAmount),
+                          0,
+                        ) ?? 0;
+
+                    const netPayment =
+                      Number(pay.salesPaymentAmount) - refundedForMethod;
+
                     return (
                       <div
                         key={pay.salesPaymentId}
@@ -340,8 +413,15 @@ const SelectedSalesPage = ({
                             </span>
                           )}
                         </div>
-                        <div className="font-semibold text-gray-900">
-                          {formatPeso(pay.salesPaymentAmount)}
+                        <div className="flex flex-col items-end">
+                          <span className="font-semibold text-gray-900">
+                            {formatPeso(netPayment)}
+                          </span>
+                          {refundedForMethod > 0 && (
+                            <span className="text-red-600 text-xs">
+                              - {formatPeso(refundedForMethod)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -355,7 +435,9 @@ const SelectedSalesPage = ({
                 Total Paid
               </div>
               <div className="text-sm 2xl:text-base font-semibold text-gray-900">
-                {formatPeso(salesData?.salesTotalPaid ?? 0)}
+                {formatPeso(
+                  Number(salesData?.salesTotalAmount ?? 0) - (refundTotal ?? 0),
+                )}
               </div>
             </div>
           </div>

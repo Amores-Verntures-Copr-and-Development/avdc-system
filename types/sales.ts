@@ -54,7 +54,18 @@ export interface SaleItems {
   salesItemTotal: number;
   salesItemPrice: number;
   salesItemStatus: SalesItemStatus;
+  salesItemRefundedBy: number;
+  salesItemRefundedAt: string;
   prodVarId: number;
+}
+
+export interface Transations {
+  transactionId: number;
+  transactionRef: "sale" | "refund";
+  transationAmount: number;
+  transactionType: "in" | "out";
+  transactionCreatedAt: "";
+  storeId: number;
 }
 
 export interface SalePayments {
@@ -65,14 +76,6 @@ export interface SalePayments {
   payMetId: number;
   paymentReference: string;
   paymentDate: number;
-}
-
-export interface SaleRefund {
-  saleRefundId: number;
-  salespaymentId: number;
-  saleRefundAmount: number;
-  saleRefunddBy: number;
-  saleRefundCreatedAt: string;
 }
 
 export interface SalesItemDiscounts {

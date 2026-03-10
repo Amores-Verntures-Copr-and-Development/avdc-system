@@ -175,14 +175,9 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
       value: (row) => row.poItemStatus,
     },
   ];
-  const {
-    data: itemResponse = { data: [] },
-    isLoading: loadingData,
-    mutate,
-  } = useSWR<ApiResponse<DisplayPOItemsSupplier[]>>(
-    `/api/purchase-order/po-items-supplier/${data?.poId}`,
-    fetcher,
-  );
+  const { data: itemResponse = { data: [] }, isLoading: loadingData } = useSWR<
+    ApiResponse<DisplayPOItemsSupplier[]>
+  >(`/api/purchase-order/po-items-supplier/${data?.poId}`, fetcher);
 
   return (
     <div className="flex flex-col h-full min-h-0">
