@@ -101,6 +101,8 @@ export const getSalesByStoreId = async ({
   from,
   to,
   keyFields,
+  offset,
+  limit,
 }: {
   storeId: number;
   search?: string;
@@ -109,6 +111,8 @@ export const getSalesByStoreId = async ({
   from?: string;
   to?: string;
   keyFields?: Partial<Sales>;
+  limit?: number;
+  offset?: number;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -118,11 +122,22 @@ export const getSalesByStoreId = async ({
       customer,
       from,
       to,
+      offset,
+      limit,
     });
+    const count = await getSalesServices.getSalesCount({
+      keyFields: { storeId: storeId },
+      search,
+      customer,
+      from,
+      to,
+    });
+
     return {
       success: true,
       message: "Sales fetched successfully!",
       data: data ?? null,
+      count: count[0].count,
     };
   } catch (e) {
     return {
@@ -141,6 +156,8 @@ export const getSales = async ({
   to,
   includeSaleItems,
   customer,
+  limit,
+  offset,
 }: {
   keyFields?: Partial<Sales>;
   search?: string;
@@ -149,6 +166,8 @@ export const getSales = async ({
   to?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  limit?: number;
+  offset?: number;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -159,11 +178,22 @@ export const getSales = async ({
       to,
       includeSaleItems,
       customer,
+      offset,
+      limit,
     });
+    const count = await getSalesServices.getSalesCount({
+      keyFields,
+      search,
+      storeName,
+      from,
+      to,
+    });
+    console.log({ count });
     return {
       success: true,
       message: "Sales fetched successfully!",
       data: data ?? null,
+      count: count[0].count,
     };
   } catch (e) {
     return {

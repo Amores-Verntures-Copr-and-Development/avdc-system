@@ -1,4 +1,5 @@
 import {
+  countSales,
   selectDailyStoreSales,
   selectSales,
   selectSalesTotalDetails,
@@ -52,6 +53,42 @@ export const getSalesServices = {
         limit,
         offset,
       });
+      return data;
+    } catch (e) {
+      console.log({ e });
+      throw e;
+    }
+  },
+  getSalesCount: async ({
+    keyFields = {},
+    connection,
+    search,
+    storeName,
+    from,
+    to,
+
+    customer,
+  }: {
+    keyFields?: Partial<Sales>;
+    connection?: PoolConnection;
+    search?: string;
+    storeName?: string;
+    from?: string;
+    to?: string;
+
+    customer?: boolean;
+  }) => {
+    try {
+      const data = await countSales({
+        connection,
+        keyFields,
+        storeName,
+        from,
+        to,
+        search,
+        customer,
+      });
+
       return data;
     } catch (e) {
       console.log({ e });

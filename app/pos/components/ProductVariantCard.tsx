@@ -143,7 +143,7 @@ const ProductVariantCard = ({
                 />
               </div>
               <span
-                className={`text-[9px] lg:text-xs xl:text-sm font-semibold break-words leading-tight ${
+                className={`text-[9px] lg:text-sm xl:text-sm font-semibold break-words leading-tight ${
                   hasStock ? "text-gray-700" : "text-gray-500"
                 }`}
               >
@@ -157,7 +157,7 @@ const ProductVariantCard = ({
                 .includes(data.prodVarName.toLowerCase()) && (
                 <div className="flex items-start gap-1.5 ml-1">
                   <Package className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <span className="text-[10px] xl:text-xs text-gray-500 break-words leading-tight">
+                  <span className="text-[12px] xl:text-xs text-gray-500 break-words leading-tight">
                     {product.prodName}
                   </span>
                 </div>

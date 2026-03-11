@@ -1,4 +1,5 @@
 import { getSalesByStoreId } from "@/controllers/SaleController";
+import { count } from "console";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -14,12 +15,15 @@ export async function GET(
     }
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    // const limit = searchParams.get("limit") || "";
-    // const page = searchParams.get("page") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
+    const offset = limitNumber * (pageNumber - 1);
 
     const res = await getSalesByStoreId({
       storeId,
@@ -28,6 +32,8 @@ export async function GET(
       customer: customer === "true",
       from,
       to,
+      offset: offset,
+      limit: limitNumber,
     });
 
     if (!res.success) {
@@ -39,6 +45,7 @@ export async function GET(
         success: true,
         message: res.message,
         data: res.data,
+        count: res.count,
       },
       { status: 201 },
     );

@@ -189,8 +189,67 @@ WHERE 1=1`;
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Sales[];
+};
+
+export const countSales = async ({
+  keyFields = {},
+  connection,
+  search,
+  storeName,
+  from,
+  to,
+
+  customer,
+}: {
+  keyFields: Partial<Sales>;
+  connection?: PoolConnection;
+  search?: string;
+  storeName?: string;
+  from?: string;
+  to?: string;
+  customer?: boolean;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `SELECT COUNT(*) as count FROM Sales s
+LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
+LEFT JOIN Customers c ON c.customerId = s.customerId
+LEFT JOIN Users u ON u.userId = s.salesCreatedBy
+LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND s.${key} IS NULL`;
+    } else {
+      sql += ` AND s.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from);
+    params.push(to);
+  }
+  if (search) {
+    const wildcard = `%${search}%`;
+    sql += ` AND s.salesNo LIKE ? OR c.customerName LIKE ? `;
+    params.push(wildcard);
+    params.push(wildcard);
+  }
+  if (customer) {
+    sql += ` AND s.customerId IS NOT NULL`;
+  }
+  sql += ` ORDER BY s.salesCreatedAt DESC `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };
 
 export const insertSales = async ({

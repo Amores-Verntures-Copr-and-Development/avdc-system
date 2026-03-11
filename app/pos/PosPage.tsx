@@ -931,8 +931,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </div>
 
             <div className="flex justify-between text-gray-500 text-sm">
-              <span className="text-[9px] 2xl:text-xs">Subtotal</span>
-              <span className="text-[9px] 2xl:text-xs">
+              <span className="text-xs 2xl:text-sm">Subtotal</span>
+              <span className="text-xs 2xl:text-sm">
                 {formatPeso(subtotal)}
               </span>
             </div>
@@ -945,7 +945,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                   return (
                     <div
                       key={index}
-                      className="flex justify-between text-gray-500 text-sm"
+                      className="flex justify-between text-gray-500 text-xs 2xl:text-sm"
                     >
                       <span>
                         {discount?.discountName} (
@@ -963,10 +963,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
             {/* Total */}
             <div className="flex justify-between  pt-2">
-              <span className=" font-semibold text-[9px] 2xl:text-sm">
-                Total
-              </span>
-              <span className="font-semibold text-[9px] 2xl:text-sm">
+              <span className=" font-semibold text-xs 2xl:text-sm">Total</span>
+              <span className="font-semibold text-xs 2xl:text-sm">
                 {formatPeso(getTotalAmount())}
               </span>
             </div>
@@ -974,8 +972,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           {/* Footer / bottom button */}
           <div className="p-2 border-t border-gray-200">
             <Button
-              size="sm"
-              label="Check Out"
+              size="md"
+              label="Checkout"
               className="w-full"
               onClick={() => {
                 const hasNoOrder =

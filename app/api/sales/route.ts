@@ -5,14 +5,17 @@ export async function GET(_request: Request) {
   try {
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    // const limit = searchParams.get("limit") || "";
-    // const page = searchParams.get("page") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
     const store = searchParams.get("store") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
-
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
+    const offset = limitNumber * (pageNumber - 1);
+    console.log({ limitNumber, pageNumber, offset });
     const res = await getSales({
       search,
       keyFields: {},
@@ -21,17 +24,19 @@ export async function GET(_request: Request) {
       to,
       includeSaleItems: includeSaleItems === "true",
       customer: customer === "true",
+      offset: offset,
+      limit: limitNumber,
     });
 
     if (!res.success) {
       throw new Error(`${res.error}`);
     }
-
     return NextResponse.json(
       {
         success: true,
         message: res.message,
         data: res.data,
+        count: res.count,
       },
       { status: 201 },
     );

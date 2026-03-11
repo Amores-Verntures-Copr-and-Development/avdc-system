@@ -44,371 +44,17 @@ interface SalesPageProps {
   hasStore: boolean;
   isAdmin: boolean;
 }
-const columns: Column<DisplaySalesDto>[] = [
-  { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  {
-    key: "salesNo",
-    name: "Sales No",
-    selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
-  },
-  {
-    key: "customerName",
-    name: "Customer",
-    selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
-  },
-  {
-    key: "salesSubTotal ",
-    name: "Subtotal",
-    selector: (row) => (
-      <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
-    ),
-  },
 
-  {
-    key: "salesDiscount ",
-    name: "Discount",
-    selector: (row) => {
-      const discount = row.salesDiscounts || [];
-
-      return (
-        <div className="group relative">
-          <select
-            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-            disabled
-          >
-            <option value="">
-              {discount.length > 1
-                ? `Discounts (${discount.filter((s) => s !== null).length})`
-                : discount.length === 1
-                  ? `${discount[0].discountName} (${formatPeso(
-                      discount[0].discountAmount,
-                    )})`
-                  : ``}
-            </option>
-          </select>
-          {discount?.length > 0 && discount.some((d) => d !== null) && (
-            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
-              {discount
-                .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
-                .map((disc) => (
-                  <div
-                    key={disc.salesDiscountId}
-                    className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
-                  >
-                    <div className="flex">
-                      <span className=" text-xs font-semibold text-gray-700">
-                        {disc.discountName}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      {" "}
-                      <span className="text-gray-400 text-[9px] xl:text-[10px]">
-                        {disc.discountType === "percent"
-                          ? `${disc.discountValue}%`
-                          : `₱${disc.discountValue.toFixed(2)}`}
-                      </span>
-                      <span className="text-[10px] font-semibold text-red-600">
-                        - ₱{disc.discountAmount.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    key: "refund ",
-    name: "Refund",
-    selector: (row) => {
-      const totalRefunds = row.salesRefunds?.reduce(
-        (total, sr) => Number(total) + Number(sr.salesRefAmount),
-        0,
-      );
-      console.log({ totalRefunds });
-      return (
-        <span
-          className={`text-[11px] ${
-            totalRefunds !== undefined && Number(totalRefunds) !== 0
-              ? `text-red-800`
-              : "text-gray-800"
-          }`}
-        >
-          {totalRefunds !== undefined && Number(totalRefunds) !== 0
-            ? formatPeso(totalRefunds)
-            : "-"}
-        </span>
-      );
-    },
-  },
-  {
-    key: "salesTotalAmount",
-    name: "Total Amount",
-    selector: (row) => {
-      const totalRefunds = Array.isArray(row.salesRefunds)
-        ? row.salesRefunds.reduce(
-            (total, sr) => total + Number(sr.salesRefAmount),
-            0,
-          )
-        : 0;
-
-      return (
-        <span className="font-semibold">
-          {formatPeso(Number(row.salesTotalAmount) - totalRefunds)}
-        </span>
-      );
-    },
-  },
-  { key: "totalItem", name: "Total Item" },
-  {
-    key: "method",
-    name: "Payment Method",
-    selector: (row) => {
-      const paymentMethod = row.paymentMethods || [];
-      return (
-        <div className="group relative">
-          <select
-            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-            disabled
-          >
-            <option value="">
-              {/* {paymentMethod.filter((s) => s !== null).length > 0
-                ? `No Payment Method (${
-                    paymentMethod.filter((s) => s !== null).length
-                  })`
-                : "No Payment Method"} */}
-              {paymentMethod.length > 1
-                ? `Multiple Payments (${
-                    paymentMethod.filter((s) => s !== null).length
-                  })`
-                : paymentMethod.length === 1
-                  ? `${paymentMethod[0].payMetName} (${formatPeso(
-                      Number(paymentMethod[0].salesPaymentAmount) >
-                        Number(row.salesTotalAmount)
-                        ? row.salesTotalAmount
-                        : paymentMethod[0].salesPaymentAmount,
-                    )})`
-                  : `No payment`}
-            </option>
-          </select>
-          {paymentMethod.filter((s) => s !== null).length > 0 && (
-            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-              {paymentMethod
-                .filter((method) => method !== null)
-                .map((method, index) => (
-                  <div
-                    key={index}
-                    className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                  >
-                    {`${method.payMetName} (${formatPeso(
-                      Number(method.salesPaymentAmount) >
-                        Number(row.salesTotalAmount)
-                        ? row.salesTotalAmount
-                        : method.salesPaymentAmount,
-                    )})`}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      );
-    },
-  },
-  { key: "salesCreatedByName", name: "Created By" },
-  {
-    key: "salesCreatedAt",
-    name: "Date",
-    selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
-  },
-  {
-    key: "salesStatus",
-    name: "Status",
-    selector: (row) => (
-      <SalesStatusBadge status={row.salesStatus as SalesStatus} />
-    ),
-  },
-];
-const adminColumns: Column<DisplaySalesDto>[] = [
-  { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  {
-    key: "salesNo",
-    name: "Sales No",
-    selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
-  },
-  {
-    key: "customerName",
-    name: "Customer",
-    selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
-  },
-  {
-    key: "salesSubTotal ",
-    name: "Subtotal",
-    selector: (row) => (
-      <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
-    ),
-  },
-  {
-    key: "salesDiscount ",
-    name: "Discount",
-    selector: (row) => {
-      const discount = row.salesDiscounts || [];
-
-      return (
-        <div className="group relative">
-          <select
-            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-            disabled
-          >
-            <option value="">
-              {discount.length > 1
-                ? `Discounts (${discount.filter((s) => s !== null).length})`
-                : discount.length === 1
-                  ? `${discount[0].discountName} (${formatPeso(
-                      discount[0].discountAmount,
-                    )})`
-                  : ``}
-            </option>
-          </select>
-          {discount?.length > 0 && discount.some((d) => d !== null) && (
-            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
-              {discount
-                .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
-                .map((disc) => (
-                  <div
-                    key={disc.salesDiscountId}
-                    className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
-                  >
-                    <div className="flex">
-                      <span className=" text-xs font-semibold text-gray-700">
-                        {disc.discountName}
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                      {" "}
-                      <span className="text-gray-400 text-[9px] xl:text-[10px]">
-                        {disc.discountType === "percent"
-                          ? `${disc.discountValue}%`
-                          : `₱${disc.discountValue.toFixed(2)}`}
-                      </span>
-                      <span className="text-[10px] font-semibold text-red-600">
-                        - ₱{disc.discountAmount.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    key: "salesTotalAmount",
-    name: "Total Amount",
-    selector: (row) => (
-      <span className="font-semibold">{formatPeso(row.salesTotalAmount)}</span>
-    ),
-  },
-  { key: "totalItem", name: "Total Item" },
-  {
-    key: "method",
-    name: "Payment Method",
-    selector: (row) => {
-      const paymentMethod = row.paymentMethods || [];
-      return (
-        <div className="group relative">
-          <select
-            className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-            disabled
-          >
-            <option value="">
-              {/* {paymentMethod.filter((s) => s !== null).length > 0
-                ? `No Payment Method (${
-                    paymentMethod.filter((s) => s !== null).length
-                  })`
-                : "No Payment Method"} */}
-              {paymentMethod.length > 1
-                ? `Multiple Payments (${
-                    paymentMethod.filter((s) => s !== null).length
-                  })`
-                : paymentMethod.length === 1
-                  ? `${paymentMethod[0].payMetName} (${formatPeso(
-                      Number(paymentMethod[0].salesPaymentAmount) >
-                        Number(row.salesTotalAmount)
-                        ? row.salesTotalAmount
-                        : paymentMethod[0].salesPaymentAmount,
-                    )})`
-                  : `No payment`}
-            </option>
-          </select>
-          {paymentMethod.filter((s) => s !== null).length > 0 && (
-            <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-              {paymentMethod
-                .filter((method) => method !== null)
-                .map((method, index) => (
-                  <div
-                    key={index}
-                    className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                  >
-                    {`${method.payMetName} (${formatPeso(
-                      Number(method.salesPaymentAmount) >
-                        Number(row.salesTotalAmount)
-                        ? row.salesTotalAmount
-                        : method.salesPaymentAmount,
-                    )})`}
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    key: "storeName",
-    name: "Store",
-    selector: (row) => <span className="font-semibold">{row.storeName}</span>,
-  },
-  { key: "salesCreatedByName", name: "Created By" },
-  {
-    key: "salesCreatedAt",
-    name: "Date",
-    selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
-  },
-];
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
-    null,
-  );
-  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
-  const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
-  const [isViewSales, setIsViewSales] = useState(false);
-  const { stores } = useStores({
-    user,
-    hasStore,
-    isAdmin,
-  });
-  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
-    data: PaymentMethods[];
-  }>(
-    selectedStoreId ? `/api/payment-method/store/${selectedStoreId}/` : null,
-    fetcher,
-  );
-  const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
-    (p) => ({ label: p.payMetName, value: String(p.payMetId) }),
-  );
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
       : `/api/sales`;
-  const defaultStoreFromUrl = searchParams.get("store") || "";
+  const searchParams = useSearchParams();
+  const limit = searchParams.get("limit") || "";
+  const page = searchParams.get("page") || "1";
+  const limitNumber = Number(limit) || 100; // default limit
+  const pageNumber = Number(page) || 1;
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -432,7 +78,389 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     params.append("page", page);
 
     return `${url}?${params.toString()}`;
-  }, [storeId, searchParams]);
+  }, [storeId, searchParams]); // default page
+  const debounceApi = useDebounce(apiUrl, 600);
+  const {
+    data: response,
+    mutate: mutateSales,
+    isLoading,
+  } = useSWR<ApiResponse<DisplaySalesDto[]>>(
+    user ? debounceApi : null,
+    fetcher,
+  );
+
+  const columns: Column<DisplaySalesDto>[] = useMemo(() => {
+    return [
+      {
+        key: "#",
+        name: "#",
+        selector: (_row, index) => (pageNumber - 1) * limitNumber + index + 1,
+      },
+      {
+        key: "salesNo",
+        name: "Sales No",
+        selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
+      },
+      {
+        key: "customerName",
+        name: "Customer",
+        selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
+      },
+      {
+        key: "salesSubTotal ",
+        name: "Subtotal",
+        selector: (row) => (
+          <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
+        ),
+      },
+      {
+        key: "salesDiscount ",
+        name: "Discount",
+        selector: (row) => {
+          const discount = row.salesDiscounts || [];
+
+          return (
+            <div className="group relative">
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option value="">
+                  {discount.length > 1
+                    ? `Discounts (${discount.filter((s) => s !== null).length})`
+                    : discount.length === 1
+                      ? `${discount[0].discountName} (${formatPeso(
+                          discount[0].discountAmount,
+                        )})`
+                      : ``}
+                </option>
+              </select>
+              {discount?.length > 0 && discount.some((d) => d !== null) && (
+                <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
+                  {discount
+                    .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
+                    .map((disc) => (
+                      <div
+                        key={disc.salesDiscountId}
+                        className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                      >
+                        <div className="flex">
+                          <span className=" text-xs font-semibold text-gray-700">
+                            {disc.discountName}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          {" "}
+                          <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                            {disc.discountType === "percent"
+                              ? `${disc.discountValue}%`
+                              : `₱${disc.discountValue.toFixed(2)}`}
+                          </span>
+                          <span className="text-[10px] font-semibold text-red-600">
+                            - ₱{disc.discountAmount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        key: "refund ",
+        name: "Refund",
+        selector: (row) => {
+          const totalRefunds = row.salesRefunds?.reduce(
+            (total, sr) => Number(total) + Number(sr.salesRefAmount),
+            0,
+          );
+
+          return (
+            <span
+              className={`text-[11px] ${
+                totalRefunds !== undefined && Number(totalRefunds) !== 0
+                  ? `text-red-800`
+                  : "text-gray-800"
+              }`}
+            >
+              {totalRefunds !== undefined && Number(totalRefunds) !== 0
+                ? formatPeso(totalRefunds)
+                : "-"}
+            </span>
+          );
+        },
+      },
+      {
+        key: "salesTotalAmount",
+        name: "Total Amount",
+        selector: (row) => {
+          const totalRefunds = Array.isArray(row.salesRefunds)
+            ? row.salesRefunds.reduce(
+                (total, sr) => total + Number(sr.salesRefAmount),
+                0,
+              )
+            : 0;
+
+          return (
+            <span className="font-semibold">
+              {formatPeso(Number(row.salesTotalAmount) - totalRefunds)}
+            </span>
+          );
+        },
+      },
+      { key: "totalItem", name: "Total Item" },
+      {
+        key: "method",
+        name: "Payment Method",
+        selector: (row) => {
+          const paymentMethod = row.paymentMethods || [];
+          return (
+            <div className="group relative">
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option value="">
+                  {/* {paymentMethod.filter((s) => s !== null).length > 0
+                ? `No Payment Method (${
+                    paymentMethod.filter((s) => s !== null).length
+                  })`
+                : "No Payment Method"} */}
+                  {paymentMethod.length > 1
+                    ? `Multiple Payments (${
+                        paymentMethod.filter((s) => s !== null).length
+                      })`
+                    : paymentMethod.length === 1
+                      ? `${paymentMethod[0].payMetName} (${formatPeso(
+                          Number(paymentMethod[0].salesPaymentAmount) >
+                            Number(row.salesTotalAmount)
+                            ? row.salesTotalAmount
+                            : paymentMethod[0].salesPaymentAmount,
+                        )})`
+                      : `No payment`}
+                </option>
+              </select>
+              {paymentMethod.filter((s) => s !== null).length > 0 && (
+                <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+                  {paymentMethod
+                    .filter((method) => method !== null)
+                    .map((method, index) => (
+                      <div
+                        key={index}
+                        className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                      >
+                        {`${method.payMetName} (${formatPeso(
+                          Number(method.salesPaymentAmount) >
+                            Number(row.salesTotalAmount)
+                            ? row.salesTotalAmount
+                            : method.salesPaymentAmount,
+                        )})`}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      { key: "salesCreatedByName", name: "Created By" },
+      {
+        key: "salesCreatedAt",
+        name: "Date",
+        selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
+      },
+      {
+        key: "salesStatus",
+        name: "Status",
+        selector: (row) => (
+          <SalesStatusBadge status={row.salesStatus as SalesStatus} />
+        ),
+      },
+    ];
+  }, [response?.data]);
+  const adminColumns: Column<DisplaySalesDto>[] = [
+    {
+      key: "#",
+      name: "#",
+      selector: (_row, index) => (pageNumber - 1) * limitNumber + index + 1,
+    },
+    {
+      key: "salesNo",
+      name: "Sales No",
+      selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
+    },
+    {
+      key: "customerName",
+      name: "Customer",
+      selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
+    },
+    {
+      key: "salesSubTotal ",
+      name: "Subtotal",
+      selector: (row) => (
+        <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
+      ),
+    },
+    {
+      key: "salesDiscount ",
+      name: "Discount",
+      selector: (row) => {
+        const discount = row.salesDiscounts || [];
+
+        return (
+          <div className="group relative">
+            <select
+              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+              disabled
+            >
+              <option value="">
+                {discount.length > 1
+                  ? `Discounts (${discount.filter((s) => s !== null).length})`
+                  : discount.length === 1
+                    ? `${discount[0].discountName} (${formatPeso(
+                        discount[0].discountAmount,
+                      )})`
+                    : ``}
+              </option>
+            </select>
+            {discount?.length > 0 && discount.some((d) => d !== null) && (
+              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
+                {discount
+                  .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
+                  .map((disc) => (
+                    <div
+                      key={disc.salesDiscountId}
+                      className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                    >
+                      <div className="flex">
+                        <span className=" text-xs font-semibold text-gray-700">
+                          {disc.discountName}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        {" "}
+                        <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                          {disc.discountType === "percent"
+                            ? `${disc.discountValue}%`
+                            : `₱${disc.discountValue.toFixed(2)}`}
+                        </span>
+                        <span className="text-[10px] font-semibold text-red-600">
+                          - ₱{disc.discountAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "salesTotalAmount",
+      name: "Total Amount",
+      selector: (row) => (
+        <span className="font-semibold">
+          {formatPeso(row.salesTotalAmount)}
+        </span>
+      ),
+    },
+    { key: "totalItem", name: "Total Item" },
+    {
+      key: "method",
+      name: "Payment Method",
+      selector: (row) => {
+        const paymentMethod = row.paymentMethods || [];
+        return (
+          <div className="group relative">
+            <select
+              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+              disabled
+            >
+              <option value="">
+                {/* {paymentMethod.filter((s) => s !== null).length > 0
+                ? `No Payment Method (${
+                    paymentMethod.filter((s) => s !== null).length
+                  })`
+                : "No Payment Method"} */}
+                {paymentMethod.length > 1
+                  ? `Multiple Payments (${
+                      paymentMethod.filter((s) => s !== null).length
+                    })`
+                  : paymentMethod.length === 1
+                    ? `${paymentMethod[0].payMetName} (${formatPeso(
+                        Number(paymentMethod[0].salesPaymentAmount) >
+                          Number(row.salesTotalAmount)
+                          ? row.salesTotalAmount
+                          : paymentMethod[0].salesPaymentAmount,
+                      )})`
+                    : `No payment`}
+              </option>
+            </select>
+            {paymentMethod.filter((s) => s !== null).length > 0 && (
+              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+                {paymentMethod
+                  .filter((method) => method !== null)
+                  .map((method, index) => (
+                    <div
+                      key={index}
+                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                    >
+                      {`${method.payMetName} (${formatPeso(
+                        Number(method.salesPaymentAmount) >
+                          Number(row.salesTotalAmount)
+                          ? row.salesTotalAmount
+                          : method.salesPaymentAmount,
+                      )})`}
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      key: "storeName",
+      name: "Store",
+      selector: (row) => <span className="font-semibold">{row.storeName}</span>,
+    },
+    { key: "salesCreatedByName", name: "Created By" },
+    {
+      key: "salesCreatedAt",
+      name: "Date",
+      selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
+    },
+  ];
+  const router = useRouter();
+  const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
+    null,
+  );
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
+  const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
+  const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
+  const [isViewSales, setIsViewSales] = useState(false);
+  const { stores } = useStores({
+    user,
+    hasStore,
+    isAdmin,
+  });
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
+    data: PaymentMethods[];
+  }>(
+    selectedStoreId ? `/api/payment-method/store/${selectedStoreId}/` : null,
+    fetcher,
+  );
+  const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
+    (p) => ({ label: p.payMetName, value: String(p.payMetId) }),
+  );
+
+  const defaultStoreFromUrl = searchParams.get("store") || "";
+
   const detailsUrl =
     user && storeId
       ? `/api/sales/${storeId}/details`
@@ -461,7 +489,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
     return `${detailsUrl}?${params.toString()}`;
   }, [storeId, searchParams, user]);
-  const debounceApi = useDebounce(apiUrl, 600);
+
   const debounceDetailsApi = useDebounce(apiDetailsUrl, 600);
 
   const { data: responseDetails } = useSWR(
@@ -469,14 +497,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     fetcher,
   );
 
-  const {
-    data: response,
-    mutate: mutateSales,
-    isLoading,
-  } = useSWR<ApiResponse<DisplaySalesDto[]>>(
-    user ? debounceApi : null,
-    fetcher,
-  );
   const updateDataSelected = async () => {
     const data = await mutateSales();
     const findSales = data?.data.find(
@@ -747,7 +767,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                     />
                   </div>
                 )}
-                totalCount={100}
+                totalCount={response?.count}
                 addContentLeftTitle={
                   !hasStore || isAdmin ? (
                     <div>
