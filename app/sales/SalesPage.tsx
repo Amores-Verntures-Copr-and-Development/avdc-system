@@ -612,7 +612,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="grid grid-cols-4 2xl:grid-cols-4 gap-2 min-h-10">
+            <div className="flex 2xl:grid-cols-4 gap-2 min-h-10">
               <SalesCard
                 icon={PhilippinePeso}
                 title="Total Sales"
@@ -692,7 +692,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                           <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
                             {method}
                           </span>
-                          <span className="text-[11px] 2xl:text-[10px] truncate w-full">
+                          <span className="text-[8px] 2xl:text-[10px] truncate w-full">
                             {formatPeso(amount)}
                           </span>
                         </div>

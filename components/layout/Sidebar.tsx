@@ -421,9 +421,6 @@ const Sidebar = () => {
                         title={isCollapsed ? name : undefined}
                         onClick={() => {
                           // Auto-close sidebar on mobile after clicking a link
-                          if (href === "/pos") {
-                            setIsCollapsed(true);
-                          }
                           if (isMobile) {
                             setIsCollapsed(true);
                           }

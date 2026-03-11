@@ -655,12 +655,17 @@ export const selectSalesTotalDetails = async ({
 
   // 1️⃣ Total Sales
   const totalSalesSql = `
-    SELECT COALESCE(SUM(s.salesTotalAmount) - SUM(sr.salesRefAmount), 0) AS totalSales
-    FROM Sales s
-    LEFT JOIN Stores st ON s.storeId = st.storeId
-    LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
-    ${totalSalesWhereClause};
-  `;
+  SELECT 
+    COALESCE(SUM(s.salesTotalAmount) - COALESCE(SUM(sr.totalRefunds),0), 0) AS totalSales
+  FROM Sales s
+  LEFT JOIN Stores st ON s.storeId = st.storeId
+  LEFT JOIN (
+    SELECT salesId, SUM(salesRefAmount) AS totalRefunds
+    FROM SalesRefunds
+    GROUP BY salesId
+  ) sr ON sr.salesId = s.salesId
+  ${totalSalesWhereClause};
+`;
 
   // 2️⃣ Total Count of Sales
   const totalCountSalesSql = `
@@ -672,25 +677,20 @@ export const selectSalesTotalDetails = async ({
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `
-    SELECT COALESCE(
-      SUM(
-          CASE WHEN DATE(s.salesCreatedAt) = CURDATE()
-              THEN s.salesTotalAmount
-              ELSE 0
-          END
-      ) 
-      - SUM(
-          CASE WHEN DATE(sr.salesRefCreatedAt) = CURDATE()
-              THEN sr.salesRefAmount
-              ELSE 0
-          END
-      ),
-  0) AS todaySales
+  SELECT 
+    COALESCE(
+      SUM(CASE WHEN DATE(s.salesCreatedAt) = CURDATE() THEN s.salesTotalAmount ELSE 0 END) -
+      COALESCE(SUM(CASE WHEN DATE(sr.salesRefCreatedAt) = CURDATE() THEN sr.totalRefunds ELSE 0 END), 0),
+    0) AS todaySales
   FROM Sales s
   LEFT JOIN Stores st ON s.storeId = st.storeId
-  LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
-    ${todaySalesWhereClause};
-  `;
+  LEFT JOIN (
+    SELECT salesId, SUM(salesRefAmount) AS totalRefunds, MAX(salesRefCreatedAt) AS salesRefCreatedAt
+    FROM SalesRefunds
+    GROUP BY salesId
+  ) sr ON sr.salesId = s.salesId
+  ${todaySalesWhereClause};
+`;
 
   // 4️⃣ Total Customers
   const totalCustomerSql = `
