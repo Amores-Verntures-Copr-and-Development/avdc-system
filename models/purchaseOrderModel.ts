@@ -163,7 +163,7 @@ export const selectPurchaseOrderItems = async ({
 	          'poItemId', oc.poItemId,
 	          'reqItemId', oc.reqItemId,
 	          'itemName', i.itemName,
-	          'itemPrice', i.itemPrice,
+	          'ordComPrice', oc.ordComPrice,
 	          'itemUnit', i.itemUnit,
             'ordComQuantity', oc.ordComQuantity
 	        )

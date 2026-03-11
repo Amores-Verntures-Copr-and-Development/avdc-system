@@ -200,8 +200,7 @@ const ShowAllIItems = ({
 
         if (hasComposite) {
           const total = row.composite?.reduce((total, item) => {
-            const subtotal = item.ordComQuantity * item.ordComPrice;
-            return (total += subtotal);
+            return total + item.ordComQuantity * item.ordComPrice;
           }, 0);
           return `${formatPeso(total)}`;
         }

@@ -11,6 +11,7 @@ import DynamicDropdown from "../shared/DynamicDropdown";
 import toast from "react-hot-toast";
 
 const Header = () => {
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { user, hasStore, isAdmin, refreshSession } = useSession();
   const { stores } = useStores({ user, hasStore, isAdmin });
 
@@ -97,15 +98,37 @@ const Header = () => {
         )}
       </div>
       <div className="flex gap-5 items-center">
-        <div className="relative flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-gray-300 text-white">
-          <Bell className="w-2.5 h-2.5 xl:w-6 xl:h-6" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2  xl:h-4 xl:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] xl:text-[10px] font-bold text-white">
+        <button
+          className="relative flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-gray-200 text-white"
+          onClick={() => setIsNotifOpen((prev) => !prev)}
+        >
+          <Bell className="w-2.5 h-2.5 xl:w-6 xl:h-6 text-primary-1" />
+          {/* {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-2 w-2 xl:h-4 xl:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] xl:text-[10px] font-bold text-white">
+              {notifications.length}
+            </span>
+          )} */}
+          <span className="absolute -top-1 -right-1 flex h-2 w-2 xl:h-4 xl:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] xl:text-[10px] font-bold text-white">
             3
           </span>
-        </div>
+        </button>
         <div className="flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-primary-1 text-xs xl:text-xl font-bold text-white">
           {user?.userFullName.charAt(0)}
         </div>
+        {isNotifOpen && (
+          <div className="absolute flex flex-col right-2 top-10 xs:top:13 lg:top-13 xl:top-15   w-80 max-h-80 bg-white border border-gray-200 rounded shadow-lg overflow-y-auto z-50">
+            <div className="flex justify-between items-center p-2 border-b border-b-gray-300">
+              <label className="text-sm font-semibold">Notifcations</label>
+              <span className="text-xs font-semibold text-primary-1">
+                Mark all as read
+              </span>
+            </div>
+            <div className="p-4 text-center text-gray-500 text-sm">
+              No notifications
+            </div>
+            {/* or map your notifications here */}
+          </div>
+        )}
       </div>
     </div>
   );

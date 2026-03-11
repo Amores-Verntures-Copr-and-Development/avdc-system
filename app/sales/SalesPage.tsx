@@ -281,161 +281,166 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       },
     ];
   }, [response?.data]);
-  const adminColumns: Column<DisplaySalesDto>[] = [
-    {
-      key: "#",
-      name: "#",
-      selector: (_row, index) => (pageNumber - 1) * limitNumber + index + 1,
-    },
-    {
-      key: "salesNo",
-      name: "Sales No",
-      selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
-    },
-    {
-      key: "customerName",
-      name: "Customer",
-      selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
-    },
-    {
-      key: "salesSubTotal ",
-      name: "Subtotal",
-      selector: (row) => (
-        <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
-      ),
-    },
-    {
-      key: "salesDiscount ",
-      name: "Discount",
-      selector: (row) => {
-        const discount = row.salesDiscounts || [];
-
-        return (
-          <div className="group relative">
-            <select
-              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-              disabled
-            >
-              <option value="">
-                {discount.length > 1
-                  ? `Discounts (${discount.filter((s) => s !== null).length})`
-                  : discount.length === 1
-                    ? `${discount[0].discountName} (${formatPeso(
-                        discount[0].discountAmount,
-                      )})`
-                    : ``}
-              </option>
-            </select>
-            {discount?.length > 0 && discount.some((d) => d !== null) && (
-              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
-                {discount
-                  .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
-                  .map((disc) => (
-                    <div
-                      key={disc.salesDiscountId}
-                      className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
-                    >
-                      <div className="flex">
-                        <span className=" text-xs font-semibold text-gray-700">
-                          {disc.discountName}
-                        </span>
-                      </div>
-
-                      <div className="flex justify-between">
-                        {" "}
-                        <span className="text-gray-400 text-[9px] xl:text-[10px]">
-                          {disc.discountType === "percent"
-                            ? `${disc.discountValue}%`
-                            : `₱${disc.discountValue.toFixed(2)}`}
-                        </span>
-                        <span className="text-[10px] font-semibold text-red-600">
-                          - ₱{disc.discountAmount.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        );
+  const adminColumns: Column<DisplaySalesDto>[] = useMemo(
+    () => [
+      {
+        key: "#",
+        name: "#",
+        selector: (_row, index) => (pageNumber - 1) * limitNumber + index + 1,
       },
-    },
-    {
-      key: "salesTotalAmount",
-      name: "Total Amount",
-      selector: (row) => (
-        <span className="font-semibold">
-          {formatPeso(row.salesTotalAmount)}
-        </span>
-      ),
-    },
-    { key: "totalItem", name: "Total Item" },
-    {
-      key: "method",
-      name: "Payment Method",
-      selector: (row) => {
-        const paymentMethod = row.paymentMethods || [];
-        return (
-          <div className="group relative">
-            <select
-              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-              disabled
-            >
-              <option value="">
-                {/* {paymentMethod.filter((s) => s !== null).length > 0
+      {
+        key: "salesNo",
+        name: "Sales No",
+        selector: (row) => <span className="font-semibold">{row.salesNo}</span>,
+      },
+      {
+        key: "customerName",
+        name: "Customer",
+        selector: (row) => (row.customerId ? row.customerName : `Walk-in`),
+      },
+      {
+        key: "salesSubTotal ",
+        name: "Subtotal",
+        selector: (row) => (
+          <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
+        ),
+      },
+      {
+        key: "salesDiscount ",
+        name: "Discount",
+        selector: (row) => {
+          const discount = row.salesDiscounts || [];
+
+          return (
+            <div className="group relative">
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option value="">
+                  {discount.length > 1
+                    ? `Discounts (${discount.filter((s) => s !== null).length})`
+                    : discount.length === 1
+                      ? `${discount[0].discountName} (${formatPeso(
+                          discount[0].discountAmount,
+                        )})`
+                      : ``}
+                </option>
+              </select>
+              {discount?.length > 0 && discount.some((d) => d !== null) && (
+                <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
+                  {discount
+                    .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
+                    .map((disc) => (
+                      <div
+                        key={disc.salesDiscountId}
+                        className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                      >
+                        <div className="flex">
+                          <span className=" text-xs font-semibold text-gray-700">
+                            {disc.discountName}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between">
+                          {" "}
+                          <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                            {disc.discountType === "percent"
+                              ? `${disc.discountValue}%`
+                              : `₱${disc.discountValue.toFixed(2)}`}
+                          </span>
+                          <span className="text-[10px] font-semibold text-red-600">
+                            - ₱{disc.discountAmount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        key: "salesTotalAmount",
+        name: "Total Amount",
+        selector: (row) => (
+          <span className="font-semibold">
+            {formatPeso(row.salesTotalAmount)}
+          </span>
+        ),
+      },
+      { key: "totalItem", name: "Total Item" },
+      {
+        key: "method",
+        name: "Payment Method",
+        selector: (row) => {
+          const paymentMethod = row.paymentMethods || [];
+          return (
+            <div className="group relative">
+              <select
+                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
+                disabled
+              >
+                <option value="">
+                  {/* {paymentMethod.filter((s) => s !== null).length > 0
                 ? `No Payment Method (${
                     paymentMethod.filter((s) => s !== null).length
                   })`
                 : "No Payment Method"} */}
-                {paymentMethod.length > 1
-                  ? `Multiple Payments (${
-                      paymentMethod.filter((s) => s !== null).length
-                    })`
-                  : paymentMethod.length === 1
-                    ? `${paymentMethod[0].payMetName} (${formatPeso(
-                        Number(paymentMethod[0].salesPaymentAmount) >
-                          Number(row.salesTotalAmount)
-                          ? row.salesTotalAmount
-                          : paymentMethod[0].salesPaymentAmount,
-                      )})`
-                    : `No payment`}
-              </option>
-            </select>
-            {paymentMethod.filter((s) => s !== null).length > 0 && (
-              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-                {paymentMethod
-                  .filter((method) => method !== null)
-                  .map((method, index) => (
-                    <div
-                      key={index}
-                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                    >
-                      {`${method.payMetName} (${formatPeso(
-                        Number(method.salesPaymentAmount) >
-                          Number(row.salesTotalAmount)
-                          ? row.salesTotalAmount
-                          : method.salesPaymentAmount,
-                      )})`}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        );
+                  {paymentMethod.length > 1
+                    ? `Multiple Payments (${
+                        paymentMethod.filter((s) => s !== null).length
+                      })`
+                    : paymentMethod.length === 1
+                      ? `${paymentMethod[0].payMetName} (${formatPeso(
+                          Number(paymentMethod[0].salesPaymentAmount) >
+                            Number(row.salesTotalAmount)
+                            ? row.salesTotalAmount
+                            : paymentMethod[0].salesPaymentAmount,
+                        )})`
+                      : `No payment`}
+                </option>
+              </select>
+              {paymentMethod.filter((s) => s !== null).length > 0 && (
+                <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
+                  {paymentMethod
+                    .filter((method) => method !== null)
+                    .map((method, index) => (
+                      <div
+                        key={index}
+                        className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
+                      >
+                        {`${method.payMetName} (${formatPeso(
+                          Number(method.salesPaymentAmount) >
+                            Number(row.salesTotalAmount)
+                            ? row.salesTotalAmount
+                            : method.salesPaymentAmount,
+                        )})`}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          );
+        },
       },
-    },
-    {
-      key: "storeName",
-      name: "Store",
-      selector: (row) => <span className="font-semibold">{row.storeName}</span>,
-    },
-    { key: "salesCreatedByName", name: "Created By" },
-    {
-      key: "salesCreatedAt",
-      name: "Date",
-      selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
-    },
-  ];
+      {
+        key: "storeName",
+        name: "Store",
+        selector: (row) => (
+          <span className="font-semibold">{row.storeName}</span>
+        ),
+      },
+      { key: "salesCreatedByName", name: "Created By" },
+      {
+        key: "salesCreatedAt",
+        name: "Date",
+        selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
+      },
+    ],
+    [response?.data],
+  );
   const router = useRouter();
   const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
     null,
