@@ -19,6 +19,9 @@ export async function processAdditionalReceiveRequestItem(
     const requestItemUpdate: Partial<RequestItems> = {
       reqItemId: data.requestItems.reqItemId,
       invItem: data.requestItems.invItem,
+      reqItemTransfer:
+        Number(data.requestItems.reqItemTransfer) +
+        Number(data.additionalReceive),
       reqItemReceived:
         Number(data.requestItems.reqItemReceived) +
         Number(data.additionalReceive),
