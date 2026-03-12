@@ -3,7 +3,9 @@ import { getDBConnection } from "@/lib/db";
 import { insertPurchaseOrderItems } from "@/models/purchaseOrderModel";
 import { insertRequestItemsBulk } from "@/models/requestModel";
 import { findRequestItemsByPoItemIdWithConverions } from "@/services/request/request-items/get-request-items";
+import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { PoolConnection } from "mysql2/promise";
+import { updatePurchaseOrderItems } from "./update-purchase-items";
 
 export async function createPurchaseOrderItem({
   connection,
@@ -72,12 +74,35 @@ export async function createPurchaseOrderItemWithSupplier({
       if (continueInsert) {
         const modifyData: CreatePurchaseOrderItemDto = {
           ...data,
-          poItemStatus: "delivered",
         };
-        await insertPurchaseOrderItems({
+        const insertedIds = await insertPurchaseOrderItems({
           connection: connection ? connection : newConnection,
           data: [modifyData],
         });
+        if (insertedIds) {
+          const checkRequestItems =
+            await findRequestItemsByPoItemIdWithConverions({
+              connection: connection ? connection : newConnection,
+              poItemId: insertedIds[0],
+            });
+          const isAllDeliveredOrReceive = checkRequestItems.every(
+            (i) =>
+              i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
+          );
+          const isAllReceived = checkRequestItems.every(
+            (i) => i.reqItemStatus === "received",
+          );
+          isAlreadyDeliveredInRequest = isAllDeliveredOrReceive;
+          const updateNew: Partial<PurchaseOrderItems> = {
+            poItemId: insertedIds[0],
+            poItemStatus: isAllReceived ? "received_store" : "delivered",
+          };
+          await updatePurchaseOrderItems({
+            keyFields: ["poItemId"],
+            updates: [updateNew],
+            connection: connection ? connection : newConnection,
+          });
+        }
         if (localConnection) {
           await newConnection.commit();
         }

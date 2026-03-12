@@ -2,6 +2,8 @@ import { Request } from "@/types/request";
 import { StoreInterface } from "@/types/stores";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { ShoppingBag } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 import React from "react";
 interface PendingRequest extends Request, StoreInterface {
   requestItemsCount: number;
@@ -11,8 +13,14 @@ interface StoreRequestOrderProps {
 }
 
 const StoreRequestOrder = ({ data }: StoreRequestOrderProps) => {
+  const router = useRouter();
   return (
-    <div className="p-2 border border-gray-200 rounded-lg shadow bg-white hover:bg-gray-50 transition-colors duration-150 flex items-center justify-between gap-3">
+    <div
+      className="p-2 border border-gray-200 rounded-lg shadow bg-white hover:bg-gray-50 transition-colors duration-150 flex items-center justify-between gap-3"
+      onClick={() => {
+        router.push(`/requisitions/${data.requestNo}`);
+      }}
+    >
       {/* Part 1: Icon and Title */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
