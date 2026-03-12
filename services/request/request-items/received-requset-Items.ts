@@ -48,7 +48,7 @@ export const receiveRequestItems = async ({
         inventoryItemId: reqItem.invItem,
         inventoryItemQuantity: reqItem.reqItemReceived,
       });
-      console.log({ poItems });
+
       if (poItems && poItems.length) {
         const checkRequestItems = await findRequestItemsByPOItemId({
           connection: connection,

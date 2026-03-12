@@ -62,6 +62,7 @@ const AddItemROModal = ({
                 setFormData((prev) => ({
                   ...prev,
                   invItem: item.inventoryItemId,
+                  unitPrice: item.itemPrice,
                 }));
               } else {
                 setFormData((prev) => ({
