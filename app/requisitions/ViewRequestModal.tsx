@@ -46,6 +46,7 @@ import Popup from "@/components/shared/PopupModal";
 import IconButton from "@/components/shared/IconButton";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import ReceiveItemComponent from "./components/ReceiveItemComponent";
+import AdditionalReceiveModal from "./components/AdditionalReceiveModal";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -65,7 +66,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [selectedRow, setSelectedRow] = useState<DisplayRequestItems | null>(
     null,
   );
-
   const [showReceiveItemModal, setShowReceiveItemModal] = useState(false);
   const [selectedRowItem, setSelectedRowItem] =
     useState<DisplayRequestItems | null>(null);
@@ -80,6 +80,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [requestItemData, setRequestItemData] = useState<DisplayRequestItems[]>(
     [],
   );
+  const [showAdditionalReceive, setShowAdditionalReceive] = useState(false);
   const [originalData, setOriginalData] = useState<DisplayRequestItems[]>([]);
   const [showReceivedConfirmation, setShowReceivedConfirmation] =
     useState(false);
@@ -634,7 +635,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       localStorage.removeItem(storageKey);
@@ -644,9 +644,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setShowReceivedConfirmation(false);
 
       return true;
-    } catch (_e) {
-      console.log(_e);
-      toast.error("Failed to update Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsReceiving(false);
@@ -673,16 +672,15 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       toast.success(res.message);
       mutate();
       mutateRequest();
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to update Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
+
       return false;
     }
   };
@@ -761,16 +759,14 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       );
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       toast.success(res.message);
       mutate();
       mutateRequest();
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add item.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsAddingItem(false);
@@ -793,23 +789,20 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
       toast.success(res.message);
       mutate();
       mutateRequest();
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add item.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsAddingItemPo(false);
     }
   };
   const handleRowSelection = (row: DisplayRequestItems[]) => {
-    console.log({ row });
     if (row.length > 0) {
       setSelectedRows(row);
     }
@@ -922,7 +915,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         ...selectedReq,
         requestItems: [{ ...selectedRowItem }],
       };
-      console.log(receiveItem);
+
       const sendData = {
         controller: "received",
         data: [receiveItem],
@@ -981,9 +974,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setSelectedRowItem(null);
 
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to update Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsReceiving(false);
@@ -1056,9 +1048,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setSelectedRowItem(null);
 
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to update Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsReceiving(false);
@@ -1248,9 +1239,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       {" "}
                       <IconButton
                         onClick={() => {
-                          console.log({ row });
-
-                          console.log({ findOriginalData });
                           if (Number(row.reqItemReceived) === 0) {
                             toast.error("No quantity to receive!");
                             return;
@@ -1264,9 +1252,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       />
                       <IconButton
                         onClick={() => {
-                          console.log({ row });
-
-                          console.log({ findOriginalData });
                           if (Number(row.reqItemReceived) === 0) {
                             toast.error("No quantity to receive!");
                             return;
@@ -1284,10 +1269,6 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     findOriginalData?.reqItemStatus !== "not_ordered" && (
                       <IconButton
                         onClick={() => {
-                          console.log({ row });
-
-                          console.log({ findOriginalData });
-
                           setSelectedRowItem(row);
                           setShowNotOrderedConfirmation(true);
                         }}
@@ -1296,6 +1277,17 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         icon={<X className="w-3 h-3 xl:w-4 xl:h-4" />}
                       />
                     )}
+                  {row.reqItemStatus === "received" && (
+                    <IconButton
+                      onClick={function (): void {
+                        setSelectedRowItem(row);
+                        setShowAdditionalReceive(true);
+                      }}
+                      label={"Additional Receive"}
+                      bg={"green"}
+                      icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                    />
+                  )}
                 </div>
               );
             }}
@@ -1789,6 +1781,29 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           }}
           onClose={function (): void {
             setShowReceiveItemModal(false);
+
+            setSelectedRow(null);
+          }}
+        />
+      </Popup>
+      <Popup
+        title={`Additional Receive ${selectedRowItem?.itemName}`}
+        isOpen={showAdditionalReceive}
+        onClose={function (): void {
+          setShowAdditionalReceive(false);
+
+          setSelectedRowItem(null);
+        }}
+        background="bg-white/20"
+      >
+        <AdditionalReceiveModal
+          data={selectedRowItem}
+          mutate={() => {
+            mutate();
+            mutateRequest();
+          }}
+          onClose={function (): void {
+            setShowAdditionalReceive(false);
 
             setSelectedRow(null);
           }}

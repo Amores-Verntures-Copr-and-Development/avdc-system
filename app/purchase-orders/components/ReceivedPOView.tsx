@@ -206,7 +206,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     {
       name: "Price",
       key: "unitPrice",
-      selector: (row) => formatPeso(row.unitPrice),
+      selector: (row) => row.unitPrice,
     },
     {
       name: "Supplier Price",

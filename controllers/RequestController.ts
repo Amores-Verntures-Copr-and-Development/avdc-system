@@ -1,4 +1,5 @@
 import { POAddToRequestItemForm } from "@/app/purchase-orders/components/_components/AddItemToRequestFromPOModal";
+import { AdditionalReceiveDto } from "@/app/requisitions/components/AdditionalReceiveModal";
 import { CreateRequestFormDto, CreateRequestItemDto } from "@/dtos/request.dto";
 import {
   getRequestOrderFromStockRoomByPurchaserFields,
@@ -11,6 +12,7 @@ import { processReceivedRequest } from "@/services/request/process-received-requ
 import { createRequestItem } from "@/services/request/request-items/create-request-items";
 import { getRequestOrderItems } from "@/services/request/request-items/get-request-items";
 import { notOrderedRequestItems } from "@/services/request/request-items/not-ordered-requestItems";
+import { processAdditionalReceiveRequestItem } from "@/services/request/request-items/proccess-additional-receive-item";
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
 import { receiveRequestItems } from "@/services/request/request-items/received-requset-Items";
 import { updateRequestItems } from "@/services/request/request-items/update-request-items";
@@ -211,7 +213,7 @@ export const updateRequestItem = async (
     });
     return {
       success: true,
-      message: "Request Items updated successfully1",
+      message: "Request Items updated successfully!",
       data: res,
     };
   } catch (e) {
@@ -259,6 +261,25 @@ export const updateRequestItemByStatus = async ({
     return {
       success: false,
       message: "Failed to update request items!",
+      error: e,
+    };
+  }
+};
+
+export const AdditionalReceiveController = async (
+  data: AdditionalReceiveDto,
+) => {
+  try {
+    const res = await processAdditionalReceiveRequestItem(data);
+    return {
+      success: true,
+      message: "Additional items received successfully.",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to process additional receive!",
       error: e,
     };
   }

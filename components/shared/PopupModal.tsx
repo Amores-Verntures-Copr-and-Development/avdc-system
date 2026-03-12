@@ -38,7 +38,7 @@ const Popup: React.FC<PopupProps> = ({
     left: `left-0 top-0 h-full w-96 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "-translate-x-full"
     }`,
-    right: `right-0 top-0 h-full w-96 transform transition-transform duration-300 ease-in-out ${
+    right: `right-0 top-0 h-full w-56 2xl:w-96 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "translate-x-full"
     }`,
     top: `top-0 left-0 w-full h-72 transform transition-transform duration-300 ease-in-out ${
@@ -54,18 +54,18 @@ const Popup: React.FC<PopupProps> = ({
       className={clsx(
         "fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300",
         isOpen ? "opacity-100" : "opacity-0",
-        background
+        background,
       )}
     >
       <div
         className={clsx(
           "fixed bg-white shadow-lg rounded-lg flex flex-col",
-          positionClasses[position]
+          positionClasses[position],
         )}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-sm 2xl:text-lg font-semibold">{title}</h2>
           <button onClick={onClose}>
             <X className="w-5 h-5" />
           </button>

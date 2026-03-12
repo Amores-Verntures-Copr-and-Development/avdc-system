@@ -23,7 +23,7 @@ export const receiveRequestItems = async ({
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    console.log({ requestItems });
+
     //Update the Request Item Received
     const updateReceivedRequestItems: Partial<RequestItems>[] =
       requestItems.map((i) => ({
@@ -84,7 +84,6 @@ export const receiveRequestItems = async ({
           keyFields: { inventoryItemId: i.inventoryItemId },
         });
         if (inventoryItem) {
-          console.log("Inventory Item: ", inventoryItem.data);
           createInventoryItemMovement.push({
             inventoryId: inventoryItem.data[0].inventoryId,
             inventoryItemId: inventoryItem.data[0].inventoryItemId,
