@@ -22,6 +22,11 @@ import {
 import React, { useState } from "react";
 import useSWR from "swr";
 import { getStatusOption } from "./CompletePOView";
+import Modal from "@/components/shared/Modal";
+import { pdf, PDFViewer } from "@react-pdf/renderer";
+import RequestOrderPDF from "@/components/pdf/RequestOrderPDF";
+import { RequestOrderPdf } from "@/dtos/request.dto";
+import { Request } from "@/types/request";
 
 interface ShowPOByRequestProps {
   setShowAllItems: React.Dispatch<
@@ -34,6 +39,8 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null,
   );
+  const [pdfData, setPdfData] = useState<RequestOrderPdf | null>(null);
+  const [showROPDF, setShowROPDF] = useState(false);
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayRequisitionWithItems[];
   }>(`/api/purchase-order/po-request-order/${data?.poNumber}`, fetcher);
@@ -96,7 +103,54 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
       },
     },
   ];
+  // const [selectedRequest, setSelectedRequest];
+  const handleDownloadPDF = (request: DisplayRequisitionWithItems) => {
+    const pdfData: RequestOrderPdf = {
+      requestItems: request.requestItemsData.map((r) => ({
+        ...r,
+        inventoryId: 0,
+      })),
+      store: {
+        storeName: request?.storeName,
+      },
+      requestOrder: {
+        requestId: request?.requestId,
+        requestNo: request?.requestNo,
+        requestCreatedAt: request?.requestCreatedAt,
+        requestStatus: request?.requestStatus,
+      },
+      requestedBy: "",
+    };
+    setPdfData(pdfData);
+    setShowROPDF(true);
+  };
+  const handleDownload = async (request: DisplayRequisitionWithItems) => {
+    const pdfData: RequestOrderPdf = {
+      requestItems: request.requestItemsData.map((r) => ({
+        ...r,
+        inventoryId: 0,
+      })),
+      store: {
+        storeName: request?.storeName,
+      },
+      requestOrder: {
+        requestId: request?.requestId,
+        requestNo: request?.requestNo,
+        requestCreatedAt: request?.requestCreatedAt,
+        requestStatus: request?.requestStatus,
+      },
+      requestedBy: "",
+    };
+    const blob = await pdf(<RequestOrderPDF data={pdfData} />).toBlob();
 
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `RequestOrder-${request?.requestNo}.pdf`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  };
   const totalAllRequestItemPrice = itemResponse.data.reduce((sum, req) => {
     const totalRequestItemPrice = req.requestItemsData
       .filter((item) => item.reqItemStatus !== "not_ordered")
@@ -166,14 +220,17 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
             const { label, bg, color, border } = getRequestStatusOption(
               reqData.requestStatus ?? "",
             );
-            const totalRequestItemPrice = reqData.requestItemsData.reduce(
-              (total, item) => {
-                const quantity = Number(item.reqItemQuantity || 1);
+            const totalRequestItemPrice = reqData.requestItemsData
+              .filter((i) => i.reqItemStatus !== "not_ordered")
+              .reduce((total, item) => {
+                const quantity = Number(
+                  item.reqItemReceived ||
+                    item.reqItemTransfer ||
+                    item.reqItemQuantity,
+                );
                 const price = Number(item.unitPrice || 0);
                 return total + quantity * price;
-              },
-              0,
-            );
+              }, 0);
             return (
               <div
                 className="flex flex-col shadow w-full border-1 border-gray-200 cursor-pointer"
@@ -252,10 +309,10 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                         color="secondary"
                         size="xs"
                         onClick={() => {
-                          console.log("Print request:", reqData.requestNo);
+                          handleDownloadPDF(reqData);
                         }}
-                        label="Print"
-                        icon={PrinterIcon}
+                        label="View PDF"
+                        icon={FileText}
                         className="font-semibold text-gray-700 text-xs px-2 py-2"
                       />
                     </div>
@@ -264,7 +321,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                         color="secondary"
                         size="xs"
                         onClick={() => {
-                          console.log("Download PDF:", reqData.requestNo);
+                          handleDownload(reqData);
                         }}
                         label="Download PDF"
                         icon={FileText}
@@ -301,6 +358,20 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
           </div>
         </div>
       </div>
+      <Modal
+        className="h-[95%]"
+        isOpen={showROPDF}
+        size="xl"
+        onClose={function (): void {
+          setShowROPDF(false);
+        }}
+        title="Request Order PDF"
+      >
+        {" "}
+        <PDFViewer width="100%" height="100%">
+          <RequestOrderPDF data={pdfData ?? null} />
+        </PDFViewer>
+      </Modal>
     </div>
   );
 };

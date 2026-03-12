@@ -71,7 +71,7 @@ const chunkItemsWithFirstPage = (
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   page: {
-    padding: 24,
+    padding: 10,
     fontSize: 9,
     fontFamily: "Helvetica",
     backgroundColor: "#fff",
@@ -200,9 +200,16 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
     return [...acc, acc[i - 1] + itemChunks[i - 1].length];
   }, []);
 
-  const grandTotal = items.reduce((sum, item) => {
-    return sum + item.reqItemReceived * Number(item.unitPrice);
-  }, 0);
+  const grandTotal = items
+    .filter(
+      (i) =>
+        i.reqItemStatus === "delivered" ||
+        i.reqItemStatus === "received" ||
+        i.reqItemStatus === "partial",
+    )
+    .reduce((sum, item) => {
+      return sum + item.reqItemReceived * Number(item.unitPrice);
+    }, 0);
 
   const renderTableHeader = () => (
     <View style={styles.tableHeader}>
