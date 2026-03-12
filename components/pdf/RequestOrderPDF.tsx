@@ -259,20 +259,20 @@ const RequestOrderPDF = ({ data }: RequestOrderPDFProps) => {
           <Text style={styles.colQty}>
             {item.reqItemQuantity
               ? formatQuantityByUnit(item.reqItemQuantity, item.itemUnit ?? "")
-              : "—"}
+              : ""}
           </Text>
           <Text style={styles.colQty}>
             {Number(item.reqItemTransfer) !== 0
               ? formatQuantityByUnit(item.reqItemTransfer, item.itemUnit ?? "")
-              : "—"}
+              : ""}
           </Text>
           <Text style={styles.colQty}>
             {Number(item.reqItemReceived) !== 0
               ? formatQuantityByUnit(item.reqItemReceived, item.itemUnit ?? "")
-              : "—"}
+              : ""}
           </Text>
           <Text style={styles.colTotal}>
-            {total !== 0 ? total.toFixed(2) : "—"}
+            {total !== 0 ? total.toFixed(2) : ""}
           </Text>
         </View>
       );
