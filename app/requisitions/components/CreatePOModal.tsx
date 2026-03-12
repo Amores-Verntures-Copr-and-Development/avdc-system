@@ -63,23 +63,57 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
   }, [itemResponse.data?.length]);
 
   const baseColumns: Column<DisplayTotalOrderItem>[] = [
-    { name: "#", key: "#", selector: (_row, index) => index + 1 },
-    { name: "Item Name", key: "itemName" },
-    { name: "Unit", key: "itemUnit" },
+    {
+      name: "#",
+      key: "#",
+      selector: (_row, index) => (
+        <span className=" flex justify-center">{index + 1}</span>
+      ),
+    },
+    {
+      name: "Item Name",
+      key: "itemName",
+      selector: (row) => (
+        <span className=" flex justify-center">{row.itemName}</span>
+      ),
+    },
+    {
+      name: "Unit",
+      key: "itemUnit",
+      selector: (row) => (
+        <span className=" flex justify-center">{row.itemUnit}</span>
+      ),
+    },
     {
       name: "Price",
       key: "itemPrice",
-      selector: (row) => formatPeso(row.itemPrice),
+      selector: (row) => (
+        <span className=" flex justify-center">
+          {formatPeso(row.itemPrice)}
+        </span>
+      ),
     },
     {
       name: "Stock Available",
       key: "stockItem",
-      selector: (row) => formatQuantityByUnit(row.stockItem, row.itemUnit),
+      selector: (row) => (
+        <span className="font-semibold flex justify-center">
+          {formatQuantityByUnit(row.stockItem, row.itemUnit)}
+        </span>
+      ),
+      bgCol: "bg-green-100",
+      bgHeader: "bg-green-200",
     },
     {
       name: "Quantity Requested",
       key: "totalQuantity",
-      selector: (row) => formatQuantityByUnit(row.totalQuantity, row.itemUnit),
+      selector: (row) => (
+        <span className="font-semibold flex justify-center">
+          {formatQuantityByUnit(row.totalQuantity, row.itemUnit)}
+        </span>
+      ),
+      bgCol: "bg-blue-100",
+      bgHeader: "bg-greeblue-200",
     },
     {
       name: "Need to Order",
@@ -91,7 +125,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
           return (
             <div className="w-full">
               {" "}
-              <span className="bg-green-600 py-1 rounded-2xl px-2 text-white">
+              <span className="bg-green-600 py-1 rounded-2xl px-2 flex justify-center text-white">
                 Avail ({row.stockItem - row.totalQuantity})
               </span>
             </div>
@@ -99,7 +133,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
         } else {
           const quantity = row.stockItem - row.totalQuantity; // Fixed: should be total - stock
           return (
-            <span className="text-red-600 font-medium">
+            <span className="text-red-600 flex justify-center font-medium">
               {formatQuantityByUnit(quantity, row.itemUnit)}
             </span>
           );
@@ -119,7 +153,11 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     .map((key) => ({
       name: key.replace(/_/g, " ").replace("Qty", "Qty").trim(),
       key,
-      selector: (row: any) => formatQuantityByUnit(row[key], row.itemUnit),
+      selector: (row: any) => (
+        <span className="flex justify-center">
+          {formatQuantityByUnit(row[key], row.itemUnit)}
+        </span>
+      ),
     }));
   const requestItemColumn: Column<DisplayTotalOrderItem>[] = [
     ...baseColumns.slice(0, 5), // before totals

@@ -30,14 +30,15 @@ export interface Column<T = any> {
   editable?: boolean | ((row: T, rowIndex: number) => boolean);
   inputType?: "text" | "number" | "date" | "email" | "tel" | "url" | "select";
   options?: SelectOption[] | ((row: T) => SelectOption[]);
-
   value?: (row: T) => any;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
   validate?: (value: any, row: T) => boolean;
   format?: (value: any) => string;
   compute?: (row: T) => any;
   dependsOn?: (keyof T | string)[];
-  selectOptionVariant?: SelectOptionVariant; // ✅ FIXED NAME
+  selectOptionVariant?: SelectOptionVariant;
+  bgCol?: string; // Cell background color
+  bgHeader?: string; // Header background color
 }
 type SelectOptionVariant = "native" | "custom";
 
@@ -345,6 +346,8 @@ const TableInner = <T extends Record<string, any>>(
     const errorKey = `${rowIndex}-${column.key}`;
     const hasError = errors.has(errorKey);
 
+    const cellBg = column.bgCol ?? "bg-white"; // default background
+
     if (editable && editMode === "inline") {
       const realRow = getRowById(row);
       if (column.inputType === "select") {
@@ -356,42 +359,43 @@ const TableInner = <T extends Record<string, any>>(
         const rawValue = column.value
           ? column.value(row)
           : realRow?.[column.key];
-
         const selectedValue =
           rawValue === null || rawValue === undefined ? "" : String(rawValue);
 
-        // 👇 SWITCH HERE
         if (column.selectOptionVariant === "custom") {
           return (
-            <CustomSelect
-              value={selectedValue}
-              options={opts}
-              onChange={(v) => handleInputChange(row, column.key, v)}
-            />
+            <div className={cellBg}>
+              <CustomSelect
+                value={selectedValue}
+                options={opts}
+                onChange={(v) => handleInputChange(row, column.key, v)}
+              />
+            </div>
           );
         }
 
-        // 👇 fallback to native select
         return (
-          <select
-            onClick={(e) => e.stopPropagation()}
-            className="border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300"
-            value={selectedValue}
-            onChange={(e) =>
-              handleInputChange(realRow ?? row, column.key, e.target.value)
-            }
-          >
-            {opts.map((opt, idx) => (
-              <option key={idx} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <div className={cellBg}>
+            <select
+              onClick={(e) => e.stopPropagation()}
+              className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-sm border-gray-300`}
+              value={selectedValue}
+              onChange={(e) =>
+                handleInputChange(realRow ?? row, column.key, e.target.value)
+              }
+            >
+              {opts.map((opt, idx) => (
+                <option key={idx} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
         );
       } else {
         const realRow = getRowById(row);
         return (
-          <div className="flex flex-col">
+          <div className={`${cellBg} flex flex-col`}>
             <input
               onClick={(e) => e.stopPropagation()}
               type={column.inputType ?? "text"}
@@ -415,9 +419,9 @@ const TableInner = <T extends Record<string, any>>(
                 handleInputChange(row, column.key, e.target.value)
               }
               className={`border rounded px-1 py-0.5 xl:px-2 xl:py-1 text-[10px] xl:text-sm text-gray-800 caret-black
-        ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
-        w-auto
-      `}
+              ${hasError ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
+              w-auto
+            `}
               {...(column.inputProps || {})}
             />
           </div>
@@ -425,10 +429,15 @@ const TableInner = <T extends Record<string, any>>(
       }
     }
 
-    if (column.selector) return column.selector(row, rowIndex);
+    if (column.selector)
+      return <div className={cellBg}>{column.selector(row, rowIndex)}</div>;
 
     const value = row[column.key];
-    return column.format ? column.format(value) : value;
+    return (
+      <div className={cellBg}>
+        {column.format ? column.format(value) : value}
+      </div>
+    );
   };
   const colSpanCount = React.useMemo(
     () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),
@@ -616,16 +625,17 @@ const TableInner = <T extends Record<string, any>>(
                       </td>
                     )}
 
-                    {columns.map((column, colIndex) => (
-                      <td
-                        key={column.key}
-                        className={`px-1 py-4 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${
-                          colIndex < columns.length - 1 ? "" : ""
-                        }`}
-                      >
-                        {renderCell(column, row, rowIndex)}
-                      </td>
-                    ))}
+                    {columns.map((column, colIndex) => {
+                      const cellBg = column.bgCol ?? "bg-white"; // default cell bg
+                      return (
+                        <td
+                          key={column.key}
+                          className={`px-1 py-4 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${cellBg}`}
+                        >
+                          {renderCell(column, row, rowIndex)}
+                        </td>
+                      );
+                    })}
 
                     {showActions && renderActions && (
                       <td
