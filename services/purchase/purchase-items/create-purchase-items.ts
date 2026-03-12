@@ -55,17 +55,25 @@ export async function createPurchaseOrderItemWithSupplier({
             connection: connection ? connection : newConnection,
             poItemId: insertedIds[0],
           });
-        const isAllDeliveredOrReceive = checkRequestItems.every(
-          (i) =>
-            i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
-        );
+        const isAllDeliveredOrReceive =
+          checkRequestItems.length > 0 &&
+          checkRequestItems.every(
+            (i) =>
+              i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
+          );
         isAlreadyDeliveredInRequest = isAllDeliveredOrReceive;
+        console.log({ checkRequestItems, isAlreadyDeliveredInRequest });
       }
       if (isAlreadyDeliveredInRequest) {
         if (localConnection) {
           await newConnection.rollback();
         }
+      } else {
+        if (localConnection) {
+          await newConnection.commit();
+        }
       }
+
       return {
         isAlreadyDeliveredInRequest: isAlreadyDeliveredInRequest,
       };
@@ -85,13 +93,19 @@ export async function createPurchaseOrderItemWithSupplier({
               connection: connection ? connection : newConnection,
               poItemId: insertedIds[0],
             });
-          const isAllDeliveredOrReceive = checkRequestItems.every(
-            (i) =>
-              i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
-          );
-          const isAllReceived = checkRequestItems.every(
-            (i) => i.reqItemStatus === "received",
-          );
+          const isAllDeliveredOrReceive =
+            checkRequestItems.length > 0 &&
+            checkRequestItems.every(
+              (i) =>
+                i.reqItemStatus === "delivered" ||
+                i.reqItemStatus === "received",
+            );
+          const isAllReceived =
+            checkRequestItems.length > 0 &&
+            checkRequestItems.every((i) => i.reqItemStatus === "received");
+          const isAllDelivered =
+            checkRequestItems.length > 0 &&
+            checkRequestItems.every((i) => i.reqItemStatus === "delivered");
           isAlreadyDeliveredInRequest = isAllDeliveredOrReceive;
           const updateNew: Partial<PurchaseOrderItems> = {
             poItemId: insertedIds[0],

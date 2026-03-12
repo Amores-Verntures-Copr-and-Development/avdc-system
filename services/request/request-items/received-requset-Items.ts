@@ -48,7 +48,7 @@ export const receiveRequestItems = async ({
         inventoryItemId: reqItem.invItem,
         inventoryItemQuantity: reqItem.reqItemReceived,
       });
-
+      console.log({ poItems });
       if (poItems && poItems.length) {
         const checkRequestItems = await findRequestItemsByPOItemId({
           connection: connection,
@@ -61,6 +61,7 @@ export const receiveRequestItems = async ({
             (i) =>
               i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
           );
+
         if (isAllRequestDeliveredOrReceived) {
           const updatePoItem: Partial<PurchaseOrderItems> = {
             poItemId: poItems[0].poItemId,
