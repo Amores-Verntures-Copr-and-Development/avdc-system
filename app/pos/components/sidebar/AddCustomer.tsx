@@ -14,8 +14,8 @@ interface AddCustomerProps {
 
 const AddCustomer = ({ storeId, user, onClose }: AddCustomerProps) => {
   const [customerForm, setCustomerForm] = useState<CreateCustomerDto>({
-    storeId: storeId!,
-    customerCreatedBy: user?.userId!,
+    storeId: storeId ?? 0,
+    customerCreatedBy: user?.userId ?? 0,
     customerEmail: "",
     customerName: "",
     customerPhone: "",
