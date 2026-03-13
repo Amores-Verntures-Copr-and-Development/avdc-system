@@ -9,6 +9,7 @@ import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 
 interface AddUserModalProps {
@@ -87,6 +88,34 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     if (currentStep > 1) {
       setCurrentStep((currentStep - 1) as ModalStep);
     }
+  };
+
+  const validateStep1 = () => {
+    if (!addUserFormData.userRole) {
+      toast.error("User role is required!");
+      return false;
+    }
+    if (!addUserFormData.userFname?.trim()) {
+      toast.error("First Name is required!");
+      return false;
+    }
+    if (!addUserFormData.userLname?.trim()) {
+      toast.error("Last Name is required!");
+      return false;
+    }
+    if (!addUserFormData.userEmail?.trim()) {
+      toast.error("Email is required!");
+      return false;
+    }
+    if (!addUserFormData.userName?.trim()) {
+      toast.error("Username is required!");
+      return false;
+    }
+    if (!addUserFormData.userPassword?.trim()) {
+      toast.error("Password is required!");
+      return false;
+    }
+    return true;
   };
 
   // Step 1: User Information
@@ -339,19 +368,25 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     //     addUserFormData.empPosition === "staff");
 
     return (
-      <div className="flex justify-between pt-4 border-t">
+      <div className="flex justify-end gap-4 pt-4 border-t">
         <div>
           {currentStep > 1 ? (
             <Button
-              size="md"
+              size="sm"
               className="text-sm font-semibold"
               color="secondary"
               label="Back"
-              onClick={goToPrevStep}
+              onClick={() => {
+                !["owner", "super-admin"].includes(
+                  addUserFormData.userRole ?? "",
+                )
+                  ? goToPrevStep()
+                  : setCurrentStep(1);
+              }}
             />
           ) : (
             <Button
-              size="md"
+              size="sm"
               className="text-sm font-semibold"
               color="secondary"
               label="Cancel"
@@ -363,16 +398,28 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         <div className="flex space-x-2">
           {currentStep < 3 ? (
             <Button
-              size="md"
+              size="sm"
               label="Next"
               className="text-sm font-semibold"
-              onClick={goToNextStep}
-              // Optional: Add validation before allowing next step
-              // disabled={!isStepValid(currentStep)}
+              onClick={() => {
+                const continueStep = validateStep1();
+
+                if (!continueStep) {
+                  console.log({ continueStep });
+                  console.log("test");
+                  return;
+                }
+
+                !["owner", "super-admin"].includes(
+                  addUserFormData.userRole ?? "",
+                )
+                  ? goToNextStep()
+                  : setCurrentStep(3);
+              }}
             />
           ) : (
             <Button
-              size="md"
+              size="sm"
               label="Submit"
               className="text-sm font-semibold"
               onClick={handleSubmit}

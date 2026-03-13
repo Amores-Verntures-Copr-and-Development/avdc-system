@@ -14,6 +14,7 @@ import {
   Receipt,
   Tag,
   TicketPercent,
+  UserRoundPlus,
 } from "lucide-react";
 import IconButton from "@/components/shared/IconButton";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
@@ -54,6 +55,7 @@ import SearchBar from "@/components/shared/SearchBar";
 import ProductVariantCard from "./components/ProductVariantCard";
 import ViewEditAmountItemOrder from "./components/ViewEditAmountItemOrder";
 import SalesOrder from "./components/sidebar/SalesOrder";
+import AddCustomer from "./components/sidebar/AddCustomer";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -93,7 +95,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
   const [isShowIcons, setIsShowIcons] = useState<
-    "discount" | "methods" | "product" | "history" | null
+    "discount" | "methods" | "product" | "history" | null | "add-customer"
   >(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [isCheckOut, setIsCheckOut] = useState(false);
@@ -755,6 +757,17 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <div className="flex gap-2">
                       <IconButton
                         onClick={() => {
+                          setIsShowIcons("add-customer");
+                        }}
+                        label="Add Customer"
+                        bg="red"
+                        icon={
+                          <UserRoundPlus className="w-5 h-5 2xl:w-7 2xl:h-5" />
+                        }
+                        isRounded={false}
+                      />
+                      <IconButton
+                        onClick={() => {
                           setIsShowIcons("methods");
                         }}
                         label="Payment Method List"
@@ -785,7 +798,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         icon={<Files className="w-5 h-5 2xl:w-7 2xl:h-5" />}
                         isRounded={false}
                       />
-
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("history");
@@ -991,6 +1003,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       </div>
       {isShowIcons !== null && (
         <Popup
+          icon={
+            isShowIcons === "add-customer"
+              ? UserRoundPlus
+              : isShowIcons === "discount"
+                ? TicketPercent
+                : isShowIcons === "methods"
+                  ? CreditCard
+                  : isShowIcons === "history"
+                    ? History
+                    : isShowIcons === "product"
+                      ? Files
+                      : undefined
+          }
           title={
             isShowIcons === "discount"
               ? "Discount List"
@@ -1000,7 +1025,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                   ? "Product List"
                   : isShowIcons === "history"
                     ? "Sales Order"
-                    : ""
+                    : isShowIcons === "add-customer"
+                      ? "Add Customer"
+                      : ""
           }
           isOpen={isShowIcons !== null}
           onClose={function (): void {
@@ -1016,6 +1043,14 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             <ProductList />
           ) : isShowIcons === "history" ? (
             <SalesOrder storeId={storeId} user={user} />
+          ) : isShowIcons === "add-customer" ? (
+            <AddCustomer
+              storeId={storeId}
+              user={user}
+              onClose={function (): void {
+                setIsShowIcons(null);
+              }}
+            />
           ) : (
             ""
           )}

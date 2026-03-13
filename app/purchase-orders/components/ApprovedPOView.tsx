@@ -20,7 +20,7 @@ import {
   RefreshCw,
   Send,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import StoreCardInSupplier from "./_components/StoreCardInSupplier";
 import useSWR from "swr";
@@ -34,6 +34,8 @@ import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
 import ReceivedComponent from "./_components/ReceivedComponent";
 import { useSession } from "@/hooks/useSession";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
+import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -135,6 +137,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const { user } = useSession();
+  const [renderPDF, setRenderPDF] = useState(false);
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number | null;
     index: null | number;
@@ -143,7 +146,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     index: null,
   });
   const [showROPDF, setShowROPDF] = useState<
-    "po" | "supplier" | "store" | null
+    "po" | "supplier" | "store" | "suppliers" | null
   >(null);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
   const [isView, setIsView] = useState<"all" | "store">("all");
@@ -194,6 +197,17 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   //     onClose();
   //   }
   // };
+  useEffect(() => {
+    if (showROPDF !== null) {
+      setRenderPDF(false);
+
+      const timer = setTimeout(() => {
+        setRenderPDF(true);
+      }, 100); // allow modal to open first
+
+      return () => clearTimeout(timer);
+    }
+  }, [showROPDF]);
 
   const handleReceivePO = async (items: DisplayPOItemsSupplier[]) => {
     try {
@@ -798,6 +812,18 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             <span className="text-xs ml-2"> Created: {}</span>
           </span>
           <div className="flex gap-3">
+            <div>
+              <Button
+                size="sm"
+                label="Supplier PDF"
+                onClick={() => {
+                  console.log("Test");
+                  setShowROPDF("suppliers");
+                }}
+                color="outline"
+                icon={FileText}
+              />
+            </div>
             <div className="">
               <Button
                 color="secondary"
@@ -850,15 +876,21 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
         }}
         title="Purchase Order PDF"
       >
-        <PDFViewer width="100%" height="100%">
-          {showROPDF === "supplier" ? (
-            <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
-          ) : (
-            <PDFViewer width="100%" height="100%">
+        {renderPDF ? (
+          <PDFViewer width="100%" height="100%">
+            {showROPDF === "supplier" ? (
+              <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
+            ) : showROPDF === "suppliers" ? (
+              <POSuppliersPDF data={data} poData={poData} />
+            ) : (
               <PurchaseOrderPDF data={poData} />
-            </PDFViewer>
-          )}
-        </PDFViewer>
+            )}
+          </PDFViewer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            Generating PDF...
+          </div>
+        )}
       </Modal>
       {receivedSupplierItem && (
         <Modal
