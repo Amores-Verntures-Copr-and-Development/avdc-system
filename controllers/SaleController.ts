@@ -265,6 +265,7 @@ export const getTotalSalesDetails = async ({
       data: data ?? null,
     };
   } catch (e) {
+    console.log({ e });
     return {
       success: false,
       message: "Failed to fetched Sales Items!",

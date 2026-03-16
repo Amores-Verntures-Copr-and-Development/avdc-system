@@ -630,8 +630,8 @@ export const selectSalesTotalDetails = async ({
     totalSalePaymentMethodConditions.push("st.storeName LIKE ?");
     totalSalePaymentMethodparams.push(`%${store}%`);
 
-    todaySalePaymentMethodConditions.push("s.storeId = ?");
-    todaySalePaymentMethodparams.push(storeId);
+    todaySalePaymentMethodConditions.push("st.storeName LIKE ?");
+    todaySalePaymentMethodparams.push(`%${store}%`);
 
     totalCountSalesconditions.push("st.storeName LIKE ?");
     totalCountSalesparams.push(`%${store}%`);
@@ -746,6 +746,7 @@ GROUP BY pm.payMetName`;
     ${totalCustomerWhereClause};
   `;
 
+  console.log({ todaysSalesPaymentMethodsSql, todaySalePaymentMethodparams });
   // Execute all queries
   const [totalSalesRows]: any = await pool.query(
     totalSalesSql,

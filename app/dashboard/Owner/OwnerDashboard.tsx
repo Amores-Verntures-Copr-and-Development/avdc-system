@@ -192,18 +192,20 @@ const OwnerDashboard = () => {
         </div>
       </div>
 
-      {/* Sidebar - 1/4 on desktop, full on mobile */}
       <div className="lg:col-span-1 flex flex-col gap-4 h-full">
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+        <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
           <h1 className="font-semibold text-sm mb-3">Daily Store Sales</h1>
           <div className="h-80 space-y-5 overflow-y-auto">
-            {storeSales.map((store) => (
-              <StoreCardSales data={store} key={store.id} />
-            ))}
+            {storeSales
+              .slice() // optional: to avoid mutating original array
+              .sort((a, b) => b.sales - a.sales) // descending order
+              .map((store) => (
+                <StoreCardSales data={store} key={store.id} />
+              ))}
           </div>
         </div>
 
-        <div className="border rounded-2xl shadow-sm border-gray-200 bg-white p-4">
+        <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
           <h1 className="font-semibold text-sm mb-3">Recent Store Sales</h1>
           <div className="h-80 space-y-5 overflow-y-auto">
             {recentStoreSales.data
