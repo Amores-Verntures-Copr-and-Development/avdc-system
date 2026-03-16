@@ -64,7 +64,6 @@ const ViewSupplierItemModal = ({
     }
   }, [data]);
   const handleUpdatePrice = async () => {
-    console.log({ updateForm });
     setIsUpdatingPrice(true);
     try {
       const result = await fetch(

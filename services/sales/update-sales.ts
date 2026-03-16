@@ -31,7 +31,6 @@ export async function updateSalesBySalesId({
   const connection = await pool.getConnection();
   await connection.beginTransaction();
   try {
-    console.log({ data });
     const salesData: Partial<Sales> = {
       salesId: data.salesId,
       customerId: data.customerId,

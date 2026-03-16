@@ -201,7 +201,6 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
         ) : (
           itemResponse.data &&
           itemResponse.data.map((s, index) => {
-            console.log({ s });
             const totalItemsSupplier = s.items
               .filter(
                 (i) =>

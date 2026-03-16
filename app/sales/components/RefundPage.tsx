@@ -103,10 +103,6 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
   }, [response]);
 
   useEffect(() => {});
-  useEffect(() => {
-    const selectedRefund = refundItems.find((i) => i.selected);
-    console.log({ selectedRefund });
-  }, [refundItems]);
 
   const toggleItem = (id: string | number) => {
     setRefundItems((prev) =>
@@ -143,7 +139,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
   const exceedPaymentAmount = totalPaymentMethodAmount > refundTotal;
   const belowRefundAmount = totalPaymentMethodAmount < refundTotal;
   const correctAmount = totalPaymentMethodAmount === refundTotal;
-  console.log({ exceedPaymentAmount, belowRefundAmount, correctAmount });
+
   useEffect(() => {
     if (refundPayments && refundPayments.length === 1) {
       setRefundPayments((prev) =>

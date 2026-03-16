@@ -55,7 +55,6 @@ export const getSalesServices = {
       });
       return data;
     } catch (e) {
-      console.log({ e });
       throw e;
     }
   },
@@ -91,7 +90,6 @@ export const getSalesServices = {
 
       return data;
     } catch (e) {
-      console.log({ e });
       throw e;
     }
   },
@@ -134,7 +132,6 @@ export const getSalesServices = {
       const data = await selectSalesTotalDetails({ storeId, from, to, store });
       return data;
     } catch (e) {
-      console.log({ e });
       throw e;
     }
   },

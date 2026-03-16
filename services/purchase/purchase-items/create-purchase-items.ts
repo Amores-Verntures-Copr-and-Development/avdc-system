@@ -62,7 +62,6 @@ export async function createPurchaseOrderItemWithSupplier({
               i.reqItemStatus === "delivered" || i.reqItemStatus === "received",
           );
         isAlreadyDeliveredInRequest = isAllDeliveredOrReceive;
-        console.log({ checkRequestItems, isAlreadyDeliveredInRequest });
       }
       if (isAlreadyDeliveredInRequest) {
         if (localConnection) {

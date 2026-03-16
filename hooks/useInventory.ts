@@ -33,7 +33,7 @@ export function useUserInventory(user: any, hasStore: boolean) {
     error: inventoryError,
     mutate,
   } = useSWR<{ data: DisplayAllInventory[] }>(inventoryKey, fetcher);
-  console.log({ inventoryResponse });
+
   return {
     inventory: inventoryResponse?.data ?? [],
     inventoryLoading: stockRoomLoading || inventoryLoading,

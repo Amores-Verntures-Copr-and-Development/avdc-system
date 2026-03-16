@@ -29,7 +29,6 @@ const ReceiveItemComponent = ({
   const handleChangeItem = handleChange(reqForm, setReqForm);
 
   const handleReceiveROItem = async () => {
-    console.log({ reqForm });
     setIsReceiving(true);
     try {
       const res = await fetch(

@@ -126,11 +126,9 @@ export const getOwnerPurchaseOrderChartData = async (year: string) => {
 
 export const StoreDashboardController = async (storeId: number) => {
   try {
-    console.log({ storeId });
     const data = await getStoreDashboard(storeId);
     return { success: true, data: data, message: "Failed to fetched" };
   } catch (e) {
-    console.log({ e });
     return { success: false, error: e, message: "Failed to fetched" };
   }
 };

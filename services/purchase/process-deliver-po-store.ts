@@ -22,7 +22,7 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    console.log({ data });
+
     const requestItemData: Partial<RequestItems>[] = data.items.map((item) => ({
       reqItemId: item.reqItemId,
       reqItemStatus: "delivered",
@@ -51,9 +51,6 @@ export async function processDeliverItemToStore(data: DeliverItemsToStore) {
       reqItemStatus: item.reqItemStatus,
     }));
 
-    console.log("Request Items: ", allRequestItems);
-    console.log({ isAllDelivered });
-    console.log({ allSameSupplier, suppId });
     if (allSameSupplier && suppId) {
       const storeSuppPoId: StoreSupplierDetails[] =
         await findStoreItemsBySupplierAndPOIds({

@@ -18,7 +18,7 @@ export async function processImportItems(data: ImportItemInfo) {
           connection,
           name: items.categoryName,
         });
-        console.log({ category });
+
         return {
           itemName: items.itemName,
           categoryId: category[0].categoryId,
@@ -27,7 +27,7 @@ export async function processImportItems(data: ImportItemInfo) {
           itemUnit: items.itemUnit,
           itemPrice: items.itemPrice,
         };
-      })
+      }),
     );
 
     const inventoryItems: CreateInventoryItemDto[] = await Promise.all(
@@ -41,7 +41,7 @@ export async function processImportItems(data: ImportItemInfo) {
           inventoryItemQuantity: 0,
           inventoryItemCreatedBy: item.itemAddedBy,
         };
-      })
+      }),
     );
     await createInventoryItems({ data: inventoryItems, connection });
 

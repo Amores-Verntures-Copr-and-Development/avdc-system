@@ -48,7 +48,7 @@ const UpdateSupplierPrice = ({
         poItem: data,
         isUpdateItem: isUpdateItemPrice,
       };
-      console.log({ formData });
+
       const result = await fetch(
         `/api/purchase-order/${data?.poId}/suppliers/${data?.suppId}/${data?.poItemId}`,
         {

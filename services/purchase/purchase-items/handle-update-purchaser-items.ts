@@ -4,7 +4,7 @@ import { Console } from "console";
 import { createPurchaseOrderItem } from "./create-purchase-items";
 
 export async function handleUpdatePurchaseItems(
-  data: CreatePurchaseOrderItemDto[]
+  data: CreatePurchaseOrderItemDto[],
 ) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
@@ -14,7 +14,7 @@ export async function handleUpdatePurchaseItems(
     //check if the itemId is existing
     //if existing increment the totalQuntity
     //if not insert
-    console.log({ data });
+
     await connection.commit();
   } catch (e) {
     await connection.rollback();

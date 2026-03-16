@@ -54,7 +54,7 @@ export async function createProductVariants({
       if (item.variantComponents && item.variantComponents.length > 0) {
         const variantComponents: CreateVarianComponentDto[] =
           item.variantComponents.map((vc) => ({ ...vc, prodVarId }));
-        console.log({ variantComponents });
+
         await createVariantComponent({
           connection: connection ? connection : newConnection,
           data: variantComponents,

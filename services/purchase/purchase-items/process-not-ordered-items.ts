@@ -16,7 +16,7 @@ export async function processNotOrderedItems(data: PurchaseOrderItems[]) {
     if (notOrdedItems.length === 0) {
       throw new Error("No data found to mark as not ordered!");
     }
-    console.log({ notOrdedItems });
+
     await updatePurchaseOrderItems({
       connection,
       keyFields: ["poItemId"],
@@ -26,7 +26,6 @@ export async function processNotOrderedItems(data: PurchaseOrderItems[]) {
       ? data[0].poId
       : null;
     if (poId) {
-      console.log({ poId });
       const poItems = await findPurchaserOrder({
         connection,
         keyfields: { poId },
@@ -34,14 +33,14 @@ export async function processNotOrderedItems(data: PurchaseOrderItems[]) {
       const validForUpdateReceived = poItems
         .filter(
           (poi) =>
-            poi.poItemStatus !== "not_ordered" && poi.poItemStatus !== "removed"
+            poi.poItemStatus !== "not_ordered" &&
+            poi.poItemStatus !== "removed",
         )
         .every((item) => item.poItemStatus === "received");
       const validForNotOrdered = poItems
         .filter((poi) => poi.poItemStatus !== "removed")
         .every((item) => item.poItemStatus !== "not_ordered");
-      console.log({ poItems });
-      console.log({ validForUpdateReceived });
+
       if (validForUpdateReceived) {
         await updatePurchase({
           connection,

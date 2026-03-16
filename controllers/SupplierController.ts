@@ -129,7 +129,6 @@ export const updateSupplierItems = async ({
   try {
     switch (controller) {
       case "update": {
-        console.log({ data });
         // await handleUpdateSupplierItemPrice({ updates: data });
         // message = "Supplier items updated successfully!";
         break;

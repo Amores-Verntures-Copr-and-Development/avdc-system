@@ -405,8 +405,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                 const continueStep = validateStep1();
 
                 if (!continueStep) {
-                  console.log({ continueStep });
-                  console.log("test");
                   return;
                 }
 

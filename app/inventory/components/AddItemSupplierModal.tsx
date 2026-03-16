@@ -25,7 +25,7 @@ const AddItemSupplierModal = ({
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
     null,
   );
-  console.log({ selectedSupplier });
+
   const [itemData, setItemData] = useState<CreateSupplierItemDto[] | null>([]);
   useEffect(() => {
     if (data) {

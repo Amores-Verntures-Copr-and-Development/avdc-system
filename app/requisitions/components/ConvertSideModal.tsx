@@ -29,7 +29,6 @@ const ConvertSideModal = ({ data, onConvert }: ConvertSideModalProps) => {
         (i) => i.itemConId === selectedConversionId,
       );
       if (findConvert) {
-        console.log({ findConvert });
         setQuantity(
           Number(data?.totalQuantity) / Number(findConvert.fromQuantity),
         );

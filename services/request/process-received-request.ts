@@ -43,7 +43,6 @@ export async function processReceivedRequest(data: Request) {
           : {}),
       }));
 
-    console.log({ validReceivedRequestItems });
     const validReceivedToFollowRequestItems: Partial<RequestItems>[] =
       data.requestItems
         .filter(
@@ -84,7 +83,6 @@ export async function processReceivedRequest(data: Request) {
         }));
 
     if (validReceivedRequestItems && validReceivedRequestItems.length > 0) {
-      console.log({ validReceivedRequestItems });
       await updateRequestItems({
         connection,
         updates: validReceivedRequestItems,

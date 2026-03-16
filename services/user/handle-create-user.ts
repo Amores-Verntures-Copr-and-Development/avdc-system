@@ -9,7 +9,6 @@ export const handleCreateUser = async (data: CreateUserDto) => {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
-    console.log({ data });
     await connection.beginTransaction();
     const userId = await createUser(connection, data);
     if (data.userRole === "employee") {

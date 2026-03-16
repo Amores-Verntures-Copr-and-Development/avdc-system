@@ -38,7 +38,6 @@ export async function createSaleItems({
 
     // Now insert all discounts into the database
     if (allDiscounts.length > 0) {
-      console.log({ allDiscounts });
       await insertSaleItemDiscounts({ connection, data: allDiscounts });
     }
 

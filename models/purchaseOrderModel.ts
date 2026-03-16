@@ -62,7 +62,7 @@ export const insertPurchaseOrderItems = async ({
   data: CreatePurchaseOrderItemDto[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  console.log({ data });
+
   if (!data.length) return 0;
   const sql = `INSERT INTO PurchaseOrderItems(poId,itemId,unitPrice,poItemOrderedQty,poItemStatus,suppId)
                 VALUES ${data.map(() => "(?, ?,?,?,?,?)").join(",")}`;
@@ -128,7 +128,15 @@ export const selectPurchaseOrder = async ({
 FROM PurchaseOrders po
 LEFT JOIN PurchaseOrderRequest por ON por.poId = po.poId
 LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
-LEFT JOIN Users u ON u.userId = po.poCreatedBy ${whereSQL} GROUP BY po.poId;`;
+LEFT JOIN Users u ON u.userId = po.poCreatedBy ${whereSQL} GROUP BY po.poId ORDER BY 
+CASE po.poStatus
+	WHEN  "pending" THEN 1
+	WHEN  "approved" THEN 2
+	WHEN  "sent" THEN 3
+	WHEN  "received" THEN 4
+	ELSE 5
+	END ASC,
+po.poCreatedAt DESC;`;
   const [rows] = await pool.execute(sql, values);
   return rows;
 };

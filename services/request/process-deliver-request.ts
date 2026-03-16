@@ -48,7 +48,6 @@ export async function processDeliveredPO(data: Request[], userId: number) {
       ...isToFollowItems,
     ];
 
-    console.log({ requestPartial, isToFollowItems });
     const requestNotOrdered: RequestItems[] = data.flatMap(
       (req) =>
         req.requestItemsData?.filter(
@@ -83,7 +82,7 @@ export async function processDeliveredPO(data: Request[], userId: number) {
           reqItemStatus: "delivered",
         }),
       );
-      console.log({ updateDelivered });
+
       await updateRequestItems({
         connection,
         updates: updateDelivered,

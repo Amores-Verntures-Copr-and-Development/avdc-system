@@ -34,7 +34,7 @@ const AddItemPOModal = ({
       : null,
     fetcher,
   );
-  console.log({ itemResponse });
+
   const poData = itemResponse.data[0];
   //get Where the requestId is belong
   const column: Column<DisplayRequestItems>[] = [
@@ -56,7 +56,7 @@ const AddItemPOModal = ({
         unitPrice: 0,
         poId: poData.poId,
       })) ?? [];
-    console.log({ poItemData });
+
     const success = await onSubmit(poItemData, poData.poId);
     if (success) {
       // onClose();

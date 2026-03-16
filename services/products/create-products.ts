@@ -61,7 +61,7 @@ export async function createBulkProducts({
         });
       });
     });
-    console.log({ allVariants });
+
     const variantIds = await createProductVariantsBulk({
       connection,
       data: allVariants,
@@ -82,7 +82,7 @@ export async function createBulkProducts({
         });
       });
     });
-    console.log({ variantIds, allVariantComponents });
+
     if (allVariantComponents.length) {
       await createVariantComponent({
         connection,
@@ -92,7 +92,6 @@ export async function createBulkProducts({
 
     await connection.commit();
   } catch (e) {
-    console.log({ e });
     // Rollback transaction safely
     await connection.rollback();
     throw e;

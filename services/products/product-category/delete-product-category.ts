@@ -58,8 +58,6 @@ export async function deleteProductCategoriesByFields({
         }),
       );
 
-      console.log({ updateProductToNullCategory });
-
       await updateProductsByFields({
         connection: dbConnection,
         updates: updateProductToNullCategory,

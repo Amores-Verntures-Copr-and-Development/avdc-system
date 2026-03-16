@@ -46,6 +46,9 @@ interface SalesPageProps {
 }
 
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
+  const [showSalesBreakdown, setShowSalesBreakdown] = useState<
+    "totalSales" | "todaysSales" | null
+  >(null);
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -529,6 +532,8 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const totalCountSales = details?.totalCountSales ?? 0;
   const totalCustomer = details?.totalCustomer ?? 0;
   const todaySales = details?.todaySales ?? 0;
+  const totalSalesPaymentMethods = details?.totalSalesPaymentMethods ?? [];
+  const todaysSalesPaymentMethods = details?.todaysSalesPaymentMethods ?? [];
 
   const storeOptions = Array.isArray(stores)
     ? stores.map((store) => ({
@@ -543,7 +548,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     {
       id: "method",
       label: "Payment Method",
-      options: paymentMethodOptions ?? [],
+      options:
+        paymentMethodOptions.length > 0
+          ? paymentMethodOptions
+          : [{ label: "Select first a store", value: "" }],
     },
     {
       id: "customerType",
@@ -551,21 +559,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       options: [],
     },
   ];
-  const paymentMethodsTotal = response?.data.reduce(
-    (acc, sale) => {
-      sale.paymentMethods?.forEach((pm) => {
-        const method = pm.payMetName;
-        const amount = Number(pm.salesPaymentAmount);
-        if (acc[method]) {
-          acc[method] += amount;
-        } else {
-          acc[method] = amount;
-        }
-      });
-      return acc;
-    },
-    {} as Record<string, number>,
-  );
+
   const today = new Date();
   today.setHours(0, 0, 0, 0); // start of today
 
@@ -612,41 +606,44 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="flex 2xl:grid-cols-4 gap-2 min-h-10">
+            <div className="flex 2xl:grid-cols-2 gap-1 min-h-10">
               <SalesCard
                 icon={PhilippinePeso}
                 title="Total Sales"
-                value={`${formatPeso(totalSales)}`}
+                value={formatPeso(totalSales)}
               >
-                <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
-                  <div
-                    className={`
-        grid gap-y-1 gap-x-2
-        ${
-          Object.keys(paymentMethodsTotal ?? {}).length <= 3
-            ? "grid-cols-3"
-            : Object.keys(paymentMethodsTotal ?? {}).length <= 6
-              ? "grid-cols-2"
-              : "grid-cols-1"
-        }
-      `}
-                  >
-                    {Object.entries(paymentMethodsTotal ?? {}).map(
-                      ([method, amount]) => (
-                        <div
-                          key={method}
-                          className="flex flex-col items-center text-center"
-                        >
-                          <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
-                            {method}
+                <div className="gap-2 hidden lg:grid lg:grid-cols-2 ">
+                  {totalSalesPaymentMethods?.map((method: any) => {
+                    const max = Math.max(totalSales);
+                    const pct = (Number(method.salesPayAmount) / max) * 100;
+                    return (
+                      <div key={method.payMetName} className="">
+                        <div className="flex flex-col 2xl:flex-row items-center justify-between">
+                          <span className="text-[9px] 2xl:text-[11px] text-gray-500">
+                            {method.payMetName}
                           </span>
-                          <span className="text-[8px] 2xl:text-[10px] truncate w-full">
-                            {formatPeso(amount)}
+                          <span className="text-[9px] 2xl:text-[11px] font-medium text-gray-900">
+                            {formatPeso(Number(method.salesPayAmount))}
                           </span>
                         </div>
-                      ),
-                    )}
-                  </div>
+                        {/* Proportional bar */}
+                        <div
+                          className="h-[2px] mt-[3px] rounded-full bg-primary-1/50"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-center lg:hidden">
+                  <IconButton
+                    onClick={function (): void {
+                      setShowSalesBreakdown("totalSales");
+                    }}
+                    label={""}
+                    bg={"gray"}
+                    icon={<Eye className="w-3 h-3" />}
+                  />
                 </div>
               </SalesCard>
               <SalesCard
@@ -670,35 +667,38 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 bgColor="bg-blue-500/40"
                 textColor="text-blue-600"
               >
-                <div className="border-l border-l-gray-300 h-full flex-1 overflow-y-auto">
-                  <div
-                    className={`
-        grid gap-y-1 gap-x-2
-        ${
-          Object.keys(todaysPaymentMethodsTotal ?? {}).length <= 3
-            ? "grid-cols-3"
-            : Object.keys(todaysPaymentMethodsTotal ?? {}).length <= 6
-              ? "grid-cols-2"
-              : "grid-cols-1"
-        }
-      `}
-                  >
-                    {Object.entries(todaysPaymentMethodsTotal ?? {}).map(
-                      ([method, amount]) => (
-                        <div
-                          key={method}
-                          className="flex flex-col items-center text-center"
-                        >
-                          <span className="font-medium text-[8px] text-gray-400 2xl:text-[10px] truncate w-full">
-                            {method}
+                <div className="gap-2 hidden lg:grid lg:grid-cols-2 ">
+                  {todaysSalesPaymentMethods?.map((method: any) => {
+                    const max = Math.max(todaySales);
+                    const pct = (Number(method.salesPayAmount) / max) * 100;
+                    return (
+                      <div key={method.payMetName} className="">
+                        <div className="flex flex-col 2xl:flex-row items-center justify-between">
+                          <span className="text-[9px] 2xl:text-[11px] text-gray-500">
+                            {method.payMetName}
                           </span>
-                          <span className="text-[8px] 2xl:text-[10px] truncate w-full">
-                            {formatPeso(amount)}
+                          <span className="text-[9px] 2xl:text-[11px] font-medium text-gray-900">
+                            {formatPeso(Number(method.salesPayAmount))}
                           </span>
                         </div>
-                      ),
-                    )}
-                  </div>
+                        {/* Proportional bar */}
+                        <div
+                          className="h-[2px] mt-[3px] rounded-full bg-primary-1/50"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-center lg:hidden">
+                  <IconButton
+                    onClick={function (): void {
+                      setShowSalesBreakdown("todaysSales");
+                    }}
+                    label={""}
+                    bg={"gray"}
+                    icon={<Eye className="w-3 h-3" />}
+                  />
                 </div>
               </SalesCard>
             </div>
@@ -840,6 +840,99 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           "Export Sales"
         ) : (
           ""
+        )}
+      </Modal>
+      <Modal
+        isOpen={showSalesBreakdown !== null}
+        onClose={function (): void {
+          setShowSalesBreakdown(null);
+        }}
+        title={
+          showSalesBreakdown === "totalSales"
+            ? "Total Sales Payments"
+            : "Today's Sales Payments"
+        }
+      >
+        {showSalesBreakdown === "totalSales" ? (
+          <div className="flex flex-col flex-1 overflow-y-auto gap-3">
+            {/* Total */}
+            <h1 className="text-2xl font-medium text-gray-900 tracking-tight leading-none">
+              {formatPeso(totalSales)}
+            </h1>
+
+            {/* Payment method rows */}
+            <div className="flex flex-col gap-2">
+              {totalSalesPaymentMethods?.map((method: any) => {
+                const amount = Number(method.salesPayAmount);
+                const pct = totalSales > 0 ? (amount / totalSales) * 100 : 0;
+
+                return (
+                  <div key={method.payMetName} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-500">
+                        {method.payMetName}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400 tabular-nums">
+                          {pct.toFixed(0)}%
+                        </span>
+                        <span className="text-[11px] font-medium text-gray-900 tabular-nums">
+                          {formatPeso(amount)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Track + fill */}
+                    <div className="h-[3px] w-full rounded-full bg-gray-100">
+                      <div
+                        className="h-full rounded-full bg-primary-1 transition-all duration-500 ease-out"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col flex-1 overflow-y-auto gap-3">
+            {/* Total */}
+            <h1 className="text-2xl font-medium text-gray-900 tracking-tight leading-none">
+              {formatPeso(todaySales)}
+            </h1>
+
+            {/* Payment method rows */}
+            <div className="flex flex-col gap-2">
+              {todaysSalesPaymentMethods?.map((method: any) => {
+                const amount = Number(method.salesPayAmount);
+                const pct = todaySales > 0 ? (amount / todaySales) * 100 : 0;
+
+                return (
+                  <div key={method.payMetName} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] text-gray-500">
+                        {method.payMetName}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-400 tabular-nums">
+                          {pct.toFixed(0)}%
+                        </span>
+                        <span className="text-[11px] font-medium text-gray-900 tabular-nums">
+                          {formatPeso(amount)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Track + fill */}
+                    <div className="h-[3px] w-full rounded-full bg-gray-100">
+                      <div
+                        className="h-full rounded-full bg-primary-1 transition-all duration-500 ease-out"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </Modal>
     </PageLayout>

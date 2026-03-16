@@ -45,12 +45,12 @@ export async function replacePOItems({
       unitPrice: to.unitPrice,
       suppId: to.suppId,
     };
-    console.log({ to });
+
     const supplierItem = await getSupplierItem({
       connection,
       keyfields: { itemId: to.itemId, suppId: to.suppId! },
     });
-    console.log({ supplierItem });
+
     if (!supplierItem || supplierItem.length === 0) {
       const createSupplierItemData: CreateSupplierItemDto = {
         itemId: to.itemId,

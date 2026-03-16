@@ -243,9 +243,7 @@ const AdminRequisitionPage = () => {
               }}
               showFilter
               filterConfig={[]}
-              onSave={() => {
-                console.log({});
-              }}
+              onSave={() => {}}
               addContentLeftTitle={
                 !["supervisor", "staff"].includes(user?.empPosition ?? "") && (
                   <div>

@@ -36,7 +36,7 @@ export async function createOrderCompositeItems({
       connection: connection ? connection : newConnection,
       data,
     });
-    console.log({ data });
+
     const hasPricesData = data.filter((i) => Number(i.ordComPrice) !== 0);
 
     if (hasPricesData && hasPricesData.length > 0) {
@@ -110,7 +110,6 @@ export async function createOrderCompositeItems({
           }
         }
         if (updateRequest && updateRequest.length) {
-          console.log({ updateRequest });
           await updateRequestItems({
             connection,
             updates: updateRequest,

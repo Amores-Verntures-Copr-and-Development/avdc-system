@@ -217,7 +217,6 @@ export const updateRequestItem = async (
       data: res,
     };
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to update request items!",
@@ -257,7 +256,6 @@ export const updateRequestItemByStatus = async ({
       };
     }
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to update request items!",

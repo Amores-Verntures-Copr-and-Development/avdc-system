@@ -22,9 +22,9 @@ export async function deleteInventoryItems({
       (item) => ({
         inventoryItemId: item.inventoryItemId,
         inventoryItemDeletedAt: dateToday,
-      })
+      }),
     );
-    console.log({ itemToDelete });
+
     await updateInventoryItems({
       connection,
       updates: itemToDelete,

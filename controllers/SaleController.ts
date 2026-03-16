@@ -188,7 +188,7 @@ export const getSales = async ({
       from,
       to,
     });
-    console.log({ count });
+
     return {
       success: true,
       message: "Sales fetched successfully!",

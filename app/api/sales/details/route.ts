@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest) {
     const store = searchParams.get("store") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
-    console.log({ from, to, store });
+
     const res = await getTotalSalesDetails({ store, from, to });
 
     if (!res.success) {

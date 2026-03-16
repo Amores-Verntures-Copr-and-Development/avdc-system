@@ -13,7 +13,6 @@ export const createOrderCompositeController = async (
       data: ids,
     };
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to add as composite!",
@@ -33,7 +32,6 @@ export const getOrderCompositeByPOItemController = async (poItemId: number) => {
       data: data,
     };
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to fetch composite!",

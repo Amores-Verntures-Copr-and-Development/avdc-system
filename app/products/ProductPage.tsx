@@ -12,12 +12,10 @@ import ProductStorePage from "./ProductStorePage";
 const ProductPage = () => {
   const { user, hasStore, loading } = useSession();
   const [storeId, setStoreId] = useState<number | null>(null);
-  console.log({ user });
 
   useEffect(() => {
     if (hasStore || user?.storeId || user?.storeId) {
       setStoreId(user?.storeId ?? 0);
-      console.log({ storeId });
     }
   }, [user]);
 

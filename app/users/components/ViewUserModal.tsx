@@ -26,7 +26,7 @@ const ViewUserModal = ({ data, user }: ViewUserModalProps) => {
   const [showEditEmployee, setShowEditEmployee] = useState(false);
   const [isAssignStores, setIsAssignStores] = useState(false);
   const [employeeData, setEmployeeData] = useState<EmployeeInterface | null>(
-    null
+    null,
   );
   const handleEditEmployee = () => {
     if (!formData) {
@@ -52,7 +52,7 @@ const ViewUserModal = ({ data, user }: ViewUserModalProps) => {
     mutate,
   } = useSWR<{ data: DisplayUserInfoDto[] }>(
     data ? `/api/users/${data.userId}` : null,
-    fetcher
+    fetcher,
   );
   useEffect(() => {
     if (response.data && response.data.length > 0) {
@@ -75,10 +75,10 @@ const ViewUserModal = ({ data, user }: ViewUserModalProps) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(newData),
-        }
+        },
       );
       const res = await result.json();
-      console.log({ res });
+
       if (!res.success) {
         console.log("Res: ", res);
         throw new Error(res.err);

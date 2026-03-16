@@ -17,7 +17,7 @@ export async function notOrderedRequestItems({
 
   try {
     await connection.beginTransaction();
-    console.log({ requestItems });
+
     const updateRequestNotOrdered: Partial<RequestItems>[] = requestItems.map(
       (i) => ({
         reqItemId: i.reqItemId,

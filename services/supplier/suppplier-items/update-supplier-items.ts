@@ -105,7 +105,6 @@ export async function handleUpdateSupplierItemPrice({
       }
     } else {
       const itemPricesPromises = updates.map(async (item) => {
-        console.log({ item });
         let suppItem = await getSupplierItem({
           connection: connection ? connection : newConnection,
           keyfields: { suppId: item.suppId, itemId: item.itemId },
@@ -151,7 +150,6 @@ export async function handleUpdateSupplierItemPrice({
 
     return result;
   } catch (e) {
-    console.log({ e });
     if (localConnection) {
       await newConnection.rollback();
     }
@@ -199,7 +197,7 @@ export async function updateSupplierPriceFromPO({
       suppItemPrice: Number(supplierItemPrice.sipAmount),
       suppItemCreatedBy: supplierItemPrice.sipCreatedBy,
     };
-    console.log({ suppItemPricePartial });
+
     await handleUpdateSupplierItemPrice({
       updates: [suppItemPricePartial],
       keyFields: ["suppItemId"],
@@ -220,7 +218,7 @@ export async function updateSupplierPriceFromPO({
       poItemId: poItem.poItemId,
     });
     let updateRequestItemUnitPrice: Partial<RequestItems>[] = [];
-    console.log({ reqItems });
+
     for (const req of reqItems) {
       let computedPrice = supplierItemPrice.sipAmount;
 
@@ -243,7 +241,6 @@ export async function updateSupplierPriceFromPO({
       });
     }
     if (updateRequestItemUnitPrice && updateRequestItemUnitPrice.length) {
-      console.log({ updateRequestItemUnitPrice });
       await updateRequestItems({
         connection: connection,
         updates: updateRequestItemUnitPrice,

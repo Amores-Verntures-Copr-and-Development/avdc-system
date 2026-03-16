@@ -431,7 +431,6 @@ const CheckOutModal = ({
               size={"md"}
               className="w-full"
               onClick={() => {
-                console.log({ remarks });
                 handleCompleteSale(remarks);
               }}
               icon={Check}

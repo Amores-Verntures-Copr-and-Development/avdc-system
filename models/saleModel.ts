@@ -588,6 +588,12 @@ export const selectSalesTotalDetails = async ({
   let totalSaleConditions: string[] = [];
   let totalSalesparams: any[] = [];
 
+  let totalSalePaymentMethodConditions: string[] = [];
+  let totalSalePaymentMethodparams: any[] = [];
+
+  let todaySalePaymentMethodConditions: string[] = [];
+  let todaySalePaymentMethodparams: any[] = [];
+
   let totalCountSalesconditions: string[] = [];
   let totalCountSalesparams: any[] = [];
 
@@ -600,6 +606,12 @@ export const selectSalesTotalDetails = async ({
   if (storeId) {
     totalSaleConditions.push("s.storeId = ?");
     totalSalesparams.push(storeId);
+
+    totalSalePaymentMethodConditions.push("s.storeId = ?");
+    totalSalePaymentMethodparams.push(storeId);
+
+    todaySalePaymentMethodConditions.push("s.storeId = ?");
+    todaySalePaymentMethodparams.push(storeId);
 
     totalCountSalesconditions.push("s.storeId = ?");
     totalCountSalesparams.push(storeId);
@@ -615,6 +627,12 @@ export const selectSalesTotalDetails = async ({
     totalSaleConditions.push("st.storeName LIKE ?");
     totalSalesparams.push(`%${store}%`);
 
+    totalSalePaymentMethodConditions.push("st.storeName LIKE ?");
+    totalSalePaymentMethodparams.push(`%${store}%`);
+
+    todaySalePaymentMethodConditions.push("s.storeId = ?");
+    todaySalePaymentMethodparams.push(storeId);
+
     totalCountSalesconditions.push("st.storeName LIKE ?");
     totalCountSalesparams.push(`%${store}%`);
 
@@ -629,6 +647,11 @@ export const selectSalesTotalDetails = async ({
     totalSaleConditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
     totalSalesparams.push(from, to);
 
+    totalSalePaymentMethodConditions.push(
+      "DATE(s.salesCreatedAt) BETWEEN ? AND ?",
+    );
+    totalSalePaymentMethodparams.push(from, to);
+
     totalCountSalesconditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
     totalCountSalesparams.push(from, to);
 
@@ -640,6 +663,17 @@ export const selectSalesTotalDetails = async ({
     totalSaleConditions.length > 0
       ? `WHERE ${totalSaleConditions.join(" AND ")}`
       : "";
+
+  const totalSalesPaymentMethodsClause =
+    totalSalePaymentMethodConditions.length > 0
+      ? ` WHERE ${totalSalePaymentMethodConditions.join(" AND ")}`
+      : "";
+  todaySalePaymentMethodConditions.push(`s.salesCreatedAt >= CURDATE()`);
+  const todaysSalesPaymentMethodsClause =
+    todaySalePaymentMethodConditions.length > 0
+      ? ` WHERE ${todaySalePaymentMethodConditions.join(" AND ")}`
+      : "";
+
   const totalCountSaleWhereClause =
     totalCountSalesconditions.length > 0
       ? `WHERE ${totalCountSalesconditions.join(" AND ")}`
@@ -667,6 +701,12 @@ export const selectSalesTotalDetails = async ({
   ${totalSalesWhereClause};
 `;
 
+  const totalSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) AS salesPayAmount, pm.payMetName  FROM Sales s
+LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
+LEFT JOIN Stores st ON s.storeId = st.storeId 
+LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId ${totalSalesPaymentMethodsClause}
+GROUP BY pm.payMetName`;
+
   // 2️⃣ Total Count of Sales
   const totalCountSalesSql = `
     SELECT COUNT(*) AS totalCountSales
@@ -674,6 +714,12 @@ export const selectSalesTotalDetails = async ({
     LEFT JOIN Stores st ON s.storeId = st.storeId
     ${totalCountSaleWhereClause};
   `;
+
+  const todaysSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) AS salesPayAmount, pm.payMetName  FROM Sales s
+LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
+LEFT JOIN Stores st ON s.storeId = st.storeId 
+LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId ${todaysSalesPaymentMethodsClause}
+GROUP BY pm.payMetName`;
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `
@@ -705,6 +751,14 @@ export const selectSalesTotalDetails = async ({
     totalSalesSql,
     totalSalesparams,
   );
+  const [totalSalesPaymentMethodRows]: any = await pool.execute(
+    totalSalesPaymentMethodsSql,
+    totalSalePaymentMethodparams,
+  );
+  const [todaysSalesPaymentMethodRows]: any = await pool.execute(
+    todaysSalesPaymentMethodsSql,
+    todaySalePaymentMethodparams,
+  );
   const [totalCountRows]: any = await pool.query(
     totalCountSalesSql,
     totalCountSalesparams,
@@ -717,12 +771,15 @@ export const selectSalesTotalDetails = async ({
     totalCustomerSql,
     totalCustomeparams,
   );
+
   return [
     {
       totalSales: totalSalesRows[0].totalSales,
+      totalSalesPaymentMethods: totalSalesPaymentMethodRows,
       totalCountSales: totalCountRows[0].totalCountSales,
       todaySales: todaySalesRows[0].todaySales,
       totalCustomer: totalCustomerRows[0].totalCustomer,
+      todaysSalesPaymentMethods: todaysSalesPaymentMethodRows,
     },
   ];
 };
