@@ -11,6 +11,8 @@ import useSWR, { mutate } from "swr";
 import { formatDiscountValue } from "../pos/components/sidebar/DiscountList";
 import RefundPage from "./components/RefundPage";
 import EditSalesPage from "./components/EditSalesPage";
+import { SalesStatus } from "@/types/sales";
+import { getSalesStatusOption } from "@/utils/salesUtils";
 
 interface SelectedSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -35,7 +37,8 @@ const SelectedSalesPage = ({
   );
 
   const updateDataSales = async () => {
-    await mutateSales();
+    console.log("Check update");
+    mutateSales();
     await mutate();
   };
 
@@ -46,7 +49,9 @@ const SelectedSalesPage = ({
           0,
         )
       : 0;
-
+  const { label, bg, color, border } = getSalesStatusOption(
+    salesData?.salesStatus ?? "",
+  );
   if (isLoading) return <LoaderComponent />;
   return (
     <div className="min-h-screen overflow-auto-y">
@@ -110,12 +115,17 @@ const SelectedSalesPage = ({
                   </div>
                   <div>
                     <Button
-                      label="Refund"
+                      label={
+                        salesData?.salesStatus === SalesStatus.REFUNDED
+                          ? "Refunded"
+                          : "Refund"
+                      }
                       size="sm"
                       hasBorder={false}
                       onClick={() => {
                         setShowViews("refund");
                       }}
+                      disabled={salesData?.salesStatus === SalesStatus.REFUNDED}
                     />
                   </div>
                 </div>
@@ -150,8 +160,10 @@ const SelectedSalesPage = ({
                 <div className="text-[10px] 2xl:text-xs text-gray-500 mb-1">
                   Status
                 </div>
-                <div className="text-xs 2xl:text-sm font-medium text-gray-900">
-                  {salesData?.salesStatus}
+                <div
+                  className={`px-1 py-1.5 text-center font-semibold text-[11px] 2xl:text-xs rounded-2xl ${bg} ${color} ${border}`}
+                >
+                  {label}
                 </div>
               </div>
             </div>
@@ -220,24 +232,19 @@ const SelectedSalesPage = ({
                         <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
                           {formatPeso(item.salesItemPrice)}
                         </td>
-                        <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
-                          {item.salesItemQuantity}
+                        <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                          {Number(item.salesItemQuantity).toFixed(0)}
                         </td>
+
                         {item.salesItemsRefunds &&
-                        item.salesItemsRefunds.length > 0 ? (
-                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
-                            {item.salesItemsRefunds?.reduce(
-                              (count, i) => i.salesRefItemQty + count,
-                              0,
-                            )}
-                          </td>
-                        ) : salesData?.salesRefunds ? (
-                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
-                            -
-                          </td>
-                        ) : (
-                          <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700"></td>
-                        )}
+                          item.salesItemsRefunds.length > 0 && (
+                            <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                              {item.salesItemsRefunds?.reduce(
+                                (count, i) => i.salesRefItemQty + count,
+                                0,
+                              )}
+                            </td>
+                          )}
                         <td className="py-2 text-right text-xs 2xl:text-sm font-normal text-gray-900">
                           {formatPeso(item.salesItemSubtotal)}
                         </td>
@@ -465,7 +472,11 @@ const SelectedSalesPage = ({
           </div>
         </div>
       ) : showViews === "refund" ? (
-        <RefundPage salesData={salesData} onBack={() => setShowViews(null)} />
+        <RefundPage
+          salesData={salesData}
+          onBack={() => setShowViews(null)}
+          mutateSales={updateDataSales}
+        />
       ) : showViews === "edit" ? (
         <EditSalesPage
           salesData={salesData}

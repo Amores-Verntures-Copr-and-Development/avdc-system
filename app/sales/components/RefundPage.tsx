@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 interface RefundPageProps {
   salesData: DisplaySalesDto | null;
   onBack: () => void;
+  mutateSales: () => void;
 }
 
 interface RefundItem extends CreateSaleItemRefundDto {
@@ -48,7 +49,7 @@ const REFUND_REASONS: { value: RefundReason; label: string }[] = [
   { value: "other", label: "Other" },
 ];
 
-const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
+const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
   const { user } = useSession();
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -129,27 +130,32 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
     (sum, i) => sum + i.salesPayRefAmount,
     0,
   );
-
+  const totalDiscounts = salesData?.salesDiscounts.reduce(
+    (sum, i) => sum + Number(i.discountAmount),
+    0,
+  );
   const selectedItems = refundItems.filter((i) => i.selected);
 
   const refundTotal = selectedItems.reduce(
     (sum, item) => sum + item.salesItemPrice * item.selectedQty,
     0,
   );
-  const exceedPaymentAmount = totalPaymentMethodAmount > refundTotal;
-  const belowRefundAmount = totalPaymentMethodAmount < refundTotal;
-  const correctAmount = totalPaymentMethodAmount === refundTotal;
+  const totaRefundAmount =
+    refundTotal - (refundTotal !== 0 ? Number(totalDiscounts) : 0);
+  const exceedPaymentAmount = totalPaymentMethodAmount > totaRefundAmount;
+  const belowRefundAmount = totalPaymentMethodAmount < totaRefundAmount;
+  const correctAmount = totalPaymentMethodAmount === totaRefundAmount;
 
   useEffect(() => {
     if (refundPayments && refundPayments.length === 1) {
       setRefundPayments((prev) =>
         prev.map((p) => ({
           ...p,
-          salesPayRefAmount: refundTotal, // update amount to total refund
+          salesPayRefAmount: totaRefundAmount, // update amount to total refund
         })),
       );
     }
-  }, [refundTotal, refundPayments.length]);
+  }, [totaRefundAmount, refundPayments.length]);
   const canProceed = selectedItems.length > 0 && reason !== "" && correctAmount;
   const handlePasswordSubmit = async () => {};
   const handleSubmit = async () => {
@@ -165,7 +171,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
     const salesPaymentRefundData: CreateSalePaymentRefundDto[] =
       refundPayments.map((rp) => ({
         salesRefId: 0,
-        salesPayRefAmount: refundTotal,
+        salesPayRefAmount: totaRefundAmount,
         salesPayRefReference: rp.salesPayRefReference,
         payMetId: rp.payMetId,
       }));
@@ -243,7 +249,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-800">Refund Processed</h2>
           <p className="text-gray-500 mt-1">
-            {formatPeso(refundTotal)} will be returned to the customer.
+            {formatPeso(totaRefundAmount)} will be returned to the customer.
           </p>
         </div>
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5 w-full max-w-sm text-sm text-gray-700 space-y-2">
@@ -261,16 +267,46 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
               {reason.replace("_", " ")}
             </span>
           </div>
-          <div className="flex justify-between border-t pt-2 mt-2">
-            <span className="font-semibold">Refund Total</span>
-            <span className="font-bold text-green-600">
-              {formatPeso(refundTotal)}
-            </span>
+          <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">Refund Total</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {formatPeso(totaRefundAmount)}
+              </p>
+
+              {selectedItems.length > 0 && (
+                <p className="text-xs text-gray-400 mt-0.5">
+                  {selectedItems.length} item
+                  {selectedItems.length > 1 ? "s" : ""} selected
+                </p>
+              )}
+
+              {/* Show discount if it exists */}
+              {totalDiscounts && totalDiscounts > 0 && (
+                <p className="text-xs text-blue-700 mt-1">
+                  Discount Applied: -{formatPeso(totalDiscounts)}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => setStep("confirm")}
+              disabled={!canProceed}
+              className="bg-red-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Review Refund →
+            </button>
           </div>
         </div>
         <div>
           {" "}
-          <Button label="Back to Sales" onClick={onBack} />
+          <Button
+            label="Back to Sales"
+            onClick={() => {
+              mutateSales();
+              onBack();
+            }}
+          />
         </div>
       </div>
     );
@@ -334,7 +370,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
               {salesData?.salesInvoice} · Order #{salesData?.salesNo}
             </p>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 border-b border-gray-100">
             {selectedItems.map((item) => (
               <div
                 key={String(item.salesItemId)}
@@ -354,6 +390,31 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
               </div>
             ))}
           </div>
+          {salesData?.salesDiscounts && salesData.salesDiscounts.length > 0 && (
+            <div className="px-5 py-3">
+              <h3 className="font-semibold text-gray-800">Discount</h3>
+              {salesData.salesDiscounts.map((d) => (
+                <div
+                  key={String(d.salesDiscountId)}
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <p className="text-xs font-medium text-gray-800">
+                      {/* {getDisplayName(item)} */ d.discountName}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {d.discountType === "percent"
+                        ? `(${d.discountValue}%)`
+                        : d.discountValue}
+                    </p>
+                  </div>
+                  <span className="text-sm font-semibold text-red-600">
+                    {formatPeso(d.discountAmount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Payment Refund Summary */}
           {refundPayments.length > 0 && (
@@ -386,7 +447,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
           <div className="px-5 py-4 bg-gray-50 flex justify-between items-center">
             <span className="font-semibold text-gray-700">Total Refund</span>
             <span className="text-lg font-bold text-red-600">
-              {formatPeso(refundTotal)}
+              {formatPeso(totaRefundAmount)}
             </span>
           </div>
         </div>
@@ -501,7 +562,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
             <p className="text-sm text-gray-500 mt-0.5">
               Enter your password to authorize this{" "}
               <span className="font-medium text-red-600">
-                {formatPeso(refundTotal)}
+                {formatPeso(totaRefundAmount)}
               </span>{" "}
               refund.
             </p>
@@ -528,7 +589,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
           <div className="text-right">
             <p className="text-xs text-gray-400">Total Refund</p>
             <p className="text-xl font-bold text-red-600">
-              {formatPeso(refundTotal)}
+              {formatPeso(totaRefundAmount)}
             </p>
           </div>
         </div>
@@ -833,7 +894,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
             <h3
               className={`font-semibold  ${exceedPaymentAmount ? `text-red-800` : belowRefundAmount ? `text-red-800` : `text-green-800`}`}
             >
-              {formatPeso(totalPaymentMethodAmount)}
+              {formatPeso(totaRefundAmount)}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">Total Payment Refund</p>
           </div>
@@ -883,7 +944,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
                       : payment.salesPayRefAmount
                   }
                   min={0}
-                  max={refundTotal}
+                  max={totaRefundAmount}
                   onChange={(e) => {
                     const val = Number(e.target.value);
                     setRefundPayments((prev) =>
@@ -981,7 +1042,7 @@ const RefundPage = ({ salesData, onBack }: RefundPageProps) => {
         <div>
           <p className="text-sm text-gray-500">Refund Total</p>
           <p className="text-2xl font-bold text-gray-800">
-            {formatPeso(refundTotal)}
+            {formatPeso(totaRefundAmount)}
           </p>
           {selectedItems.length > 0 && (
             <p className="text-xs text-gray-400 mt-0.5">

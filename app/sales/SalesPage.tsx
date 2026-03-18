@@ -37,6 +37,7 @@ import { FilterConfig, FilterOption } from "@/components/shared/FilterDropDown";
 import { PaymentMethods } from "@/types/payment-methods";
 import SalesStatusBadge from "./components/SalesStatusBadge";
 import { SalesStatus } from "@/types/sales";
+import { getSalesStatusOption } from "@/utils/salesUtils";
 
 interface SalesPageProps {
   storeId: number;
@@ -119,7 +120,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       {
         key: "salesDiscount ",
         name: "Discount",
-        selector: (row) => {
+        selector: (row: DisplaySalesDto) => {
           const discount = row.salesDiscounts || [];
 
           return (
@@ -311,7 +312,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       {
         key: "salesDiscount ",
         name: "Discount",
-        selector: (row) => {
+        selector: (row: DisplaySalesDto) => {
           const discount = row.salesDiscounts || [];
 
           return (
@@ -365,19 +366,52 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         },
       },
       {
+        key: "refund ",
+        name: "Refund",
+        selector: (row) => {
+          const totalRefunds = row.salesRefunds?.reduce(
+            (total, sr) => Number(total) + Number(sr.salesRefAmount),
+            0,
+          );
+
+          return (
+            <span
+              className={`text-[11px] ${
+                totalRefunds !== undefined && Number(totalRefunds) !== 0
+                  ? `text-red-800`
+                  : "text-gray-800"
+              }`}
+            >
+              {totalRefunds !== undefined && Number(totalRefunds) !== 0
+                ? formatPeso(totalRefunds)
+                : "-"}
+            </span>
+          );
+        },
+      },
+      {
         key: "salesTotalAmount",
         name: "Total Amount",
-        selector: (row) => (
-          <span className="font-semibold">
-            {formatPeso(row.salesTotalAmount)}
-          </span>
-        ),
+        selector: (row) => {
+          const totalRefunds = Array.isArray(row.salesRefunds)
+            ? row.salesRefunds.reduce(
+                (total, sr) => total + Number(sr.salesRefAmount),
+                0,
+              )
+            : 0;
+
+          return (
+            <span className="font-semibold">
+              {formatPeso(Number(row.salesTotalAmount) - totalRefunds)}
+            </span>
+          );
+        },
       },
       { key: "totalItem", name: "Total Item" },
       {
         key: "method",
         name: "Payment Method",
-        selector: (row) => {
+        selector: (row: DisplaySalesDto) => {
           const paymentMethod = row.paymentMethods || [];
           return (
             <div className="group relative">
@@ -440,6 +474,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         key: "salesCreatedAt",
         name: "Date",
         selector: (row) => formatDateToWords(row.salesCreatedAt ?? ""),
+      },
+      {
+        key: "salesStatus",
+        name: "Status",
+        selector: (row) => <SalesStatusBadge status={row.salesStatus} />,
       },
     ],
     [response?.data],
@@ -506,11 +545,13 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
 
   const updateDataSelected = async () => {
+    console.log("Run");
     const data = await mutateSales();
     const findSales = data?.data.find(
       (s) => s.salesId === seletectedSales?.salesId,
     );
     if (findSales) {
+      console.log({ findSales });
       setSelectedSales(findSales);
     }
   };

@@ -14,6 +14,12 @@ import {
   getStoreSuperVisorForRefund,
 } from "../user/get-user";
 import bcrypt from "bcryptjs";
+import { getSalesItemServices } from "../sales/sale-items/get-sale-items";
+import { getSalesItemRefundsByFields } from "./sales-item-refund/get-sales-item-refunds";
+import { getSalesRefundsByFields } from "./get-sales-refund";
+import { SalesItemRefund } from "@/types/sales-refund";
+import { updateSalesByFields } from "../sales/update-sales";
+import { SalesStatus } from "@/types/sales";
 
 export async function processCreateSaleRefund({
   data,
@@ -114,6 +120,51 @@ export async function processCreateSaleRefund({
     await createTransactions({ connection: connection, data: transactionData });
     //check if all items is
 
+    const salesItems = await getSalesItemServices.findSaleItemsBySalesId({
+      salesId: data.salesId,
+      connection: connection,
+    });
+    let salesItemRefund: SalesItemRefund[] = [];
+    const salesItemsCount = salesItems.reduce(
+      (count, item) => Number(item.salesItemQuantity) + Number(count),
+      0,
+    );
+    // const salesItemRefunds = await getSalesItemRefundsByFields({keyFields:{""}})
+    const salesRef = await getSalesRefundsByFields({
+      keyFields: { salesId: data.salesId },
+      connection: connection,
+    });
+
+    if (salesRef && salesRef.length > 0) {
+      for (const ref of salesRef) {
+        const salesItem = await getSalesItemRefundsByFields({
+          keyFields: { salesRefId: ref.salesRefId },
+          connection: connection,
+        });
+        if (salesItem && salesItem.length > 0) {
+          console.log({ salesItem });
+          salesItemRefund.push(...salesItem);
+        }
+      }
+    }
+    const salesItemRefundCount = salesItemRefund.reduce(
+      (count, item) => Number(item.salesRefItemQty) + Number(count),
+      0,
+    );
+
+    const isUpdateSalesStatusRefund = salesItemRefundCount >= salesItemsCount;
+    console.log({
+      salesItemsCount,
+      salesItemRefundCount,
+      isUpdateSalesStatusRefund,
+    });
+    if (isUpdateSalesStatusRefund) {
+      await updateSalesByFields({
+        connection: connection,
+        updates: [{ salesId: data.salesId, salesStatus: SalesStatus.REFUNDED }],
+        keyFields: ["salesId"],
+      });
+    }
     await connection.commit();
   } catch (e) {
     await connection.rollback();

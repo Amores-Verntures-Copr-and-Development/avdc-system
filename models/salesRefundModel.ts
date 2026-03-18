@@ -4,7 +4,8 @@ import {
   CreateSalesRefundDto,
 } from "@/dtos/sales-refund.dto";
 import { getDBConnection } from "@/lib/db";
-import { PoolConnection, ResultSetHeader } from "mysql2/promise";
+import { SalesItemRefund, SalesRefund } from "@/types/sales-refund";
+import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertSalesRefund = async ({
   connection,
@@ -92,4 +93,54 @@ export const insertSalesPaymentRefunds = async ({
   );
 
   return insertedIds;
+};
+
+export const selectSalesRefunds = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields: Partial<SalesRefund>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `
+SELECT * FROM SalesRefunds sr WHERE 1=1
+`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND sr.${key} IS NULL`;
+    } else {
+      sql += ` AND sr.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as SalesRefund[];
+};
+
+export const selectSalesItemRefunds = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields: Partial<SalesItemRefund>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `
+SELECT * FROM SalesItemRefunds sif WHERE 1=1
+`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND sif.${key} IS NULL`;
+    } else {
+      sql += ` AND sif.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as SalesItemRefund[];
 };

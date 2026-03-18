@@ -715,26 +715,45 @@ GROUP BY pm.payMetName`;
     ${totalCountSaleWhereClause};
   `;
 
-  const todaysSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) AS salesPayAmount, pm.payMetName  FROM Sales s
+  const todaysSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount, pm.payMetName  FROM Sales s
 LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
 LEFT JOIN Stores st ON s.storeId = st.storeId 
-LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId ${todaysSalesPaymentMethodsClause}
+LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId 
+LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
+LEFT JOIN SalesPaymentRefunds spr ON spr.salesRefId = sr.salesRefId ${todaysSalesPaymentMethodsClause}
 GROUP BY pm.payMetName`;
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `
   SELECT 
+  COALESCE(
+    SUM(
+      CASE 
+        WHEN DATE(s.salesCreatedAt) = CURDATE() 
+        THEN s.salesTotalAmount 
+        ELSE 0 
+      END
+    ) 
+    -
     COALESCE(
-      SUM(CASE WHEN DATE(s.salesCreatedAt) = CURDATE() THEN s.salesTotalAmount ELSE 0 END) -
-      COALESCE(SUM(CASE WHEN DATE(sr.salesRefCreatedAt) = CURDATE() THEN sr.totalRefunds ELSE 0 END), 0),
-    0) AS todaySales
-  FROM Sales s
-  LEFT JOIN Stores st ON s.storeId = st.storeId
-  LEFT JOIN (
-    SELECT salesId, SUM(salesRefAmount) AS totalRefunds, MAX(salesRefCreatedAt) AS salesRefCreatedAt
-    FROM SalesRefunds
-    GROUP BY salesId
-  ) sr ON sr.salesId = s.salesId
+      SUM(
+        CASE 
+          WHEN DATE(s.salesCreatedAt) = CURDATE() 
+          THEN sr.totalRefunds 
+          ELSE 0 
+        END
+      ), 
+    0),
+  0) AS todaySales
+FROM Sales s
+LEFT JOIN Stores st ON s.storeId = st.storeId
+LEFT JOIN (
+  SELECT 
+    salesId, 
+    SUM(salesRefAmount) AS totalRefunds
+  FROM SalesRefunds
+  GROUP BY salesId
+) sr ON sr.salesId = s.salesId
   ${todaySalesWhereClause};
 `;
 

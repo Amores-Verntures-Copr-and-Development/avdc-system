@@ -1,8 +1,7 @@
-import { CreateStoreDto } from "@/dtos/store.dto";
 import { getDBConnection } from "../lib/db";
 import { CreateCategoryDto } from "@/dtos/category.dto";
 import { CategoryInterface } from "@/types/categories";
-import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { PoolConnection, RowDataPacket } from "mysql2/promise";
 
 export const insertCategory = async (data: CreateCategoryDto) => {
   const pool = await getDBConnection();
@@ -52,13 +51,13 @@ export const selectCategoriesById = async ({
   const pool = await getDBConnection();
   if (stockRoomId) {
     whereClauses.push(
-      `categoryReferenceId = ? AND categoryReferenceType = "stock-room"`
+      `categoryReferenceId = ? AND categoryReferenceType = "stock-room"`,
     );
     values.push(stockRoomId);
   }
   if (storeId) {
     whereClauses.push(
-      `categoryReferenceId = ? AND categoryReferenceType = "stores"`
+      `categoryReferenceId = ? AND categoryReferenceType = "stores"`,
     );
     values.push(storeId);
   }
