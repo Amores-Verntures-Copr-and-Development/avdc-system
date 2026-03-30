@@ -27,6 +27,7 @@ import {
   Layers2,
   Replace,
   RefreshCw,
+  Hand,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -1076,7 +1077,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                             );
                                           }}
                                           label="Auto-Fill Received Qty"
-                                          bg="primary"
+                                          bg="gray"
                                         />
                                       )}
                                       <IconButton
@@ -1101,6 +1102,29 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                         }}
                                         label="Update Supplier Price"
                                         bg="tertiary"
+                                      />
+                                      <IconButton
+                                        icon={<Package size={14} />}
+                                        onClick={() => {
+                                          if (!row) {
+                                            return;
+                                          }
+                                          if (supplier) {
+                                            setIsShowReceivedConfirm(true);
+                                            setSupplierReceivedData([
+                                              {
+                                                ...supplier,
+                                                items: [
+                                                  {
+                                                    ...row,
+                                                  },
+                                                ],
+                                              },
+                                            ]);
+                                          }
+                                        }}
+                                        label="Receive Item"
+                                        bg="primary"
                                       />
                                     </div>
                                   )}
@@ -1291,7 +1315,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             handleReceivePO(supplierReceivedData);
           }
         }}
-        confirmationInfo={`Are you sure you want to received items from ${supplierReceivedData?.[0].suppName}`}
+        confirmationInfo={
+          supplierReceivedData && supplierReceivedData?.[0].items.length > 1
+            ? `Are you sure you want to received items from ${supplierReceivedData?.[0].suppName}`
+            : `Are you sure you want to received (${supplierReceivedData?.[0].items[0].poItemReceivedQty})  ${supplierReceivedData?.[0].items[0].itemName} from ${supplierReceivedData?.[0].suppName}`
+        }
         onClose={() => {
           setIsShowReceivedConfirm(false);
           setSupplierReceivedData(null);
