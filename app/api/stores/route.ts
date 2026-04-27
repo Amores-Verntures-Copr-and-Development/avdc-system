@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         message: "Store added successfully!",
         data: res, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.error("POST /api/auth/users error:", err);
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
         message: "Store add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -38,20 +38,19 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   try {
     const res = await getStore({});
-  
+
     if (!res.success) {
       // propagate the actual message if available
       console.log(res.error);
       throw new Error("Failed to insert user");
     }
-    console.log(res.data);
     return NextResponse.json(
       {
         success: true,
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.error("POST /api/auth/users error:", err);
@@ -61,7 +60,7 @@ export async function GET() {
         message: "User add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -130,7 +130,7 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
     (sum, i) => sum + i.salesPayRefAmount,
     0,
   );
-  const totalDiscounts = salesData?.salesDiscounts.reduce(
+  const totalDiscounts = salesData?.salesDiscounts?.reduce(
     (sum, i) => sum + Number(i.discountAmount),
     0,
   );
@@ -140,8 +140,11 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
     (sum, item) => sum + item.salesItemPrice * item.selectedQty,
     0,
   );
+  const safeRefundTotal = Number(refundTotal) || 0;
+  const safeDiscounts = Number(totalDiscounts) || 0;
+
   const totaRefundAmount =
-    refundTotal - (refundTotal !== 0 ? Number(totalDiscounts) : 0);
+    safeRefundTotal - (safeRefundTotal !== 0 ? safeDiscounts : 0);
   const exceedPaymentAmount = totalPaymentMethodAmount > totaRefundAmount;
   const belowRefundAmount = totalPaymentMethodAmount < totaRefundAmount;
   const correctAmount = totalPaymentMethodAmount === totaRefundAmount;
@@ -288,14 +291,6 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
                 </p>
               )}
             </div>
-
-            <button
-              onClick={() => setStep("confirm")}
-              disabled={!canProceed}
-              className="bg-red-600 text-white px-6 py-2.5 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Review Refund →
-            </button>
           </div>
         </div>
         <div>
