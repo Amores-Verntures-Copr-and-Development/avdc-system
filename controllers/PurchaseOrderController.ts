@@ -33,6 +33,7 @@ import {
   // updatePurchaseOrderReceive,
   // updatePurchaseOrderSent,
 } from "@/services/purchaseOrderServices";
+import { processAdjustReceivedPOItem } from "@/services/purchase/purchase-items/process-adjust-received";
 import {
   PurchaseOrderItems,
   PurchaseOrderRequest,
@@ -450,5 +451,21 @@ export const replacePurchaseOrderitems = async ({
       message: "Failed to replace PO Item!",
       error: e,
     };
+  }
+};
+
+export const adjustReceivedController = async (
+  poItem: Partial<PurchaseOrderItems> & { poCreatedBy: number },
+) => {
+  try {
+    const res = await processAdjustReceivedPOItem(poItem);
+
+    return {
+      success: true,
+      message: "Item adjusted successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return { success: true, message: "Failed to replace PO Item!", error: e };
   }
 };

@@ -49,8 +49,6 @@ export async function handleConvertItem({
   try {
     await connection.beginTransaction();
 
-    
-
     const inventoryItem = await findInventoryItemsByField({
       connection,
       keyFields: {

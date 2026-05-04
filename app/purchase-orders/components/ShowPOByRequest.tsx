@@ -287,6 +287,7 @@ const ShowPOByRequest = ({ setShowAllItems, data }: ShowPOByRequestProps) => {
                 {isRequestExpanded === reqData.requestNo && (
                   <div>
                     <Table
+                      localSearch
                       columns={columns}
                       showActions={
                         !["delivered", "completed", "received"].includes(

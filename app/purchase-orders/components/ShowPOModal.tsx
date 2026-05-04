@@ -19,10 +19,13 @@ import { UserAuth } from "@/hooks/useSession";
 import ShowPOByRequest from "./ShowPOByRequest";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/shared/Button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock } from "lucide-react";
 import ShowAllIItems from "./ShowAllIItems";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import SupplierView from "./SupplierView";
+import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import { formatDateToWords } from "@/utils/formatDateToWords";
+import { getPOStatusInfo } from "@/utils/formatPOStatus";
 // import PendingPOView from "./PendingPOView";
 // import ApprovedPOView from "./ApprovedPOView";
 interface ShowPOModalPros {
@@ -450,23 +453,40 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
+  const { status, bgClass, textClass, borderClass } = getPOStatusInfo(
+    data?.poStatus ?? "pending",
+  );
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center">
         <PageHeader title={`${data?.poNumber}`} subtitle={"Purchase Order"} />
+        <div className="flex flex-col gap-1">
+          <div className="flex">
+            <span
+              className={`${bgClass} px-2 py-1 ${textClass} gap-2 items-center font-semibold text-xs ${borderClass} flex rounded-xl`}
+            >
+              <Clock className="w-2.5 h-2.5 font-se" /> {status}
+            </span>
+          </div>
+          <span className="text-xs text-gray-500 ">
+            Last updated:
+            {formatDateToWords(data?.poUpdatedAt ?? "", {
+              showHour: true,
+              showMinute: true,
+            })}
+          </span>
+        </div>
         <div>
           <Button
             size="sm"
             onClick={onClose}
             label="Back"
             icon={ArrowLeft}
-            color="neutral"
-            isRounded={false}
-            hasBorder={true}
+            color="secondary"
           />
         </div>
       </div>
-      <div className="bg-gray-50 p-2">
+      {/* <div className="bg-gray-50 p-2">
         <div className="flex justify-between items-center max-w-3xl mx-auto">
           {statusSteps.map((step, index) => (
             <div key={step} className="flex items-center flex-1">
@@ -494,7 +514,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             </div>
           ))}
         </div>
-      </div>
+      </div> */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {isLoading ? (
           <LoaderComponent />

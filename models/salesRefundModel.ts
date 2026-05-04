@@ -144,3 +144,30 @@ SELECT * FROM SalesItemRefunds sif WHERE 1=1
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as SalesItemRefund[];
 };
+
+export const selectSalesItemWithTotalRefunds = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields: Partial<SalesItemRefund>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `
+SELECT si.*,SUM(sir.salesRefItemQty) AS totalItemRefunds FROM SalesItems si
+LEFT JOIN SalesItemRefunds sir ON sir.salesItemId = si.salesItemId
+WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND si.${key} IS NULL`;
+    } else {
+      sql += ` AND si.${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  sql += ` GROUP BY si.salesItemId`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};

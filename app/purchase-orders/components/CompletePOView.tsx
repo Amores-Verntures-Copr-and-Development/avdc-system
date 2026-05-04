@@ -116,6 +116,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null,
   );
+  console.log({ data });
   const [isShowDeliverConfirm, setIsShowDeliverConfirm] = useState(false);
   const [deliverRequestData, setDeliverRequestData] =
     useState<DisplayRequisitionWithItems | null>(null);
@@ -742,9 +743,9 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 </div>
               </div>
               <div className="flex justify-end">
-                <span className="text-sm">
+                <span className="text-[10px] 2xl:text-sm">
                   Total Purchase:{" "}
-                  <span className="font-semibold text-lg">
+                  <span className="font-semibold text-sm 2xl:text-lg">
                     {formatPeso(totalPOAmount)}
                   </span>
                 </span>
@@ -798,7 +799,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
             );
             return (
               <div
-                className="flex flex-col rounded-lg shadow w-full border-1 border-gray-200 cursor-pointer"
+                className="flex flex-col rounded-lg shadow w-full border-1 border-gray-200 border-l-4 border-l-primary-1 cursor-pointer"
                 key={reqData.requestId}
                 onClick={() =>
                   setIsRequestExpanded(
@@ -808,7 +809,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                   )
                 }
               >
-                <div className="flex items-center justify-between p-2 bg-white rounded-t-lg rounded-r-lg">
+                <div className="flex items-center justify-between p-4  bg-white rounded-t-lg rounded-r-lg">
                   <div className="flex flex-col border-gray-200">
                     <div className="flex items-center gap-2">
                       {" "}
@@ -868,7 +869,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                 {isRequestExpanded === reqData.requestNo && (
                   <>
                     <div className="flex p-2 border-t border-gray-200 bg-white justify-between">
-                      {/* Left side: Fulfill button */}
                       <div>
                         {!["delivered", "received", "completed"].includes(
                           reqData.requestStatus ?? "",
@@ -887,7 +887,6 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           />
                         )}
                       </div>
-
                       {/* Right side: Print & Download always at the end */}
                       <div className="flex gap-2">
                         <button className="p-1.5 hover:bg-gray-200 rounded transition-colors">

@@ -237,14 +237,18 @@ const SelectedSalesPage = ({
                         </td>
 
                         {item.salesItemsRefunds &&
-                          item.salesItemsRefunds.length > 0 && (
-                            <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
-                              {item.salesItemsRefunds?.reduce(
-                                (count, i) => i.salesRefItemQty + count,
-                                0,
-                              )}
-                            </td>
-                          )}
+                        item.salesItemsRefunds.length > 0 ? (
+                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                            {item.salesItemsRefunds?.reduce(
+                              (count, i) => i.salesRefItemQty + count,
+                              0,
+                            )}
+                          </td>
+                        ) : (
+                          <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
+                            -
+                          </td>
+                        )}
                         <td className="py-2 text-right text-xs 2xl:text-sm font-normal text-gray-900">
                           {formatPeso(item.salesItemSubtotal)}
                         </td>

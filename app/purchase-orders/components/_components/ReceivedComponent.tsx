@@ -1,7 +1,14 @@
 import Button from "@/components/shared/Button";
 import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
 import { formatPeso } from "@/utils/formatPeso";
-import { Package, PackageCheck, PackageMinus } from "lucide-react";
+import {
+  Check,
+  Package,
+  PackageCheck,
+  PackageMinus,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -21,6 +28,7 @@ interface ReceivedComponentProps {
   setExpandedSupplier: React.Dispatch<React.SetStateAction<number | null>>;
   onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
   mutateInventory: () => void;
+  poCreatedBy: number;
 }
 
 const ReceivedComponent = ({
@@ -29,19 +37,22 @@ const ReceivedComponent = ({
   mutateInventory,
   onMaskAsDeliverdSupplier,
   onReceivePO,
+  poCreatedBy,
 }: ReceivedComponentProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [supplierReceivedData, setSupplierReceivedData] = useState<
     DisplayPOItemsSupplier[] | null
   >(null);
-  //   const [supplierData, setSupplierData] =
-  //     useState<DisplayPOItemsSupplier[]>(supplier);
+
   const [isShowReceivedConfirm, setIsShowReceivedConfirm] = useState(false);
 
   const [supplierData, setSupplierData] =
     useState<DisplayPOItemsSupplier>(supplier);
-
+  const [isAdjustReceive, setIsAdjustReceive] = useState<{
+    poItemId: number;
+    prevQty: number;
+  } | null>(null);
   const columns: Column<PurchaseOrderItems>[] = [
     { name: "Item Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
@@ -54,7 +65,9 @@ const ReceivedComponent = ({
     {
       name: "Received Qty",
       key: "poItemReceivedQty",
-      editable: (row) => row.poItemStatus === "sent",
+      editable: (row) =>
+        row.poItemStatus === "sent" ||
+        isAdjustReceive?.poItemId === row.poItemId,
       inputType: "number",
       selector: (row) =>
         row.poItemStatus === "not_ordered" ? 0 : row.poItemReceivedQty,
@@ -194,6 +207,35 @@ const ReceivedComponent = ({
     }));
   };
 
+  const handleAdjustReceivedQty = async (
+    poItem: Partial<PurchaseOrderItems>,
+  ) => {
+    try {
+      console.log({ poItem });
+
+      const res = await fetch(
+        `/api/purchase-order/${poItem.poId}/${poItem.poItemId}/adjust-received/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(poItem),
+        },
+      );
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      setIsAdjustReceive(null);
+      toast.success(result.message);
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
   const [selectSupplierNotOrder, setSelectSupplierNotOrder] =
     useState<DisplayPOItemsSupplier | null>(null);
   const [isSubmittingNotOrder, setIsSubmittingNotOrder] = useState(false);
@@ -329,6 +371,75 @@ const ReceivedComponent = ({
               label="Auto-Fill Received Qty"
               bg="primary"
             />
+          ) : row.poItemStatus === "received" ? (
+            isAdjustReceive?.poItemId === row.poItemId ? (
+              <div className="flex gap-2 items-center justify-center">
+                <IconButton
+                  icon={<X size={18} />}
+                  onClick={() => {
+                    if (!row.suppId) {
+                      return;
+                    }
+                    console.log({ isAdjustReceive });
+                    setSupplierData((prev) => ({
+                      ...prev,
+                      items: prev.items.map((item) => {
+                        if (
+                          item.suppId === row.suppId &&
+                          item.poItemId === row.poItemId
+                        ) {
+                          return {
+                            ...item,
+                            poItemReceivedQty: isAdjustReceive.prevQty, // or whatever value you want
+                          };
+                        }
+                        return item;
+                      }),
+                    }));
+
+                    setIsAdjustReceive(null);
+                  }}
+                  label="Cancel Adjust"
+                  bg="red"
+                />
+                <IconButton
+                  icon={<Check size={18} />}
+                  onClick={() => {
+                    const poItem: Partial<PurchaseOrderItems> & {
+                      poCreatedBy: number;
+                    } = {
+                      poItemId: row.poItemId,
+                      poId: row.poId,
+                      poItemReceivedQty: row.poItemReceivedQty,
+                      itemId: row.itemId,
+                      poCreatedBy: poCreatedBy,
+                    };
+                    handleAdjustReceivedQty(poItem);
+                  }}
+                  label="Confirm Adjust"
+                  bg="green"
+                />
+              </div>
+            ) : (
+              <IconButton
+                icon={<PackageMinus size={18} />}
+                onClick={() => {
+                  if (!row.suppId) {
+                    return;
+                  }
+                  if (isAdjustReceive !== null) {
+                    toast.error("Finish the current adjustment first");
+                    return;
+                  }
+                  setIsAdjustReceive({
+                    poItemId: row.poItemId,
+                    prevQty: row.poItemReceivedQty,
+                  });
+                }}
+                label="Adjust Received Qty"
+                bg="secondary"
+              />
+            )
           ) : (
             <></>
           )

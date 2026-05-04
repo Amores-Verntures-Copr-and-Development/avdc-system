@@ -914,6 +914,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
             ): void {
               console.log({ value });
             }}
+            poCreatedBy={poData?.poCreatedBy ?? 0}
           />
           {/* <PDFViewer width="100%" height="100%">
             {showROPDF === "supplier" ? (

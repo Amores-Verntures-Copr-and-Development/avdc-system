@@ -15,11 +15,15 @@ import {
 } from "../user/get-user";
 import bcrypt from "bcryptjs";
 import { getSalesItemServices } from "../sales/sale-items/get-sale-items";
-import { getSalesItemRefundsByFields } from "./sales-item-refund/get-sales-item-refunds";
+import {
+  getSalesItemRefundsByFields,
+  getSalesItemWithTotalRefundsByFields,
+} from "./sales-item-refund/get-sales-item-refunds";
 import { getSalesRefundsByFields } from "./get-sales-refund";
 import { SalesItemRefund } from "@/types/sales-refund";
 import { updateSalesByFields } from "../sales/update-sales";
-import { SalesStatus } from "@/types/sales";
+import { SaleItems, SalesItemStatus, SalesStatus } from "@/types/sales";
+import { updateSaleItemsByFields } from "../sales/sale-items/update-sale-items";
 
 export async function processCreateSaleRefund({
   data,
@@ -36,6 +40,7 @@ export async function processCreateSaleRefund({
     storeId: number | null;
   };
 }) {
+  console.log({ data });
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   await connection.beginTransaction();
@@ -135,36 +140,56 @@ export async function processCreateSaleRefund({
       connection: connection,
     });
 
-    if (salesRef && salesRef.length > 0) {
-      for (const ref of salesRef) {
-        const salesItem = await getSalesItemRefundsByFields({
-          keyFields: { salesRefId: ref.salesRefId },
-          connection: connection,
-        });
-        if (salesItem && salesItem.length > 0) {
-          console.log({ salesItem });
-          salesItemRefund.push(...salesItem);
-        }
-      }
-    }
-    const salesItemRefundCount = salesItemRefund.reduce(
-      (count, item) => Number(item.salesRefItemQty) + Number(count),
-      0,
+    const salesItemWithTotalRefs = await getSalesItemWithTotalRefundsByFields({
+      keyFields: { salesId: data.salesId },
+      connection,
+    });
+
+    const isAllTotalSameRefunds = salesItemWithTotalRefs.every(
+      (si) => Number(si.totalItemRefunds) === Number(si.salesItemQuantity),
+    );
+    const equalRefundItems = salesItemWithTotalRefs.filter(
+      (si) =>
+        Number(si.totalItemRefunds ?? 0) === Number(si.salesItemQuantity) &&
+        data.salesItemRefunds?.some(
+          (sir) => si.salesItemId === sir.salesItemId,
+        ) &&
+        si.salesItemStatus === "active",
     );
 
-    const isUpdateSalesStatusRefund = salesItemRefundCount >= salesItemsCount;
-    console.log({
-      salesItemsCount,
-      salesItemRefundCount,
-      isUpdateSalesStatusRefund,
-    });
-    if (isUpdateSalesStatusRefund) {
+    if (isAllTotalSameRefunds) {
+      //Update all to refunded salesItems and Sales
+      //c
+      await updateSaleItemsByFields({
+        connection: connection,
+        updates: [
+          { salesId: data.salesId, salesItemStatus: SalesItemStatus.RETURNED },
+        ],
+        keyFields: ["salesId"],
+      });
       await updateSalesByFields({
         connection: connection,
         updates: [{ salesId: data.salesId, salesStatus: SalesStatus.REFUNDED }],
         keyFields: ["salesId"],
       });
     }
+
+    if (equalRefundItems && equalRefundItems.length > 0) {
+      //Update specific
+
+      const updateSaleRefundsItemsData: Partial<SaleItems>[] =
+        equalRefundItems.map((er) => ({
+          salesItemId: er.salesItemId,
+          salesItemStatus: SalesItemStatus.RETURNED,
+        }));
+
+      await updateSaleItemsByFields({
+        connection: connection,
+        updates: updateSaleRefundsItemsData,
+        keyFields: ["salesItemId"],
+      });
+    }
+
     await connection.commit();
   } catch (e) {
     await connection.rollback();

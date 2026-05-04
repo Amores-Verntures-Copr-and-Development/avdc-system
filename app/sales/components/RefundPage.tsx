@@ -84,6 +84,7 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
 
   // Populate refund items once data loads
   useEffect(() => {
+    console.log({ response });
     if (response?.data) {
       setRefundItems(
         response.data.map((item) => ({
@@ -91,13 +92,28 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
           prodName: item.prodName ?? "",
           prodVarName: item.prodVarName,
           salesItemPrice: item.salesItemPrice,
-          salesItemQuantity: item.salesItemQuantity,
+          salesItemQuantity:
+            Number(item.salesItemQuantity) -
+            (item.salesItemsRefunds?.reduce(
+              (sum, i) => sum + Number(i.salesRefItemQty),
+              0,
+            ) ?? 0),
           salesItemTotal: item.salesItemTotal,
-          selectedQty: item.salesItemQuantity,
+          selectedQty:
+            Number(item.salesItemQuantity) -
+            (item.salesItemsRefunds?.reduce(
+              (sum, i) => sum + Number(i.salesRefItemQty),
+              0,
+            ) ?? 0),
           selected: false,
           salesRefId: 0,
           salesRefItemPrice: item.salesItemPrice,
-          salesRefItemQty: item.salesItemQuantity,
+          salesRefItemQty:
+            Number(item.salesItemQuantity) -
+            (item.salesItemsRefunds?.reduce(
+              (sum, i) => sum + Number(i.salesRefItemQty),
+              0,
+            ) ?? 0),
         })),
       );
     }
@@ -106,6 +122,7 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
   useEffect(() => {});
 
   const toggleItem = (id: string | number) => {
+    console.log({ refundItems });
     setRefundItems((prev) =>
       prev.map((i) =>
         i.salesItemId === id ? { ...i, selected: !i.selected } : i,
@@ -797,13 +814,15 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
                 key={String(item.salesItemId)}
                 className={`flex items-center gap-4 px-5 py-4 transition-colors ${item.selected ? "bg-blue-50" : "hover:bg-gray-50"}`}
               >
-                {/* Checkbox */}
                 <button
+                  disabled={item.salesItemQuantity === 0}
                   onClick={() => toggleItem(item.salesItemId)}
                   className={`w-5 h-5 rounded flex-shrink-0 border-2 flex items-center justify-center transition-colors ${
-                    item.selected
-                      ? "bg-blue-600 border-blue-600"
-                      : "border-gray-300"
+                    item.salesItemQuantity === 0
+                      ? "bg-gray-200 border-gray-200 cursor-not-allowed opacity-60"
+                      : item.selected
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300 hover:border-blue-400"
                   }`}
                 >
                   {item.selected && (
@@ -881,7 +900,9 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
             <h3 className="font-semibold text-gray-800">
               Payment Method for Refund
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p
+              className={`text-xs ${Number(refundPayments.length) !== 0 ? "text-gray-500" : "text-red-500"} mt-0.5`}
+            >
               Select how the refund will be returned to the customer.
             </p>
           </div>

@@ -178,13 +178,57 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
   const { data: itemResponse = { data: [] }, isLoading: loadingData } = useSWR<
     ApiResponse<DisplayPOItemsSupplier[]>
   >(`/api/purchase-order/po-items-supplier/${data?.poId}`, fetcher);
+  console.log({ itemResponse });
+  const totalPurchase = itemResponse.data.reduce((sum, s) => {
+    const totalItemsSupplier = s.items
+      .filter(
+        (i) =>
+          i.poItemStatus === "sent" ||
+          i.poItemStatus === "received" ||
+          i.poItemStatus === "delivered" ||
+          i.poItemStatus === "received_store",
+      )
+      .reduce((total, item) => {
+        if (item.poItemStatus === "not_ordered") return total;
 
+        const hasComposite = item.composite && item.composite.length > 0;
+
+        if (hasComposite) {
+          const compositeTotal = item.composite
+            ?.filter((c) => c !== null)
+            .reduce((sum, c) => {
+              return (
+                sum + Number(c.ordComQuantity || 0) * Number(c.ordComPrice || 0)
+              );
+            }, 0);
+
+          return total + Number(compositeTotal || 0);
+        }
+
+        const price = Number(item.supplierPrice || item.unitPrice || 0);
+
+        const qty = Number(
+          Number(item.poItemReceivedQty || 0) > 0
+            ? item.poItemReceivedQty
+            : item.poItemOrderedQty || 0,
+        );
+
+        return total + price * qty;
+      }, 0);
+
+    return sum + totalItemsSupplier;
+  }, 0);
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex justify-between shadow bg-white p-2">
-        <h1 className="font-semibold text-sm 2xl:text-md">
-          Overview of Suppliers
-        </h1>
+      <div className="flex justify-between shadow bg-white p-2 mb-2 rounded">
+        <div>
+          <h1 className="font-semibold text-sm 2xl:text-md">
+            Overview of Suppliers
+          </h1>
+          <span className="text-xs font-semibold">
+            Total Supplier Purchase: {formatPeso(totalPurchase)}
+          </span>
+        </div>
         <div>
           <Button
             label="Back"
@@ -463,6 +507,7 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
           })
         )}
       </div>
+      <div className="p-2 shadow"></div>
     </div>
   );
 };
