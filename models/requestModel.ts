@@ -21,11 +21,12 @@ export const insertRequest = async ({
   data: CreateRequestDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO RequestOrders(requestNo,storeId,requestById) VALUES(?,?,?)`;
+  const sql = `INSERT INTO RequestOrders(requestNo,storeId,requestById,requestDesc) VALUES(?,?,?,?)`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.requestNo,
     data.storeId,
     data.requestById,
+    data.requestDesc,
   ]);
   return results.insertId;
 };

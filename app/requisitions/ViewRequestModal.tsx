@@ -1070,12 +1070,38 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             title={`${selectedReq?.requestNo}`}
             subtitle="Request Order"
           />
-          <div
-            className={`${bg} ${color} py-1 px-2 rounded-md text-sm items-center text-center shadow`}
-          >
-            {" "}
-            <span className="">{label}</span>
+          <div className="flex gap-2">
+            {selectedReq?.requestDesc && (
+              <span className="text-xs font-semibold">
+                Description: {selectedReq?.requestDesc}
+              </span>
+            )}
+            <IconButton
+              onClick={function (): void {
+                throw new Error("Function not implemented.");
+              }}
+              label={"Edit Description"}
+              bg={"white"}
+              icon={<Pencil size={10} />}
+            />
           </div>
+        </div>
+        <div>
+          <div>
+            {" "}
+            <span
+              className={`${bg} ${color} py-1 px-2 rounded-md text-sm items-center text-center shadow`}
+            >
+              {label}
+            </span>
+          </div>
+          <span className="text-xs">
+            Last Updated:
+            {formatDateToWords(selectedReq?.requestCreatedAt ?? "", {
+              showHour: true,
+              showMinute: true,
+            })}
+          </span>
         </div>
         <div className="flex flex-col gap-2">
           <Button
@@ -1309,22 +1335,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                     />
                   </div>
                 )}
-                {!["completed", "received"].includes(
-                  selectedReq?.requestStatus ?? "",
-                ) && (
-                  <div>
-                    <Button
-                      icon={Plus}
-                      onClick={() => {
-                        setShowAddItem(true);
-                      }}
-                      size="sm"
-                      label="Add Item"
-                      className="font-semibold"
-                      color="primary"
-                    />
-                  </div>
-                )}
+                <div>
+                  <Button
+                    icon={Plus}
+                    onClick={() => {
+                      setShowAddItem(true);
+                    }}
+                    size="sm"
+                    label="Add Item"
+                    className="font-semibold"
+                    color="primary"
+                  />
+                </div>
               </div>
             }
             maxHeight="h-full"

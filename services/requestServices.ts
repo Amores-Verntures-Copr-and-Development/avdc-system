@@ -31,6 +31,7 @@ export async function createRequest(data: CreateRequestFormDto) {
       storeId: data.storeId,
       requestById: data.requestById,
       requestNo: generateId,
+      requestDesc: data.requestDesc,
     };
     const newRequeStId = await insertRequest({ connection, data: requestData });
     const requestItemData: InsertItemsRequestDto[] = data.items.map((item) => ({

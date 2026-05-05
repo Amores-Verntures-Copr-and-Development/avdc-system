@@ -1,5 +1,6 @@
 import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
+import Input from "@/components/shared/Input";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import {
@@ -52,6 +53,10 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
   onRemoveItem,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reqDesc, setReqDesc] = useState("");
+  const currentMonthName = new Date().toLocaleString("default", {
+    month: "long",
+  });
   const [tableData, setTableData] = useState<EditableItem[]>(() =>
     data.map((items) => ({
       invItem: items.inventoryItemId,
@@ -110,6 +115,7 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         requestById: user?.userId ?? 0,
         requestNo: "",
         items: newItems,
+        requestDesc: reqDesc,
       };
 
       const success = await onSubmit(requestData);
@@ -124,6 +130,35 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
 
   return (
     <div className="flex flex-col h-full gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="min-w-20 max-w-100">
+          <Input
+            label={"Description"}
+            sizes={"sm"}
+            value={reqDesc}
+            onChange={(e) => setReqDesc(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-3">
+          <span className="text-gray-700 text-xs">Suggested Desription:</span>
+          <div>
+            <Button
+              size="xs"
+              label={`${currentMonthName} - 2 Weeks`}
+              color="outline"
+              onClick={() => setReqDesc(`${currentMonthName} - 2 Weeks`)}
+            />
+          </div>
+          <div>
+            <Button
+              size="xs"
+              label={`${currentMonthName} - Weekly`}
+              color="outline"
+              onClick={() => setReqDesc(`${currentMonthName} - Weekly`)}
+            />
+          </div>
+        </div>
+      </div>
       <div className="flex-1 min-h-0">
         <Table
           uniqueIdKey="invItem"

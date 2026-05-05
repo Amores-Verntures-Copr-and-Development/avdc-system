@@ -19,6 +19,7 @@ export type RequestItemStatus =
   | "received_store"
   | "";
 export interface Request {
+  requestDesc: string;
   requestId: number;
   requestNo: string;
   storeId?: number | null;

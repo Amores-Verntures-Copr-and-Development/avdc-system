@@ -24,6 +24,7 @@ export async function processCreateRequest(data: CreateRequestFormDto) {
       requestById: data.requestById,
       requestNo: generateId,
       storeId: data.storeId,
+      requestDesc: data.requestDesc,
     };
     const requestId = await createRequest({ connection, data: requestData });
     const requestItemData: CreateRequestItemDto[] = data.items.map((item) => ({

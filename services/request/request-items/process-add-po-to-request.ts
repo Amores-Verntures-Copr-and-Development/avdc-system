@@ -50,6 +50,7 @@ export const processAddItemFromPOtoRequest = async (
           invItem: inventoryItem.data[0].inventoryItemId,
           requestId: data.requestId,
           reqItemStatus: "pending",
+          unitPrice: poItem.itemPrice,
         });
         return {
           requestId: data.requestId,

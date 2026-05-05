@@ -35,6 +35,7 @@ import { getRequestStatusOption } from "@/utils/requestOrderUtils";
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order No", key: "requestNo" },
   { name: "Total Items", key: "totalItems" },
+  { name: "Description", key: "requestDesc" },
   { name: "Requested By", key: "requestedByName" },
   {
     name: "Date Created",
@@ -104,36 +105,36 @@ const StoreRequisitionPage = () => {
       setSelectedRow(findSelectedRo);
     }
   };
-  const handleSubmitCreateRequest = async (data: CreateRequestItemDto[]) => {
-    const requestFormData: CreateRequestFormDto = {
-      requestById: user?.userId ?? 0,
-      requestNo: "",
-      items: data,
-      storeId: user?.storeId ?? 0,
-    };
-    try {
-      const result = await fetch(`api/requests`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestFormData),
-      });
-      const res = await result.json();
-      if (!res.success) {
-        console.log("Res: ", res);
-        throw new Error(res.err);
-      }
-      toast.success("Request order created successfully!");
-      mutate();
-      handleClear();
-      return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to create request order.");
-      return false;
-    }
-  };
+  // const handleSubmitCreateRequest = async (data: CreateRequestItemDto[]) => {
+  //   const requestFormData: CreateRequestFormDto = {
+  //     requestById: user?.userId ?? 0,
+  //     requestNo: "",
+  //     items: data,
+  //     storeId: user?.storeId ?? 0,
+  //   };
+  //   try {
+  //     const result = await fetch(`api/requests`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(requestFormData),
+  //     });
+  //     const res = await result.json();
+  //     if (!res.success) {
+  //       console.log("Res: ", res);
+  //       throw new Error(res.err);
+  //     }
+  //     toast.success("Request order created successfully!");
+  //     mutate();
+  //     handleClear();
+  //     return true;
+  //   } catch (e) {
+  //     console.log(e);
+  //     toast.error("Failed to create request order.");
+  //     return false;
+  //   }
+  // };
 
   return (
     <PageLayout className="p-2 gap-2 xl:gap-4">
@@ -216,7 +217,7 @@ const StoreRequisitionPage = () => {
                     />
                   ) : (
                     <>
-                      <Button
+                      {/* <Button
                         size="sm"
                         icon={Plus}
                         onClick={function (): void {
@@ -224,7 +225,7 @@ const StoreRequisitionPage = () => {
                         }}
                         label="Request Stock"
                         className="font-semibold text-xs"
-                      />
+                      /> */}
                     </>
                   )}
                 </>
@@ -258,7 +259,7 @@ const StoreRequisitionPage = () => {
           </div>
         </>
       )}
-      <Modal
+      {/* <Modal
         title="Create Request Order"
         size="xl"
         isOpen={isShowCreateRequest}
@@ -274,7 +275,7 @@ const StoreRequisitionPage = () => {
             setIsShowCreateRequest(false);
           }}
         />
-      </Modal>
+      </Modal> */}
       {/* <Modal
         hasPadding={false}
         className="bg-white h-[95%]"

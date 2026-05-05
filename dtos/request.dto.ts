@@ -3,7 +3,7 @@ import { StoreInterface } from "@/types/stores";
 
 export type CreateRequestDto = Pick<
   Request,
-  "requestById" | "storeId" | "requestNo"
+  "requestById" | "storeId" | "requestNo" | "requestDesc"
 >;
 export type CreateRequestItemDto = Pick<
   RequestItems,

@@ -21,6 +21,7 @@ interface AddItemToRequestFromPOModaProps {
 export interface POAddToRequestItem {
   poItemId: number;
   itemId: number;
+  itemPrice: number;
 }
 
 export interface POAddToRequestItemForm {
@@ -209,6 +210,7 @@ const AddItemToRequestFromPOModal = ({
                       {
                         poItemId: row.poItemId,
                         itemId: row.itemId,
+                        itemPrice: row.unitPrice,
                       },
                     ];
                   });

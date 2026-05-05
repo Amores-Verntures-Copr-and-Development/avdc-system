@@ -53,6 +53,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
       <span className="font-semibold">{formatPeso(row.totalCost)}</span>
     ),
   },
+  { name: "Description", key: "requestDesc" },
   {
     name: "Status",
     key: "requestStatus",
