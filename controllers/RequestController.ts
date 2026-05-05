@@ -16,6 +16,7 @@ import { processAdditionalReceiveRequestItem } from "@/services/request/request-
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
 import { receiveRequestItems } from "@/services/request/request-items/received-requset-Items";
 import { updateRequestItems } from "@/services/request/request-items/update-request-items";
+import { updateRequests } from "@/services/request/update-request";
 import {
   getRequestItems,
   getRequestItemsByIds,
@@ -164,6 +165,29 @@ export const updateRequest = async (
     return {
       success: false,
       message: "Failed to update request",
+      error: e,
+    };
+  }
+};
+
+export const updateRequestById = async ({
+  data,
+  keyFields = ["requestId"], // default primary key
+}: {
+  data: Partial<Request>;
+  keyFields?: (keyof Request)[]; // which fields define the WHERE condition
+}) => {
+  try {
+    const res = await updateRequests({ updates: [data], keyFields });
+    return {
+      success: true,
+      message: "Request Order updated successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to update request order!",
       error: e,
     };
   }

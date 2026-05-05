@@ -47,6 +47,8 @@ import IconButton from "@/components/shared/IconButton";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import ReceiveItemComponent from "./components/ReceiveItemComponent";
 import AdditionalReceiveModal from "./components/AdditionalReceiveModal";
+import Input from "@/components/shared/Input";
+import EditRequestDescription from "./components/EditRequestDescription";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -84,6 +86,8 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [originalData, setOriginalData] = useState<DisplayRequestItems[]>([]);
   const [showReceivedConfirmation, setShowReceivedConfirmation] =
     useState(false);
+
+  const [isAddOrEditDes, setIsAddOrEditDes] = useState(false);
   const [showNotOrderedConfirmation, setShowNotOrderedConfirmation] =
     useState(false);
   const [showROPDF, setShowROPDF] = useState(false);
@@ -1078,7 +1082,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             )}
             <IconButton
               onClick={function (): void {
-                throw new Error("Function not implemented.");
+                setIsAddOrEditDes(true);
               }}
               label={"Edit Description"}
               bg={"white"}
@@ -1088,14 +1092,13 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         </div>
         <div>
           <div>
-            {" "}
             <span
               className={`${bg} ${color} py-1 px-2 rounded-md text-sm items-center text-center shadow`}
             >
               {label}
             </span>
           </div>
-          <span className="text-xs">
+          <span className="text-[10px] 2xl:text-xs">
             Last Updated:
             {formatDateToWords(selectedReq?.requestCreatedAt ?? "", {
               showHour: true,
@@ -1808,6 +1811,24 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           }}
         />
       </Popup>
+      <Modal
+        title="Edit Request Description"
+        isOpen={isAddOrEditDes}
+        onClose={function (): void {
+          setIsAddOrEditDes(false);
+        }}
+      >
+        <EditRequestDescription
+          data={selectedReq}
+          mutate={function (): void {
+            mutateRequest();
+            mutate();
+          }}
+          onClose={function (): void {
+            setIsAddOrEditDes(false);
+          }}
+        />
+      </Modal>
       <Popup
         title={`Additional Receive ${selectedRowItem?.itemName}`}
         isOpen={showAdditionalReceive}
