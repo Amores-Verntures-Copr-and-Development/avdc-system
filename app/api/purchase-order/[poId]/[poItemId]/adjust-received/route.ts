@@ -7,7 +7,7 @@ export async function PATCH(request: NextRequest) {
     const body = (await request.json()) as Partial<PurchaseOrderItems> & {
       poCreatedBy: number;
     };
-    console.log({ body });
+
     const res = await adjustReceivedController(body);
     if (!res.success) {
       console.log(res.error);

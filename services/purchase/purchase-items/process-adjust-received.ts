@@ -44,13 +44,6 @@ export const processAdjustReceivedPOItem = async (
 
     const prevPOData = prevPO[0];
 
-    const isDeduct =
-      Number(prevPOData.poItemReceivedQty) > Number(poItem.poItemReceivedQty);
-
-    const isAdd =
-      Number(prevPOData.poItemReceivedQty) < Number(poItem.poItemReceivedQty);
-
-    console.log({ isDeduct, isAdd });
     const adjustPrevInventoryItem: Partial<InventoryItemInterface> = {
       inventoryItemReferenceId: poItem.itemId,
       inventoryItemQuantity: prevPOData.poItemReceivedQty,
@@ -128,7 +121,6 @@ export const processAdjustReceivedPOItem = async (
     });
     await connection.commit();
   } catch (e) {
-    console.log({ e });
     await connection.rollback();
   } finally {
     connection.release();

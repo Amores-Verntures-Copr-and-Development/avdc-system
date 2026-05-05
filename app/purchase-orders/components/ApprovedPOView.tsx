@@ -87,6 +87,12 @@ const columns: Column<PurchaseOrderItems>[] = [
       formatQuantityByUnit(row.poItemOrderedQty, row.itemUnit ?? ""),
   },
   {
+    name: "Received",
+    key: "poItemReceivedQty",
+    selector: (row) =>
+      formatQuantityByUnit(row.poItemReceivedQty, row.itemUnit ?? ""),
+  },
+  {
     name: "Status",
     key: "poItemStatus",
     selector: (row) => {
@@ -547,7 +553,9 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                         (i) => i.poItemStatus !== "not_ordered",
                                       )
                                       .every(
-                                        (i) => i.poItemStatus === "received",
+                                        (i) =>
+                                          i.poItemStatus === "received" ||
+                                          i.poItemStatus === "received_store",
                                       ) ? (
                                       <Button
                                         isRounded={false}
@@ -615,9 +623,13 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     .reduce((total, item) => {
                                       const price = Number(item.unitPrice) || 0;
                                       const quantity =
-                                        item.poItemStatus === "received"
-                                          ? item.poItemReceivedQty
+                                        item.poItemStatus === "received" ||
+                                        item.poItemStatus === "received_store"
+                                          ? item.poItemReceivedQty > 0
+                                            ? item.poItemReceivedQty
+                                            : item.poItemOrderedQty
                                           : item.poItemOrderedQty;
+
                                       const qty = Number(quantity) || 0;
                                       return total + price * qty;
                                     }, 0),

@@ -82,12 +82,6 @@ const ReceivedComponent = ({
       selector: (row) => formatPeso(row.unitPrice),
     },
     {
-      name: "Supplier Price",
-      key: "supplierPrice",
-      editable: (row) => row.poItemStatus === "sent",
-      inputType: "number",
-    },
-    {
       name: "Total",
       key: "total",
       selector: (row) =>
