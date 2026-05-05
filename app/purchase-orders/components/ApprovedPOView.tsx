@@ -19,6 +19,7 @@ import {
   PackageOpen,
   RefreshCw,
   Send,
+  Store,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -36,6 +37,9 @@ import { useSession } from "@/hooks/useSession";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
+import IconButton from "@/components/shared/IconButton";
+import Popup from "@/components/shared/Popup";
+import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -128,8 +132,23 @@ const columns: Column<PurchaseOrderItems>[] = [
   {
     name: "Total",
     key: "total",
-    selector: (row: PurchaseOrderItems) =>
-      formatPeso(row.poItemOrderedQty * row.unitPrice),
+    selector: (row: PurchaseOrderItems) => {
+      const isReceived =
+        row.poItemStatus === "received" ||
+        row.poItemStatus === "received_store";
+
+      const quantity = isReceived
+        ? row.poItemReceivedQty > 0
+          ? row.poItemReceivedQty
+          : row.poItemOrderedQty
+        : row.poItemOrderedQty;
+
+      const qty = Number(quantity) || 0;
+      const price = Number(row.unitPrice) || 0;
+
+      if (row.poItemStatus === "not_ordered") return 0;
+      return formatPeso(qty * price);
+    },
   },
 ];
 const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
@@ -144,6 +163,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   const [isUpdating, setIsUpdating] = useState(false);
   const { user } = useSession();
   const [renderPDF, setRenderPDF] = useState(false);
+  const [isShowUpdateSuppPrice, setIsShowUpdateSuppPrice] =
+    useState<PurchaseOrderItems | null>(null);
   const [expandedSupplier, setExpandedSupplier] = useState<{
     suppId: number | null;
     index: null | number;
@@ -675,7 +696,22 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                 data={data.items}
                                 isRounded={false}
                                 localSearch={true}
-                                renderTopActions
+                                showActions
+                                renderActions={(row) => (
+                                  <div className="flex justify-center gap-2">
+                                    <IconButton
+                                      icon={<Store size={14} />}
+                                      onClick={() => {
+                                        if (!row) {
+                                          return;
+                                        }
+                                        setIsShowUpdateSuppPrice(row);
+                                      }}
+                                      label="Update Supplier Price"
+                                      bg="tertiary"
+                                    />
+                                  </div>
+                                )}
                               />
                             </div>
                           ) : (
@@ -939,6 +975,30 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           </PDFViewer> */}
         </Modal>
       )}
+
+      <Popup
+        isOpen={isShowUpdateSuppPrice !== null}
+        onClose={function (): void {
+          setIsShowUpdateSuppPrice(null);
+        }}
+        background="bg-white/20"
+        title={`Update Supplier Price`}
+        closeOnClickOutside={false}
+      >
+        <UpdateSupplierPrice
+          data={isShowUpdateSuppPrice}
+          supplierName={
+            data.find((s) => s.suppId === isShowUpdateSuppPrice?.suppId)
+              ?.suppName ?? ""
+          }
+          onClose={function (): void {
+            setIsShowUpdateSuppPrice(null);
+          }}
+          mutate={() => {
+            mutate();
+          }}
+        />
+      </Popup>
     </div>
   );
 };
