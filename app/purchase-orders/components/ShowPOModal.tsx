@@ -41,8 +41,6 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   onClose,
   user,
 }) => {
-  const statusSteps = ["pending", "approved", "sent", "received", "completed"];
-  const currentStepIndex = statusSteps.indexOf(data?.poStatus ?? "pending");
   const [showPage, setShowPage] = useState<
     "status" | "all" | "request" | "supplier"
   >("status");

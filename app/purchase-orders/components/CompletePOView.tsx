@@ -613,6 +613,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     const hasNoFulFillQty = newRequestItems.some(
       (item) =>
         item.reqItemStatus !== "not_ordered" &&
+        item.reqItemStatus !== "received" &&
         Number(item.reqItemTransfer) === 0,
     );
 
@@ -1019,14 +1020,22 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                           size="xs"
                           onClick={() => {
                             const hasNoFulFillQty = reqData.requestItemsData
-                              .filter((i) => i.reqItemStatus !== "delivered")
+                              .filter(
+                                (i) =>
+                                  i.reqItemStatus !== "delivered" &&
+                                  i.reqItemStatus !== "received",
+                              )
                               .some(
                                 (item) =>
                                   item.reqItemStatus !== "not_ordered" &&
                                   Number(item.reqItemTransfer) === 0,
                               );
                             const hasNoToFollowQty = reqData.requestItemsData
-                              .filter((i) => i.reqItemStatus !== "delivered")
+                              .filter(
+                                (i) =>
+                                  i.reqItemStatus !== "delivered" &&
+                                  i.reqItemStatus !== "received",
+                              )
                               .some(
                                 (item) =>
                                   item.reqItemStatus !== "not_ordered" &&

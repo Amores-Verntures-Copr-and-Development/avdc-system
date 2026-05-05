@@ -48,7 +48,7 @@ const AddItemToRequestFromPOModal = ({
   const [selectedPoItems, setSelectedPoItems] = useState<POAddToRequestItem[]>(
     [],
   );
-
+  const [isAdding, setIsAdding] = useState(false);
   const reqItemIds = reqData?.requestItemsData.map((item) => item.itemId) || [];
 
   useEffect(() => {
@@ -157,6 +157,7 @@ const AddItemToRequestFromPOModal = ({
   ];
 
   const submitAddItemsToRequest = async () => {
+    setIsAdding(true);
     if (!poData || !reqData) return;
 
     const formData: POAddToRequestItemForm = {
@@ -168,10 +169,12 @@ const AddItemToRequestFromPOModal = ({
 
     const success = await onAddItem(formData);
     if (success) {
+      setIsAdding(false);
       mutateRequest();
       setSelectedPoItems([]);
       onClose();
     }
+    setIsAdding(false);
   };
   const onRemoveItem = (poItemId: number) => {
     const filterItem = selectedPoItems.filter((i) => i.poItemId !== poItemId);
@@ -244,7 +247,12 @@ const AddItemToRequestFromPOModal = ({
       </div>
       <div className="flex mt-auto justify-end gap-3">
         <div>
-          <Button label="Cancel" size="sm" color="secondary" />
+          <Button
+            label="Cancel"
+            size="sm"
+            color="secondary"
+            disabled={isAdding}
+          />
         </div>
         <div>
           <Button
@@ -252,6 +260,7 @@ const AddItemToRequestFromPOModal = ({
             size="sm"
             disabled={selectedPoItems.length === 0}
             onClick={submitAddItemsToRequest}
+            loading={isAdding}
           />
         </div>
       </div>
