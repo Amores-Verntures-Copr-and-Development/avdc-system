@@ -31,6 +31,7 @@ export const selectCustomers = async ({
   offset,
   search,
   type,
+  store,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -38,6 +39,7 @@ export const selectCustomers = async ({
   type?: string;
   limit?: number;
   offset?: number;
+  store?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
 
@@ -73,6 +75,9 @@ WHERE 1=1`;
     OR c.customerPhone LIKE ?
   )`;
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+
+  if (store) {
   }
 
   sql += ` GROUP BY c.customerId, c.customerName, c.customerEmail, c.customerPhone, c.customerType, c.storeId, st.storeName`;

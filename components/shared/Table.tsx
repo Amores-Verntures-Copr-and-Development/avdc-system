@@ -346,7 +346,7 @@ const TableInner = <T extends Record<string, any>>(
     const errorKey = `${rowIndex}-${column.key}`;
     const hasError = errors.has(errorKey);
 
-    const cellBg = column.bgCol ?? "bg-white"; // default background
+    const cellBg = column.bgCol ?? ""; // default background
 
     if (editable && editMode === "inline") {
       const realRow = getRowById(row);
@@ -604,7 +604,14 @@ const TableInner = <T extends Record<string, any>>(
                 filteredData.map((row, rowIndex) => (
                   <tr
                     key={rowIndex}
-                    className={`hover:bg-gray-50 transition-colors duration-150 text-[10px] xl:text-${textSize} border-b-2 border-gray-100`}
+                    className={`
+    transition-colors duration-150
+    hover:bg-blue-50
+    hover:[&>td]:bg-blue-50
+    cursor-pointer
+    text-[10px] xl:text-${textSize}
+    border-b border-gray-200
+  `}
                     onClick={() => {
                       if (onRowSelection) {
                         onRowSelection(row);
@@ -626,11 +633,17 @@ const TableInner = <T extends Record<string, any>>(
                     )}
 
                     {columns.map((column, colIndex) => {
-                      const cellBg = column.bgCol ?? "bg-white"; // default cell bg
+                      const cellBg = column.bgCol ?? ""; // default cell bg
                       return (
                         <td
                           key={column.key}
-                          className={`px-1 py-4 xl:px-2 xl:py-1 border-r-2 border-gray-100 text-xs xl:text-${textSize} ${cellBg}`}
+                          className={`
+  px-1 py-4 xl:px-2 xl:py-1
+  border-r border-gray-200
+  text-xs xl:text-${textSize}
+  transition-colors duration-150
+  ${cellBg}
+`}
                         >
                           {renderCell(column, row, rowIndex)}
                         </td>

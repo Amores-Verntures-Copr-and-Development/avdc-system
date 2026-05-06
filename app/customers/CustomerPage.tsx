@@ -74,6 +74,7 @@ const adminColumns: Column<DisplayCustomerDto>[] = [
 const CustomerPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [selectedStore, setSelectedStore] = useState<number | null>(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user, hasStore, isAdmin } = useSession();
   const { stores } = useStores({ user, hasStore, isAdmin });
@@ -173,14 +174,22 @@ const CustomerPage = () => {
         toast.error("Customer Type is required");
         return false;
       }
-      const data = await fetch(`/api/customers/store/${user?.storeId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+
+      if (!user?.storeId && !selectedStore) {
+        throw new Error("No store ID found!");
+      }
+
+      const data = await fetch(
+        `/api/customers/store/${user?.storeId || selectedStore}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(cusData),
+          credentials: "include",
         },
-        body: JSON.stringify(cusData),
-        credentials: "include",
-      });
+      );
       const res = await data.json();
       if (!res.success) {
         throw new Error(res.message || "Failed to add customer.");
@@ -200,6 +209,7 @@ const CustomerPage = () => {
     ? stores.map((s) => ({
         label: s.storeName,
         value: s.storeName,
+        id: s.storeId,
       }))
     : [];
   return (
@@ -231,10 +241,15 @@ const CustomerPage = () => {
                     if (value) {
                       const url = new URL(window.location.href);
                       url.searchParams.set("store", String(value));
+                      const findId = storeOptions.find(
+                        (s) => s.value === value,
+                      )?.id;
+                      setSelectedStore(Number(findId));
                       router.push(url.toString());
                     } else {
                       const url = new URL(window.location.href);
                       url.searchParams.delete("store"); // remove 'store'
+                      setSelectedStore(null);
                       router.push(url.toString());
                     }
                   }}
@@ -260,14 +275,14 @@ const CustomerPage = () => {
         onClose={function (): void {
           setShowAddCustomer(false);
         }}
-        title="Add Customer"
-        size="xl"
-        className="h-[90%]"
+        title={`Add ${storeOptions.find((s) => selectedStore === s.id)?.value ?? ""} Customer`}
+        className="max-h-[90%]"
+        size="lg"
       >
         <AddCustomerModal
           hasStore={hasStore}
           user={user}
-          storeId={user?.storeId ?? 0}
+          storeId={user?.storeId ?? Number(selectedStore)}
           onSumit={handleSubmitAddCustomer}
           isSubmitting={isSubmitting}
           onClose={function (): void {
@@ -275,6 +290,9 @@ const CustomerPage = () => {
           }}
           stores={Array.isArray(stores) ? stores : stores}
           onSubmitCustomerStores={handleSubmitAddCustomerStores}
+          storeName={
+            storeOptions.find((s) => selectedStore === s.id)?.value ?? null
+          }
         />
       </Modal>
     </PageLayout>
