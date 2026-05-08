@@ -58,6 +58,19 @@ const SalesReportModal = ({
     )}`;
   };
 
+  const getSaleRefundAmount = (sale: DisplaySalesDto) => {
+    return (
+      sale.salesRefunds?.reduce(
+        (sum: number, refund: any) => sum + Number(refund.salesRefAmount || 0),
+        0,
+      ) ?? 0
+    );
+  };
+
+  const getSaleNetTotal = (sale: DisplaySalesDto) => {
+    return Number(sale.salesTotalAmount || 0) - getSaleRefundAmount(sale);
+  };
+
   const getTotalDiscountAmount = (sale: DisplaySalesDto) => {
     const wholeOrderDiscountTotal =
       sale.salesDiscounts?.reduce(
@@ -81,10 +94,17 @@ const SalesReportModal = ({
     return wholeOrderDiscountTotal + singleItemDiscountTotal;
   };
 
-  const totalAmount = salesData.reduce(
-    (sum, sale) => sum + Number(sale.salesTotalAmount),
+  const grossTotalAmount = salesData.reduce(
+    (sum, sale) => sum + Number(sale.salesTotalAmount || 0),
     0,
   );
+
+  const totalRefundAmount = salesData.reduce(
+    (sum, sale) => sum + getSaleRefundAmount(sale),
+    0,
+  );
+
+  const netTotalAmount = grossTotalAmount - totalRefundAmount;
 
   const totalDiscountAmount = salesData.reduce(
     (sum, sale) => sum + getTotalDiscountAmount(sale),
@@ -101,7 +121,7 @@ const SalesReportModal = ({
     (acc, sale) => {
       sale.paymentMethods?.forEach((payment) => {
         const name = payment.payMetName;
-        acc[name] = (acc[name] || 0) + Number(payment.salesPaymentAmount);
+        acc[name] = (acc[name] || 0) + Number(payment.salesPaymentAmount || 0);
       });
 
       return acc;
@@ -159,7 +179,14 @@ const SalesReportModal = ({
 
       TotalDiscount: getTotalDiscountAmount(sales),
 
-      TotalAmount: Number(sales.salesTotalAmount),
+      Refunds:
+        sales.salesRefunds
+          ?.map((refund: any) => formatPeso(Number(refund.salesRefAmount || 0)))
+          .join(", ") ?? "-",
+
+      TotalRefund: getSaleRefundAmount(sales),
+      GrossTotal: Number(sales.salesTotalAmount),
+      NetTotal: getSaleNetTotal(sales),
 
       Payment:
         sales.paymentMethods
@@ -207,8 +234,7 @@ const SalesReportModal = ({
               </h1>
 
               <p className="mt-1 text-sm text-gray-400">
-                Shows whole-order discounts and single-item-level discounts
-                separately.
+                Shows discounts, refunds, and net sales total.
               </p>
             </div>
 
@@ -238,10 +264,10 @@ const SalesReportModal = ({
               </div>
 
               <div className="text-right">
-                <p className="text-xs text-gray-400">Total Sales</p>
+                <p className="text-xs text-gray-400">Net Sales</p>
 
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatPeso(totalAmount)}
+                  {formatPeso(netTotalAmount)}
                 </p>
               </div>
             </div>
@@ -284,14 +310,13 @@ const SalesReportModal = ({
               </h2>
 
               <p className="text-xs text-gray-400">
-                Whole-order discounts and item discounts are displayed
-                separately.
+                Refunds are deducted from each sale total.
               </p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1500px] table-fixed">
+            <table className="w-full min-w-[1620px] table-fixed">
               <thead>
                 <tr className="border-b border-gray-100">
                   <th className="w-[140px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
@@ -316,8 +341,12 @@ const SalesReportModal = ({
                     </th>
                   )}
 
-                  <th className="w-[120px] pb-3 text-center text-xs font-medium uppercase text-gray-400">
+                  <th className="w-[120px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
                     Subtotal
+                  </th>
+
+                  <th className="w-[140px] pb-3 text-center text-xs font-medium uppercase text-rose-400">
+                    Refunds
                   </th>
 
                   <th className="w-[260px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
@@ -329,7 +358,7 @@ const SalesReportModal = ({
                   </th>
 
                   <th className="w-[120px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
-                    Total
+                    Net Total
                   </th>
 
                   <th className="w-[160px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
@@ -343,44 +372,138 @@ const SalesReportModal = ({
               </thead>
 
               <tbody>
-                {salesData.map((sale, idx) => (
-                  <tr
-                    key={sale.salesId}
-                    className={
-                      idx !== salesData.length - 1
-                        ? "border-b border-gray-100"
-                        : ""
-                    }
-                  >
-                    <td className="py-4 pr-4 align-top text-sm font-semibold text-gray-900">
-                      {sale.salesNo}
+                {salesData.map((sale, idx) => {
+                  const saleRefundAmount = getSaleRefundAmount(sale);
+                  const saleNetTotal = getSaleNetTotal(sale);
 
-                      <br />
+                  return (
+                    <tr
+                      key={sale.salesId}
+                      className={
+                        idx !== salesData.length - 1
+                          ? "border-b border-gray-100"
+                          : ""
+                      }
+                    >
+                      <td className="py-4 pr-4 align-top text-sm font-semibold text-gray-900">
+                        {sale.salesNo}
 
-                      <span className="text-xs font-normal text-gray-400">
-                        {sale.salesInvoice}
-                      </span>
-                    </td>
+                        <br />
 
-                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
-                      {sale.customerName || "Walk-in"}
-                    </td>
+                        <span className="text-xs font-normal text-gray-400">
+                          {sale.salesInvoice}
+                        </span>
+                      </td>
 
-                    <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
-                      {sale.storeName}
-                    </td>
-
-                    <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
-                      {sale.salesCreatedByName}
-                    </td>
-
-                    {includeSaleItems && (
                       <td className="py-4 pr-4 align-top text-xs text-gray-700">
-                        {sale.saleItems?.length ? (
+                        {sale.customerName || "Walk-in"}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
+                        {sale.storeName}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
+                        {sale.salesCreatedByName}
+                      </td>
+
+                      {includeSaleItems && (
+                        <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                          {sale.saleItems?.length ? (
+                            <div className="space-y-1">
+                              {sale.saleItems.map((item: any) => (
+                                <div
+                                  key={item.salesItemId}
+                                  className="leading-5"
+                                >
+                                  {item.salesItemQuantity} x {item.saleItemName}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                      )}
+
+                      <td className="py-4 pr-4 align-top text-right text-xs text-gray-700 whitespace-nowrap">
+                        {formatPeso(Number(sale.salesSubTotal))}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-center text-xs whitespace-nowrap">
+                        {saleRefundAmount > 0 ? (
+                          <span className="font-semibold text-rose-500">
+                            -{formatPeso(saleRefundAmount)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                        {sale.salesDiscounts?.length ? (
+                          <div className="space-y-2">
+                            {sale.salesDiscounts.map(
+                              (discount: any, index: number) => (
+                                <div
+                                  key={`${sale.salesId}-discount-${index}`}
+                                  className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700"
+                                >
+                                  {formatDiscount(discount)}
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                        {sale.saleItems?.some(
+                          (item: any) => item.salesItemDiscounts?.length,
+                        ) ? (
+                          <div className="space-y-2">
+                            {sale.saleItems.flatMap(
+                              (item: any) =>
+                                item.salesItemDiscounts?.map(
+                                  (discount: any, index: number) => (
+                                    <div
+                                      key={`${item.salesItemId}-${index}`}
+                                      className="rounded-lg bg-amber-50 px-3 py-2 text-amber-700"
+                                    >
+                                      <div className="font-semibold">
+                                        {item.salesItemQuantity} x{" "}
+                                        {item.saleItemName}
+                                      </div>
+
+                                      <div className="mt-1">
+                                        {formatDiscount(discount)}
+                                      </div>
+                                    </div>
+                                  ),
+                                ) ?? [],
+                            )}
+                          </div>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-right text-xs font-semibold text-gray-900 whitespace-nowrap">
+                        {formatPeso(saleNetTotal)}
+                      </td>
+
+                      <td className="py-4 pr-4 align-top text-right text-xs text-gray-700">
+                        {sale.paymentMethods?.length ? (
                           <div className="space-y-1">
-                            {sale.saleItems.map((item: any) => (
-                              <div key={item.salesItemId} className="leading-5">
-                                {item.salesItemQuantity} x {item.saleItemName}
+                            {sale.paymentMethods.map((payment) => (
+                              <div
+                                key={payment.salesPaymentId}
+                                className="whitespace-nowrap"
+                              >
+                                {payment.payMetName}{" "}
+                                {formatPeso(Number(payment.salesPaymentAmount))}
                               </div>
                             ))}
                           </div>
@@ -388,94 +511,34 @@ const SalesReportModal = ({
                           "-"
                         )}
                       </td>
-                    )}
 
-                    <td className="py-4 pr-4 align-top text-center text-xs text-gray-700 whitespace-nowrap">
-                      {formatPeso(Number(sale.salesSubTotal))}
-                    </td>
-
-                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
-                      {sale.salesDiscounts?.length ? (
-                        <div className="space-y-2">
-                          {sale.salesDiscounts.map(
-                            (discount: any, index: number) => (
-                              <div
-                                key={`${sale.salesId}-discount-${index}`}
-                                className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700"
-                              >
-                                {formatDiscount(discount)}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
-                      {sale.saleItems?.some(
-                        (item: any) => item.salesItemDiscounts?.length,
-                      ) ? (
-                        <div className="space-y-2">
-                          {sale.saleItems.flatMap(
-                            (item: any) =>
-                              item.salesItemDiscounts?.map(
-                                (discount: any, index: number) => (
-                                  <div
-                                    key={`${item.salesItemId}-${index}`}
-                                    className="rounded-lg bg-amber-50 px-3 py-2 text-amber-700"
-                                  >
-                                    <div className="font-semibold">
-                                      {item.salesItemQuantity} x{" "}
-                                      {item.saleItemName}
-                                    </div>
-
-                                    <div className="mt-1">
-                                      {formatDiscount(discount)}
-                                    </div>
-                                  </div>
-                                ),
-                              ) ?? [],
-                          )}
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    <td className="py-4 pr-4 align-top text-right text-xs font-semibold text-gray-900 whitespace-nowrap">
-                      {formatPeso(Number(sale.salesTotalAmount))}
-                    </td>
-
-                    <td className="py-4 pr-4 align-top text-right text-xs text-gray-700">
-                      {sale.paymentMethods?.length ? (
-                        <div className="space-y-1">
-                          {sale.paymentMethods.map((payment) => (
-                            <div
-                              key={payment.salesPaymentId}
-                              className="whitespace-nowrap"
-                            >
-                              {payment.payMetName}{" "}
-                              {formatPeso(Number(payment.salesPaymentAmount))}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </td>
-
-                    <td className="py-4 align-top text-right text-xs font-medium text-gray-900">
-                      {formatDateToWords(sale.salesCreatedAt)}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="py-4 align-top text-right text-xs font-medium text-gray-900">
+                        {formatDateToWords(sale.salesCreatedAt)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           <div className="mt-6 space-y-3 border-t border-gray-100 pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Gross Sales</span>
+
+              <span className="font-semibold text-gray-900">
+                {formatPeso(grossTotalAmount)}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Total Refunds</span>
+
+              <span className="font-semibold text-rose-500">
+                -{formatPeso(totalRefundAmount)}
+              </span>
+            </div>
+
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Total Discounts</span>
 
@@ -507,11 +570,11 @@ const SalesReportModal = ({
 
             <div className="flex justify-between border-t border-gray-100 pt-3">
               <span className="text-base font-semibold text-gray-900">
-                Total
+                Net Total
               </span>
 
               <span className="text-base font-bold text-gray-900">
-                {formatPeso(totalAmount)}
+                {formatPeso(netTotalAmount)}
               </span>
             </div>
           </div>
