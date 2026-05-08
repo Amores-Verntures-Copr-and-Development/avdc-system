@@ -51,7 +51,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       <div className="flex justify-end space-x-2">
         <div>
           <Button
-            size="md"
+            size="sm"
             className="text-sm font-semibold"
             color="secondary"
             label="Cancel"
@@ -61,7 +61,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
         <div>
           {" "}
           <Button
-            size="md"
+            size="sm"
             label="Add Category"
             className="text-sm font-semibold"
             onClick={handleAddCategory}
