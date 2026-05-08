@@ -39,10 +39,10 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
     useState(false);
   const [showCreateDailyReport, setShowCreateDailyReport] = useState(false);
   const [openModal, setOpenModal] = useState<"inventory" | "daily" | null>(
-    null
+    null,
   );
   const [selectedRow, setSelectedRow] = useState<Reports | undefined>(
-    undefined
+    undefined,
   );
   const {
     data: itemResponse = { data: [] },
@@ -60,8 +60,8 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
             row.reportType === "inventory"
               ? "inventory"
               : row.reportType === "daily"
-              ? "daily"
-              : null
+                ? "daily"
+                : null,
           );
           setSelectedRow(row);
         }}
@@ -97,6 +97,7 @@ const ReportSection = ({ inventoryId, user }: ReportSectionProps) => {
         maxHeight="h-full"
         columns={columns}
         data={itemResponse.data}
+        showPagination
         totalCount={20}
       />
       <Modal

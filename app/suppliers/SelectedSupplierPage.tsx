@@ -213,6 +213,7 @@ const SelectedSupplierPage = ({
         <Table
           searchUrl="/suppliers"
           totalCount={itemResponse.data.length}
+          showPagination
           maxHeight="h-full"
           loading={isLoading}
           uniqueIdKey="suppItemId"

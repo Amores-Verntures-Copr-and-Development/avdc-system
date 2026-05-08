@@ -38,6 +38,7 @@ import { PaymentMethods } from "@/types/payment-methods";
 import SalesStatusBadge from "./components/SalesStatusBadge";
 import { SalesStatus } from "@/types/sales";
 import { getSalesStatusOption } from "@/utils/salesUtils";
+import { PaymentBreakdown } from "./components/PaymentBreakdown";
 
 interface SalesPageProps {
   storeId: number;
@@ -92,7 +93,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     user ? debounceApi : null,
     fetcher,
   );
-
+  const [openDiscountId, setOpenDiscountId] = useState<number | null>(null);
   const columns: Column<DisplaySalesDto>[] = useMemo(() => {
     return [
       {
@@ -124,49 +125,66 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           const discount = row.salesDiscounts || [];
 
           return (
-            <div className="group relative">
-              <select
-                className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-                disabled
+            <div className="relative min-w-[70px]">
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenDiscountId(
+                    openDiscountId === row.salesId ? null : row.salesId,
+                  )
+                }
+                className="
+      w-full rounded-lg border border-gray-200
+      bg-gray-50 px-2 py-1
+      text-left text-[10px] text-gray-700
+      xl:text-xs
+    "
               >
-                <option value="">
-                  {discount.length > 1
-                    ? `Discounts (${discount.filter((s) => s !== null).length})`
-                    : discount.length === 1
-                      ? `${discount[0].discountName} (${formatPeso(
-                          discount[0].discountAmount,
-                        )})`
-                      : ``}
-                </option>
-              </select>
-              {discount?.length > 0 && discount.some((d) => d !== null) && (
-                <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
-                  {discount
-                    .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
-                    .map((disc) => (
+                {discount.length > 1
+                  ? `Discounts (${discount.length})`
+                  : discount.length === 1
+                    ? `${discount[0].discountName} (${formatPeso(
+                        discount[0].discountAmount,
+                      )})`
+                    : "-"}
+              </button>
+
+              {discount.length > 0 && openDiscountId === row.salesId && (
+                <div
+                  className="
+          absolute left-0 top-full z-[9999] mt-1
+          w-64 overflow-hidden rounded-xl
+          border border-gray-100 bg-white
+          shadow-xl
+        "
+                >
+                  <div className="max-h-48 overflow-y-auto p-1">
+                    {discount.map((disc) => (
                       <div
                         key={disc.salesDiscountId}
-                        className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                        className="
+                rounded-lg px-3 py-2
+                transition hover:bg-gray-50
+              "
                       >
-                        <div className="flex">
-                          <span className=" text-xs font-semibold text-gray-700">
-                            {disc.discountName}
-                          </span>
+                        <div className="text-xs font-semibold text-gray-700">
+                          {disc.discountName}
                         </div>
 
-                        <div className="flex justify-between">
-                          {" "}
-                          <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                        <div className="mt-1 flex justify-between">
+                          <span className="text-[10px] text-gray-400">
                             {disc.discountType === "percent"
                               ? `${disc.discountValue}%`
                               : `₱${disc.discountValue.toFixed(2)}`}
                           </span>
-                          <span className="text-[10px] font-semibold text-red-600">
+
+                          <span className="text-[10px] font-semibold text-red-500">
                             - ₱{disc.discountAmount.toFixed(2)}
                           </span>
                         </div>
                       </div>
                     ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -222,7 +240,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         selector: (row) => {
           const paymentMethod = row.paymentMethods || [];
           return (
-            <div className="group relative">
+            <div className="relative min-w-[100px]">
               <select
                 className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
                 disabled
@@ -647,100 +665,47 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="flex 2xl:grid-cols-2 gap-1 min-h-10">
+            <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
               <SalesCard
                 icon={PhilippinePeso}
                 title="Total Sales"
                 value={formatPeso(totalSales)}
               >
-                <div className="gap-2 hidden lg:grid lg:grid-cols-2 ">
-                  {totalSalesPaymentMethods?.map((method: any) => {
-                    const max = Math.max(totalSales);
-                    const pct = (Number(method.salesPayAmount) / max) * 100;
-                    return (
-                      <div key={method.payMetName} className="">
-                        <div className="flex flex-col 2xl:flex-row items-center justify-between">
-                          <span className="text-[9px] 2xl:text-[11px] text-gray-500">
-                            {method.payMetName}
-                          </span>
-                          <span className="text-[9px] 2xl:text-[11px] font-medium text-gray-900">
-                            {formatPeso(Number(method.salesPayAmount))}
-                          </span>
-                        </div>
-                        {/* Proportional bar */}
-                        <div
-                          className="h-[2px] mt-[3px] rounded-full bg-primary-1/50"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-center lg:hidden">
-                  <IconButton
-                    onClick={function (): void {
-                      setShowSalesBreakdown("totalSales");
-                    }}
-                    label={""}
-                    bg={"gray"}
-                    icon={<Eye className="w-3 h-3" />}
-                  />
-                </div>
+                <PaymentBreakdown
+                  data={totalSalesPaymentMethods}
+                  total={totalSales}
+                />
               </SalesCard>
+
               <SalesCard
                 icon={CalendarCheck}
                 title="Total Orders"
                 value={totalCountSales}
-                bgColor="bg-green-500/40"
-                textColor="text-green-600"
+                bgColor="bg-emerald-50"
+                textColor="text-emerald-600"
+                subtitle="All time orders"
               />
+
               <SalesCard
                 icon={Users}
                 title="Total Customer"
                 value={totalCustomer}
-                bgColor="bg-yellow-500/40"
-                textColor="text-yellow-600"
+                bgColor="bg-amber-50"
+                textColor="text-amber-600"
+                subtitle="Unique customers"
               />
+
               <SalesCard
                 icon={Calendar}
                 title="Today's Sales"
-                value={`${formatPeso(todaySales)}`}
-                bgColor="bg-blue-500/40"
+                value={formatPeso(todaySales)}
+                bgColor="bg-blue-50"
                 textColor="text-blue-600"
               >
-                <div className="gap-2 hidden lg:grid lg:grid-cols-2 ">
-                  {todaysSalesPaymentMethods?.map((method: any) => {
-                    const max = Math.max(todaySales);
-                    const pct = (Number(method.salesPayAmount) / max) * 100;
-                    return (
-                      <div key={method.payMetName} className="">
-                        <div className="flex flex-col 2xl:flex-row items-center justify-between">
-                          <span className="text-[9px] 2xl:text-[11px] text-gray-500">
-                            {method.payMetName}
-                          </span>
-                          <span className="text-[9px] 2xl:text-[11px] font-medium text-gray-900">
-                            {formatPeso(Number(method.salesPayAmount))}
-                          </span>
-                        </div>
-                        {/* Proportional bar */}
-                        <div
-                          className="h-[2px] mt-[3px] rounded-full bg-primary-1/50"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="flex justify-center lg:hidden">
-                  <IconButton
-                    onClick={function (): void {
-                      setShowSalesBreakdown("todaysSales");
-                    }}
-                    label={""}
-                    bg={"gray"}
-                    icon={<Eye className="w-3 h-3" />}
-                  />
-                </div>
+                <PaymentBreakdown
+                  data={todaysSalesPaymentMethods}
+                  total={todaySales}
+                />
               </SalesCard>
             </div>
             <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
@@ -814,6 +779,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   </div>
                 )}
                 totalCount={response?.count}
+                showPagination
                 addContentLeftTitle={
                   !hasStore || isAdmin ? (
                     <div>

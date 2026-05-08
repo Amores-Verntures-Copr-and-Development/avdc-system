@@ -4,8 +4,11 @@ import React from "react";
 interface DashboardCardProps {
   title: string;
   icon: LucideIcon;
-  value: string;
+  value: string | number;
   bgColor?: string;
+  textColor?: string;
+  trend?: string;
+  trendType?: "up" | "down";
   onClick?: () => void;
 }
 
@@ -13,41 +16,55 @@ const DashboardCard = ({
   title,
   icon: Icon,
   value,
-  bgColor = "bg-emerald-600",
+  bgColor = "bg-primary-1",
+  textColor = "text-primary-1",
+  trend,
+  trendType = "up",
   onClick,
 }: DashboardCardProps) => {
   return (
-    <div className="flex flex-col justify-between p-3 xs:p-4 xl:p-5 border rounded-sm shadow-sm border-gray-200 bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
-      {/* Top Section */}
-      <div className="flex flex-row items-center gap-2 xs:gap-3 xl:gap-4">
+    <div className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md xl:p-5">
+      <div className="flex items-start gap-4">
         <div
-          className={`${bgColor} p-1.5 xs:p-2.5 2xl:p-3 rounded-lg xl:rounded-xl flex items-center justify-center flex-shrink-0`}
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${bgColor} shadow-sm`}
         >
-          <Icon className="text-white w-3 h-3 xs:w-5 xs:h-5 xl:w-5 2xl:w-6 2xl:h-6" />
+          <Icon className="h-6 w-6 text-white" />
         </div>
-        <div className="flex flex-col items-start min-w-0 flex-1">
-          <span className="block text-[10px]  lg:text-sm  2xl:text-xl font-bold text-gray-900 truncate w-full">
-            {value.toLocaleString()}
-          </span>
-          <span className="text-[10px]  2xl:text-xs text-gray-500 truncate w-full mt-0.5 xs:mt-1">
+
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-gray-500 xl:text-sm">
             {title}
-          </span>
+          </p>
+
+          <h3 className="mt-1 truncate text-xl font-bold text-gray-900 xl:text-2xl">
+            {value}
+          </h3>
+
+          {trend && (
+            <p
+              className={`mt-1 text-xs font-medium ${
+                trendType === "up" ? "text-emerald-500" : "text-rose-500"
+              }`}
+            >
+              {trendType === "up" ? "↑" : "↓"} {trend}
+              <span className="ml-1 font-normal text-gray-400">
+                vs last 30 days
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="border-t border-gray-200 my-2 xs:my-3 xl:my-4"></div>
+      <div className="my-4 border-t border-gray-100" />
 
-      {/* Footer */}
-      <div
-        className="flex items-center justify-between text-gray-600 hover:text-gray-900 cursor-pointer group"
+      <button
+        type="button"
         onClick={onClick}
+        className={`flex w-full items-center justify-between text-xs font-semibold ${textColor}`}
       >
-        <span className="text-[10px]  xl:text-xs  font-medium truncate">
-          View details
-        </span>
-        <ArrowRight className="w-3 h-3 xs:w-4 xs:h-4 xl:w-4 xl:h-4 group-hover:translate-x-1 transition-transform duration-200" />
-      </div>
+        <span>View details</span>
+        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+      </button>
     </div>
   );
 };

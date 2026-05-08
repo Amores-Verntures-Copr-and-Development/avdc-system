@@ -63,7 +63,7 @@ const IconButton: React.FC<IconButtonProps> = ({
           onMouseEnter={handleEnter}
           onMouseLeave={handleLeave}
           className={`px-1 py-0.5 xl:px-2 xl:py-1 border border-gray-200 flex items-center gap-2 ${
-            isRounded ? "rounded" : ""
+            isRounded ? "rounded-lg" : ""
           } ${
             disable
               ? "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -72,7 +72,7 @@ const IconButton: React.FC<IconButtonProps> = ({
           disabled={disable || loading}
         >
           {loading ? (
-            <Loader2 size={18} className="animate-spin text-current" />
+            <Loader2 className="animate-spin text-current h-3 w-3" />
           ) : (
             icon
           )}

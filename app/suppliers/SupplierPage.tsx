@@ -37,7 +37,7 @@ const SupplierPage = () => {
   const [showCreateSupplier, setShowCreateSupplier] = useState(false);
   const [showViewSupplier, setShowViewSupplier] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(
-    null
+    null,
   );
   const { user } = useSession();
   const {
@@ -113,6 +113,7 @@ const SupplierPage = () => {
                 setSelectedSupplier(row);
               }}
               totalCount={10}
+              showPagination
               renderActions={(row) => (
                 <div className="flex gap-2 justify-center">
                   {/* View Button */}

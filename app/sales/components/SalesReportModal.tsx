@@ -24,7 +24,9 @@ const SalesReportModal = ({
   const parsedUrl = new URL(apiUrl, window.location.origin);
   const from = parsedUrl.searchParams.get("from") || "";
   const to = parsedUrl.searchParams.get("to") || "";
+
   const [includeSaleItems, setIncludeSaleItems] = useState(true);
+
   const debounceApi = useDebounce(
     includeSaleItems
       ? `${apiUrl}&includeSaleItems=true${
@@ -33,6 +35,7 @@ const SalesReportModal = ({
       : `${apiUrl}${showReportType === "Customer" ? `&customer=true` : ""}`,
     500,
   );
+
   const { data: response, isLoading } = useSWR<ApiResponse<DisplaySalesDto[]>>(
     apiUrl ? debounceApi : null,
     fetcher,
@@ -42,39 +45,85 @@ const SalesReportModal = ({
 
   const salesData = response?.data ?? [];
 
-  // Total amount
+  const formatDiscount = (discount: any) => {
+    if (!discount) return "-";
+
+    const value =
+      discount.discountType === "percent"
+        ? `${discount.discountValue}%`
+        : formatPeso(Number(discount.discountValue));
+
+    return `${discount.discountName} (${value}) - ${formatPeso(
+      Number(discount.discountAmount || 0),
+    )}`;
+  };
+
+  const getTotalDiscountAmount = (sale: DisplaySalesDto) => {
+    const wholeOrderDiscountTotal =
+      sale.salesDiscounts?.reduce(
+        (sum: number, discount: any) =>
+          sum + Number(discount.discountAmount || 0),
+        0,
+      ) ?? 0;
+
+    const singleItemDiscountTotal =
+      sale.saleItems?.reduce((sum: number, item: any) => {
+        const itemTotal =
+          item.salesItemDiscounts?.reduce(
+            (subSum: number, discount: any) =>
+              subSum + Number(discount.discountAmount || 0),
+            0,
+          ) ?? 0;
+
+        return sum + itemTotal;
+      }, 0) ?? 0;
+
+    return wholeOrderDiscountTotal + singleItemDiscountTotal;
+  };
+
   const totalAmount = salesData.reduce(
     (sum, sale) => sum + Number(sale.salesTotalAmount),
     0,
   );
 
-  // Store names
+  const totalDiscountAmount = salesData.reduce(
+    (sum, sale) => sum + getTotalDiscountAmount(sale),
+    0,
+  );
+
   const storesName = Array.from(
-    new Set(salesData.map((s) => s.storeName)),
+    new Set(salesData.map((sale) => sale.storeName)),
   ).join(", ");
 
-  // Payment summary
+  const uniqueStores = new Set(salesData.map((sale) => sale.storeName));
+
   const paymentSummary = salesData.reduce<Record<string, number>>(
     (acc, sale) => {
       sale.paymentMethods?.forEach((payment) => {
         const name = payment.payMetName;
         acc[name] = (acc[name] || 0) + Number(payment.salesPaymentAmount);
       });
+
       return acc;
     },
     {},
   );
 
-  // Date range summary
   const dateSummary = salesData.reduce<{
     from: string | null;
     to: string | null;
   }>(
     (acc, sale) => {
       const saleDate = new Date(sale.salesCreatedAt);
-      if (!acc.from || saleDate < new Date(acc.from))
+
+      if (!acc.from || saleDate < new Date(acc.from)) {
         acc.from = sale.salesCreatedAt;
-      if (!acc.to || saleDate > new Date(acc.to)) acc.to = sale.salesCreatedAt;
+      }
+
+      if (!acc.to || saleDate > new Date(acc.to)) {
+        acc.to = sale.salesCreatedAt;
+      }
+
       return acc;
     },
     { from: null, to: null },
@@ -84,149 +133,215 @@ const SalesReportModal = ({
     const formatData = salesData.map((sales) => ({
       Date: sales.salesCreatedAt,
       SalesNo: sales.salesNo,
-      Subtotal: Number(sales.salesSubTotal),
-      Discounts: sales.salesDiscounts?.map((d) => d.discountValue).join(", "),
-      TotalAmount: Number(sales.salesTotalAmount),
-      Payment: sales.paymentMethods.map((d) => `${d.payMetName}`).join(", "),
-      Description: sales.saleItems
-        .map((item) => `${item.salesItemQuantity} x ${item.saleItemName}`)
-        .join(", "),
+      Invoice: sales.salesInvoice,
       Store: sales.storeName,
-      Customer: sales.customerName,
+      Customer: sales.customerName || "Walk-in",
       Cashier: sales.salesCreatedByName,
+      Subtotal: Number(sales.salesSubTotal),
+
+      WholeOrderDiscounts:
+        sales.salesDiscounts
+          ?.map((discount: any) => formatDiscount(discount))
+          .join(", ") ?? "-",
+
+      SingleItemDiscounts:
+        sales.saleItems
+          ?.flatMap(
+            (item: any) =>
+              item.salesItemDiscounts?.map(
+                (discount: any) =>
+                  `${item.salesItemQuantity} x ${
+                    item.saleItemName
+                  }: ${formatDiscount(discount)}`,
+              ) ?? [],
+          )
+          .join(", ") ?? "-",
+
+      TotalDiscount: getTotalDiscountAmount(sales),
+
+      TotalAmount: Number(sales.salesTotalAmount),
+
+      Payment:
+        sales.paymentMethods
+          ?.map(
+            (payment) =>
+              `${payment.payMetName} (${formatPeso(
+                Number(payment.salesPaymentAmount),
+              )})`,
+          )
+          .join(", ") ?? "-",
+
+      Items:
+        sales.saleItems
+          ?.map(
+            (item: any) =>
+              `${item.salesItemQuantity} x ${item.saleItemName} - ${formatPeso(
+                Number(item.salesItemTotal),
+              )}`,
+          )
+          .join(", ") ?? "-",
     }));
 
     exportToExcel({
       data: formatData,
       fileName: "SalesReport",
-      sheetName: "",
+      sheetName: "Sales Report",
     });
   };
-  const uniqueStores = new Set(salesData.map((s) => s.storeName));
+
   return (
-    <div className="min-h-0 overflow-auto-y p-4">
-      <div className="max-w-5xl mx-auto space-y-4">
-        {/* Report Header */}{" "}
+    <div className="min-h-0 overflow-y-auto p-4">
+      <div className="mx-auto max-w-7xl space-y-4">
         <Toggle
           initial={includeSaleItems}
           label="Show sale items"
           sizes="xs"
           onToggle={(state) => setIncludeSaleItems(state)}
         />
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex justify-between items-start mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-              Sales Report
-            </h1>
-            <div className="flex flex-col gap-2 items-end">
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Sales Report
+              </h1>
+
+              <p className="mt-1 text-sm text-gray-400">
+                Shows whole-order discounts and single-item-level discounts
+                separately.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-end gap-3">
               <div className="flex items-center gap-2">
-                <div>
-                  <Button
-                    label="Print"
-                    color="outline"
-                    size="sm"
-                    icon={Printer}
-                  />
-                </div>
-                <div>
-                  <Button
-                    label="Download PDF"
-                    color="outline"
-                    size="sm"
-                    icon={FileText}
-                  />
-                </div>
-                <div>
-                  <Button
-                    icon={Download}
-                    label="Export"
-                    color="outline"
-                    size="sm"
-                    onClick={() => {
-                      handleExportData();
-                    }}
-                  />
-                </div>
+                <Button
+                  label="Print"
+                  color="outline"
+                  size="sm"
+                  icon={Printer}
+                />
+
+                <Button
+                  label="Download PDF"
+                  color="outline"
+                  size="sm"
+                  icon={FileText}
+                />
+
+                <Button
+                  icon={Download}
+                  label="Export"
+                  color="outline"
+                  size="sm"
+                  onClick={handleExportData}
+                />
               </div>
+
               <div className="text-right">
-                <div className="text-xs text-gray-500 mb-1">
-                  Total Amount Sales
-                </div>
-                <div className="text-2xl font-semibold text-gray-900">
+                <p className="text-xs text-gray-400">Total Sales</p>
+
+                <p className="text-2xl font-bold text-gray-900">
                   {formatPeso(totalAmount)}
-                </div>
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-6 pt-4 border-t border-gray-200">
+          <div className="grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-3">
             <div>
-              <div className="text-xs text-gray-500 mb-1">From</div>
-              <div className="text-sm font-medium text-gray-900">
-                {formatDateToWords(
-                  formatDateToWords(from || dateSummary?.from || ""),
-                )}
-              </div>
+              <p className="text-xs text-gray-400">From</p>
+
+              <p className="text-sm font-medium text-gray-900">
+                {formatDateToWords(from || dateSummary.from || "")}
+              </p>
             </div>
+
             <div>
-              <div className="text-xs text-gray-500 mb-1">To</div>
-              <div className="text-sm font-medium text-gray-900">
-                {formatDateToWords(
-                  formatDateToWords(to || dateSummary?.to || ""),
-                )}
-              </div>
+              <p className="text-xs text-gray-400">To</p>
+
+              <p className="text-sm font-medium text-gray-900">
+                {formatDateToWords(to || dateSummary.to || "")}
+              </p>
             </div>
+
             {uniqueStores.size === 1 && (
               <div>
-                <div className="text-xs text-gray-500 mb-1">Store(s)</div>
-                <div className="text-sm font-medium text-gray-900">
+                <p className="text-xs text-gray-400">Store</p>
+
+                <p className="text-sm font-medium text-gray-900">
                   {storesName}
-                </div>
+                </p>
               </div>
             )}
           </div>
         </div>
-        {/* Sales Table */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">
-            Sales ({salesData.length})
-          </h2>
+
+        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-900">
+                Sales ({salesData.length})
+              </h2>
+
+              <p className="text-xs text-gray-400">
+                Whole-order discounts and item discounts are displayed
+                separately.
+              </p>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full table-auto">
+            <table className="w-full min-w-[1500px] table-fixed">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+                <tr className="border-b border-gray-100">
+                  <th className="w-[140px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
                     Sales No
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[100px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
                     Customer
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[140px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
                     Store
                   </th>
-                  <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[100px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
                     Cashier
                   </th>
+
                   {includeSaleItems && (
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase pb-3">
+                    <th className="w-[220px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
                       Items
                     </th>
                   )}
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[120px] pb-3 text-center text-xs font-medium uppercase text-gray-400">
                     Subtotal
                   </th>
 
-                  <th className="text-center text-xs font-medium text-gray-500 uppercase pb-3">
+                  <th className="w-[260px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
+                    Whole Order Discounts
+                  </th>
+
+                  <th className="w-[320px] pb-3 text-left text-xs font-medium uppercase text-gray-400">
+                    Single Item Discounts
+                  </th>
+
+                  <th className="w-[120px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
                     Total
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[160px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
                     Method
                   </th>
-                  <th className="text-right text-xs font-medium text-gray-500 uppercase pb-3">
+
+                  <th className="w-[140px] pb-3 text-right text-xs font-medium uppercase text-gray-400">
                     Date
                   </th>
                 </tr>
               </thead>
+
               <tbody>
                 {salesData.map((sale, idx) => (
                   <tr
@@ -237,59 +352,121 @@ const SalesReportModal = ({
                         : ""
                     }
                   >
-                    <td className="py-2 text-sm font-medium text-gray-900">
+                    <td className="py-4 pr-4 align-top text-sm font-semibold text-gray-900">
                       {sale.salesNo}
+
                       <br />
-                      <span className="text-xs text-gray-500">
+
+                      <span className="text-xs font-normal text-gray-400">
                         {sale.salesInvoice}
                       </span>
                     </td>
-                    <td className="py-2 text-xs text-gray-700">
+
+                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
                       {sale.customerName || "Walk-in"}
                     </td>
-                    <td className="py-2  text-left text-xs font-semibold text-gray-700">
+
+                    <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
                       {sale.storeName}
                     </td>
-                    <td className="py-2 text-left text-xs font-semibold text-gray-700">
+
+                    <td className="py-4 pr-4 align-top text-xs font-medium text-gray-700">
                       {sale.salesCreatedByName}
                     </td>
+
                     {includeSaleItems && (
-                      <td className="py-2 text-xs text-gray-700">
-                        {sale.saleItems && sale.saleItems.length > 0 ? (
-                          <>
-                            {sale.saleItems.map((item, i) => (
-                              <div key={i} className="truncate">
+                      <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                        {sale.saleItems?.length ? (
+                          <div className="space-y-1">
+                            {sale.saleItems.map((item: any) => (
+                              <div key={item.salesItemId} className="leading-5">
                                 {item.salesItemQuantity} x {item.saleItemName}
                               </div>
                             ))}
-                          </>
+                          </div>
                         ) : (
                           "-"
                         )}
                       </td>
                     )}
-                    <td className="py-2 text-right text-xs text-gray-700">
-                      {formatPeso(sale.salesSubTotal)}
+
+                    <td className="py-4 pr-4 align-top text-center text-xs text-gray-700 whitespace-nowrap">
+                      {formatPeso(Number(sale.salesSubTotal))}
                     </td>
 
-                    <td className="py-2 text-center text-xs font-semibold text-gray-700">
-                      {formatPeso(sale.salesTotalAmount)}
-                    </td>
-                    <td className="py-2 text-right text-xs text-gray-700">
-                      {sale.paymentMethods && sale.paymentMethods.length > 0 ? (
-                        <>
-                          {sale.paymentMethods.map((item, i) => (
-                            <div key={i} className="truncate">
-                              {item.payMetName} x{" "}
-                              {formatPeso(item.salesPaymentAmount)}
-                            </div>
-                          ))}
-                        </>
+                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                      {sale.salesDiscounts?.length ? (
+                        <div className="space-y-2">
+                          {sale.salesDiscounts.map(
+                            (discount: any, index: number) => (
+                              <div
+                                key={`${sale.salesId}-discount-${index}`}
+                                className="rounded-lg bg-rose-50 px-3 py-2 text-rose-700"
+                              >
+                                {formatDiscount(discount)}
+                              </div>
+                            ),
+                          )}
+                        </div>
                       ) : (
                         "-"
                       )}
                     </td>
-                    <td className="py-2 text-right text-xs font-medium text-gray-900">
+
+                    <td className="py-4 pr-4 align-top text-xs text-gray-700">
+                      {sale.saleItems?.some(
+                        (item: any) => item.salesItemDiscounts?.length,
+                      ) ? (
+                        <div className="space-y-2">
+                          {sale.saleItems.flatMap(
+                            (item: any) =>
+                              item.salesItemDiscounts?.map(
+                                (discount: any, index: number) => (
+                                  <div
+                                    key={`${item.salesItemId}-${index}`}
+                                    className="rounded-lg bg-amber-50 px-3 py-2 text-amber-700"
+                                  >
+                                    <div className="font-semibold">
+                                      {item.salesItemQuantity} x{" "}
+                                      {item.saleItemName}
+                                    </div>
+
+                                    <div className="mt-1">
+                                      {formatDiscount(discount)}
+                                    </div>
+                                  </div>
+                                ),
+                              ) ?? [],
+                          )}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+
+                    <td className="py-4 pr-4 align-top text-right text-xs font-semibold text-gray-900 whitespace-nowrap">
+                      {formatPeso(Number(sale.salesTotalAmount))}
+                    </td>
+
+                    <td className="py-4 pr-4 align-top text-right text-xs text-gray-700">
+                      {sale.paymentMethods?.length ? (
+                        <div className="space-y-1">
+                          {sale.paymentMethods.map((payment) => (
+                            <div
+                              key={payment.salesPaymentId}
+                              className="whitespace-nowrap"
+                            >
+                              {payment.payMetName}{" "}
+                              {formatPeso(Number(payment.salesPaymentAmount))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        "-"
+                      )}
+                    </td>
+
+                    <td className="py-4 align-top text-right text-xs font-medium text-gray-900">
                       {formatDateToWords(sale.salesCreatedAt)}
                     </td>
                   </tr>
@@ -298,22 +475,28 @@ const SalesReportModal = ({
             </table>
           </div>
 
-          {/* Summary */}
-          <div className="mt-6 pt-4 border-t border-gray-200 space-y-3">
-            {/* Payment Summary */}
-            {paymentSummary && Object.keys(paymentSummary).length > 0 && (
-              <div className="flex justify-between mb-3">
-                <div className="text-sm text-gray-600 w-32">
-                  Payment Summary
-                </div>
+          <div className="mt-6 space-y-3 border-t border-gray-100 pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Total Discounts</span>
+
+              <span className="font-semibold text-rose-500">
+                -{formatPeso(totalDiscountAmount)}
+              </span>
+            </div>
+
+            {Object.keys(paymentSummary).length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-sm text-gray-500">Payment Summary</span>
+
                 <div className="flex flex-col gap-1">
                   {Object.entries(paymentSummary).map(([method, total]) => (
                     <div
                       key={method}
-                      className="flex justify-between text-sm text-gray-700 gap-2"
+                      className="flex justify-between gap-6 text-sm text-gray-700"
                     >
                       <span>{method}</span>
-                      <span className="font-semibold text-green-600">
+
+                      <span className="font-semibold text-emerald-600">
                         {formatPeso(total)}
                       </span>
                     </div>
@@ -322,14 +505,14 @@ const SalesReportModal = ({
               </div>
             )}
 
-            {/* Total */}
-            <div className="flex justify-between pt-3 border-t border-gray-200">
-              <div className="text-base font-semibold text-gray-900 w-32">
+            <div className="flex justify-between border-t border-gray-100 pt-3">
+              <span className="text-base font-semibold text-gray-900">
                 Total
-              </div>
-              <div className="text-base font-semibold text-gray-900 w-24 text-right">
+              </span>
+
+              <span className="text-base font-bold text-gray-900">
                 {formatPeso(totalAmount)}
-              </div>
+              </span>
             </div>
           </div>
         </div>

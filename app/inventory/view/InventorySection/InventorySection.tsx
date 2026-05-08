@@ -857,7 +857,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         onSelectionChange={handleSelectionChange}
         renderTopActions={
           showRequestStockMode ? (
-            <div className="flex">
+            <div className="flex ">
               <div>
                 <Button
                   isRounded={false}
@@ -867,7 +867,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                     setSelectedRequestRows([]);
                     setShowRequestStockMode(false);
                   }}
-                  size="xs"
+                  size="sm"
                   className="font-semibold"
                   color="secondary"
                 />
@@ -880,36 +880,34 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                   onClick={() => {
                     setShowCreateRequestModal(true);
                   }}
-                  size="xs"
+                  size="sm"
                   className="font-semibold"
                   color="tertiary"
                 />
               </div>
             </div>
           ) : (
-            <div className="flex">
+            <div className="flex gap-2">
               <div>
                 <Button
-                  isRounded={false}
                   icon={Clipboard}
                   label="Inventory Report"
                   onClick={() => {
                     setShowCreateInventoryReport(true);
                   }}
-                  size="xs"
+                  size="sm"
                   className="font-semibold"
                   color="secondary"
                 />
               </div>
               <div>
                 <Button
-                  isRounded={false}
                   icon={Import}
                   label="Import Item"
                   onClick={() => {
                     setShowImportModal(true);
                   }}
-                  size="xs"
+                  size="sm"
                   className="font-semibold"
                   color="secondary"
                 />
@@ -923,13 +921,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div>
                   <Button
-                    isRounded={false}
                     icon={Store}
                     label={`Request Stock (${selectedRows?.length})`}
                     onClick={() => {
                       setShowCreateRequestModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                     color="tertiary"
                   />
@@ -943,13 +940,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div>
                   <Button
-                    isRounded={false}
                     icon={Store}
                     label={`Request Stock`}
                     onClick={() => {
                       setShowRequestStockMode(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                     color="tertiary"
                   />
@@ -960,20 +956,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 <>
                   <div>
                     <Button
-                      isRounded={false}
                       icon={CheckCircleIcon}
                       label="In Stock"
                       onClick={() => {
                         setShowInOrOutStock("in");
                       }}
-                      size="xs"
+                      size="sm"
                       className="font-semibold"
                       color="success"
                     />
                   </div>
                   <div>
                     <Button
-                      isRounded={false}
                       icon={PackageX}
                       label="Out Stock"
                       onClick={() => {
@@ -989,7 +983,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
 
                         setShowInOrOutStock("out");
                       }}
-                      size="xs"
+                      size="sm"
                       className="font-semibold"
                       color="danger"
                     />
@@ -1004,13 +998,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div className="">
                   <Button
-                    isRounded={false}
                     icon={Package}
                     label="Add Item to supplier"
                     onClick={() => {
                       setShowAddItemSupplierModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                     color="tertiary"
                   />
@@ -1022,13 +1015,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div className="">
                   <Button
-                    isRounded={false}
                     icon={Store}
                     label="Add Item to store"
                     onClick={() => {
                       setShowAddItemModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                     color="warning"
                   />
@@ -1040,13 +1032,12 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               ) && (
                 <div className="">
                   <Button
-                    isRounded={false}
                     icon={Store}
                     label="Add Item to product"
                     onClick={() => {
                       setShowAddProductModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                     color="warning"
                   />
@@ -1055,28 +1046,26 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               {user?.empPosition === "purchaser" ? (
                 <div>
                   <Button
-                    isRounded={false}
                     icon={Plus}
                     label="Add Item"
                     onClick={() => {
                       //add for stock room
                       setShowAdddModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                   />
                 </div>
               ) : (
                 <div>
                   <Button
-                    isRounded={false}
                     icon={Plus}
                     // add for store item
                     label="Add Item"
                     onClick={() => {
                       setShowAdddModal(true);
                     }}
-                    size="xs"
+                    size="sm"
                     className="font-semibold"
                   />
                 </div>
@@ -1146,6 +1135,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             </div>
           )
         }
+        showPagination
         totalCount={itemResponse?.totalItems}
       />
       <Modal

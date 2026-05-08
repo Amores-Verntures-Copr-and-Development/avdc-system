@@ -19,16 +19,18 @@ const ViewEditAmountItemOrder = ({
 }: Props) => {
   const [form, setForm] = useState<OrderList | null>(data);
 
-  /** preload existing discount (edit mode) */
   const [selectedDiscount, setSelectedDiscount] = useState<Discounts | null>(
     () => {
       if (!data?.discounts?.length) return null;
+
       const applied = data.discounts[0];
+
       return (
         discountData.find((d) => d.discountId === applied.discountId) ?? null
       );
     },
   );
+
   const baseTotal = useMemo(() => {
     const price = Number(form?.prodVarPrice ?? 0);
     const qty = Number(form?.quantity ?? 0);
@@ -36,7 +38,6 @@ const ViewEditAmountItemOrder = ({
     return price * qty;
   }, [form?.prodVarPrice, form?.quantity]);
 
-  /** calculate discount dynamically */
   const discountAmount = useMemo(() => {
     if (!selectedDiscount) return 0;
 
@@ -47,13 +48,11 @@ const ViewEditAmountItemOrder = ({
     return selectedDiscount.discountValue;
   }, [selectedDiscount, baseTotal]);
 
-  /** base price always comes from price × qty */
-
   const finalTotal = Math.max(0, baseTotal - discountAmount);
 
-  /** manual edit cancels discount */
   const handleManualAmountChange = (value: number) => {
     setSelectedDiscount(null);
+
     setForm((prev) =>
       prev
         ? {
@@ -65,11 +64,10 @@ const ViewEditAmountItemOrder = ({
     );
   };
 
-  /** select / replace / remove discount */
   const handleDiscountChange = (value: number) => {
     if (!value) {
-      // remove discount
       setSelectedDiscount(null);
+
       setForm((prev) =>
         prev
           ? {
@@ -79,6 +77,7 @@ const ViewEditAmountItemOrder = ({
             }
           : prev,
       );
+
       return;
     }
 
@@ -86,7 +85,6 @@ const ViewEditAmountItemOrder = ({
     setSelectedDiscount(found ?? null);
   };
 
-  /** save to POS */
   const handleSave = () => {
     if (!form) return;
 
@@ -112,65 +110,89 @@ const ViewEditAmountItemOrder = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm h-full">
+    <div className="flex h-full flex-col rounded-2xl bg-white p-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-700">
-          Edit Item Amount
-        </h2>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900">Edit Amount</h2>
+          <p className="mt-1 text-xs text-gray-400">
+            Adjust item total or apply a discount.
+          </p>
+        </div>
+
         {selectedDiscount && (
-          <span className="text-[10px] px-2 py-0.5 bg-green-100 text-green-700 rounded">
-            Discount Applied
+          <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-600">
+            Discount applied
           </span>
         )}
       </div>
 
       {/* Amount */}
-      <Input
-        label="Final Amount"
-        sizes="sm"
-        value={selectedDiscount ? finalTotal : form?.prodVarTotal}
-        onChange={(e) => handleManualAmountChange(Number(e.target.value))}
-      />
+      <div className="space-y-2">
+        <Input
+          label="Final Amount"
+          sizes="sm"
+          value={selectedDiscount ? finalTotal : form?.prodVarTotal}
+          onChange={(e) => handleManualAmountChange(Number(e.target.value))}
+        />
+      </div>
 
-      {/* Discount Selector */}
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-600">Discount</label>
+      {/* Discount */}
+      <div className="mt-5 space-y-2">
+        <label className="text-xs font-medium text-gray-500">Discount</label>
+
         <select
-          className="border rounded px-2 py-1 text-xs"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700 outline-none transition focus:border-gray-300 focus:bg-white"
           value={selectedDiscount?.discountId ?? ""}
           onChange={(e) => handleDiscountChange(Number(e.target.value))}
         >
           <option value="">No discount</option>
+
           {discountData.map((d) => (
             <option key={d.discountId} value={d.discountId}>
-              {d.discountName} (
+              {d.discountName}{" "}
               {d.discountType === "percent"
-                ? `${d.discountValue}%`
-                : `₱${d.discountValue}`}
-              )
+                ? `(${d.discountValue}%)`
+                : `(₱${d.discountValue})`}
             </option>
           ))}
         </select>
       </div>
 
       {/* Summary */}
-      <div className="text-xs text-gray-600 space-y-1">
-        <div>Base: ₱{baseTotal.toFixed(2)}</div>
+      <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-gray-400">Base</span>
+          <span className="font-medium text-gray-700">
+            ₱{baseTotal.toFixed(2)}
+          </span>
+        </div>
+
         {selectedDiscount && (
           <>
-            <div className="text-green-600">
-              Discount: −₱{discountAmount.toFixed(2)}
+            <div className="mt-3 flex items-center justify-between text-sm">
+              <span className="text-gray-400">Discount</span>
+              <span className="font-medium text-emerald-600">
+                −₱{discountAmount.toFixed(2)}
+              </span>
             </div>
-            <div className="font-semibold">Final: ₱{finalTotal.toFixed(2)}</div>
+
+            <div className="my-3 border-t border-gray-200" />
+
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium text-gray-500">Final</span>
+              <span className="text-lg font-semibold text-gray-900">
+                ₱{finalTotal.toFixed(2)}
+              </span>
+            </div>
           </>
         )}
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 mt-auto">
+      <div className="mt-auto flex justify-end gap-2 pt-6">
         <Button label="Cancel" size="sm" color="secondary" onClick={onClose} />
-        <Button label="Save" size="sm" onClick={handleSave} />
+        <Button label="Save Changes" size="sm" onClick={handleSave} />
       </div>
     </div>
   );

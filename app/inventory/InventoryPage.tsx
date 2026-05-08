@@ -84,10 +84,9 @@ const InventoryPage = () => {
               subtitle="Track and manage your stock levels"
             />
             <div className="flex">
-              <div className="flex  border-gray-300">
+              <div className="flex  border-gray-300 gap-2">
                 <div>
                   <Button
-                    isRounded={false}
                     size="sm"
                     onClick={function (): void {
                       setSelectionSection("inventory");
@@ -101,7 +100,6 @@ const InventoryPage = () => {
                 </div>
                 <div>
                   <Button
-                    isRounded={false}
                     size="sm"
                     onClick={function (): void {
                       setSelectionSection("movement");
@@ -115,7 +113,6 @@ const InventoryPage = () => {
                 </div>
                 <div>
                   <Button
-                    isRounded={false}
                     size="sm"
                     onClick={function (): void {
                       setSelectionSection("report");

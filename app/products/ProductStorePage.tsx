@@ -459,6 +459,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                 uniqueIdKey="prodId"
                 columns={hasStore ? columns : adminColumn}
                 data={itemResponse.data}
+                showPagination
                 totalCount={20}
                 maxHeight="h-full"
                 searchUrl="products"
@@ -505,10 +506,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                   <div className="flex gap-2">
                     <div>
                       <Button
-                        isRounded={false}
                         className="text-sm"
                         label="View Category"
-                        size="xs"
+                        size="sm"
                         icon={Layers}
                         onClick={() => {
                           setShowCategory(true);
@@ -518,10 +518,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     </div>
                     <div>
                       <Button
-                        isRounded={false}
                         className="text-sm"
                         label="Add Category"
-                        size="xs"
+                        size="sm"
                         icon={Layers}
                         onClick={() => {
                           setShowAddProductCat(true);
@@ -531,10 +530,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     </div>
                     <div>
                       <Button
-                        isRounded={false}
                         className="text-sm"
                         label="Add Product"
-                        size="xs"
+                        size="sm"
                         icon={Plus}
                         onClick={() => {
                           setShowAddProductModal(true);

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useRef, useState } from "react";
 import { Bell, Store } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { StoreInterface } from "@/types/stores";
@@ -12,125 +11,159 @@ import toast from "react-hot-toast";
 
 const Header = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const { user, hasStore, isAdmin, refreshSession } = useSession();
-  const { stores } = useStores({ user, hasStore, isAdmin });
-
   const [storeData, setStoreData] = useState<StoreInterface | null>(null);
+
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  const { user, hasStore, isAdmin, refreshSession } = useSession();
+  useStores({ user, hasStore, isAdmin });
+
   const isSuperVisor = user?.empPosition === "supervisor";
 
   const { data: response, isLoading } = useSWR<ApiResponse<StoreInterface[]>>(
     isSuperVisor ? `/api/stores/userId/${user?.userId}/store-employee/` : null,
     fetcher,
   );
+
   useEffect(() => {
-    // Get store data from localStorage
     const storedStoreData = localStorage.getItem("storeData");
 
-    if (storedStoreData) {
-      try {
-        const parsedData = JSON.parse(storedStoreData);
-        setStoreData(parsedData);
-      } catch (error) {
-        console.error("Error parsing storeData:", error);
-      }
+    if (!storedStoreData) return;
+
+    try {
+      setStoreData(JSON.parse(storedStoreData));
+    } catch (error) {
+      console.error("Error parsing storeData:", error);
     }
   }, [user]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
+        setIsNotifOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const storeOptions = Array.isArray(response?.data)
-    ? response.data?.map((store) => ({
-        label: store.storeName, // or whatever you want to show
-        value: store.storeId ?? 0, // optional leading icon if you have one
+    ? response.data.map((store) => ({
+        label: store.storeName,
+        value: store.storeId ?? 0,
       }))
     : [];
+
   const handleStoreSelection = async (store: StoreInterface) => {
     try {
-      // Call the update-token API
       const response = await fetch("/api/auth/store", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Important for cookies
+        credentials: "include",
         body: JSON.stringify({ storeId: store.storeId }),
       });
 
       const data = await response.json();
-      if (response.ok && data.success) {
-        // Update localStorage with new user data
 
+      if (response.ok && data.success) {
         localStorage.setItem("storeData", JSON.stringify(store));
         await refreshSession();
         toast.success("Store selected successfully!");
         window.location.reload();
-      } else {
-        toast.error(data.message || "Failed to update token");
+        return;
       }
+
+      toast.error(data.message || "Failed to update token");
     } catch (error) {
       console.error("Error updating token:", error);
       toast.error("Failed to select store");
     }
   };
+
   return (
-    <div className="flex justify-between h-8 md:h-13 xl:h-15 items-center pr-2 pl-2 shadow  bg-white overflow-visible">
-      <div className="flex flex-col">
-        {isLoading ? (
-          ""
-        ) : response?.data.length && response?.data.length > 1 ? (
-          <DynamicDropdown
-            size="md"
-            options={storeOptions}
-            onChange={function (value: string | number): void {
-              const findStore = response.data?.find(
-                (s) => s.storeId === Number(value),
-              );
-              if (findStore) {
-                handleStoreSelection(findStore);
-              }
-            }}
-            placeholder={""}
-            icon={<Store className="w-4 h-4" />}
-            defaultValue={storeData?.storeId ?? 0}
-          />
+    <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-gray-100 bg-white/90 px-3 shadow-sm backdrop-blur-md sm:px-4 xl:h-16">
+      {/* Left */}
+      <div className="flex min-w-0 items-center">
+        {!isLoading && response?.data && response.data.length > 1 ? (
+          <div className="w-36 sm:w-44">
+            <DynamicDropdown
+              size="sm"
+              options={storeOptions}
+              onChange={(value) => {
+                const selectedStore = response.data?.find(
+                  (s) => s.storeId === Number(value),
+                );
+
+                if (selectedStore) {
+                  handleStoreSelection(selectedStore);
+                }
+              }}
+              placeholder="Select store"
+              icon={<Store className="h-4 w-4" />}
+              defaultValue={storeData?.storeId ?? 0}
+            />
+          </div>
         ) : (
-          <span className="font-semibold text-[10px] 2xl:text-lg">
-            {storeData?.storeName}
-          </span>
-        )}
-      </div>
-      <div className="flex gap-5 items-center">
-        <button
-          className="relative flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-gray-200 text-white"
-          onClick={() => setIsNotifOpen((prev) => !prev)}
-        >
-          <Bell className="w-2.5 h-2.5 xl:w-6 xl:h-6 text-primary-1" />
-          {/* {notifications.length > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-2 w-2 xl:h-4 xl:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] xl:text-[10px] font-bold text-white">
-              {notifications.length}
+          <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-sm">
+            <Store className="h-4 w-4 text-gray-400" />
+            <span className="truncate text-sm font-semibold text-gray-800">
+              {storeData?.storeName ?? "Store"}
             </span>
-          )} */}
-          <span className="absolute -top-1 -right-1 flex h-2 w-2 xl:h-4 xl:w-4 items-center justify-center rounded-full bg-red-500 text-[8px] xl:text-[10px] font-bold text-white">
-            3
-          </span>
-        </button>
-        <div className="flex items-center justify-center w-5 h-5 xl:w-9 xl:h-9 rounded-full bg-primary-1 text-xs xl:text-xl font-bold text-white">
-          {user?.userFullName.charAt(0)}
-        </div>
-        {isNotifOpen && (
-          <div className="absolute flex flex-col right-2 top-10 xs:top:13 lg:top-13 xl:top-15   w-80 max-h-80 bg-white border border-gray-200 rounded shadow-lg overflow-y-auto z-50">
-            <div className="flex justify-between items-center p-2 border-b border-b-gray-300">
-              <label className="text-sm font-semibold">Notifcations</label>
-              <span className="text-xs font-semibold text-primary-1">
-                Mark all as read
-              </span>
-            </div>
-            <div className="p-4 text-center text-gray-500 text-sm">
-              No notifications
-            </div>
-            {/* or map your notifications here */}
           </div>
         )}
       </div>
-    </div>
+
+      {/* Right */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="relative" ref={notifRef}>
+          <button
+            type="button"
+            onClick={() => setIsNotifOpen((prev) => !prev)}
+            className="relative flex h-9 w-9 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50"
+          >
+            <Bell className="h-4 w-4 text-primary-1" />
+
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+              3
+            </span>
+          </button>
+
+          {isNotifOpen && (
+            <div className="absolute right-0 mt-3 w-80 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">
+                    Notifications
+                  </h3>
+                  <p className="text-xs text-gray-400">Latest updates</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="text-xs font-medium text-primary-1 hover:underline"
+                >
+                  Mark all as read
+                </button>
+              </div>
+
+              <div className="flex min-h-32 items-center justify-center px-4 py-8">
+                <p className="text-sm text-gray-400">No notifications</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-1 text-sm font-bold text-white shadow-sm">
+          {user?.userFullName?.charAt(0) ?? "U"}
+        </div>
+      </div>
+    </header>
   );
 };
 

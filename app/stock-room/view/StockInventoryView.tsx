@@ -28,7 +28,7 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
     selector: (row) => {
       const { status, bgClass, textClass } = getInventoryStatusInfo(
         row.inventoryItemQuantity,
-        row.inventoryItemMin
+        row.inventoryItemMin,
       );
 
       return (
@@ -52,11 +52,7 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
         <div>
           <div>
             {" "}
-            <Button
-              icon={Plus}
-              size="xs"
-              label="Add Store"
-            />
+            <Button icon={Plus} size="xs" label="Add Store" />
           </div>
         </div>
       }
@@ -65,6 +61,7 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
       columns={inventoryItemColumns}
       data={response.data}
       totalCount={10}
+      showPagination
       maxHeight="h-full"
     />
   );

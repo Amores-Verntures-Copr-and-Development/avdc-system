@@ -95,6 +95,7 @@ export const customerServices = {
     type,
     limit,
     offset,
+    store,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -102,6 +103,7 @@ export const customerServices = {
     type?: string;
     limit?: number;
     offset?: number;
+    store?: string;
   }) => {
     try {
       const data = await selectCustomers({
@@ -110,6 +112,7 @@ export const customerServices = {
         search,
         limit,
         offset,
+        store,
       });
       return data;
     } catch (e) {
@@ -120,11 +123,14 @@ export const customerServices = {
   countCustomerByStoreId: async ({
     keyFields = {},
     connection,
+    store,
+    search,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
     search?: string;
     type?: string;
+    store?: string;
   }) => {
     try {
       const count = await selectCountCustomers({ keyFields, connection });

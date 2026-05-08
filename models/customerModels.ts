@@ -78,6 +78,8 @@ WHERE 1=1`;
   }
 
   if (store) {
+    sql += ` AND st.storeName = ?`;
+    params.push(store);
   }
 
   sql += ` GROUP BY c.customerId, c.customerName, c.customerEmail, c.customerPhone, c.customerType, c.storeId, st.storeName`;

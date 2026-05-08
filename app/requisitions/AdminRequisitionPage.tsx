@@ -239,6 +239,7 @@ const AdminRequisitionPage = () => {
               ref={tableRef}
               data={itemResponse.data}
               totalCount={10}
+              showPagination
               onRowSelection={(row) => {
                 setSelectedRow(row);
               }}

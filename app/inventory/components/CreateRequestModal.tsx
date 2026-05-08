@@ -179,21 +179,28 @@ const CreateRequestModal: React.FC<CreateRequestModalProps> = ({
         />
       </div>
       <div className="flex flex-1 justify-end gap-2">
-        <Button
-          label="Cancel"
-          color="secondary"
-          size="sm"
-          onClick={onCancel}
-          className="font-semibold"
-          disabled={isSubmitting}
-        />
-        <Button
-          label="Submit Request"
-          size="sm"
-          onClick={handleSubmit}
-          className="font-semibold"
-          loading={isSubmitting}
-        />
+        <div className="flex gap-3">
+          <div>
+            {" "}
+            <Button
+              label="Cancel"
+              color="secondary"
+              size="sm"
+              onClick={onCancel}
+              className="font-semibold"
+              disabled={isSubmitting}
+            />
+          </div>
+          <div>
+            <Button
+              label="Submit Request"
+              size="sm"
+              onClick={handleSubmit}
+              className="font-semibold"
+              loading={isSubmitting}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

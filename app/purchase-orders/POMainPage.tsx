@@ -69,6 +69,7 @@ const POMainPage = ({
           loading={isLoading}
           maxHeight="h-full"
           totalCount={10}
+          showPagination
           rowSize="h-10"
           textSize="xs"
           showActions

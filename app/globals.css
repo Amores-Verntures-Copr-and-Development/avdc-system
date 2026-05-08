@@ -28,3 +28,12 @@ body {
   /* POS Essentials */
   font-family: var(--font-poppins), sans-serif;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

@@ -105,6 +105,7 @@ const UserPage = () => {
           columns={userColumn}
           data={response.data}
           totalCount={10}
+          showPagination
           uniqueIdKey="userId"
           onRowSelection={(row) => {
             setSelectedUser(row);

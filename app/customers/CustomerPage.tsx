@@ -265,6 +265,7 @@ const CustomerPage = () => {
           data={response?.data ?? []}
           showCheckBox
           isRounded={false}
+          showPagination
           totalCount={response?.count}
           maxHeight="h-full"
           loading={isLoading}

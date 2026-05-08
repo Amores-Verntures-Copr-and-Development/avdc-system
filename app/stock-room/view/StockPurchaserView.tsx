@@ -97,6 +97,7 @@ const StockPurchaserView = ({ data, user }: StockPurchaserViewProps) => {
         columns={purchaserColumns}
         data={response.data}
         totalCount={10}
+        showPagination
         maxHeight="h-full"
       />
       <Modal

@@ -36,7 +36,7 @@ const CategoryPage = () => {
   const { stockRoom } = useStockRoom(
     user?.empPosition === "admin" || user?.empPosition === "purchaser"
       ? user?.userId
-      : null
+      : null,
   );
   // const { stores } = useStores({ user, hasStore, isAdmin });
   const categoriesUrl =
@@ -44,11 +44,11 @@ const CategoryPage = () => {
     (user?.empPosition === "admin" || user?.empPosition === "purchaser")
       ? `api/categories/stock-room/${stockRoom?.stockRoomId}`
       : hasStore
-      ? `api/categories/stores/${user?.storeId}`
-      : `api/categories/`;
+        ? `api/categories/stores/${user?.storeId}`
+        : `api/categories/`;
   const { data: response, mutate } = useSWR<ApiResponse<CategoryInterface[]>>(
     user ? categoriesUrl : null,
-    fetcher
+    fetcher,
   );
 
   const handleSubmit = async (data: CreateCategoryDto): Promise<boolean> => {
@@ -57,7 +57,7 @@ const CategoryPage = () => {
       categoryReferenceType: stockRoom ? "stock-room" : "stores",
       categoryReferenceId: stockRoom
         ? stockRoom.stockRoomId
-        : user?.storeId ?? 0,
+        : (user?.storeId ?? 0),
     };
 
     try {
@@ -91,6 +91,7 @@ const CategoryPage = () => {
       />
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table
+          showPagination
           uniqueIdKey="categoryId"
           renderTopActions={
             <>

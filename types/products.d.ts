@@ -8,6 +8,7 @@ export interface Products {
   prodCreatedBy: number;
   prodCatId: number | null;
   productVariants?: ProductVariants[];
+  productImage?: string;
 }
 
 export interface ProductVariants {

@@ -65,11 +65,13 @@ export const getCustomer = async ({
       search,
       limit,
       offset,
+      store,
     });
     const count = await customerServices.countCustomerByStoreId({
       keyFields,
       type,
       search,
+      store,
     });
     return {
       success: true,

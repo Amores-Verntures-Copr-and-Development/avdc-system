@@ -3,6 +3,7 @@ import { Calendar, ChevronUp, ChevronDown } from "lucide-react";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import { createPortal } from "react-dom";
 
 interface DateRangeProps {
   onDateRangeChange?: (range: { from: string; to: string }) => void;
@@ -12,22 +13,27 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   const [isShow, setIsShow] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsShow(false);
-      }
-    };
+  const updatePosition = () => {
+    if (!triggerRef.current) return;
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    const rect = triggerRef.current.getBoundingClientRect();
+
+    setPosition({
+      top: rect.bottom + 8,
+      left: rect.left,
+    });
+  };
+
+  const toggleDropdown = () => {
+    updatePosition();
+    setIsShow((prev) => !prev);
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const from = params.get("from");
@@ -36,14 +42,42 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     if (from) setFromDate(from);
     if (to) setToDate(to);
   }, []);
-  // Handle date range changes
+
   useEffect(() => {
-    if (fromDate && toDate && onDateRangeChange) {
-      onDateRangeChange({ from: fromDate, to: toDate });
+    if (fromDate && toDate) {
+      onDateRangeChange?.({ from: fromDate, to: toDate });
     }
   }, [fromDate, toDate, onDateRangeChange]);
 
-  // Quick date range functions
+  useEffect(() => {
+    if (!isShow) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+
+      if (
+        triggerRef.current?.contains(target) ||
+        dropdownRef.current?.contains(target)
+      ) {
+        return;
+      }
+
+      setIsShow(false);
+    };
+
+    const handleUpdatePosition = () => updatePosition();
+
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("resize", handleUpdatePosition);
+    window.addEventListener("scroll", handleUpdatePosition, true);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("resize", handleUpdatePosition);
+      window.removeEventListener("scroll", handleUpdatePosition, true);
+    };
+  }, [isShow]);
+
   const setToday = () => {
     const today = new Date().toISOString().split("T")[0];
     setFromDate(today);
@@ -54,7 +88,9 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   const setYesterday = () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
+
     const dateStr = yesterday.toISOString().split("T")[0];
+
     setFromDate(dateStr);
     setToDate(dateStr);
     setIsShow(false);
@@ -63,6 +99,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   const setPastMonth = () => {
     const today = new Date();
     const pastMonth = new Date();
+
     pastMonth.setMonth(today.getMonth() - 1);
 
     setFromDate(pastMonth.toISOString().split("T")[0]);
@@ -73,6 +110,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   const setPastThreeMonths = () => {
     const today = new Date();
     const pastThreeMonths = new Date();
+
     pastThreeMonths.setMonth(today.getMonth() - 3);
 
     setFromDate(pastThreeMonths.toISOString().split("T")[0]);
@@ -83,13 +121,10 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   const clearDates = () => {
     setFromDate("");
     setToDate("");
-    if (onDateRangeChange) {
-      onDateRangeChange({ from: "", to: "" });
-    }
+    onDateRangeChange?.({ from: "", to: "" });
     setIsShow(false);
   };
 
-  // Get display text for the button
   const getDisplayText = () => {
     if (!fromDate && !toDate) return "Any Date";
     if (fromDate === toDate) return formatDateToWords(fromDate);
@@ -97,107 +132,114 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
   };
 
   return (
-    <div className="relative inline-block text-left" ref={dropdownRef}>
+    <>
       <button
-        onClick={() => setIsShow((prev) => !prev)}
-        className={`flex items-center gap-2 px-1.5 py-1 2xl:px-3 2xl:py-1.5 rounded-md border border-gray-300 ${
-          isShow ? "!bg-primary-1" : "bg-white"
-        } shadow-sm hover:bg-gray-50 transition-colors duration-200 min-w-[140px]`}
+        ref={triggerRef}
+        type="button"
+        onClick={toggleDropdown}
+        className={`
+    flex min-w-[140px] items-center gap-2
+    rounded-xl border px-2 py-1.5
+    text-xs font-medium  transition
+    2xl:px-3 2xl:py-1.5
+    ${
+      isShow
+        ? "border-primary-1 bg-primary-1 text-white"
+        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+    }
+  `}
       >
-        <Calendar
-          className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
-            isShow ? "!text-white" : "text-gray-600"
-          } `}
-        />
-        <span
-          className={`text-[8px] 2xl:text-xs 3xl:text-sm ${
-            isShow ? "!text-white" : "text-gray-700"
-          } font-medium flex-1 text-left`}
-        >
-          {getDisplayText()}
-        </span>
+        <Calendar className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
+
+        <span className="flex-1 truncate text-left">{getDisplayText()}</span>
 
         {isShow ? (
-          <ChevronUp
-            className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
-              isShow ? "!text-white" : "text-gray-600"
-            } `}
-          />
+          <ChevronUp className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
         ) : (
-          <ChevronDown
-            className={`w-2 h-2 2xl:w-4 2xl:h-4 text-gray-600         ${
-              isShow ? "!text-white" : "text-gray-600"
-            } `}
-          />
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
         )}
       </button>
 
-      {isShow && (
-        <div className="absolute z-50 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg p-4 space-y-4">
-          {/* Date Inputs */}
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              type="date"
-              label="From"
-              sizes="xs"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-            />
-            <Input
-              type="date"
-              label="To"
-              sizes="xs"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              min={fromDate}
-            />
-          </div>
+      {isShow &&
+        createPortal(
+          <div
+            ref={dropdownRef}
+            style={{
+              position: "fixed",
+              top: position.top,
+              left: position.left,
+              zIndex: 9999,
+            }}
+            className="w-80 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                type="date"
+                label="From"
+                sizes="xs"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+              <Input
+                type="date"
+                label="To"
+                sizes="xs"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                min={fromDate}
+              />
+            </div>
 
-          {/* Quick Selection Buttons */}
-          <div className="grid grid-cols-1 gap-2">
-            <Button
-              size="xs"
-              label="Today"
-              color="secondary"
-              onClick={setToday}
-              className="justify-center"
-            />
-            <Button
-              size="xs"
-              label="Yesterday"
-              color="secondary"
-              onClick={setYesterday}
-              className="justify-center"
-            />
-            <Button
-              size="xs"
-              label="Past Month"
-              color="secondary"
-              onClick={setPastMonth}
-              className="justify-center"
-            />
-            <Button
-              size="xs"
-              label="Past 3 Months"
-              color="secondary"
-              onClick={setPastThreeMonths}
-              className="justify-center"
-            />
-          </div>
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <Button
+                size="xs"
+                label="Today"
+                color="secondary"
+                onClick={setToday}
+                className="justify-center"
+              />
+              <Button
+                size="xs"
+                label="Yesterday"
+                color="secondary"
+                onClick={setYesterday}
+                className="justify-center"
+              />
+              <Button
+                size="xs"
+                label="Past Month"
+                color="secondary"
+                onClick={setPastMonth}
+                className="justify-center"
+              />
+              <Button
+                size="xs"
+                label="Past 3 Months"
+                color="secondary"
+                onClick={setPastThreeMonths}
+                className="justify-center"
+              />
+            </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-between  gap-2 ">
-            <Button
-              size="xs"
-              label="Clear"
-              color="secondary"
-              onClick={clearDates}
-            />
-            <Button size="xs" label="Apply" onClick={() => setIsShow(false)} />
-          </div>
-        </div>
-      )}
-    </div>
+            <div className="mt-4 flex gap-2">
+              <Button
+                size="xs"
+                label="Clear"
+                color="secondary"
+                onClick={clearDates}
+                className="flex-1 justify-center"
+              />
+              <Button
+                size="xs"
+                label="Apply"
+                onClick={() => setIsShow(false)}
+                className="flex-1 justify-center"
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 };
 

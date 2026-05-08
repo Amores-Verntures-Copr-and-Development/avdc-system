@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -10,21 +10,28 @@ interface PaginationProps {
 
 const Pagination: React.FC<PaginationProps> = ({
   totalItems,
-  defaultLimit = 300,
+  defaultLimit = 100,
   maxVisiblePages = 5,
 }) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Memoize params for stability
-  // const params = new URLSearchParams(searchParams.toString());
+  const [memoTotalItems, setMemoTotalItems] = useState(totalItems ?? 0);
+
+  useEffect(() => {
+    if (typeof totalItems === "number" && totalItems > 0) {
+      setMemoTotalItems(totalItems);
+    }
+  }, [totalItems]);
 
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+
   const limit = Math.max(
     1,
-    parseInt(searchParams.get("limit") || `${defaultLimit}`, 10)
+    parseInt(searchParams.get("limit") || `${defaultLimit}`, 10),
   );
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit));
+
+  const totalPages = Math.max(1, Math.ceil(memoTotalItems / limit));
 
   const setPageAndLimit = (newPage: number, newLimit: number = limit) => {
     const safePage = Math.max(1, Math.min(newPage, totalPages));
@@ -33,8 +40,12 @@ const Pagination: React.FC<PaginationProps> = ({
     params.set("page", safePage.toString());
     params.set("limit", newLimit.toString());
 
-    router.push(`?${params.toString()}`); // CHANGED: replace → push
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    router.push(`?${params.toString()}`);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const handleLimitChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -42,10 +53,9 @@ const Pagination: React.FC<PaginationProps> = ({
     setPageAndLimit(1, newLimit);
   };
 
-  const startItem = (page - 1) * limit + 1;
-  const endItem = Math.min(page * limit, totalItems);
+  const startItem = memoTotalItems === 0 ? 0 : (page - 1) * limit + 1;
+  const endItem = Math.min(page * limit, memoTotalItems);
 
-  // Generate visible page numbers
   const getVisiblePages = () => {
     const pages: (number | string)[] = [];
     const half = Math.floor(maxVisiblePages / 2);
@@ -53,7 +63,6 @@ const Pagination: React.FC<PaginationProps> = ({
     let start = Math.max(1, page - half);
     let end = Math.min(totalPages, page + half);
 
-    // Adjust if we're near the beginning or end
     if (end - start + 1 < maxVisiblePages) {
       if (start === 1) {
         end = Math.min(totalPages, start + maxVisiblePages - 1);
@@ -62,24 +71,23 @@ const Pagination: React.FC<PaginationProps> = ({
       }
     }
 
-    // Add first page and ellipsis if needed
     if (start > 1) {
       pages.push(1);
+
       if (start > 2) {
         pages.push("...");
       }
     }
 
-    // Add visible pages
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
 
-    // Add ellipsis and last page if needed
     if (end < totalPages) {
       if (end < totalPages - 1) {
         pages.push("...");
       }
+
       pages.push(totalPages);
     }
 
@@ -88,7 +96,6 @@ const Pagination: React.FC<PaginationProps> = ({
 
   const visiblePages = getVisiblePages();
 
-  // Clamp invalid page numbers
   useEffect(() => {
     if (page > totalPages) {
       setPageAndLimit(totalPages);
@@ -96,17 +103,29 @@ const Pagination: React.FC<PaginationProps> = ({
   }, [page, totalPages]);
 
   return (
-    <div className="flex flex-row items-center justify-between lg:justify-between gap-3 text-black lg:pl-5 lg:pr-5">
-      {/* Row selector */}
+    <div className="flex items-center justify-between gap-4 border-t border-gray-100 bg-white px-2 py-1.5 2xl:px-4 2xl:py-3">
+      {/* Rows per page */}
       <div className="flex items-center gap-2">
-        <label htmlFor="limit" className="text-[8px] lg:text-xs font-semibold">
-          Rows per page:
+        <label
+          htmlFor="limit"
+          className="text-[10px] font-medium text-gray-500 2xl:text-xs"
+        >
+          Rows per page
         </label>
+
         <select
           id="limit"
           value={limit}
           onChange={handleLimitChange}
-          className="border rounded px-2 py-1 text-[8px] lg:text-xs font-semibold"
+          className="
+            rounded-xl border border-gray-200
+            bg-white px-1.5 py-1
+            text-[8px] font-medium text-gray-700
+            shadow-sm outline-none transition
+            hover:border-gray-300
+            focus:border-gray-300
+            2xl:px-3 2xl:py-2 2xl:text-xs
+          "
           aria-label="Select rows per page"
         >
           {[10, 20, 50, 100, 200, 300].map((option) => (
@@ -117,24 +136,31 @@ const Pagination: React.FC<PaginationProps> = ({
         </select>
       </div>
 
-      {/* Pagination controls */}
-      <div className="flex items-center gap-1">
+      {/* Pagination */}
+      <div className="flex items-center justify-center gap-1">
         <button
-          className="px-2 lg:px-3 py-1 rounded text-primary-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="
+            flex h-5 w-5 items-center justify-center
+            rounded-xl border border-transparent
+            text-gray-500 transition
+            hover:bg-gray-100
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+            2xl:h-9 2xl:w-9
+          "
           onClick={() => setPageAndLimit(page - 1)}
           disabled={page <= 1}
           aria-label="Previous page"
         >
-          <ArrowLeft className="w-4 h-4  lg:w-5 lg:h-5" />
+          <ArrowLeft className="h-3 w-3 2xl:h-4 2xl:w-4" />
         </button>
 
-        {/* Page numbers */}
         {visiblePages.map((pageNum, index) => {
           if (pageNum === "...") {
             return (
               <span
                 key={`ellipsis-${index}`}
-                className="px-2 lg:px-3 py-1 text-gray-400"
+                className="px-2 text-[8px] text-gray-400 2xl:text-xs"
               >
                 ...
               </span>
@@ -142,17 +168,24 @@ const Pagination: React.FC<PaginationProps> = ({
           }
 
           const isCurrentPage = pageNum === page;
+
           return (
             <button
               key={pageNum}
-              className={`px-2 py-0.5 lg:px-3 lg:py-1 rounded transition-colors text-[10px] lg:text-xs ${
-                isCurrentPage
-                  ? "bg-primary-1 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
               onClick={() => setPageAndLimit(Number(pageNum))}
               aria-label={`Go to page ${pageNum}`}
               aria-current={isCurrentPage ? "page" : undefined}
+              className={`
+                min-w-[20px] rounded-xl px-1.5 py-1
+                text-[8px] font-medium transition-all
+                2xl:px-3 2xl:py-2 2xl:text-xs
+                
+                ${
+                  isCurrentPage
+                    ? "bg-primary-1 text-white shadow-sm"
+                    : "text-gray-600 hover:bg-gray-100"
+                }
+              `}
             >
               {pageNum}
             </button>
@@ -160,18 +193,37 @@ const Pagination: React.FC<PaginationProps> = ({
         })}
 
         <button
-          className="px-3 py-1 rounded text-primary-1 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="
+            flex h-5 w-5 items-center justify-center
+            rounded-xl border border-transparent
+            text-gray-500 transition
+            hover:bg-gray-100
+            disabled:cursor-not-allowed
+            disabled:opacity-40
+            2xl:h-9 2xl:w-9
+          "
           onClick={() => setPageAndLimit(page + 1)}
           disabled={page >= totalPages}
           aria-label="Next page"
         >
-          <ArrowRight className="w-4 h-4  lg:w-5 lg:h-5" />
+          <ArrowRight className="h-3 w-3 2xl:h-4 2xl:w-4" />
         </button>
       </div>
 
-      {/* Showing info */}
-      <div className="text-[8px] lg:text-xs font-semibold text-gray-700">
-        Showing {totalItems === 0 ? 0 : startItem}–{endItem} of {totalItems}{" "}
+      {/* Showing Info */}
+      <div className="text-center text-[8px] 2xl:text-sm font-medium text-gray-500 lg:text-right">
+        Showing{" "}
+        <span className="text-[8px] 2xl:text-sm font-semibold text-gray-800">
+          {startItem}
+        </span>
+        –
+        <span className="text-[8px] 2xl:text-sm font-semibold text-gray-800">
+          {endItem}
+        </span>{" "}
+        of{" "}
+        <span className="text-[8px] 2xl:text-sm font-semibold text-gray-800">
+          {memoTotalItems}
+        </span>{" "}
         items
       </div>
     </div>

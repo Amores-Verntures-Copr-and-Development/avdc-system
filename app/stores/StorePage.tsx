@@ -32,15 +32,15 @@ const StorePage = () => {
   const { user, isAdmin, hasStore } = useSession();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInterface | null>(
-    null
+    null,
   );
   const isSupervisor = user?.empPosition === "supervisor";
   const url =
     isAdmin || !hasStore
       ? "/api/stores/"
       : isSupervisor
-      ? `/api/stores/userId/${user?.userId}/store-employee`
-      : null;
+        ? `/api/stores/userId/${user?.userId}/store-employee`
+        : null;
   const {
     data: response = { data: [] },
     isLoading,
@@ -95,6 +95,7 @@ const StorePage = () => {
           showActions
           maxHeight="h-full"
           totalCount={10}
+          showPagination
           renderActions={(row: any) => (
             <div className="flex justify-center gap-2">
               <IconButton

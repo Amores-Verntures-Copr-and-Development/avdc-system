@@ -189,6 +189,7 @@ const StoreRequisitionPage = () => {
               columns={requisitionColumns}
               data={itemResponse.data}
               ref={tableRef}
+              showPagination
               totalCount={10}
               loading={loading}
               onRowSelection={(row) => {

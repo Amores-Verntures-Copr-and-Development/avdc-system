@@ -8,55 +8,113 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  DotProps,
 } from "recharts";
 
 interface ChartData {
   name: string;
   value: number;
 }
-// ✅ Example mock monthly sales data
 
 interface ChartProps {
   data?: ChartData[];
   tooltipLabel?: string;
 }
-const formaToPeso = (value: number) => {
+
+const formatToPeso = (value: number) => {
   if (value >= 1000) return `₱${(value / 1000).toFixed(1)}k`;
   return `₱${value.toFixed(0)}`;
 };
-const Chart = ({ data, tooltipLabel }: ChartProps) => {
+
+const Chart = ({ data = [], tooltipLabel = "Sales" }: ChartProps) => {
   return (
-    <div className="w-full h-full flex flex-col">
+    <div className="h-full w-full rounded-2xl bg-white">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={data}
+          className="font-semibold"
           margin={{
-            top: 10,
-            right: 20,
-            left: -10,
-            bottom: 0,
+            top: 24,
+            right: 28,
+            left: -6,
+            bottom: 8,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis tickFormatter={formaToPeso} tick={{ fontSize: 12 }} />
+          <defs>
+            <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#e63389" stopOpacity={0.35} />
+              <stop offset="55%" stopColor="#e63389" stopOpacity={0.12} />
+              <stop offset="100%" stopColor="#e63389" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid
+            stroke="#e5e7eb"
+            strokeDasharray="4 4"
+            vertical={true}
+          />
+
+          <XAxis
+            dataKey="name"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 12, fill: "#6b7280" }}
+            dy={8}
+          />
+
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            tickFormatter={formatToPeso}
+            tick={{ fontSize: 12, fill: "#6b7280" }}
+            width={58}
+          />
+
           <Tooltip
-            formatter={(value: number) => [
-              `${formatPeso(value)}`,
-              tooltipLabel || "Sales",
-            ]}
+            cursor={{
+              stroke: "#e63389",
+              strokeWidth: 1,
+              strokeDasharray: "4 4",
+            }}
+            formatter={(value: number) => [formatPeso(value), tooltipLabel]}
             contentStyle={{
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
+              backgroundColor: "rgba(255,255,255,0.96)",
+              border: "1px solid #f1f5f9",
+              borderRadius: "14px",
+              boxShadow: "0 12px 30px rgba(15, 23, 42, 0.10)",
+              padding: "10px 12px",
+            }}
+            labelStyle={{
+              color: "#475569",
+              fontSize: 12,
+              fontWeight: 600,
+              marginBottom: 4,
+            }}
+            itemStyle={{
+              color: "#0f172a",
+              fontSize: 13,
+              fontWeight: 700,
             }}
           />
+
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#e63389" // Tailwind green-500
-            fill="#e081c5" // Tailwind green-100
-            strokeWidth={2}
+            stroke="#e63389"
+            fill="url(#salesGradient)"
+            strokeWidth={3}
+            activeDot={{
+              r: 7,
+              stroke: "#ffffff",
+              strokeWidth: 3,
+              fill: "#e63389",
+            }}
+            dot={{
+              r: 3,
+              stroke: "#ffffff",
+              strokeWidth: 2,
+              fill: "#e63389",
+            }}
           />
         </AreaChart>
       </ResponsiveContainer>

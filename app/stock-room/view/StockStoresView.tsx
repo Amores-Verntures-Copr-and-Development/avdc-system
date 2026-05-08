@@ -39,7 +39,7 @@ const StockStoresView = ({ data, user }: StockStoresViewProps) => {
     mutate,
   } = useSWR<{ data: DisplayStores[] }>(
     `/api/stock-room/${data.stockRoomId}/store`,
-    fetcher
+    fetcher,
   );
   const handleAddStore = async (dataStore: CreateStockStore[]) => {
     console.log("DataStore: ", dataStore);
@@ -87,6 +87,7 @@ const StockStoresView = ({ data, user }: StockStoresViewProps) => {
         columns={columns}
         data={response.data}
         totalCount={10}
+        showPagination
         maxHeight="h-full"
       />
       <Modal

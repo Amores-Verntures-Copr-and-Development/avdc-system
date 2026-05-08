@@ -127,6 +127,7 @@ const ProductVariantTable = ({
       showActions
       onRowSelection={(row) => onRowSelection(row)}
       totalCount={10}
+      showPagination
       searchUrl="/products"
       renderActions={(row) => (
         <div className="flex gap-1 xl:gap-2 px-1 justify-center">

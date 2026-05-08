@@ -179,6 +179,7 @@ const StockMovementSection: React.FC<StockMovementSectionProps> = ({
         data={itemResponse.data}
         loading={loading}
         totalCount={20}
+        showPagination
         filterConfig={filterConfig}
       />
     </>

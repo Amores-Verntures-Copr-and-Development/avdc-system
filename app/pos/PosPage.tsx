@@ -708,7 +708,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               <>
                 {/* Main Header */}
                 <div className="flex items-center flex-1">
-                  <div className="flex flex-col gap-2 flex-1">
+                  <div className=" flex gap-2 p-2 flex-1">
                     <div className="flex gap-2 items-center">
                       {showProductView === "product" ? (
                         <div className="">
@@ -749,6 +749,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                           onSearch={(value) => {
                             setSearchProd(value);
                           }}
+                          placeholder="Search Products"
                         />
                       </div>
                     </div>
@@ -764,7 +765,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         icon={
                           <UserRoundPlus className="w-5 h-5 2xl:w-7 2xl:h-5" />
                         }
-                        isRounded={false}
+                        isRounded={true}
                       />
                       <IconButton
                         onClick={() => {
@@ -775,7 +776,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         icon={
                           <CreditCard className="w-5 h-5 2xl:w-7 2xl:h-5" />
                         }
-                        isRounded={false}
+                        isRounded={true}
                       />
                       <IconButton
                         onClick={() => {
@@ -787,7 +788,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         icon={
                           <TicketPercent className="w-5 h-5 2xl:w-7 2xl:h-5" />
                         }
-                        isRounded={false}
+                        isRounded={true}
                       />
                       <IconButton
                         onClick={() => {
@@ -796,7 +797,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         label="Product List"
                         bg="yellow"
                         icon={<Files className="w-5 h-5 2xl:w-7 2xl:h-5" />}
-                        isRounded={false}
+                        isRounded={true}
                       />
                       <IconButton
                         onClick={() => {
@@ -804,8 +805,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         }}
                         label="Todays Order"
                         bg="primary"
-                        icon={<History className="w-6 h-5 2xl:w-7 2xl:h-5" />}
-                        isRounded={false}
+                        icon={<History className="w-5 h-5 2xl:w-7 2xl:h-5" />}
+                        isRounded={true}
                       />
                     </div>
                   </div>
@@ -813,7 +814,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             )}
           </div>
-          <div className="flex flex-col w-full 2xl:gap-2 2xl:mt-2">
+          <div className="flex flex-col w-full 2xl:gap-2 p-2 bg-white border border-gray-200">
             <h2 className="text-xs 2xl:text-base font-semibold text-gray-800 px-2">
               Categories
             </h2>
@@ -863,7 +864,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             )
           ) : (
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 overflow-y-auto auto-rows-max items-start">
+            <div className="flex-1 bg-white border  border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
               {filteredProductList.flatMap((p) =>
                 p.productVariants?.flatMap((pv) => (
                   <ProductVariantCard
