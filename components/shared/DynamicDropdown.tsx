@@ -49,7 +49,7 @@ const DynamicDropdown = ({
   const selectedOption =
     options.find((o) => o.value === value) ||
     options.find((o) => o.value === defaultValue);
-
+  console.log({ value, options, selectedOption });
   const updatePosition = () => {
     if (!triggerRef.current) return;
 
@@ -111,7 +111,10 @@ const DynamicDropdown = ({
         ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={toggleDropdown}
+        onClick={(e) => {
+          toggleDropdown();
+          e.stopPropagation();
+        }}
         className={`
           flex w-full items-center justify-between gap-2
           rounded-xl border
@@ -184,7 +187,8 @@ const DynamicDropdown = ({
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (isSelected) {
                           onChange("");
                         } else {

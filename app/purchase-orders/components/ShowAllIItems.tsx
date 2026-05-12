@@ -460,10 +460,10 @@ const ShowAllIItems = ({
     },
   ];
   return (
-    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden p-4">
+    <div className="gap-5 bg-white rounded-xl h-full flex flex-col overflow-hidden p-2 2xl:p-4">
       <div className="flex justify-between items-center ">
         {" "}
-        <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
+        <h3 className="font-semibold text-gray-800  text-lg flex-shrink-0">
           All Item list
         </h3>
         <div>

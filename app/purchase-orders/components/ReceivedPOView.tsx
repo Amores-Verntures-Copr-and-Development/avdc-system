@@ -28,6 +28,9 @@ import {
   Replace,
   RefreshCw,
   Hand,
+  Eye,
+  Menu,
+  File,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -57,6 +60,7 @@ import { PDFViewer } from "@react-pdf/renderer";
 import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
 import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
 import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -601,41 +605,41 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     ),
   );
   return (
-    <div className="gap-5 bg-white h-full flex flex-col overflow-hidden">
+    <div className="gap-5 bg-white rounded-lg h-full flex flex-col overflow-hidden">
       <div className="flex p-1  flex-col h-full w-full overflow-hidden">
-        <div className="text-center mt-4 mb-2 flex-shrink-0">
-          <p className="text-gray-700 text-xs 2xl:text-sm">
+        <div className="text-center mt-1 2xl:mt-4 mb-1 2xl:mb-2 2xl:space-y-2 flex-shrink-0">
+          <p className="text-gray-700 text-xs font-semibold 2xl:text-sm">
             Review PO and send to suppliers
           </p>
-          <p className="text-gray-500 text-xs 2xl:text-sm">
+          <p className="text-gray-500 text-xs 2xl:text-xs">
             Review your purchase order and send it to the selected suppliers.
           </p>
         </div>
 
         <div className="flex flex-1 flex-col p-4 overflow-hidden min-h-0">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold text-gray-800 mb-3 text-lg flex-shrink-0">
+          <div className="flex justify-between items-center mb-3">
+            <h3 className="font-semibold text-gray-800  text-sm 2xl:text-md flex-shrink-0">
               Order Items by Supplier
             </h3>
-            <div className="flex">
+            <div className="flex gap-2">
               <div className="self-center">
                 <Button
                   color="neutral"
-                  isRounded={false}
                   size="sm"
                   label="Supplier View"
                   onClick={() => {
                     setShowAllItems("supplier");
                     setSelectedStoreSupplier(null);
                   }}
+                  icon={Eye}
                 />
               </div>
               <div className="self-center">
                 <Button
                   color="neutral"
-                  isRounded={false}
                   size="sm"
                   label="View All PO Item"
+                  icon={Menu}
                   onClick={() => {
                     setShowAllItems("all");
                     setSelectedStoreSupplier(null);
@@ -645,12 +649,12 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
               <div className="self-center">
                 <Button
                   color="neutral"
-                  isRounded={false}
                   size="sm"
                   label="View PO Request"
                   onClick={() => {
                     setShowAllItems("request");
                   }}
+                  icon={File}
                 />
               </div>
             </div>
@@ -755,10 +759,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                         </div>
                         <div className="border-t border-gray-300"></div>
                         <div className="flex justify-between mt-5">
-                          <div className="flex">
+                          <div className="flex gap-2">
                             <div>
                               <Button
-                                isRounded={false}
                                 size="xs"
                                 color="secondary"
                                 label="PDF"
@@ -774,7 +777,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               <>
                                 <div>
                                   <Button
-                                    isRounded={false}
                                     size="xs"
                                     onClick={() => {
                                       // handleReceivePO([supplier]);
@@ -813,7 +815,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   <div>
                                     {" "}
                                     <Button
-                                      isRounded={false}
                                       size="xs"
                                       onClick={() => {
                                         setShowDeliverToStore(supplier);
@@ -831,7 +832,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               <div>
                                 {" "}
                                 <Button
-                                  isRounded={false}
                                   size="xs"
                                   onClick={() => {
                                     // handleSendBySupplier(supplier.items);
@@ -849,7 +849,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                               <div>
                                 {" "}
                                 <Button
-                                  isRounded={false}
                                   size="xs"
                                   onClick={() => {
                                     // handleSendBySupplier(supplier.items);
@@ -1192,7 +1191,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         <div className="flex border-t-1 p-2 justify-between border-gray-200 items-center">
           <span className="flex items-center">
             <Clock size={15} />{" "}
-            <span className="text-xs ml-2"> Created: {}</span>
+            <span className="text-xs ml-2">
+              {" "}
+              <span className="text-xs font-semibold">Created:</span>{" "}
+              {formatDateToWords(poData?.poCreatedAt ?? "")}
+            </span>
           </span>
           <div className="flex gap-3">
             <div>

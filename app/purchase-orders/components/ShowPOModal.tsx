@@ -458,15 +458,15 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center">
         <PageHeader title={`${data?.poNumber}`} subtitle={"Purchase Order"} />
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-center gap-1">
           <div className="flex">
             <span
-              className={`${bgClass} px-2 py-1 ${textClass} gap-2 items-center font-semibold text-xs ${borderClass} flex rounded-xl`}
+              className={`${bgClass} px-2 py-1 ${textClass} gap-2 items-center font-semibold text-[10px] 2xl:text-xs ${borderClass} flex rounded-xl`}
             >
               <Clock className="w-2.5 h-2.5 font-se" /> {status}
             </span>
           </div>
-          <span className="text-xs text-gray-500 ">
+          <span className="text-[8px] 2xl:text-xs text-gray-500 ">
             Last updated:
             {formatDateToWords(data?.poUpdatedAt ?? "", {
               showHour: true,
@@ -478,41 +478,13 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
           <Button
             size="sm"
             onClick={onClose}
-            label="Back"
+            label="Back to Main"
             icon={ArrowLeft}
             color="secondary"
           />
         </div>
       </div>
-      {/* <div className="bg-gray-50 p-2">
-        <div className="flex justify-between items-center max-w-3xl mx-auto">
-          {statusSteps.map((step, index) => (
-            <div key={step} className="flex items-center flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-4 h-4 xl:w-7 xl:h-7 rounded-full flex items-center justify-center font-semibold text-xs xl:text-sm ${
-                    index <= currentStepIndex
-                      ? "bg-primary-1 text-white"
-                      : "bg-gray-300 text-gray-600"
-                  }`}
-                >
-                  {index + 1}
-                </div>
-                <span className="text-[9px] xl:text-xs mt-2 capitalize">
-                  {step}
-                </span>
-              </div>
-              {index < statusSteps.length - 1 && (
-                <div
-                  className={`flex-1 h-1 ${
-                    index < currentStepIndex ? "bg-primary-1" : "bg-gray-300"
-                  }`}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div> */}
+
       <div className="flex-1 min-h-0 overflow-hidden">
         {isLoading ? (
           <LoaderComponent />

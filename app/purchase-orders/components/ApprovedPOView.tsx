@@ -40,6 +40,7 @@ import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
 import IconButton from "@/components/shared/IconButton";
 import Popup from "@/components/shared/Popup";
 import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -857,7 +858,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
         <div className="border-t border-gray-300 flex justify-between pl-4 pr-4 pt-4 pb-4 gap-4 items-center flex-shrink-0">
           <span className="flex items-center">
             <Clock size={15} />
-            <span className="text-xs ml-2"> Created: {}</span>
+            <span className="text-xs ml-2">
+              {" "}
+              Created: {formatDateToWords(poData?.poCreatedAt ?? "")}
+            </span>
           </span>
           <div className="flex gap-3">
             <div>

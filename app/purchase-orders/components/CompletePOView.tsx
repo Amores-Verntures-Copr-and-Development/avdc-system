@@ -914,6 +914,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
                               placeholder={"Status"}
                               size="sm"
                               icon={<Clock className="w-3 h-3" />}
+                              value={selectedStatus[reqData.requestNo] ?? ""}
                             />
                           </div>
                         }
