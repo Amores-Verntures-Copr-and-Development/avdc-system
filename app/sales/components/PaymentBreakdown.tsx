@@ -10,7 +10,7 @@ export const PaymentBreakdown = ({
   if (!data?.length) return null;
 
   return (
-    <div className="hidden   lg:grid grid-cols-2 2xl:grid-cols-1 gap-3">
+    <div className="hidden   lg:grid grid-cols-2 2xl:grid-cols-2 gap-3">
       {data.map((method) => {
         const pct =
           total > 0

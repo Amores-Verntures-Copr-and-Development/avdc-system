@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type ToggleProps = {
   label?: string;
@@ -17,27 +17,39 @@ export default function Toggle({
 }: ToggleProps) {
   const [enabled, setEnabled] = useState(initial);
 
+  useEffect(() => {
+    setEnabled(initial);
+  }, [initial]);
+
   const handleToggle = () => {
     const newState = !enabled;
     setEnabled(newState);
     onToggle?.(newState);
   };
+
   const labelClass = {
     xs: "text-[10px] xl:text-xs",
     sm: "text-[10px] lg:text-md xl:text-sm",
     md: "text-[10px] lg:text-md xl:text-sm",
     lg: "text-md md:text-lg",
   }[sizes];
+
   return (
     <div
-      className={`${flexType === "flex" ? `flex items-center space-x-4` : `flex flex-col space-y-2`} `}
+      className={
+        flexType === "flex"
+          ? "flex items-center space-x-4"
+          : "flex flex-col space-y-2"
+      }
     >
       {label && (
-        <span className={`${labelClass} font-semibold text-gray-700 `}>
+        <span className={`${labelClass} font-semibold text-gray-700`}>
           {label}
         </span>
       )}
+
       <button
+        type="button"
         onClick={handleToggle}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
           enabled ? "bg-primary-1" : "bg-gray-300"

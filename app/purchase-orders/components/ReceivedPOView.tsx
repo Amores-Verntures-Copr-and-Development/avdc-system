@@ -53,6 +53,10 @@ import ReplacePOItemComponent from "./_components/ReplacePOItemComponent";
 import UpdatePOItemStatus from "./_components/UpdatePOItemStatus";
 import { ItemInterface } from "@/types/items";
 import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
+import { PDFViewer } from "@react-pdf/renderer";
+import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
+import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
+import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
 
 const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -159,6 +163,11 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const [originalData, setOriginalData] = useState<
     DisplayPOItemsSupplier[] | null
   >(null);
+  const [selectedSupplier, setSelectedSupplier] =
+    useState<DisplayPOItemsSupplier | null>(null);
+  const [showROPDF, setShowROPDF] = useState<
+    "po" | "supplier" | "store" | "suppliers" | null
+  >(null);
   const [isShowReceivedConfirm, setIsShowReceivedConfirm] = useState(false);
   const [supplierReceivedData, setSupplierReceivedData] = useState<
     DisplayPOItemsSupplier[] | null
@@ -171,6 +180,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   const [expandedSupplier, setExpandedSupplier] = useState<number | null>(null);
   const [isShowDeliverConfirmation, setIsShowDeliverConfirmation] =
     useState(false);
+  const [renderPDF, setRenderPDF] = useState(false);
   const [showDeliverToStore, setShowDeliverToStore] =
     useState<DisplayPOItemsSupplier | null>(null);
   const [selectedStoreSupplier, setSelectedStoreSupplier] =
@@ -383,6 +393,17 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
       setSupplierData(data);
     }
   }, [data]);
+  useEffect(() => {
+    if (showROPDF !== null) {
+      setRenderPDF(false);
+
+      const timer = setTimeout(() => {
+        setRenderPDF(true);
+      }, 100); // allow modal to open first
+
+      return () => clearTimeout(timer);
+    }
+  }, [showROPDF]);
   // ✅ Auto-fill for one supplier (one row)
   const handleAutoFill = (suppId: number, poItemId: number) => {
     setSupplierData((prev) =>
@@ -735,21 +756,6 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                         <div className="border-t border-gray-300"></div>
                         <div className="flex justify-between mt-5">
                           <div className="flex">
-                            {" "}
-                            <div>
-                              {" "}
-                              <Button
-                                isRounded={false}
-                                size="xs"
-                                color="secondary"
-                                label="Edit"
-                                icon={Edit}
-                                className="font-semibold text-gray-700 text-xs"
-                                onClick={function (): void {
-                                  throw new Error("Function not implemented.");
-                                }}
-                              />
-                            </div>
                             <div>
                               <Button
                                 isRounded={false}
@@ -758,8 +764,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 label="PDF"
                                 icon={Download}
                                 className="font-semibold text-gray-700 text-xs"
-                                onClick={function (): void {
-                                  throw new Error("Function not implemented.");
+                                onClick={() => {
+                                  setSelectedSupplier(supplier);
+                                  setShowROPDF("supplier");
                                 }}
                               />
                             </div>
@@ -1464,6 +1471,32 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
           </div>
         </div>
         {/* <UpdatePOItemStatus data={selectedPOItemRows ?? []} /> */}
+      </Modal>
+
+      <Modal
+        className="h-[95%]"
+        isOpen={showROPDF !== null}
+        size="xl"
+        onClose={function (): void {
+          setShowROPDF(null);
+        }}
+        title="Purchase Order PDF"
+      >
+        {renderPDF ? (
+          <PDFViewer width="100%" height="100%">
+            {showROPDF === "supplier" ? (
+              <POSupplierItemsPDF data={selectedSupplier!} poData={poData} />
+            ) : showROPDF === "suppliers" ? (
+              <POSuppliersPDF data={data} poData={poData} />
+            ) : (
+              <PurchaseOrderPDF data={poData} />
+            )}
+          </PDFViewer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            Generating PDF...
+          </div>
+        )}
       </Modal>
     </div>
   );

@@ -196,9 +196,9 @@ const colorClasses: Record<
     text: "text-white",
 
     disabled: `
-      bg-emerald-300
+      bg-emerald-400/80
       border-emerald-300
-      text-white/70
+      text-black/60
     `,
   },
 

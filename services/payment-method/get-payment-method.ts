@@ -1,4 +1,7 @@
-import { selectPaymentMethods } from "@/models/paymentMethod";
+import {
+  selectPaymentMethodByNameAndStore,
+  selectPaymentMethods,
+} from "@/models/paymentMethod";
 import { PaymentMethods } from "@/types/payment-methods";
 import { PoolConnection } from "mysql2/promise";
 
@@ -52,5 +55,20 @@ export const getPaymentMethodServices = {
     } catch (e) {
       throw e;
     }
+  },
+  findPaymentMethodLikeNameAndStore: async ({
+    connection,
+    name,
+    storeId,
+  }: {
+    connection?: PoolConnection;
+    name: string;
+    storeId: number;
+  }) => {
+    return await selectPaymentMethodByNameAndStore({
+      connection,
+      name: name,
+      storeId,
+    });
   },
 };
