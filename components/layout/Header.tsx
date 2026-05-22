@@ -90,7 +90,7 @@ const Header = () => {
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-gray-100 bg-white/90 px-3 shadow-sm backdrop-blur-md sm:px-4 xl:h-16">
       {/* Left */}
       <div className="flex min-w-0 items-center">
-        {!isLoading && response?.data && response.data.length > 1 ? (
+        {!isLoading && response?.data && response.data.length > 1 && (
           <div className="w-36 sm:w-44">
             <DynamicDropdown
               size="sm"
@@ -108,13 +108,6 @@ const Header = () => {
               icon={<Store className="h-4 w-4" />}
               defaultValue={storeData?.storeId ?? 0}
             />
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 rounded-2xl border border-gray-100 bg-white px-3 py-2 shadow-sm">
-            <Store className="h-4 w-4 text-gray-400" />
-            <span className="truncate text-sm font-semibold text-gray-800">
-              {storeData?.storeName ?? "Store"}
-            </span>
           </div>
         )}
       </div>

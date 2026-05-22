@@ -32,6 +32,7 @@ import {
   CheckCircleIcon,
   PackageX,
   Trash2Icon,
+  FileText,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -855,224 +856,436 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           setShowInventoryItemModal(true);
         }}
         onSelectionChange={handleSelectionChange}
-        renderTopActions={
-          showRequestStockMode ? (
-            <div className="flex ">
-              <div>
-                <Button
-                  isRounded={false}
-                  icon={Clipboard}
-                  label="Exit Request"
-                  onClick={() => {
-                    setSelectedRequestRows([]);
-                    setShowRequestStockMode(false);
-                  }}
-                  size="sm"
-                  className="font-semibold"
-                  color="secondary"
-                />
-              </div>
-              <div>
-                <Button
-                  isRounded={false}
-                  icon={Clipboard}
-                  label={`View Request (${selectedRequestRows.length})`}
-                  onClick={() => {
-                    setShowCreateRequestModal(true);
-                  }}
-                  size="sm"
-                  className="font-semibold"
-                  color="tertiary"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <div>
-                <Button
-                  icon={Clipboard}
-                  label="Inventory Report"
-                  onClick={() => {
-                    setShowCreateInventoryReport(true);
-                  }}
-                  size="sm"
-                  className="font-semibold"
-                  color="secondary"
-                />
-              </div>
-              <div>
-                <Button
-                  icon={Import}
-                  label="Import Item"
-                  onClick={() => {
-                    setShowImportModal(true);
-                  }}
-                  size="sm"
-                  className="font-semibold"
-                  color="secondary"
-                />
-              </div>
-
-              {Boolean(
+        renderTopActionButtons={[
+          {
+            props: {
+              label: "Inventory Report",
+              icon: Clipboard,
+              onClick: () => {
+                setShowCreateInventoryReport(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "secondary",
+            },
+            isShow: !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Import Item",
+              icon: Import,
+              onClick: () => {
+                setShowImportModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "secondary",
+            },
+            isShow: !showRequestStockMode,
+          },
+          {
+            props: {
+              label: `Request Stock (${selectedRows?.length})`,
+              icon: Store,
+              onClick: () => {
+                setShowCreateRequestModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "tertiary",
+            },
+            isShow:
+              Boolean(
                 selectedRows?.length &&
                 selectedRows?.length > 0 &&
                 (user?.empPosition === "supervisor" ||
                   user?.empPosition === "staff"),
-              ) && (
-                <div>
-                  <Button
-                    icon={Store}
-                    label={`Request Stock (${selectedRows?.length})`}
-                    onClick={() => {
-                      setShowCreateRequestModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                    color="tertiary"
-                  />
-                </div>
-              )}
-              {Boolean(
+              ) && !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Request Stock",
+              icon: Store,
+              onClick: () => {
+                setShowRequestStockMode(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "tertiary",
+            },
+            isShow:
+              Boolean(
                 !selectedRows?.length &&
                 selectedRows?.length === 0 &&
                 (user?.empPosition === "supervisor" ||
                   user?.empPosition === "staff"),
-              ) && (
-                <div>
-                  <Button
-                    icon={Store}
-                    label={`Request Stock`}
-                    onClick={() => {
-                      setShowRequestStockMode(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                    color="tertiary"
-                  />
-                </div>
-              )}
+              ) && !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "In Stock",
+              icon: CheckCircleIcon,
+              onClick: () => {
+                setShowInOrOutStock("in");
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "success",
+            },
+            isShow:
+              Boolean(selectedRows?.length && selectedRows?.length > 0) &&
+              !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Out Stock",
+              icon: PackageX,
+              onClick: () => {
+                // Check if ANY selected item has NO stock (quantity = 0)
+                const hasItemsWithNoStock = selectedRows?.some(
+                  (item) => Number(item.inventoryItemQuantity) === 0,
+                );
 
-              {Boolean(selectedRows?.length && selectedRows?.length > 0) && (
-                <>
-                  <div>
-                    <Button
-                      icon={CheckCircleIcon}
-                      label="In Stock"
-                      onClick={() => {
-                        setShowInOrOutStock("in");
-                      }}
-                      size="sm"
-                      className="font-semibold"
-                      color="success"
-                    />
-                  </div>
-                  <div>
-                    <Button
-                      icon={PackageX}
-                      label="Out Stock"
-                      onClick={() => {
-                        // Check if ANY selected item has NO stock (quantity = 0)
-                        const hasItemsWithNoStock = selectedRows?.some(
-                          (item) => Number(item.inventoryItemQuantity) === 0,
-                        );
+                if (hasItemsWithNoStock) {
+                  toast.error("Cannot move out items with zero stock!");
+                  return;
+                }
 
-                        if (hasItemsWithNoStock) {
-                          toast.error("Cannot move out items with zero stock!");
-                          return;
-                        }
-
-                        setShowInOrOutStock("out");
-                      }}
-                      size="sm"
-                      className="font-semibold"
-                      color="danger"
-                    />
-                  </div>
-                </>
-              )}
-              {Boolean(
+                setShowInOrOutStock("out");
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "danger",
+            },
+            isShow:
+              Boolean(selectedRows?.length && selectedRows?.length > 0) &&
+              !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Add Item to supplier",
+              icon: Package,
+              onClick: () => {
+                setShowAddItemSupplierModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "tertiary",
+            },
+            isShow:
+              Boolean(
                 selectedRows?.length &&
                 selectedRows?.length > 0 &&
                 user?.empPosition !== "staff" &&
                 user?.empPosition !== "supervisor",
-              ) && (
-                <div className="">
-                  <Button
-                    icon={Package}
-                    label="Add Item to supplier"
-                    onClick={() => {
-                      setShowAddItemSupplierModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                    color="tertiary"
-                  />
-                </div>
-              )}
-              {Boolean(
+              ) && !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Add Item to store",
+              icon: Package,
+              onClick: () => {
+                setShowAddItemModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "warning",
+            },
+            isShow:
+              Boolean(
                 user?.empPosition !== "staff" &&
                 user?.empPosition !== "supervisor",
-              ) && (
-                <div className="">
-                  <Button
-                    icon={Store}
-                    label="Add Item to store"
-                    onClick={() => {
-                      setShowAddItemModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                    color="warning"
-                  />
-                </div>
-              )}
-              {Boolean(
+              ) && !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Add Item to product",
+              icon: Package,
+              onClick: () => {
+                setShowAddProductModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "warning",
+            },
+            isShow:
+              Boolean(
                 user?.empPosition === "staff" ||
                 user?.empPosition === "supervisor",
-              ) && (
-                <div className="">
-                  <Button
-                    icon={Store}
-                    label="Add Item to product"
-                    onClick={() => {
-                      setShowAddProductModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                    color="warning"
-                  />
-                </div>
-              )}
-              {user?.empPosition === "purchaser" ? (
-                <div>
-                  <Button
-                    icon={Plus}
-                    label="Add Item"
-                    onClick={() => {
-                      //add for stock room
-                      setShowAdddModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                  />
-                </div>
-              ) : (
-                <div>
-                  <Button
-                    icon={Plus}
-                    // add for store item
-                    label="Add Item"
-                    onClick={() => {
-                      setShowAdddModal(true);
-                    }}
-                    size="sm"
-                    className="font-semibold"
-                  />
-                </div>
-              )}
-            </div>
-          )
-        }
+              ) && !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Add Item",
+              icon: Plus,
+              onClick: () => {
+                setShowAdddModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+            },
+            isShow:
+              Boolean(user?.empPosition === "purchaser") &&
+              !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Add Item",
+              icon: Plus,
+              onClick: () => {
+                setShowAdddModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+            },
+            isShow: !showRequestStockMode,
+          },
+          {
+            props: {
+              label: "Exit Request",
+              icon: Clipboard,
+              onClick: () => {
+                setSelectedRequestRows([]);
+                setShowRequestStockMode(false);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "secondary",
+            },
+            isShow: showRequestStockMode,
+          },
+          {
+            props: {
+              label: `View Request (${selectedRequestRows.length})`,
+              icon: Clipboard,
+              onClick: () => {
+                setShowCreateRequestModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "tertiary",
+            },
+            isShow: showRequestStockMode,
+          },
+        ]}
+        // renderTopActions={
+        //   showRequestStockMode ? (
+        //     <div className="flex ">
+        //       <div>
+        //         <Button
+        //           isRounded={false}
+        //           icon={Clipboard}
+        //           label="Exit Request"
+        //           onClick={() => {
+        //             setSelectedRequestRows([]);
+        //             setShowRequestStockMode(false);
+        //           }}
+        //           size="sm"
+        //           className="font-semibold"
+        //           color="secondary"
+        //         />
+        //       </div>
+        //       <div>
+        //         <Button
+        //           isRounded={false}
+        //           icon={Clipboard}
+        //           label={`View Request (${selectedRequestRows.length})`}
+        //           onClick={() => {
+        //             setShowCreateRequestModal(true);
+        //           }}
+        //           size="sm"
+        //           className="font-semibold"
+        //           color="tertiary"
+        //         />
+        //       </div>
+        //     </div>
+        //   ) : (
+        //     <>
+        //       <div>
+        //         <Button
+        //           icon={Clipboard}
+        //           label="Inventory Report"
+        //           onClick={() => {
+        //             setShowCreateInventoryReport(true);
+        //           }}
+        //           size="sm"
+        //           className="font-semibold"
+        //           color="secondary"
+        //         />
+        //       </div>
+        //       <div>
+        //         <Button
+        //           icon={Import}
+        //           label="Import Item"
+        //           onClick={() => {
+        //             setShowImportModal(true);
+        //           }}
+        //           size="sm"
+        //           className="font-semibold"
+        //           color="secondary"
+        //         />
+        //       </div>
+
+        //       {Boolean(
+        //         selectedRows?.length &&
+        //         selectedRows?.length > 0 &&
+        //         (user?.empPosition === "supervisor" ||
+        //           user?.empPosition === "staff"),
+        //       ) && (
+        //         <div>
+        //           <Button
+        //             icon={Store}
+        //             label={`Request Stock (${selectedRows?.length})`}
+        //             onClick={() => {
+        //               setShowCreateRequestModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //             color="tertiary"
+        //           />
+        //         </div>
+        //       )}
+        //       {Boolean(
+        //         !selectedRows?.length &&
+        //         selectedRows?.length === 0 &&
+        //         (user?.empPosition === "supervisor" ||
+        //           user?.empPosition === "staff"),
+        //       ) && (
+        //         <div>
+        //           <Button
+        //             icon={Store}
+        //             label={`Request Stock`}
+        //             onClick={() => {
+        //               setShowRequestStockMode(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //             color="tertiary"
+        //           />
+        //         </div>
+        //       )}
+
+        //       {Boolean(selectedRows?.length && selectedRows?.length > 0) && (
+        //         <>
+        //           <div>
+        //             <Button
+        //               icon={CheckCircleIcon}
+        //               label="In Stock"
+        //               onClick={() => {
+        //                 setShowInOrOutStock("in");
+        //               }}
+        //               size="sm"
+        //               className="font-semibold"
+        //               color="success"
+        //             />
+        //           </div>
+        //           <div>
+        //             <Button
+        //               icon={PackageX}
+        //               label="Out Stock"
+        //               onClick={() => {
+        //                 // Check if ANY selected item has NO stock (quantity = 0)
+        //                 const hasItemsWithNoStock = selectedRows?.some(
+        //                   (item) => Number(item.inventoryItemQuantity) === 0,
+        //                 );
+
+        //                 if (hasItemsWithNoStock) {
+        //                   toast.error("Cannot move out items with zero stock!");
+        //                   return;
+        //                 }
+
+        //                 setShowInOrOutStock("out");
+        //               }}
+        //               size="sm"
+        //               className="font-semibold"
+        //               color="danger"
+        //             />
+        //           </div>
+        //         </>
+        //       )}
+        //       {Boolean(
+        //         selectedRows?.length &&
+        //         selectedRows?.length > 0 &&
+        //         user?.empPosition !== "staff" &&
+        //         user?.empPosition !== "supervisor",
+        //       ) && (
+        //         <div className="">
+        //           <Button
+        //             icon={Package}
+        //             label="Add Item to supplier"
+        //             onClick={() => {
+        //               setShowAddItemSupplierModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //             color="tertiary"
+        //           />
+        //         </div>
+        //       )}
+        //       {Boolean(
+        //         user?.empPosition !== "staff" &&
+        //         user?.empPosition !== "supervisor",
+        //       ) && (
+        //         <div className="">
+        //           <Button
+        //             icon={Store}
+        //             label="Add Item to store"
+        //             onClick={() => {
+        //               setShowAddItemModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //             color="warning"
+        //           />
+        //         </div>
+        //       )}
+        //       {Boolean(
+        //         user?.empPosition === "staff" ||
+        //         user?.empPosition === "supervisor",
+        //       ) && (
+        //         <div className="">
+        //           <Button
+        //             icon={Store}
+        //             label="Add Item to product"
+        //             onClick={() => {
+        //               setShowAddProductModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //             color="warning"
+        //           />
+        //         </div>
+        //       )}
+        //       {user?.empPosition === "purchaser" ? (
+        //         <div>
+        //           <Button
+        //             icon={Plus}
+        //             label="Add Item"
+        //             onClick={() => {
+        //               //add for stock room
+        //               setShowAdddModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //           />
+        //         </div>
+        //       ) : (
+        //         <div>
+        //           <Button
+        //             icon={Plus}
+        //             // add for store item
+        //             label="Add Item"
+        //             onClick={() => {
+        //               setShowAdddModal(true);
+        //             }}
+        //             size="sm"
+        //             className="font-semibold"
+        //           />
+        //         </div>
+        //       )}
+        //     </>
+        //   )
+        // }
         renderActions={(row) =>
           showRequestStockMode ? (
             <div

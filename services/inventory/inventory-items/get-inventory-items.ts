@@ -87,7 +87,9 @@ export async function findInventoryItemsCount({
       connection,
     });
     return data;
-  } catch (e) {}
+  } catch (e) {
+    throw e;
+  }
 }
 
 export async function getInventoryItemsStatus(inventoryId: number) {

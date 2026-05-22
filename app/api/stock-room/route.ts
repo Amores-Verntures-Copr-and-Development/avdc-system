@@ -26,16 +26,15 @@ export async function POST(request: NextRequest) {
         message: "Failed to create stock room",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET() {
   try {
-    const res = await getStockRooms({} );
+    const res = await getStockRooms({});
     if (!res.success) {
-      console.log(res.error);
       throw new Error("Failed fetched stock rooms!");
     }
     return NextResponse.json({

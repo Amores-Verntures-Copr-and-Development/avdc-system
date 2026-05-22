@@ -5,7 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    const res = await getStore({ search, limit: 10, skip: 0 });
+    const storeName = searchParams.get("storeName") || "";
+
+    const res = await getStore({
+      search,
+      limit: 10,
+      skip: 0,
+      keyfields: { storeName: storeName },
+    });
     if (!res.success) {
       // propagate the actual message if available
       throw new Error("Failed to fetch user");
@@ -22,7 +29,7 @@ export async function GET(request: NextRequest) {
         message: "User add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

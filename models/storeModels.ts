@@ -34,25 +34,42 @@ export const selectStores = async ({
   search,
   limit,
   skip,
+  keyfields = {},
 }: {
   search?: string;
   limit?: number;
   skip?: number;
+  keyfields?: Partial<StoreInterface>;
 }) => {
+  console.log({ keyfields });
   const pool = await getDBConnection();
   const whereClauses: string[] = [];
-  const values: any[] = [];
+
+  const params: any[] = [];
+  let sql = `SELECT * FROM Stores s WHERE 1=1`;
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === null) {
+      sql += ` AND s.${key} IS NULL`;
+    } else {
+      sql += ` AND s.${key} = ?`;
+      params.push(value);
+    }
+  }
   if (search) {
     const wildcard = `%${search}%`;
     whereClauses.push(`(storeName LIKE ?)`);
-    values.push(wildcard);
+    params.push(wildcard);
   }
-  const whereSQL =
-    whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
-  const sql = `SELECT * FROM Stores ${whereSQL}  ${
-    (limit || skip) && `LIMIT ${limit} OFFSET ${skip}`
-  }`;
-  const [result] = await pool.execute(sql, values);
+
+  if (limit) {
+    sql += ` LIMIT ${limit}`;
+  }
+
+  if (skip) {
+    sql += ` OFFSET ${skip}`;
+  }
+
+  const [result] = await pool.execute(sql, params);
   return result;
 };
 
@@ -163,5 +180,35 @@ export const selectStoreEmployee = async ({
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as StoreInterface[];
+};
+
+export const selectStoreEmployeeDetails = async ({
+  connection,
+  keyFields,
+}: {
+  connection?: PoolConnection;
+  keyFields: Partial<EmployeeInterface>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `
+  SELECT se.*,CONCAT(u.userName,' ',u.userLname) AS 'name',e.empPosition,e.empId,u.userRole,u.userEmail,e.*  FROM StoreEmployees se 
+  LEFT JOIN Stores s ON s.storeId = se.storeId
+  LEFT JOIN Employees e ON e.empId = se.empId
+  LEFT JOIN Users u ON u.userId = e.userId
+  WHERE 1=1
+  
+  `;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND se.${key} IS NULL`;
+    } else {
+      sql += ` AND se.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log({ sql, params });
   return rows as StoreInterface[];
 };

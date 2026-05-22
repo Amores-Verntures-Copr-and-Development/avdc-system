@@ -21,9 +21,9 @@ export const createUser = async (data: CreateUserDto) => {
   }
 };
 
-export const getUsers = async () => {
+export const getUsers = async ({ search }: { search?: string }) => {
   try {
-    const data = await selectUsers({});
+    const data = await selectUsers({ search });
     return {
       success: true,
       message: "Users fetched successfully!",

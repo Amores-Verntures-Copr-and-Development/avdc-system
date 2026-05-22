@@ -14,9 +14,10 @@ type ButtonColor =
   | "neutral"
   | "outline";
 
-interface ButtonProps {
+export interface ButtonProps {
   isRounded?: boolean;
   label?: string;
+  isAdaptive?: boolean;
   onClick?: () => void;
   loading?: boolean;
   disabled?: boolean;

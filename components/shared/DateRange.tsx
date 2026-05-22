@@ -23,9 +23,24 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
 
     const rect = triggerRef.current.getBoundingClientRect();
 
+    const dropdownWidth = 320;
+    const dropdownHeight = 340;
+    const margin = 12;
+
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    const shouldOpenUp =
+      spaceBelow < dropdownHeight && spaceAbove > dropdownHeight;
+
+    const left = Math.min(
+      Math.max(margin, rect.left),
+      window.innerWidth - dropdownWidth - margin,
+    );
+
     setPosition({
-      top: rect.bottom + 8,
-      left: rect.left,
+      top: shouldOpenUp ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
+      left,
     });
   };
 
@@ -138,9 +153,9 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
         type="button"
         onClick={toggleDropdown}
         className={`
-    flex min-w-[140px] items-center gap-2
-    rounded-xl border px-2 py-1.5
-    text-xs font-medium  transition
+    flex min-w-[80px] items-center gap-2
+    rounded-xl border px-2 py-1
+    text-[8px] 2xl:text-xs font-medium  transition
     2xl:px-3 2xl:py-1.5
     ${
       isShow
@@ -149,14 +164,14 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
     }
   `}
       >
-        <Calendar className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
+        <Calendar className="h-3 w-3 shrink-0 2xl:h-4 2xl:w-4" />
 
         <span className="flex-1 truncate text-left">{getDisplayText()}</span>
 
         {isShow ? (
-          <ChevronUp className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
+          <ChevronUp className="h-3 w-3 shrink-0 2xl:h-4 2xl:w-4" />
         ) : (
-          <ChevronDown className="h-3.5 w-3.5 shrink-0 2xl:h-4 2xl:w-4" />
+          <ChevronDown className="h-3 w-3 shrink-0 2xl:h-4 2xl:w-4" />
         )}
       </button>
 
@@ -170,7 +185,16 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
               left: position.left,
               zIndex: 9999,
             }}
-            className="w-80 rounded-2xl border border-gray-100 bg-white p-4 shadow-2xl"
+            className="
+  w-80
+  max-h-[90vh]
+  overflow-y-auto
+  rounded-2xl
+  border border-gray-100
+  bg-white
+  p-4
+  shadow-2xl
+"
           >
             <div className="grid grid-cols-2 gap-3">
               <Input

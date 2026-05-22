@@ -1,6 +1,7 @@
 import Button from "@/components/shared/Button";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
+import { ApiResponse } from "@/types/api";
 import { StockRoom } from "@/types/stockRoom";
 import { fetcher } from "@/utils/fetcher";
 import { getInventoryStatusInfo } from "@/utils/inventoryStatus";
@@ -42,9 +43,12 @@ export const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
   },
 ];
 const StockInventoryView = ({ data }: StockInventoryViewProps) => {
-  const { data: response = { data: [] } } = useSWR<{
-    data: DisplayInventoryItems[];
-  }>(`/api/stock-room/${data.stockRoomId}/inventory`, fetcher);
+  const { data: response } = useSWR<any>(
+    `/api/stock-room/${data.stockRoomId}/inventory`,
+    fetcher,
+  );
+
+  console.log("ASD", response);
   return (
     <Table
       rowSize="h-10"
@@ -59,8 +63,8 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
       isRounded={false}
       textSize="xs"
       columns={inventoryItemColumns}
-      data={response.data}
-      totalCount={10}
+      data={response?.data.data ?? []}
+      totalCount={response?.data.total}
       showPagination
       maxHeight="h-full"
     />

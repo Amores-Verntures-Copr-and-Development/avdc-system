@@ -17,6 +17,9 @@ import StoreRequestOrder from "./_components/StoreRequestOrder";
 import { Request } from "@/types/request";
 import { StoreInterface } from "@/types/stores";
 import { formatPeso } from "@/utils/formatPeso";
+import PageHeader from "@/components/shared/PageHeader";
+import DateRange from "@/components/shared/DateRange";
+import DynamicDropdown from "@/components/shared/DynamicDropdown";
 
 interface DashboardStats {
   totalPurchase: number;
@@ -140,93 +143,112 @@ const PurchaserDashboard = () => {
   const pendingCount = pendingRequest?.data?.length ?? 0;
 
   return (
-    <div className="min-h-0 flex flex-col gap-2 overflow-auto">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 ">
-        <StatCard
-          title="Inventory Cost"
-          value={formatPeso(stats.inventoryCost)}
-          icon={ShoppingCart}
-          accent="bg-blue-500"
+    <div className="min-h-0 p-2 flex flex-col gap-2  overflow-y-auto ">
+      <div className="flex justify-between">
+        <PageHeader
+          title={"Dashboard"}
+          subtitle="Welcome back! Here's your system overview."
         />
-        <StatCard
-          title="Total Purchase"
-          value={formatPeso(stats.totalPurchase ?? 0)}
-          icon={Calendar}
-          accent="bg-violet-500"
-        />
-        <StatCard
-          title="Low Stock"
-          value={`${stats.lowStock ?? 0} items`}
-          icon={AlertTriangle}
-          accent="bg-amber-500"
-        />
-        <StatCard
-          title="Out of Stock"
-          value={`${stats.outOfStock ?? 0} items`}
-          icon={Package}
-          accent="bg-rose-500"
-        />
+        <div className="">
+          <DateRange />
+          <DynamicDropdown
+            options={[]}
+            onChange={function (value: string | number | ""): void {
+              throw new Error("Function not implemented.");
+            }}
+            placeholder={""}
+            icon={undefined}
+          />
+        </div>
       </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4">
-        {/* Left: Charts */}
-        <div className="xl:col-span-3 flex flex-col gap-3 sm:gap-4">
-          <SectionCard title="Purchase Spending Trend">
-            <div className="h-52 sm:h-64">
-              <Chart />
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Current Schedule Request">
-            <div className="h-52 sm:h-64">
-              <Chart />
-            </div>
-          </SectionCard>
+      <div className="min-h-0 flex flex-col gap-2 overflow-auto">
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 ">
+          <StatCard
+            title="Inventory Cost"
+            value={formatPeso(stats.inventoryCost)}
+            icon={ShoppingCart}
+            accent="bg-blue-500"
+          />
+          <StatCard
+            title="Total Purchase"
+            value={formatPeso(stats.totalPurchase ?? 0)}
+            icon={Calendar}
+            accent="bg-violet-500"
+          />
+          <StatCard
+            title="Low Stock"
+            value={`${stats.lowStock ?? 0} items`}
+            icon={AlertTriangle}
+            accent="bg-amber-500"
+          />
+          <StatCard
+            title="Out of Stock"
+            value={`${stats.outOfStock ?? 0} items`}
+            icon={Package}
+            accent="bg-rose-500"
+          />
         </div>
 
-        {/* Right: Sidebar */}
-        <div className="xl:col-span-1 flex-1 flex flex-col gap-3 sm:gap-4">
-          {/* Pending Requests */}
-          <SectionCard
-            title="Pending Requests"
-            subtitle={`${pendingCount} total`}
-            className="flex-1 min-h-0"
-          >
-            <div className="flex flex-col gap-2 min-h-0">
-              {pendingCount > 0 ? (
-                pendingRequest.data.map((ro) => (
-                  <StoreRequestOrder data={ro} key={ro.requestId} />
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-                    <Clock size={18} className="text-emerald-500" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-600">
-                    All caught up!
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    No pending requests
-                  </p>
-                </div>
-              )}
-            </div>
-          </SectionCard>
-
-          {/* Top Purchased Items */}
-          <SectionCard title="Top Purchased Items" className="flex-1 min-h-0">
-            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
-              {/* Placeholder state */}
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
-                  <TrendingUp size={18} className="text-gray-400" />
-                </div>
-                <p className="text-xs text-gray-400">No data available</p>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4">
+          {/* Left: Charts */}
+          <div className="xl:col-span-3 flex flex-col gap-3 sm:gap-4">
+            <SectionCard title="Purchase Spending Trend">
+              <div className="h-52 sm:h-64">
+                <Chart />
               </div>
-            </div>
-          </SectionCard>
+            </SectionCard>
+
+            <SectionCard title="Current Schedule Request">
+              <div className="h-52 sm:h-64">
+                <Chart />
+              </div>
+            </SectionCard>
+          </div>
+
+          {/* Right: Sidebar */}
+          <div className="xl:col-span-1 flex-1 flex flex-col gap-3 sm:gap-4">
+            {/* Pending Requests */}
+            <SectionCard
+              title="Pending Requests"
+              subtitle={`${pendingCount} total`}
+              className="flex-1 min-h-0"
+            >
+              <div className="flex flex-col gap-2 min-h-0">
+                {pendingCount > 0 ? (
+                  pendingRequest.data.map((ro) => (
+                    <StoreRequestOrder data={ro} key={ro.requestId} />
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
+                      <Clock size={18} className="text-emerald-500" />
+                    </div>
+                    <p className="text-sm font-medium text-gray-600">
+                      All caught up!
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      No pending requests
+                    </p>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+
+            {/* Top Purchased Items */}
+            <SectionCard title="Top Purchased Items" className="flex-1 min-h-0">
+              <div className="flex flex-col gap-2 max-h-48 overflow-y-auto">
+                {/* Placeholder state */}
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center mb-3">
+                    <TrendingUp size={18} className="text-gray-400" />
+                  </div>
+                  <p className="text-xs text-gray-400">No data available</p>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
         </div>
       </div>
     </div>

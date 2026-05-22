@@ -75,7 +75,9 @@ export const selectStockRoom = async ({
   keyFields?: Partial<StockRoom>;
 }) => {
   const pool = await getDBConnection();
-  let sql = `SELECT * FROM StockRooms WHERE 1=1`;
+  let sql = `SELECT sr.*, COUNT(ii.inventoryItemId) AS totalItems FROM StockRooms sr
+LEFT JOIN Inventories i ON i.inventoryReferenceId = sr.stockRoomId AND i.inventoryReference = 'stock-room'
+LEFT JOIN InventoryItems ii ON ii.inventoryId = i.inventoryId AND ii.inventoryItemDeletedAt IS NULL WHERE 1=1`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     const tableAlias = [
@@ -85,10 +87,10 @@ export const selectStockRoom = async ({
     ].includes(key)
       ? "ii"
       : key === "storeId"
-      ? "i"
-      : key === "categoryId"
-      ? "c"
-      : "it";
+        ? "i"
+        : key === "categoryId"
+          ? "c"
+          : "it";
 
     if (value === null) {
       sql += ` AND ${tableAlias}.${key} IS NULL`;
@@ -97,7 +99,10 @@ export const selectStockRoom = async ({
       params.push(value);
     }
   }
+
+  sql += ` GROUP BY sr.stockRoomId`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
   return rows;
 };
 export const selectStockStoresBySSKeyfields = async ({

@@ -15,8 +15,8 @@ export interface StoreEmployee {
   storeEmpId: number;
   storeId: number | null;
   empId: number;
-  storeEmpCreatedAt: number;
-  storeEmpUpdatedAt: number;
-  storeEmpDeletedAt: number;
+  storeEmpCreatedAt: string;
+  storeEmpUpdatedAt: string;
+  storeEmpDeletedAt: string;
   storeEmpCreatedBy: number;
 }

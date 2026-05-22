@@ -1,0 +1,170 @@
+"use client";
+import Button from "@/components/shared/Button";
+import { Card, CardContent } from "@/components/shared/CustomCard";
+import Modal from "@/components/shared/Modal";
+
+import PageHeader from "@/components/shared/PageHeader";
+import PageLayout from "@/components/shared/PageLayout";
+import Table, { Column } from "@/components/shared/Table";
+import { ApiResponse } from "@/types/api";
+import { StoreEmployee, StoreInterface } from "@/types/stores";
+import { UserRole } from "@/types/users";
+import { fetcher } from "@/utils/fetcher";
+import { formatDateToWords } from "@/utils/formatDateToWords";
+import {
+  ArrowLeft,
+  Calendar,
+  IdCard,
+  MapPin,
+  Pencil,
+  PinIcon,
+  Store,
+} from "lucide-react";
+import { useParams } from "next/navigation";
+import React, { useState } from "react";
+import DatePicker from "react-datepicker";
+import useSWR from "swr";
+import AddUserToStoreForm from "./components/AddUserToStoreForm";
+import { EmployeeInterface } from "@/types/employees";
+
+interface StoreEmployeeDetails extends StoreEmployee {
+  name: string;
+  userRole: UserRole;
+  userEmail: string;
+}
+const userColumns: Column<StoreEmployeeDetails>[] = [
+  { key: "name", name: "User" },
+  { key: "empPosition", name: "Position" },
+  { key: "userEmail", name: "Email" },
+  {
+    key: "storeEmpCreatedAt",
+    name: "Assigned On",
+    selector: (row) => formatDateToWords(row.storeEmpCreatedAt ?? ""),
+  },
+  { key: "status", name: "Status" },
+];
+
+const Page = () => {
+  const params = useParams();
+  const [isAddUser, setIsAddUser] = useState(false);
+  const { storeName } = params;
+
+  const { data } = useSWR<ApiResponse<StoreInterface[]>>(
+    storeName ? `/api/stores/search?storeName=${storeName}` : null,
+    fetcher,
+  );
+
+  const store = data?.data[0];
+
+  const {
+    data: employeeData,
+    isLoading: isEmpLoading,
+    mutate: mutateEmp,
+  } = useSWR<ApiResponse<StoreEmployeeDetails[]>>(
+    store ? `/api/stores/${store.storeId}/store-employee` : null,
+    fetcher,
+  );
+
+  return (
+    <PageLayout className="p-2 flex flex-1 flex-col gap-2 min-h-screen">
+      <div className="flex justify-between">
+        <button className="px-1 py-1 flex gap-2 items-center font-semibold text-xs hover:bg-gray-200 rounded-lg">
+          <ArrowLeft className="w-4 h-4" />
+          <span>all stores</span>
+        </button>
+        <div>
+          <Button icon={Pencil} label="Edit Store" size="sm" />
+        </div>
+      </div>
+      <Card className="">
+        <CardContent className="p-5 flex flex-1 items-center gap-4">
+          <div className="p-5 bg-primary-1/10 border rounded-sm border-primary-1/5">
+            <Store className="text-primary-1 h-10 w-10" />
+          </div>
+
+          <div className="flex flex-col justify-between gap-2">
+            <div className="flex flex-col gap-1">
+              <h3 className="font-semibold text-lg">{store?.storeName}</h3>
+              <span className="text-xs text-gray-500 font-normal">
+                {store?.storeDescription}
+              </span>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span className="text-xs text-gray-500">
+                  {store?.storeLocation}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <IdCard className="w-4 h-4 text-gray-500" />
+                <span className="text-xs text-gray-500">{store?.storeId}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-500" />
+                <span className="text-xs text-gray-500">Created at {}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span className="text-xs text-gray-500">
+                  {store?.storeLocation}
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Card className="flex flex-col gap-3  min-h-0">
+        <CardContent className="p-3 flex-1 flex flex-col">
+          <div className="border-b-2 border-border">
+            <div className="flex gap-3 p-3">
+              {/* <button className="text-xs font-semibold">Overview</button> */}
+              <button className="text-xs font-semibold">Users</button>
+              {/* <button className="text-xs font-semibold">Stock Rooms</button> */}
+            </div>
+          </div>
+          <div className="min-h-0">
+            <div className="flex justify-between pt-4 pb-3">
+              <div className="flex flex-col gap-2 ">
+                <h4 className="font-semibold text-sm">Assigned Users</h4>
+                <p className="text-xs font-medium text-gray-500">
+                  Users who have access to this store.
+                </p>
+              </div>
+              <div>
+                <Button
+                  label="Add User"
+                  size="sm"
+                  icon={Pencil}
+                  onClick={() => setIsAddUser(true)}
+                />
+              </div>
+            </div>
+            <div className="flex flex-1 min-h-0">
+              <Table
+                columns={userColumns}
+                data={employeeData?.data || []}
+                loading={isEmpLoading}
+                isRounded={false}
+                maxHeight={"h-full"}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      <Modal
+        title="Add User to Store"
+        isOpen={isAddUser}
+        onClose={() => setIsAddUser(false)}
+      >
+        <AddUserToStoreForm
+          store={store ?? null}
+          mutate={mutateEmp}
+          onCancel={() => setIsAddUser(false)}
+        />
+      </Modal>
+    </PageLayout>
+  );
+};
+
+export default Page;

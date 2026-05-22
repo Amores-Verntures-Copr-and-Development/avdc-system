@@ -36,10 +36,6 @@ const DashboardPage = () => {
   }
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader
-        title={"Dashboard"}
-        subtitle="Welcome back! Here's your system overview."
-      />
       {/* {isAdmin ? <OwnerDashboard /> : <PurchaserDashboard />} */}
       {user?.userRole === "superadmin" ? (
         <OwnerDashboard />

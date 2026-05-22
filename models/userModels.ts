@@ -25,12 +25,22 @@ export const insertUser = async ({
   ]);
   return result.insertId;
 };
-export const selectUsers = async ({ userName }: { userName?: string }) => {
+export const selectUsers = async ({
+  userName,
+  search,
+}: {
+  userName?: string;
+  search?: string;
+}) => {
   const whereClauses: string[] = [];
   const values: any[] = [];
   if (userName) {
     whereClauses.push(`u.userName = ?`);
     values.push(userName);
+  }
+  if (search) {
+    whereClauses.push(`u.userFname LIKE ? OR u.userLname LIKE ?`);
+    values.push(`%${search}%`, `%${search}%`);
   }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
@@ -40,6 +50,8 @@ export const selectUsers = async ({ userName }: { userName?: string }) => {
         CONCAT_WS(' ', us.userFname, us.userLname) AS addedBy
         FROM Users u LEFT JOIN Employees e ON e.userId = u.userId LEFT JOIN Users us ON us.userId = u.userAddedBy ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
+
+  console.log("selectUsers result:", rows);
   return rows;
 };
 

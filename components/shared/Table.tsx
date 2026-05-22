@@ -1,4 +1,4 @@
-import { Loader2, ChevronDown } from "lucide-react";
+import { Loader2, ChevronDown, Menu } from "lucide-react";
 import React, {
   useEffect,
   forwardRef,
@@ -12,6 +12,8 @@ import FilterDropdown from "./FilterDropDown";
 import Input from "./Input";
 import DateRange from "./DateRange";
 import { createPortal } from "react-dom";
+import Button, { ButtonProps } from "./Button";
+import IconButton from "./IconButton";
 
 export interface SelectOption {
   label: string;
@@ -20,7 +22,10 @@ export interface SelectOption {
   bg?: string;
   disabled?: boolean;
 }
-
+interface RenderTopActionButtons {
+  props: ButtonProps;
+  isShow?: boolean;
+}
 type LocalFilter<T> = {
   keys?: (keyof T)[];
   values?: Partial<T>;
@@ -101,6 +106,7 @@ interface TableProps<T> {
   localFilter?: LocalFilter<T>;
   showDateRange?: boolean;
   onDateRangeChange?: (range: { from: string; to: string }) => void;
+  renderTopActionButtons?: RenderTopActionButtons[];
 }
 
 export interface TableHandle {
@@ -119,6 +125,7 @@ const TableInner = <T extends Record<string, any>>(
     showActions = false,
     renderActions,
     renderTopActions,
+    renderTopActionButtons,
     Datalabel,
     textSize = "xs",
     totalCount = 0,
@@ -152,11 +159,35 @@ const TableInner = <T extends Record<string, any>>(
   const [errors, setErrors] = useState<Map<string, string>>(new Map());
   const [localSearchQuery, setLocalSearchQuery] = useState("");
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showMobileActions, setShowMobileActions] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     setEditableData(data ?? []);
   }, [data]);
+  const updatePosition = () => {
+    if (!triggerRef.current) return;
 
+    const rect = triggerRef.current.getBoundingClientRect();
+    const dropdownWidth = 210;
+    const padding = 8;
+
+    let left = rect.right - dropdownWidth;
+
+    if (left < padding) left = padding;
+    if (left + dropdownWidth > window.innerWidth - padding) {
+      left = window.innerWidth - dropdownWidth - padding;
+    }
+
+    setPosition({
+      top: rect.bottom + 6,
+      left,
+      width: dropdownWidth,
+    });
+  };
   const filteredData = React.useMemo(() => {
     let rows = [...editableData];
 
@@ -441,6 +472,7 @@ const TableInner = <T extends Record<string, any>>(
       >
         {(searchUrl ||
           renderTopActions ||
+          renderTopActionButtons ||
           subtitle ||
           title ||
           localSearch ||
@@ -499,6 +531,68 @@ const TableInner = <T extends Record<string, any>>(
 
               {addContentLeftTitle}
 
+              {renderTopActionButtons && (
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  {/* Mobile */}
+                  <div className="block md:hidden">
+                    <IconButton
+                      ref={triggerRef}
+                      onClick={() => {
+                        updatePosition();
+                        setShowMobileActions((prev) => !prev);
+                      }}
+                      label=""
+                      icon={<Menu className="h-3.5 w-3.5" />}
+                      bg="nobg"
+                    />
+                  </div>
+
+                  {/* Mobile Floating Menu */}
+                  {showMobileActions &&
+                    typeof window !== "undefined" &&
+                    createPortal(
+                      <div
+                        ref={dropdownRef}
+                        className="fixed z-[9999]  rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl md:hidden"
+                        style={{
+                          top: position.top,
+                          left: position.left,
+                          width: position.width,
+                        }}
+                      >
+                        <div className="flex  flex-col gap-2">
+                          {renderTopActionButtons
+                            .filter((button) => button.isShow ?? true)
+                            .map((button, index) => (
+                              <Button
+                                key={index}
+                                size="sm"
+                                {...button.props}
+                                className={`
+                    w-full justify-start font-semibold
+                    ${button.props.className ?? ""}
+                  `}
+                                onClick={() => {
+                                  button.props.onClick?.();
+                                  setShowMobileActions(false);
+                                }}
+                              />
+                            ))}
+                        </div>
+                      </div>,
+                      document.body,
+                    )}
+
+                  {/* Desktop */}
+                  <div className="hidden items-center gap-2 md:flex">
+                    {renderTopActionButtons
+                      .filter((button) => button.isShow ?? true)
+                      .map((button, index) => (
+                        <Button key={index} size="sm" {...button.props} />
+                      ))}
+                  </div>
+                </div>
+              )}
               <div
                 className="flex items-center gap-2"
                 onClick={(e) => e.stopPropagation()}

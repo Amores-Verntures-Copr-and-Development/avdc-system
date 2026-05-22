@@ -1,4 +1,4 @@
-import { getPurchaserNotInStockPurchaser } from "@/controllers/StockRoomController";
+import { getStockRooms } from "@/controllers/StockRoomController";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -6,12 +6,10 @@ export async function GET(
   { params }: { params: Promise<{ stockRoomId: string }> },
 ) {
   try {
-    const slug = (await params).stockRoomId;
-    const id = Number(slug);
-    if (!id) {
-      throw new Error("No stock room id found!");
-    }
-    const res = await getPurchaserNotInStockPurchaser();
+    const { stockRoomId } = await params;
+    const res = await getStockRooms({
+      keySPFields: { stockRoomId: Number(stockRoomId) },
+    });
     if (!res.success) {
       console.log(res.error);
       throw new Error("Failed fetched stock rooms!");

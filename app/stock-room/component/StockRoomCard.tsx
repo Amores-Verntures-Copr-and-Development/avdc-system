@@ -3,11 +3,24 @@ import { Package, MapPin, ChevronRight } from "lucide-react";
 import React from "react";
 
 interface StockRoomCardProps {
-  data: StockRoom;
+  data: StockRoom & { totalItems?: number };
   onClick: (row: StockRoom) => void;
 }
 
 const StockRoomCard = ({ data, onClick }: StockRoomCardProps) => {
+  const modifyTotal = () => {
+    const total = data.totalItems || 0;
+
+    if (total >= 1_000_000) {
+      return (total / 1_000_000).toFixed(1).replace(".0", "") + "M";
+    }
+
+    if (total >= 1_000) {
+      return (total / 1_000).toFixed(1).replace(".0", "") + "k";
+    }
+
+    return total.toString();
+  };
   return (
     <div
       onClick={() => {
@@ -38,7 +51,7 @@ const StockRoomCard = ({ data, onClick }: StockRoomCardProps) => {
           </div>
           <div className="flex items-center gap-1">
             <Package className="w-3 h-3" />
-            <span>1.2k items</span>
+            <span>{modifyTotal()} items</span>
           </div>
         </div>
       </div>

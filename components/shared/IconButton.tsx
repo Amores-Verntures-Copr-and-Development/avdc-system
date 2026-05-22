@@ -1,5 +1,10 @@
 import { Loader2 } from "lucide-react";
-import React, { useRef, useState } from "react";
+import React, {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 interface IconButtonProps {
@@ -23,80 +28,110 @@ const colorMap: Record<string, string> = {
   nobg: "text-black hover:bg-gray-300",
 };
 
-const IconButton: React.FC<IconButtonProps> = ({
-  icon,
-  onClick,
-  label,
-  bg,
-  isRounded = true,
-  showLabel = true,
-  disable = false,
-  loading = false,
-}) => {
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
+  (
+    {
+      icon,
+      onClick,
+      label,
+      bg,
+      isRounded = true,
+      showLabel = true,
+      disable = false,
+      loading = false,
+    },
+    ref,
+  ) => {
+    const btnRef = useRef<HTMLButtonElement>(null);
 
-  const handleEnter = () => {
-    if (disable) return; // don't show tooltip if disabled
-    const rect = btnRef.current?.getBoundingClientRect();
-    if (rect) {
-      setPos({
-        top: rect.top - 30, // tooltip above the button
-        left: rect.left + rect.width / 2,
-      });
-    }
-    setShowTooltip(true);
-  };
+    useImperativeHandle(ref, () => btnRef.current as HTMLButtonElement);
 
-  const handleLeave = () => setShowTooltip(false);
+    const [showTooltip, setShowTooltip] = useState(false);
 
-  return (
-    <>
-      <div className="inline-block">
-        <button
-          ref={btnRef}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (!disable) onClick();
-          }}
-          onMouseEnter={handleEnter}
-          onMouseLeave={handleLeave}
-          className={`px-1 py-0.5 xl:px-2 xl:py-1 border border-gray-200 flex items-center gap-2 ${
-            isRounded ? "rounded-lg" : ""
-          } ${
-            disable
-              ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-              : colorMap[bg] || ""
-          }`}
-          disabled={disable || loading}
-        >
-          {loading ? (
-            <Loader2 className="animate-spin text-current h-3 w-3" />
-          ) : (
-            icon
-          )}
-        </button>
-      </div>
+    const [pos, setPos] = useState({
+      top: 0,
+      left: 0,
+    });
 
-      {showTooltip &&
-        showLabel &&
-        !disable && // tooltip hidden when disabled
-        createPortal(
-          <span
-            className="fixed z-[9999] bg-gray-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity duration-200 hidden xl:inline"
-            style={{
-              top: `${pos.top}px`,
-              left: `${pos.left}px`,
-              transform: "translateX(-50%)",
+    const handleEnter = () => {
+      if (disable) return;
+
+      const rect = btnRef.current?.getBoundingClientRect();
+
+      if (rect) {
+        setPos({
+          top: rect.top - 30,
+          left: rect.left + rect.width / 2,
+        });
+      }
+
+      setShowTooltip(true);
+    };
+
+    const handleLeave = () => setShowTooltip(false);
+
+    return (
+      <>
+        <div className="inline-block">
+          <button
+            ref={btnRef}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              if (!disable) onClick();
             }}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+            className={`
+              px-1 py-0.5 xl:px-2 xl:py-1
+              border border-gray-200
+              flex items-center gap-2
+              ${isRounded ? "rounded-lg" : ""}
+              ${
+                disable
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : colorMap[bg] || ""
+              }
+            `}
+            disabled={disable || loading}
           >
-            {label}
-          </span>,
-          document.body,
-        )}
-    </>
-  );
-};
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin text-current" />
+            ) : (
+              icon
+            )}
+          </button>
+        </div>
+
+        {showTooltip &&
+          showLabel &&
+          !disable &&
+          createPortal(
+            <span
+              className="
+                fixed z-[9999]
+                hidden xl:inline
+                rounded bg-gray-800
+                px-2 py-1
+                text-xs text-white
+                pointer-events-none
+                transition-opacity duration-200
+              "
+              style={{
+                top: `${pos.top}px`,
+                left: `${pos.left}px`,
+                transform: "translateX(-50%)",
+              }}
+            >
+              {label}
+            </span>,
+            document.body,
+          )}
+      </>
+    );
+  },
+);
+
+IconButton.displayName = "IconButton";
 
 export default IconButton;

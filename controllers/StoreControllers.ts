@@ -6,8 +6,12 @@ import {
 } from "@/services/store/get-store";
 import { processCreateStore } from "@/services/store/process-create-store";
 import { EmployeeInterface } from "@/types/employees";
-import { getStoreEmployee } from "@/services/store/store-employee/get-store-employee";
+import {
+  getStoreEmployee,
+  getStoreEmployeeDetails,
+} from "@/services/store/store-employee/get-store-employee";
 import { createStoreEmployees } from "@/services/store/store-employee/create-store-employee";
+import { StoreInterface } from "@/types/stores";
 
 export const createStore = async (data: CreateStoreDto) => {
   try {
@@ -29,18 +33,20 @@ export const getStore = async ({
   limit = 20,
   skip = 0,
   empKeyfields,
+  keyfields,
 }: {
   search?: string;
   limit?: number;
   skip?: number;
   empKeyfields?: Partial<EmployeeInterface>;
+  keyfields?: Partial<StoreInterface>;
 }) => {
   try {
     let data;
     if (empKeyfields) {
       data = await findStoreByEmpFields({ keyFields: empKeyfields });
     } else {
-      data = await selectStores({ search, limit, skip });
+      data = await selectStores({ search, limit, skip, keyfields });
     }
     return {
       success: true,
@@ -48,6 +54,7 @@ export const getStore = async ({
       data: data ?? null,
     };
   } catch (e) {
+    console.log({ e });
     return {
       success: false,
       message: "Failed to create store!",
@@ -76,6 +83,48 @@ export const getStoreByPOId = async (poId: number) => {
 export const getStoresByEmployeeByUserId = async (userId: number) => {
   try {
     const data = await getStoreEmployee({ keyFields: { userId: userId } });
+    return {
+      success: true,
+      message: "Store fetch successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to create store!",
+      error: e,
+    };
+  }
+};
+
+export const getStoreEmployeeByFields = async ({
+  keyFields,
+}: {
+  keyFields: Partial<EmployeeInterface>;
+}) => {
+  try {
+    const data = await getStoreEmployee({ keyFields });
+    return {
+      success: true,
+      message: "Store fetch successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to create store!",
+      error: e,
+    };
+  }
+};
+
+export const getStoreEmployeeDetailsByFields = async ({
+  keyFields,
+}: {
+  keyFields: Partial<EmployeeInterface>;
+}) => {
+  try {
+    const data = await getStoreEmployeeDetails({ keyFields });
     return {
       success: true,
       message: "Store fetch successfully!",

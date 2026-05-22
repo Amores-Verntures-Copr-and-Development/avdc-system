@@ -17,6 +17,7 @@ import { StoreInterface } from "@/types/stores";
 import ViewStoreModal from "./components/ViewStoreModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
+import { useRouter } from "next/navigation";
 const storeColumn: Column<StoreInterface>[] = [
   { name: "#", key: "#", selector: (_row, index) => index + 1 },
   { name: "Name", key: "storeName" },
@@ -30,6 +31,7 @@ const storeColumn: Column<StoreInterface>[] = [
 ];
 const StorePage = () => {
   const { user, isAdmin, hasStore } = useSession();
+  const router = useRouter();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInterface | null>(
     null,
@@ -95,6 +97,9 @@ const StorePage = () => {
           showActions
           maxHeight="h-full"
           totalCount={10}
+          onRowSelection={(row) => {
+            router.push(`/stores/${row.storeName}`);
+          }}
           showPagination
           renderActions={(row: any) => (
             <div className="flex justify-center gap-2">

@@ -16,9 +16,11 @@
   /* Define your custom colors */
   --color-primary-1: #c51d71;
   --color-primary-1-hover: #e63389;
-
+  --color-card: #ffffff;
+  --color-card-foreground: #0f1729;
   /* Fix the font to use Poppins as the default sans */
   --font-sans: var(--font-poppins), sans-serif;
+  --color-border: #e5e7eb;
 }
 
 body {

@@ -78,9 +78,8 @@ export const getStockRooms = async ({
 }) => {
   try {
     let data;
-    if (keySPFields) {
+    if (Object.keys(keySPFields).length > 0) {
       data = await findStockRoomBySPFields({ keyFields: keySPFields });
-      
     } else {
       data = await getStockRoom({});
     }
