@@ -164,7 +164,26 @@ const TableInner = <T extends Record<string, any>>(
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showMobileActions, setShowMobileActions] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      const target = event.target as Node;
 
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target) &&
+        triggerRef.current &&
+        !triggerRef.current.contains(target)
+      ) {
+        setShowMobileActions(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   useEffect(() => {
     setEditableData(data ?? []);
   }, [data]);
