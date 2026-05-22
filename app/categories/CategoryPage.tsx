@@ -59,7 +59,8 @@ const CategoryPage = () => {
         ? stockRoom.stockRoomId
         : (user?.storeId ?? 0),
     };
-
+    console.log("New Data: ", newData);
+    console.log({ stockRoom, userStoreId: user?.storeId });
     try {
       const result = await fetch("api/categories", {
         method: "POST",

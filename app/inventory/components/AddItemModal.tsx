@@ -17,6 +17,8 @@ interface AddItemModalProps {
   loading?: boolean;
   isAdmin: boolean;
   hasStore: boolean;
+  inventoryType: "stores" | "stock-room" | "inventoryId";
+  inventoryId: number;
 }
 
 const AddItemModal: React.FC<AddItemModalProps> = ({
@@ -24,11 +26,11 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   onSubmit,
   user,
   loading,
+  inventoryId,
   // isAdmin,
   // hasStore,
+  inventoryType,
 }) => {
-  const { stockRoom } = useStockRoom(user?.userId ?? null);
-
   const isUserStores = user?.storeId !== null;
   const [selection, setSelection] = useState<"create" | "warehouse">("create");
   const [inventoryForm, setInventoryForm] = useState<CreateFirstItem>({
@@ -48,6 +50,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   const handleItemChange = handleChange(inventoryForm, setInventoryForm);
   const handleSubmit = async () => {
     const success = await onSubmit(inventoryForm);
+    console.log("Submit Data: ", inventoryForm);
     if (success) {
       onCancel();
     }
@@ -88,7 +91,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
             />
             <DropDownSelectCategory
               referenceType={isUserStores ? "stores" : "stock-room"}
-              id={(isUserStores ? user?.storeId : stockRoom?.stockRoomId) ?? 0}
+              id={inventoryId ?? 0}
               categoryType="item"
               name={"categoryId"}
               sizes="xs"
@@ -155,8 +158,8 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               value={inventoryForm.itemName}
             />
             <DropDownSelectCategory
-              id={stockRoom?.stockRoomId}
-              referenceType={"stock-room"}
+              id={inventoryId}
+              referenceType={inventoryType}
               categoryType="item"
               name={"categoryId"}
               sizes="xs"

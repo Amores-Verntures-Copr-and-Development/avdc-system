@@ -4,6 +4,7 @@ import DropdownSelect from "./DropdownSelect";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { CategoryInterface } from "@/types/categories";
+import { useSession } from "@/hooks/useSession";
 
 interface DropDownSelectCategoryProps {
   categoryType: "item" | "product";
@@ -17,7 +18,7 @@ interface DropDownSelectCategoryProps {
   sizes?: "xs" | "sm" | "md" | "lg";
   disabled?: boolean;
   loading?: boolean;
-  referenceType: "stores" | "stock-room" | null;
+  referenceType: "stores" | "stock-room" | "inventoryId";
   id?: number;
 }
 const DropDownSelectCategory: React.FC<DropDownSelectCategoryProps> = ({
@@ -34,12 +35,15 @@ const DropDownSelectCategory: React.FC<DropDownSelectCategoryProps> = ({
   referenceType,
   id,
 }) => {
+  const { user } = useSession();
   const categoryBaseUrl =
     referenceType === "stock-room"
       ? `api/categories/stock-room/${id}`
       : referenceType === "stores"
-      ? `api/categories/stock-room/${id}`
-      : `api/categories`;
+        ? `api/categories/stores/${user?.storeId}`
+        : `api/categories`;
+
+  console.log({ categoryBaseUrl, referenceType, id });
   const { data: response = { data: [] }, isLoading } = useSWR<{
     data: CategoryInterface[];
   }>(id ? categoryBaseUrl : null, fetcher);

@@ -80,6 +80,7 @@ interface InventorySectionProps {
 const InventorySection: React.FC<InventorySectionProps> = ({
   inventoryId,
   mutate: mutateStats,
+  inventoryType,
 }) => {
   const [showAddComponent, setShowAddComponent] = useState(false);
   const searchParams = useSearchParams();
@@ -449,6 +450,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }
         toast.success("Inventory added successfully!");
         mutate();
+        setShowAddProductModal(false);
         return true;
       }
       if (!data.isAddAsVariant) {
@@ -1362,6 +1364,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         className="bg-white"
       >
         <AddItemModal
+          inventoryType={
+            inventoryType === "stock-room" ? "stock-room" : "stores"
+          }
+          inventoryId={inventoryId ?? 0}
           user={user}
           onCancel={() => {
             setShowAdddModal(false);
