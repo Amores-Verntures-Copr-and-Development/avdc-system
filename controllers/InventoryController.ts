@@ -164,6 +164,7 @@ export const getInventoryItems = async ({
 export const addItemToInventory = async (data: CreateFirstItem) => {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
+  await connection.beginTransaction();
   try {
     if (!data) {
       return {
@@ -171,6 +172,23 @@ export const addItemToInventory = async (data: CreateFirstItem) => {
         message: "No data found!",
       };
     }
+
+    // const existingItems = await findInventoryItemsByField({
+    //   connection,
+    //   keyFields: {
+    //     inventoryId: data.inventoryId,
+    //     inventoryItemReferenceType: "item",
+    //     inventoryItemReferenceId: data.inventoryItemReferenceId,
+    //   },
+    // });
+
+    // if (existingItems.data.length > 0) {
+    //   return {
+    //     success: false,
+    //     message: "Item already exists in inventory!",
+    //   };
+    // }
+
     const itemData: CreateItemDto = {
       categoryId: data.categoryId,
       itemAddedBy: data.itemAddedBy,

@@ -22,12 +22,17 @@ export function useCategories({
     inventoryId ? baseApi : null,
     async (url) => {
       // Check localStorage first
-      const stored = localStorage.getItem(localStorageKey);
-      if (stored) {
-        const storedData = JSON.parse(stored);
+      // const stored = localStorage.getItem(localStorageKey);
+      // console.log(
+      //   { stored },
+      //   "Checking localStorage for key:",
+      //   localStorageKey,
+      // );
+      // if (stored) {
+      //   const storedData = JSON.parse(stored);
 
-        return storedData;
-      }
+      //   return storedData;
+      // }
 
       // Fetch from API if not in localStorage
       const res = await fetch(url, { credentials: "include" });
@@ -71,7 +76,7 @@ export function useCategories({
 
   return {
     categoryOptions: categoryOptions,
-    categories: data?.data[0],
+    categories: data?.data,
     error,
     isLoading,
     mutate,

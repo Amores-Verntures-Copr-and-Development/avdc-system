@@ -128,6 +128,7 @@ export async function handleUpdateItemOrInventory({
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
+    console.log({ itemData, inventoryData });
     if (itemData && itemData.length > 0 && itemData[0] !== undefined) {
       //update item
       const item = await findItemsByFields({
@@ -142,6 +143,7 @@ export async function handleUpdateItemOrInventory({
           itemId: itemData[0].itemId,
           itemUnit: itemData[0].itemUnit,
           itemName: itemData[0].itemName,
+          categoryId: itemData[0].categoryId,
         },
       ];
       if (!isSamePrice) {

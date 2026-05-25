@@ -4,6 +4,8 @@ import {
   getCategoriesById,
   getCategoriesByInventoryId,
 } from "@/services/categories/get-categories";
+import { CategoryInterface } from "@/types/categories";
+import { updateCategoriesByFields } from "@/services/categories/update-categories";
 
 export const createCategory = async (data: CreateCategoryDto) => {
   try {
@@ -31,11 +33,9 @@ export const getCategories = async ({
   try {
     let data;
     if (controller === "storeId") {
-   
       data = await getCategoriesById({ storeId: id });
     } else if (controller === "stockRoomId") {
       data = await getCategoriesById({ stockRoomId: id });
-  
     } else if (controller === "inventoryId" && id) {
       data = await getCategoriesByInventoryId({ inventoryId: id });
     }
@@ -49,6 +49,30 @@ export const getCategories = async ({
     return {
       success: false,
       message: "Failed to fetch category!",
+      error: e,
+    };
+  }
+};
+
+export const editCategory = async ({
+  updates,
+  keyFields = ["categoryId"],
+}: {
+  updates: Partial<CategoryInterface>[];
+  keyFields?: (keyof CategoryInterface)[];
+}) => {
+  try {
+    const res = await updateCategoriesByFields({ updates, keyFields });
+    return {
+      success: true,
+      message: "Category updated successfully!",
+      data: res,
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      message: "Failed to update category!",
       error: e,
     };
   }

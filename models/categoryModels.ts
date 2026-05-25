@@ -75,7 +75,7 @@ export const selectCategoriesByInventoryId = async ({
 }) => {
   const pool = await getDBConnection();
 
-  const sql = `SELECT DISTINCT c.categoryName
+  const sql = `SELECT DISTINCT c.*
 FROM InventoryItems ii
 LEFT JOIN Inventories i ON i.inventoryId = ii.inventoryId
 LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId
@@ -83,5 +83,79 @@ LEFT JOIN Categories c ON c.categoryId = it.categoryId
 WHERE ii.inventoryId = ? 
 ORDER BY c.categoryName ASC;`;
   const [result] = await pool.execute(sql, [inventoryId]);
+  return result;
+};
+
+export const updateCategories = async ({
+  connection,
+  updates,
+  keyFields = ["categoryId"],
+  excludedFields = ["categoryCreatedAt", "categoryUpdatedAt"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<CategoryInterface>[];
+  keyFields?: (keyof CategoryInterface)[];
+  excludedFields?: (keyof CategoryInterface)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) =>
+      !keyFields.includes(field as keyof CategoryInterface) &&
+      !excludedFields.includes(field as keyof CategoryInterface),
+  );
+
+  if (updateFields.length === 0) {
+    throw new Error("No fields to update.");
+  }
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // key values
+      keyFields.forEach((k) => params.push((row as any)[k]));
+
+      // field value
+      params.push((row as any)[field]);
+    }
+
+    setClauses.push(
+      `${field} = (CASE ${caseParts.join(" ")} ELSE ${field} END)`,
+    );
+  }
+
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE Categories
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+
+  const [result] = await pool.execute(sql, params);
+
   return result;
 };

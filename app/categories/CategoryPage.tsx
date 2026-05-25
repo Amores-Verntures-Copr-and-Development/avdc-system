@@ -18,9 +18,10 @@ import { useSession } from "@/hooks/useSession";
 import { CategoryInterface } from "@/types/categories";
 import { useStockRoom } from "@/hooks/useStockRoom";
 import { ApiResponse } from "@/types/api";
+import EditCategoryModal from "./components/EditCategoryModal";
 
 const categoriesColumn: Column<CategoryInterface>[] = [
-  { name: "ID", key: "categoryId" },
+  { name: "#", key: "#", selector: (row, index) => index + 1 },
   { name: "Name", key: "categoryName" },
   { name: "Type", key: "categoryType" },
   { name: "Store", key: "storeId" },
@@ -32,6 +33,8 @@ const categoriesColumn: Column<CategoryInterface>[] = [
 ];
 const CategoryPage = () => {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showEditCategoryModal, setShowEditCategoryModal] =
+    useState<CategoryInterface | null>(null);
   const { user, hasStore } = useSession();
   const { stockRoom } = useStockRoom(
     user?.empPosition === "admin" || user?.empPosition === "purchaser"
@@ -118,7 +121,7 @@ const CategoryPage = () => {
             <div className="flex justify-center gap-2">
               <IconButton
                 onClick={function (): void {
-                  throw new Error("Function not implemented.");
+                  setShowEditCategoryModal(row);
                 }}
                 label={"Edit"}
                 bg={"gray"}
@@ -149,6 +152,19 @@ const CategoryPage = () => {
             setShowAddCategoryModal(false);
           }}
           onSubmit={handleSubmit}
+        />
+      </Modal>
+      <Modal
+        isOpen={showEditCategoryModal !== null}
+        onClose={function (): void {
+          setShowEditCategoryModal(null);
+        }}
+        title={`Edit Category - ${showEditCategoryModal?.categoryName}`}
+      >
+        <EditCategoryModal
+          data={showEditCategoryModal}
+          mutate={mutate}
+          onCancel={() => setShowEditCategoryModal(null)}
         />
       </Modal>
     </PageLayout>

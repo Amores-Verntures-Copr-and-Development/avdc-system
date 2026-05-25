@@ -441,7 +441,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }));
 
         const result = await fetch(
-          `api/products/${data.storeId}/${data.prodId}/product-variants/create-bulk`,
+          `api/products/${data.storeId}/product-variants/${data.prodId}/create-bulk`,
           {
             method: "POST",
             headers: {

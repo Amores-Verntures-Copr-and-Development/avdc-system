@@ -302,11 +302,14 @@ const EditItemDetails: React.FC<
   mutate,
   isEditing,
 }) => {
-  const { categoryOptions } = useCategories({
+  const { categoryOptions, categories } = useCategories({
     inventoryId: data?.inventoryId ?? 0,
     reference: "inventoryId",
   });
 
+  const [setIsEditDetailsChanged, isEditDetailsChanged] = useState<
+    "name" | "type" | "category" | "minimum" | null
+  >(null);
   const [editedInventoryItem, setEditedInventoryItem] = useState<
     Partial<InventoryItemInterface>
   >({
@@ -330,22 +333,22 @@ const EditItemDetails: React.FC<
   );
 
   // Handle supervisor editing (only minimum stock)
-  const handleEditMinimumStock = async () => {
-    if (!onSubmitEditItems || !mutate) return;
+  // const handleEditMinimumStock = async () => {
+  //   if (!onSubmitEditItems || !mutate) return;
 
-    try {
-      const success = await onSubmitEditItems({
-        inventoryItemData: editedInventoryItem,
-      });
-      if (success) {
-        mutate();
-        onClose?.();
-        setSelectedButton?.("");
-      }
-    } catch (error) {
-      console.error("Error updating minimum stock:", error);
-    }
-  };
+  //   try {
+  //     const success = await onSubmitEditItems({
+  //       inventoryItemData: editedInventoryItem,
+  //     });
+  //     if (success) {
+  //       mutate();
+  //       onClose?.();
+  //       setSelectedButton?.("");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating minimum stock:", error);
+  //   }
+  // };
 
   // Handle admin editing (all fields)
   const handleEditInventoryItem = async (
@@ -354,6 +357,10 @@ const EditItemDetails: React.FC<
     if (!onSubmitEditItems || !mutate) return;
 
     try {
+      const id = categories?.find(
+        (cat) => cat.categoryName === updatedData.categoryName,
+      )?.categoryId;
+
       // Separate data for ItemInterface (item-specific fields)
       const itemData: Partial<ItemInterface> = {
         itemId: updatedData.itemId,
@@ -361,6 +368,9 @@ const EditItemDetails: React.FC<
         itemUnit: updatedData.itemUnit,
         itemPrice: updatedData.itemPrice,
         itemAddedBy: user?.userId,
+        categoryId: categories?.find(
+          (cat) => cat.categoryName === updatedData.categoryName,
+        )?.categoryId,
         // categoryId should be mapped from categoryName if available
         // You might need additional logic to get categoryId from categoryName
       };
@@ -414,6 +424,10 @@ const EditItemDetails: React.FC<
     }
   }, [data]);
 
+  const isPermitted =
+    ["owner", "superadmin"].includes(user?.userRole ?? "") ||
+    user?.empPosition === "supervisor";
+
   return (
     <div className="space-y-4 xl:space-y-6">
       <div className="bg-white rounded-lg border border-gray-200 p-4">
@@ -423,7 +437,7 @@ const EditItemDetails: React.FC<
         </h3>
 
         <div className="space-y-4">
-          {user?.empPosition === "supervisor" ? (
+          {!isPermitted ? (
             // Supervisor View - Read-only except minimum stock
             <>
               <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -508,22 +522,24 @@ const EditItemDetails: React.FC<
                   placeholder="Select category"
                 />
               </div>
-              <div className="flex justify-between items-center py-2">
-                <span className="text-[10px] xl:text-sm text-gray-600">
-                  Cost Price
-                </span>
-                <div className="w-20 2xl:w-30">
-                  <Input
-                    value={editedAdminInventoryItem?.itemPrice ?? 0}
-                    name="itemPrice"
-                    sizes="sm"
-                    onChange={setAdminChange}
-                    type="number"
-                    min="0"
-                    label=""
-                  />
+              {["owner", "superadmin"].includes(user?.userRole ?? "") && (
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[10px] xl:text-sm text-gray-600">
+                    Cost Price
+                  </span>
+                  <div className="w-20 2xl:w-30">
+                    <Input
+                      value={editedAdminInventoryItem?.itemPrice ?? 0}
+                      name="itemPrice"
+                      sizes="sm"
+                      onChange={setAdminChange}
+                      type="number"
+                      min="0"
+                      label=""
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="flex justify-between items-center py-2">
                 <span className="text-[10px] xl:text-sm text-gray-600">
                   Minimum Stock
@@ -558,11 +574,7 @@ const EditItemDetails: React.FC<
           size="sm"
           label="Save Changes"
           onClick={() => {
-            if (user?.empPosition === "supervisor") {
-              handleEditMinimumStock();
-            } else {
-              handleEditInventoryItem(editedAdminInventoryItem);
-            }
+            handleEditInventoryItem(editedAdminInventoryItem);
           }}
           className="font-medium"
           loading={isEditing}

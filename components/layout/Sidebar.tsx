@@ -356,8 +356,8 @@ const Sidebar = () => {
                 ? "-translate-x-full lg:translate-x-0 lg:w-15"
                 : "lg:w-15"
               : isMobile
-                ? "translate-x-0 w-72"
-                : "w-72"
+                ? "translate-x-0 w-50"
+                : "w-50"
           }
         `}
       >

@@ -190,12 +190,18 @@ export function DropdownSearch<T>({
               style={{
                 top: dropdownRef.current
                   ? dropdownRef.current.getBoundingClientRect().bottom +
-                    window.scrollY
+                    window.scrollY +
+                    4
                   : 0,
+
                 left: dropdownRef.current
                   ? dropdownRef.current.getBoundingClientRect().left +
                     window.scrollX
                   : 0,
+
+                width: dropdownRef.current
+                  ? dropdownRef.current.getBoundingClientRect().width
+                  : undefined,
               }}
             >
               {suggestions.map((item, index) => (

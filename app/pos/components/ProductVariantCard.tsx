@@ -171,12 +171,34 @@ const ProductVariantCard = ({
       {showImage && (
         <div
           className="
-            relative flex h-32 items-center justify-center
-            overflow-hidden
-            bg-gradient-to-br
-            from-gray-50 to-gray-100
-          "
+      relative flex h-32 items-center justify-center
+      overflow-hidden
+      bg-gradient-to-br
+      from-gray-50 to-gray-100
+    "
         >
+          <div
+            className={`
+        absolute right-2 top-2 z-10
+        rounded-xl px-2.5 py-1
+        text-xs font-bold text-white
+        shadow-lg backdrop-blur-sm
+        
+        ${
+          hasStock
+            ? `
+              bg-gradient-to-br
+              from-primary-1
+              to-pink-500
+            `
+            : `
+              bg-gray-400
+            `
+        }
+      `}
+          >
+            {formatPeso(data.prodVarPrice)}
+          </div>
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -232,31 +254,6 @@ const ProductVariantCard = ({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="flex items-start gap-2">
-              <div
-                className={`
-                  flex h-8 w-8 shrink-0 items-center justify-center
-                  rounded-xl transition-colors
-                  
-                  ${
-                    hasStock
-                      ? `
-                        bg-primary-1/10
-                        group-hover:bg-primary-1/20
-                      `
-                      : `
-                        bg-gray-200
-                      `
-                  }
-                `}
-              >
-                <Tag
-                  className={`
-                    h-4 w-4
-                    ${hasStock ? "text-primary-1" : "text-gray-400"}
-                  `}
-                />
-              </div>
-
               <div className="min-w-0 flex-1">
                 <h2
                   className={`
@@ -283,34 +280,8 @@ const ProductVariantCard = ({
               </div>
             </div>
           </div>
-
-          {/* Price */}
-          <div className="shrink-0">
-            <div
-              className={`
-                rounded-xl px-2 py-1
-                text-xs font-bold text-white
-                shadow-sm
-                
-                ${
-                  hasStock
-                    ? `
-                      bg-gradient-to-br
-                      from-primary-1
-                      to-pink-500
-                    `
-                    : `
-                      bg-gray-400
-                    `
-                }
-              `}
-            >
-              {formatPeso(data.prodVarPrice)}
-            </div>
-          </div>
         </div>
 
-        {/* Stock Warning */}
         {!hasStock && Number(data.isDeductInv) === 1 && (
           <div
             className="

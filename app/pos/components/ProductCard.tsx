@@ -77,25 +77,43 @@ const ProductCard = ({
       selectProduct(data);
     }
   };
+  const singleVariant = data.productVariants?.[0];
 
+  const hasOneVariant = variantCount === 1;
+
+  const available =
+    singleVariant?.variantComponents?.length === 1
+      ? (singleVariant.variantComponents[0].left ?? 0)
+      : 0;
+  const isAvailable = !hasOneVariant || available > 0;
   return (
     <div
-      onClick={handleSelect}
-      className="
-        group relative overflow-hidden
-        rounded-2xl border border-gray-100
-        bg-white
-        p-2 2xl:p-3
-        shadow-sm
-        transition-all duration-200
-        
-        hover:-translate-y-0.5
-        hover:border-primary-1/20
-        hover:shadow-md
-        
-        active:scale-[0.99]
-        cursor-pointer
-      "
+      onClick={isAvailable ? handleSelect : undefined}
+      className={`
+    group relative overflow-hidden
+    rounded-2xl border
+    bg-white
+    p-2 2xl:p-3
+    shadow-sm
+    transition-all duration-200
+    
+    ${
+      isAvailable
+        ? `
+          cursor-pointer
+          border-gray-100
+          hover:-translate-y-0.5
+          hover:border-primary-1/20
+          hover:shadow-md
+          active:scale-[0.99]
+        `
+        : `
+          cursor-not-allowed
+          border-gray-200
+          opacity-70
+        `
+    }
+  `}
     >
       {/* Top Hover Line */}
       <div
@@ -121,6 +139,26 @@ const ProductCard = ({
             from-gray-50 to-gray-100
           "
         >
+          {hasOneVariant && (
+            <div
+              className="
+      absolute right-2 top-2 z-10
+      rounded-xl bg-primary-1
+      px-2 py-1
+      text-[9px] font-bold text-white
+      shadow-lg
+      2xl:text-xs
+    "
+            >
+              {Number(singleVariant?.prodVarPrice || 0).toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                },
+              )}
+            </div>
+          )}
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -151,6 +189,28 @@ const ProductCard = ({
               >
                 No Image
               </span>
+              {!isAvailable && (
+                <div
+                  className="
+      absolute inset-0 z-20
+      flex items-center justify-center
+      bg-black/30
+      backdrop-blur-[2px]
+    "
+                >
+                  <div
+                    className="
+        rounded-full bg-red-500
+        px-3 py-1
+        text-[10px] font-semibold text-white
+        shadow-lg
+        2xl:text-xs
+      "
+                  >
+                    Out of Stock
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -216,44 +276,35 @@ const ProductCard = ({
       {/* Footer */}
       <div
         className="
-          mt-3 flex items-center justify-between
-          border-t border-gray-100
-          pt-2
-        "
+    mt-3 flex items-center justify-between
+    border-t border-gray-100
+    pt-2
+  "
       >
-        <div
-          className="
-            flex items-center gap-1.5
-            text-gray-400
-          "
-        >
-          <Package className="h-3 w-3 2xl:h-4 2xl:w-4" />
+        {!hasOneVariant && (
+          <div className="flex items-center gap-1.5 text-gray-400">
+            <Package className="h-3 w-3 2xl:h-4 2xl:w-4" />
 
-          <span
-            className="
-              text-[9px]
-              font-medium
-              text-gray-600
-              2xl:text-xs
-            "
-          >
-            {variantCount} variant
-            {variantCount !== 1 ? "s" : ""}
-          </span>
-        </div>
+            <span className="text-[9px] font-medium text-gray-600 2xl:text-xs">
+              {variantCount} variant{variantCount !== 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
 
-        {variantCount > 1 && (
-          <span
-            className="
-              rounded-full
-              bg-gray-100
-              px-2 py-1
-              text-[8px]
-              font-medium
-              text-gray-600
-              2xl:text-[10px]
-            "
+        {hasOneVariant ? (
+          <div
+            className={`flex w-full items-center gap-1.5 ${hasOneVariant && " justify-between"}`}
           >
+            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-semibold text-emerald-600 2xl:text-[10px]">
+              {available > 0 ? `${available} left` : "Unavailable"}
+            </span>
+
+            <span className="rounded-full bg-orange-50 px-2 py-1 text-[8px] font-semibold text-orange-600 2xl:text-[10px]">
+              {singleVariant?.sold ?? 0} sold
+            </span>
+          </div>
+        ) : (
+          <span className="rounded-full bg-gray-100 px-2 py-1 text-[8px] font-medium text-gray-600 2xl:text-[10px]">
             Select
           </span>
         )}

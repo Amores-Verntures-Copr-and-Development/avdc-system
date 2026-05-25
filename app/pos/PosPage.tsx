@@ -206,14 +206,14 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       return;
     }
 
+    // deduct once, outside setSelectedOrder
+    deductVariantComponents(newProduct.prodVarId, 1);
+
     setSelectedOrder((prev) => {
       const orders = prev ?? [];
       const existing = orders.find((p) => p.prodVarId === newProduct.prodVarId);
 
-      // NEW ITEM
       if (!existing) {
-        deductVariantComponents(newProduct.prodVarId, 1);
-
         const quantity = 1;
         const subtotal = newProduct.prodVarPrice * quantity;
         const discount = calculateItemDiscount(
@@ -221,6 +221,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           quantity,
           newProduct.discounts,
         );
+
         return [
           ...orders,
           {
@@ -242,16 +243,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         ];
       }
 
-      // UPDATE ITEM
       return orders.map((item) => {
         if (item.prodVarId !== newProduct.prodVarId) return item;
 
-        deductVariantComponents(newProduct.prodVarId, 1);
-
         const quantity = item.quantity + 1;
-        const subtotal = newProduct.prodVarPrice * quantity;
+        const subtotal = item.prodVarPrice * quantity;
         const discount = calculateItemDiscount(
-          newProduct.prodVarPrice,
+          item.prodVarPrice,
           quantity,
           item.discounts,
         );
@@ -321,7 +319,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const removeQuantityProductList = (product: OrderList) => {
     // Restore inventory first
     restoreVariantComponents(product.prodVarId, 1);
-
+    console.log({ product });
     setSelectedOrder((prev) => {
       if (!prev) return [];
 
@@ -367,24 +365,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     );
   }, [subtotal]);
   const addQuantity = (product: OrderList) => {
-    // Check inventory first
     if (!hasSufficientInventory(product.prodVarId)) {
       toast.error("Insufficient inventory");
       return;
     }
 
+    deductVariantComponents(product.prodVarId, 1);
+
     setSelectedOrder((prev) => {
       const orders = prev ?? [];
 
-      const existingIndex = orders.findIndex(
-        (p) => p.prodVarId === product.prodVarId,
-      );
+      const existing = orders.find((p) => p.prodVarId === product.prodVarId);
 
-      // NEW ITEM
-      if (existingIndex === -1) {
-        // Deduct inventory only when we actually add
-        deductVariantComponents(product.prodVarId, 1);
-
+      if (!existing) {
         const quantity = 1;
         const subtotal = product.prodVarPrice * quantity;
         const discount = calculateItemDiscount(
@@ -404,16 +397,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         ];
       }
 
-      // EXISTING ITEM: increase quantity
-      return orders.map((item, index) => {
-        if (index !== existingIndex) return item;
-
-        // Deduct inventory for the added unit
-        deductVariantComponents(product.prodVarId, 1);
+      return orders.map((item) => {
+        if (item.prodVarId !== product.prodVarId) return item;
 
         const quantity = item.quantity + 1;
         const subtotal = item.prodVarPrice * quantity;
-
         const discount = calculateItemDiscount(
           item.prodVarPrice,
           quantity,
@@ -890,10 +878,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             </span>
           </div>
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
-            <h1 className="font-semibold text-[9px] 2xl:text-sm">Customer:</h1>
+            <h1 className="font-semibold text-xs 2xl:text-sm">Customer:</h1>
             <div className="flex-1">
               <DropdownSearch<Customer>
-                sizes="xs"
+                sizes="sm"
                 placeholder="Search customer"
                 searchFn={searchCustomers}
                 onSelect={function (row: Customer): void {
