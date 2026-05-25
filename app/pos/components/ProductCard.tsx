@@ -81,11 +81,17 @@ const ProductCard = ({
 
   const hasOneVariant = variantCount === 1;
 
+  const isDeductibleSingle = singleVariant?.isDeductInv === true;
+
   const available =
     singleVariant?.variantComponents?.length === 1
       ? (singleVariant.variantComponents[0].left ?? 0)
       : 0;
-  const isAvailable = !hasOneVariant || available > 0;
+  const isAvailable = !hasOneVariant
+    ? true
+    : !isDeductibleSingle
+      ? true
+      : available > 0;
   return (
     <div
       onClick={isAvailable ? handleSelect : undefined}
@@ -296,7 +302,11 @@ const ProductCard = ({
             className={`flex w-full items-center gap-1.5 ${hasOneVariant && " justify-between"}`}
           >
             <span className="rounded-full bg-emerald-50 px-2 py-1 text-[8px] font-semibold text-emerald-600 2xl:text-[10px]">
-              {available > 0 ? `${available} left` : "Unavailable"}
+              {available > 0
+                ? `${available} left`
+                : singleVariant?.isDeductInv
+                  ? "Out of Stock"
+                  : ""}
             </span>
 
             <span className="rounded-full bg-orange-50 px-2 py-1 text-[8px] font-semibold text-orange-600 2xl:text-[10px]">

@@ -6,6 +6,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Button from "@/components/shared/Button";
 import {
   ArrowLeft,
+  Barcode,
   CreditCard,
   Files,
   History,
@@ -56,6 +57,7 @@ import ProductVariantCard from "./components/ProductVariantCard";
 import ViewEditAmountItemOrder from "./components/ViewEditAmountItemOrder";
 import SalesOrder from "./components/sidebar/SalesOrder";
 import AddCustomer from "./components/sidebar/AddCustomer";
+import BarcodeScanner from "./components/BarcodeScanner";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -95,7 +97,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
   const [isShowIcons, setIsShowIcons] = useState<
-    "discount" | "methods" | "product" | "history" | null | "add-customer"
+    | "discount"
+    | "methods"
+    | "product"
+    | "history"
+    | null
+    | "add-customer"
+    | "open-scanner"
   >(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [isCheckOut, setIsCheckOut] = useState(false);
@@ -746,6 +754,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     <div className="flex gap-2">
                       <IconButton
                         onClick={() => {
+                          setIsShowIcons("open-scanner");
+                        }}
+                        label="Open Scanner"
+                        bg="black"
+                        icon={<Barcode className="w-5 h-5 2xl:w-7 2xl:h-5" />}
+                        isRounded={true}
+                      />
+                      <IconButton
+                        onClick={() => {
                           setIsShowIcons("add-customer");
                         }}
                         label="Add Customer"
@@ -1018,7 +1035,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                       ? "Add Customer"
                       : ""
           }
-          isOpen={isShowIcons !== null}
+          isOpen={isShowIcons !== null && isShowIcons !== "open-scanner"}
           onClose={function (): void {
             setIsShowIcons(null);
           }}
@@ -1135,6 +1152,20 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           data={editOrderAmount}
           onClose={function (): void {
             setEditOrderAmount(null);
+          }}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isShowIcons === "open-scanner"}
+        onClose={function (): void {
+          setIsShowIcons(null);
+        }}
+        title="Scan Item"
+      >
+        <BarcodeScanner
+          onScan={function (code: string): void {
+            toast.success(`Scanned: ${code}`);
           }}
         />
       </Modal>
