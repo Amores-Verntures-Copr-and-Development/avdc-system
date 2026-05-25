@@ -9,6 +9,7 @@ import { UserAuth } from "@/hooks/useSession";
 import { useStockRoom } from "@/hooks/useStockRoom";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 
 interface AddItemModalProps {
   onCancel: () => void;
@@ -49,8 +50,19 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
   });
   const handleItemChange = handleChange(inventoryForm, setInventoryForm);
   const handleSubmit = async () => {
+    if (!inventoryForm.itemName || inventoryForm.itemName.trim() === "") {
+      toast.error("Item name is required");
+      return;
+    }
+    if (!inventoryForm.categoryId || inventoryForm.categoryId === 0) {
+      toast.error("Category is required");
+      return;
+    }
+    if (inventoryForm.itemUnit.trim() === "") {
+      toast.error("Item unit is required");
+      return;
+    }
     const success = await onSubmit(inventoryForm);
-    console.log("Submit Data: ", inventoryForm);
     if (success) {
       onCancel();
     }
