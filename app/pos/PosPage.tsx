@@ -790,7 +790,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         }
                         isRounded={true}
                       />
-                      <IconButton
+                      {/* <IconButton
                         onClick={() => {
                           setIsShowIcons("product");
                         }}
@@ -798,7 +798,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         bg="yellow"
                         icon={<Files className="w-5 h-5 2xl:w-7 2xl:h-5" />}
                         isRounded={true}
-                      />
+                      /> */}
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("history");

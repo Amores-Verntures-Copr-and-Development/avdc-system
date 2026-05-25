@@ -133,12 +133,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         return (page - 1) * limit + index + 1;
       },
     },
-    { name: "Item Name", key: "itemName" },
+    {
+      name: "Item Name",
+      key: "itemName",
+      selector: (row) => (
+        <span className="text-gray-800 font-semibold">{row.itemName}</span>
+      ),
+    },
     {
       name: "Stock Available",
       key: "inventoryItemQuantity",
       selector: (row) => (
-        <span className="font-semibold">
+        <span className="font-semibold ">
           {formatQuantityByUnit(row.inventoryItemQuantity, row.itemUnit)}
         </span>
       ),

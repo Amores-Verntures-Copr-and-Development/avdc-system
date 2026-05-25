@@ -15,6 +15,7 @@ import { DisplaySalesDto } from "@/dtos/sales.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import PageHeader from "@/components/shared/PageHeader";
+import PageLayout from "@/components/shared/PageLayout";
 
 const SupervisorPage = () => {
   const router = useRouter();
@@ -38,7 +39,7 @@ const SupervisorPage = () => {
   }
 
   return (
-    <div className="min-h-0 p-2 flex flex-col gap-2  overflow-y-auto ">
+    <PageLayout>
       <div>
         <PageHeader
           title={"Dashboard"}
@@ -150,7 +151,7 @@ const SupervisorPage = () => {
           </BigCard>
         </div>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

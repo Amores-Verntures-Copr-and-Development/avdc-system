@@ -45,9 +45,9 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
     }[sizes];
 
     const sizeClass = {
-      xs: "h-6 xl:h-8 text-xs px-2",
-      sm: "h-6 xl:h-8 text-xs xl:text-sm px-2",
-      md: "h-6 xl:h-10 text-xs xl:text-base px-3",
+      xs: "h-8 xl:h-8 text-xs px-2",
+      sm: "h-8 xl:h-8 text-xs xl:text-sm px-2",
+      md: "h-8 xl:h-10 text-xs xl:text-base px-3",
       lg: "h-12 text-md md:text-lg px-4",
     }[sizes];
 

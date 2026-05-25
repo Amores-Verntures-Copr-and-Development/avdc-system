@@ -30,7 +30,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
   const handleCategoryChage = handleChange(categoryForm, setCategoryForm);
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap gap-5">
+      <div className="flex flex-col 2xl:flex-wrap gap-5">
         {" "}
         <Input
           label={"Name"}

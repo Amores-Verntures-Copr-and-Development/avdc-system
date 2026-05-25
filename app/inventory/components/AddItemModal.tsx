@@ -81,7 +81,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       </div>
       {selection === "create" && (
         <>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <Input
               label={"Name"}
               name="itemName"
@@ -100,7 +100,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               onChange={handleItemChange}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <DropdownSelect
               label={"Unit"}
               name="itemUnit"
@@ -118,7 +118,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               value={inventoryForm.itemPrice}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <Textarea
               label={"Description"}
               name="itemDescription"
@@ -127,7 +127,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               value={inventoryForm.itemDescription ?? ""}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <Input
               label={"Quantity"}
               type="number"
@@ -149,7 +149,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
       )}
       {selection === "warehouse" && (
         <>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <Input
               label={"Name"}
               name="itemName"
@@ -168,7 +168,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               onChange={handleItemChange}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <DropdownSelect
               label={"Unit"}
               name="itemUnit"
@@ -186,7 +186,7 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               value={inventoryForm.itemPrice}
             />
           </div>
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col 2xl:flex-row gap-4">
             <Textarea
               label={"Description"}
               name="itemDescription"

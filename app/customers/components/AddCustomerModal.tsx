@@ -328,7 +328,7 @@ const AddCustomerModal = ({
       {!isImport ? (
         !isSelectStore ? (
           <div className="flex flex-col gap-2">
-            <div className="flex gap-4">
+            <div className="flex flex-col 2xl:flex-row gap-4">
               <Input
                 label="Name"
                 sizes="xs"
@@ -347,7 +347,7 @@ const AddCustomerModal = ({
               />
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col 2xl:flex-row gap-4">
               <Input
                 label="Email"
                 sizes="xs"
@@ -358,7 +358,7 @@ const AddCustomerModal = ({
               />
             </div>
 
-            <div className="grid grid-cols-2">
+            <div className="grid ">
               <Input
                 label="Type (Staff)"
                 sizes="xs"

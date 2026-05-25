@@ -353,8 +353,8 @@ const Sidebar = () => {
           ${
             isCollapsed
               ? isMobile
-                ? "-translate-x-full lg:translate-x-0 lg:w-20"
-                : "lg:w-20"
+                ? "-translate-x-full lg:translate-x-0 lg:w-15"
+                : "lg:w-15"
               : isMobile
                 ? "translate-x-0 w-72"
                 : "w-72"
@@ -420,9 +420,10 @@ const Sidebar = () => {
                         aria-current={isActive ? "page" : undefined}
                         title={isCollapsed ? name : undefined}
                         onClick={() => {
-                          if (isMobile || href === "/pos") {
+                          if (isMobile) {
                             setIsCollapsed(true);
                           }
+                          setIsCollapsed(true);
                         }}
                         className={`
                           group flex items-center gap-3 rounded-2xl px-3 py-2.5
@@ -437,7 +438,7 @@ const Sidebar = () => {
                       >
                         <Icon
                           className={`
-                            h-5 w-5 shrink-0 transition
+                            h-4 w-4 2xl:h-5 2xl:w-5 shrink-0 transition
                             ${
                               isActive
                                 ? "text-white"

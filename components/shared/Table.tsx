@@ -553,7 +553,7 @@ const TableInner = <T extends Record<string, any>>(
               {renderTopActionButtons && (
                 <div className="relative" onClick={(e) => e.stopPropagation()}>
                   {/* Mobile */}
-                  <div className="block md:hidden">
+                  <div className="block 2xl:hidden">
                     <IconButton
                       ref={triggerRef}
                       onClick={() => {
@@ -572,7 +572,7 @@ const TableInner = <T extends Record<string, any>>(
                     createPortal(
                       <div
                         ref={dropdownRef}
-                        className="fixed z-[9999]  rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl md:hidden"
+                        className="fixed z-[9999]  rounded-2xl border border-gray-200 bg-white p-2 shadow-2xl 2xl:hidden"
                         style={{
                           top: position.top,
                           left: position.left,
@@ -603,7 +603,7 @@ const TableInner = <T extends Record<string, any>>(
                     )}
 
                   {/* Desktop */}
-                  <div className="hidden items-center gap-2 md:flex">
+                  <div className="hidden items-center gap-2 2xl:flex">
                     {renderTopActionButtons
                       .filter((button) => button.isShow ?? true)
                       .map((button, index) => (
