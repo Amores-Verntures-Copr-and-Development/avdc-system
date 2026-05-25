@@ -33,6 +33,7 @@ import {
   PackageX,
   Trash2Icon,
   FileText,
+  Barcode,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -64,6 +65,7 @@ import { ItemInterface } from "@/types/items";
 import { ApiResponse } from "@/types/api";
 import InStockModal from "../../components/InStockModal";
 import OutStockModal from "../../components/OutStockModal";
+import BarcodeComponent from "../../components/BarcodeComponent";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -119,6 +121,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [showBarcode, setShowBarcode] = useState(false);
   const inventoryItemColumns: Column<DisplayInventoryItems>[] = [
     {
       name: "#",
@@ -1076,224 +1079,6 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             isShow: showRequestStockMode,
           },
         ]}
-        // renderTopActions={
-        //   showRequestStockMode ? (
-        //     <div className="flex ">
-        //       <div>
-        //         <Button
-        //           isRounded={false}
-        //           icon={Clipboard}
-        //           label="Exit Request"
-        //           onClick={() => {
-        //             setSelectedRequestRows([]);
-        //             setShowRequestStockMode(false);
-        //           }}
-        //           size="sm"
-        //           className="font-semibold"
-        //           color="secondary"
-        //         />
-        //       </div>
-        //       <div>
-        //         <Button
-        //           isRounded={false}
-        //           icon={Clipboard}
-        //           label={`View Request (${selectedRequestRows.length})`}
-        //           onClick={() => {
-        //             setShowCreateRequestModal(true);
-        //           }}
-        //           size="sm"
-        //           className="font-semibold"
-        //           color="tertiary"
-        //         />
-        //       </div>
-        //     </div>
-        //   ) : (
-        //     <>
-        //       <div>
-        //         <Button
-        //           icon={Clipboard}
-        //           label="Inventory Report"
-        //           onClick={() => {
-        //             setShowCreateInventoryReport(true);
-        //           }}
-        //           size="sm"
-        //           className="font-semibold"
-        //           color="secondary"
-        //         />
-        //       </div>
-        //       <div>
-        //         <Button
-        //           icon={Import}
-        //           label="Import Item"
-        //           onClick={() => {
-        //             setShowImportModal(true);
-        //           }}
-        //           size="sm"
-        //           className="font-semibold"
-        //           color="secondary"
-        //         />
-        //       </div>
-
-        //       {Boolean(
-        //         selectedRows?.length &&
-        //         selectedRows?.length > 0 &&
-        //         (user?.empPosition === "supervisor" ||
-        //           user?.empPosition === "staff"),
-        //       ) && (
-        //         <div>
-        //           <Button
-        //             icon={Store}
-        //             label={`Request Stock (${selectedRows?.length})`}
-        //             onClick={() => {
-        //               setShowCreateRequestModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //             color="tertiary"
-        //           />
-        //         </div>
-        //       )}
-        //       {Boolean(
-        //         !selectedRows?.length &&
-        //         selectedRows?.length === 0 &&
-        //         (user?.empPosition === "supervisor" ||
-        //           user?.empPosition === "staff"),
-        //       ) && (
-        //         <div>
-        //           <Button
-        //             icon={Store}
-        //             label={`Request Stock`}
-        //             onClick={() => {
-        //               setShowRequestStockMode(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //             color="tertiary"
-        //           />
-        //         </div>
-        //       )}
-
-        //       {Boolean(selectedRows?.length && selectedRows?.length > 0) && (
-        //         <>
-        //           <div>
-        //             <Button
-        //               icon={CheckCircleIcon}
-        //               label="In Stock"
-        //               onClick={() => {
-        //                 setShowInOrOutStock("in");
-        //               }}
-        //               size="sm"
-        //               className="font-semibold"
-        //               color="success"
-        //             />
-        //           </div>
-        //           <div>
-        //             <Button
-        //               icon={PackageX}
-        //               label="Out Stock"
-        //               onClick={() => {
-        //                 // Check if ANY selected item has NO stock (quantity = 0)
-        //                 const hasItemsWithNoStock = selectedRows?.some(
-        //                   (item) => Number(item.inventoryItemQuantity) === 0,
-        //                 );
-
-        //                 if (hasItemsWithNoStock) {
-        //                   toast.error("Cannot move out items with zero stock!");
-        //                   return;
-        //                 }
-
-        //                 setShowInOrOutStock("out");
-        //               }}
-        //               size="sm"
-        //               className="font-semibold"
-        //               color="danger"
-        //             />
-        //           </div>
-        //         </>
-        //       )}
-        //       {Boolean(
-        //         selectedRows?.length &&
-        //         selectedRows?.length > 0 &&
-        //         user?.empPosition !== "staff" &&
-        //         user?.empPosition !== "supervisor",
-        //       ) && (
-        //         <div className="">
-        //           <Button
-        //             icon={Package}
-        //             label="Add Item to supplier"
-        //             onClick={() => {
-        //               setShowAddItemSupplierModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //             color="tertiary"
-        //           />
-        //         </div>
-        //       )}
-        //       {Boolean(
-        //         user?.empPosition !== "staff" &&
-        //         user?.empPosition !== "supervisor",
-        //       ) && (
-        //         <div className="">
-        //           <Button
-        //             icon={Store}
-        //             label="Add Item to store"
-        //             onClick={() => {
-        //               setShowAddItemModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //             color="warning"
-        //           />
-        //         </div>
-        //       )}
-        //       {Boolean(
-        //         user?.empPosition === "staff" ||
-        //         user?.empPosition === "supervisor",
-        //       ) && (
-        //         <div className="">
-        //           <Button
-        //             icon={Store}
-        //             label="Add Item to product"
-        //             onClick={() => {
-        //               setShowAddProductModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //             color="warning"
-        //           />
-        //         </div>
-        //       )}
-        //       {user?.empPosition === "purchaser" ? (
-        //         <div>
-        //           <Button
-        //             icon={Plus}
-        //             label="Add Item"
-        //             onClick={() => {
-        //               //add for stock room
-        //               setShowAdddModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //           />
-        //         </div>
-        //       ) : (
-        //         <div>
-        //           <Button
-        //             icon={Plus}
-        //             // add for store item
-        //             label="Add Item"
-        //             onClick={() => {
-        //               setShowAdddModal(true);
-        //             }}
-        //             size="sm"
-        //             className="font-semibold"
-        //           />
-        //         </div>
-        //       )}
-        //     </>
-        //   )
-        // }
         renderActions={(row) =>
           showRequestStockMode ? (
             <div
@@ -1343,6 +1128,15 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 label={"View"}
                 bg={"nobg"}
                 icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+              />
+              <IconButton
+                onClick={function (): void {
+                  setSelectedRow(row);
+                  setShowBarcode(true);
+                }}
+                label={"Barcode"}
+                bg={"blue"}
+                icon={<Barcode className="w-3 h-3 xl:w-4 xl:h-4" />}
               />
               <IconButton
                 onClick={function (): void {
@@ -1601,6 +1395,19 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             </div>
           </div>
         </div>
+      </Modal>
+      <Modal
+        title={`${selectedRow?.itemName} - Barcode`}
+        isOpen={showBarcode}
+        onClose={function (): void {
+          setShowBarcode(false);
+        }}
+      >
+        <BarcodeComponent
+          data={selectedRow ?? null}
+          onCancel={() => setShowBarcode(false)}
+          mutate={handleUpdateData}
+        />
       </Modal>
     </>
   );

@@ -30,14 +30,10 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           backCamera?.deviceId,
           videoRef.current!,
           (result) => {
-            if (result && !stopped) {
-              stopped = true;
-
+            if (result) {
               const code = result.getText();
 
               onScan(code);
-
-              controls?.stop();
             }
           },
         );
