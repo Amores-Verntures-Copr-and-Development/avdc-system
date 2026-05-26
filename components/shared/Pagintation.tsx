@@ -152,7 +152,7 @@ const Pagination: React.FC<PaginationProps> = ({
           disabled={page <= 1}
           aria-label="Previous page"
         >
-          <ArrowLeft className="h-3 w-3 2xl:h-4 2xl:w-4" />
+          <ArrowLeft className="h-5 w-5 2xl:h-4 2xl:w-4" />
         </button>
 
         {visiblePages.map((pageNum, index) => {
@@ -194,7 +194,7 @@ const Pagination: React.FC<PaginationProps> = ({
 
         <button
           className="
-            flex h-5 w-5 items-center justify-center
+            flex h-7 w-7 items-center justify-center
             rounded-xl border border-transparent
             text-gray-500 transition
             hover:bg-gray-100
@@ -206,7 +206,7 @@ const Pagination: React.FC<PaginationProps> = ({
           disabled={page >= totalPages}
           aria-label="Next page"
         >
-          <ArrowRight className="h-3 w-3 2xl:h-4 2xl:w-4" />
+          <ArrowRight className="h-5 w-5 2xl:h-4 2xl:w-4" />
         </button>
       </div>
 

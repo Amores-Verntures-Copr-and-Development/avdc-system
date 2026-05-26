@@ -36,6 +36,7 @@ const FilterDropdown = ({
     top: 0,
     left: 0,
     width: 0,
+    maxHeight: 0,
   });
 
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -97,6 +98,7 @@ const FilterDropdown = ({
       top: rect.bottom + 8,
       left,
       width: dropdownWidth,
+      maxHeight: window.innerHeight - rect.bottom - 20,
     });
   };
 
@@ -202,15 +204,17 @@ const FilterDropdown = ({
               top: position.top,
               left: position.left,
               width: position.width,
+              maxHeight: position.maxHeight,
               zIndex: 9999,
             }}
             className="
-              overflow-hidden rounded-2xl
-              border border-gray-100
-              bg-white/95
-              shadow-2xl
-              backdrop-blur-sm
-            "
+  flex flex-col
+  overflow-hidden rounded-2xl
+  border border-gray-100
+  bg-white/95
+  shadow-2xl
+  backdrop-blur-sm
+"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
@@ -234,7 +238,7 @@ const FilterDropdown = ({
             </div>
 
             {/* Content */}
-            <div className="no-scrollbar max-h-[420px] overflow-y-auto px-4 py-4">
+            <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-4">
               <div className="space-y-5">
                 {filterConfig.map((filter) => (
                   <div key={filter.id}>
