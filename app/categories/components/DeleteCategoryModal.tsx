@@ -43,7 +43,7 @@ const DeleteCategoryModal = ({
       <div>
         <p>
           Are you sure you want to delete the category{" "}
-          <span className="font-bold">"{data?.categoryName}"</span>?
+          <span className="font-bold">{data?.categoryName}</span>?
         </p>
       </div>
       <div className="flex gap-2 justify-end">
