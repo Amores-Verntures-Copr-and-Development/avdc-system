@@ -182,9 +182,9 @@ export const selectItemsByFields = async ({
   // Handle single-value fields
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
-      sql += ` AND ${key} IS NULL`;
+      sql += ` AND i.${key} IS NULL`;
     } else {
-      sql += ` AND ${key} = ?`;
+      sql += ` AND i.${key} = ?`;
       params.push(value);
     }
   }
@@ -193,7 +193,7 @@ export const selectItemsByFields = async ({
   for (const [key, values] of Object.entries(arrayFields)) {
     if (Array.isArray(values) && values.length > 0) {
       const placeholders = values.map(() => "?").join(",");
-      sql += ` AND ${key} IN (${placeholders})`;
+      sql += ` AND i.${key} IN (${placeholders})`;
       params.push(...values);
     }
   }

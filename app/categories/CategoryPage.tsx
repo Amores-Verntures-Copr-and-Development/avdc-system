@@ -19,6 +19,7 @@ import { CategoryInterface } from "@/types/categories";
 import { useStockRoom } from "@/hooks/useStockRoom";
 import { ApiResponse } from "@/types/api";
 import EditCategoryModal from "./components/EditCategoryModal";
+import DeleteCategoryModal from "./components/DeleteCategoryModal";
 
 const categoriesColumn: Column<CategoryInterface>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
@@ -34,6 +35,8 @@ const categoriesColumn: Column<CategoryInterface>[] = [
 const CategoryPage = () => {
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showEditCategoryModal, setShowEditCategoryModal] =
+    useState<CategoryInterface | null>(null);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] =
     useState<CategoryInterface | null>(null);
   const { user, hasStore } = useSession();
   const { stockRoom } = useStockRoom(
@@ -129,7 +132,7 @@ const CategoryPage = () => {
               />
               <IconButton
                 onClick={function (): void {
-                  console.log(row);
+                  setShowDeleteCategoryModal(row);
                 }}
                 label={"Delete"}
                 bg={"red"}
@@ -165,6 +168,19 @@ const CategoryPage = () => {
           data={showEditCategoryModal}
           mutate={mutate}
           onCancel={() => setShowEditCategoryModal(null)}
+        />
+      </Modal>
+      <Modal
+        isOpen={showDeleteCategoryModal !== null}
+        onClose={function (): void {
+          setShowDeleteCategoryModal(null);
+        }}
+        title={`Delete Category - ${showDeleteCategoryModal?.categoryName}`}
+      >
+        <DeleteCategoryModal
+          data={showDeleteCategoryModal}
+          mutate={mutate}
+          onCancel={() => setShowDeleteCategoryModal(null)}
         />
       </Modal>
     </PageLayout>

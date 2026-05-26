@@ -274,8 +274,12 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     params.push(wildcard);
   }
   if (category) {
-    sql += ` AND c.categoryName = ? `;
-    params.push(category);
+    if (category === "null" || category === null) {
+      sql += ` AND c.categoryId IS NULL `;
+    } else {
+      sql += ` AND c.categoryName = ? `;
+      params.push(category);
+    }
   }
   if (unit) {
     sql += ` AND it.itemUnit = ? `;
@@ -317,9 +321,7 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
-
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-
   return rows;
 };
 
@@ -387,8 +389,12 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     params.push(wildcard);
   }
   if (category) {
-    sql += ` AND c.categoryName = ? `;
-    params.push(category);
+    if (category === "null" || category === null) {
+      sql += ` AND c.categoryId IS NULL `;
+    } else {
+      sql += ` AND c.categoryName = ? `;
+      params.push(category);
+    }
   }
   if (unit) {
     sql += ` AND it.itemUnit = ? `;

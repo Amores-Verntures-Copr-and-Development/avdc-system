@@ -8,7 +8,7 @@ export interface ItemInterface {
   itemUpdatedAt: string;
   itemDeletedAt?: string | null;
   itemAddedBy: number; // userId
-  categoryId: number;
+  categoryId: number | null;
 }
 
 export interface ItemPrice {

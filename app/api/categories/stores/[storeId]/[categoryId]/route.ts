@@ -1,4 +1,4 @@
-import { editCategory } from "@/controllers/CategoryController";
+import { deleteCategory, editCategory } from "@/controllers/CategoryController";
 import { CategoryInterface } from "@/types/categories";
 import { NextResponse } from "next/server";
 
@@ -35,6 +35,53 @@ export async function PATCH(
       {
         success: false,
         message: "Category update failed!",
+        error: err?.message || String(err),
+      },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ storeId: string; categoryId: string }> },
+) {
+  try {
+    const { storeId, categoryId } = await params;
+    console.log({ storeId, categoryId });
+
+    // Implement delete logic here, e.g., call a deleteCategory function
+    const res = await deleteCategory({
+      updates: [
+        {
+          categoryId: Number(categoryId),
+          categoryDeletedAt: new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace("T", " "),
+        },
+      ],
+      keyFields: ["categoryId"],
+    });
+
+    if (!res.success) {
+      console.log(res.message);
+      throw new Error(`${res.message ?? "Failed to delete category"}`);
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Category deleted successfully",
+        data: null,
+      },
+      { status: 200 },
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Category deletion failed!",
         error: err?.message || String(err),
       },
       { status: 500 },

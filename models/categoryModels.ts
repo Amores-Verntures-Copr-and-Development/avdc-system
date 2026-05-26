@@ -61,6 +61,8 @@ export const selectCategoriesById = async ({
     );
     values.push(storeId);
   }
+
+  whereClauses.push(`categoryDeletedAt IS NULL`);
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const sql = `SELECT * FROM Categories ${whereSQL}`;

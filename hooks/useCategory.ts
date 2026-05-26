@@ -21,20 +21,6 @@ export function useCategories({
   >(
     inventoryId ? baseApi : null,
     async (url) => {
-      // Check localStorage first
-      // const stored = localStorage.getItem(localStorageKey);
-      // console.log(
-      //   { stored },
-      //   "Checking localStorage for key:",
-      //   localStorageKey,
-      // );
-      // if (stored) {
-      //   const storedData = JSON.parse(stored);
-
-      //   return storedData;
-      // }
-
-      // Fetch from API if not in localStorage
       const res = await fetch(url, { credentials: "include" });
 
       if (res.status === 401) {
@@ -65,14 +51,14 @@ export function useCategories({
   );
 
   const categoryOptions = data?.data
-    .map((item) => item.categoryName)
+    .map((item) => ({
+      label: item.categoryName ?? "No Category",
+      value: item.categoryName ?? null,
+    }))
     .filter(
-      (categoryName, index, array) => array.indexOf(categoryName) === index,
-    )
-    .map((categoryName) => ({
-      label: categoryName,
-      value: categoryName,
-    }));
+      (item, index, array) =>
+        array.findIndex((i) => i.value === item.value) === index,
+    );
 
   return {
     categoryOptions: categoryOptions,
