@@ -1,11 +1,13 @@
 import Button from "@/components/shared/Button";
 import { CreateBarcodeDto } from "@/dtos/barcode.dto";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
+import { useSession } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
 import { Barcodes } from "@/types/barcode";
 import { fetcher } from "@/utils/fetcher";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 import React, { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 
 interface BarcodeComponentProps {
@@ -21,86 +23,118 @@ const BarcodeComponent = ({
 }: BarcodeComponentProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showView, setShowView] = useState<"view" | "add" | "preview">("view");
-
+  const { user } = useSession();
   const [addUse, setAddUse] = useState<"scan" | "input">("scan");
-  const { data: barcodeResponse } = useSWR<ApiResponse<Barcodes[]>>(
-    data ? `/api/barcode/item/${data.itemId}` : null,
-    fetcher,
-  );
+  const { data: barcodeResponse, mutate: mutateBarcode } = useSWR<
+    ApiResponse<Barcodes[]>
+  >(data ? `/api/barcode/item/${data.inventoryItemId}` : null, fetcher);
 
-  const [form, setForm] = useState<CreateBarcodeDto>({
-    inventoryItemId: data?.inventoryItemId ?? 0,
-    barcode: "",
-    prodVarId: null,
-    createdBy: 0,
-  });
+  const [barcode, setBarcode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (showView !== "add" || addUse !== "scan") {
+  const handleSaveBarcode = async () => {
+    setIsLoading(true);
+
+    if (!user) {
+      toast.error("No user found!");
       return;
     }
+    try {
+      const barcodeData: CreateBarcodeDto = {
+        inventoryItemId: data?.inventoryItemId ?? 0,
+        barcode,
+        prodVarId: null,
+        createdBy: user.userId,
+      };
+      console.log({ barcodeData });
+
+      const res = await fetch(
+        `/api/barcode/item/${barcodeData.inventoryItemId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(barcodeData),
+        },
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        throw new Error(result.message || "Failed to save barcode!");
+      }
+
+      toast.success("Barcode saved successfully!");
+      setBarcode("");
+      setShowView("view");
+      mutateBarcode();
+      mutate();
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showView !== "add" || addUse !== "scan") return;
 
     const reader = new BrowserMultiFormatReader();
-
     let controls: IScannerControls | undefined;
+    let stopped = false;
 
     let lastCode = "";
     let lastScanTime = 0;
 
-    async function start() {
+    const start = async () => {
       try {
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+        const video = videoRef.current;
 
-        const backCamera =
-          devices.find((d) => /back|rear|environment/i.test(d.label)) ??
-          devices[0];
+        if (!video) {
+          console.error("Video element not ready");
+          return;
+        }
 
-        controls = await reader.decodeFromVideoDevice(
-          backCamera?.deviceId,
-          videoRef.current!,
+        controls = await reader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          },
+          video,
           (result) => {
-            if (result) {
-              const code = result.getText();
+            if (stopped || !result) return;
 
-              const now = Date.now();
+            const code = result.getText();
+            const now = Date.now();
 
-              if (code !== lastCode || now - lastScanTime > 1500) {
-                lastCode = code;
-                lastScanTime = now;
-
-                setForm((prev) => ({
-                  ...prev,
-                  barcode: code,
-                }));
-              }
+            if (code !== lastCode || now - lastScanTime > 1000) {
+              lastCode = code;
+              lastScanTime = now;
+              setBarcode(code);
             }
           },
         );
       } catch (error) {
         console.error("Barcode scanner error:", error);
       }
-    }
+    };
 
-    start();
+    const timer = setTimeout(start, 300);
 
     return () => {
+      stopped = true;
+      clearTimeout(timer);
       controls?.stop();
     };
   }, [showView, addUse]);
   return (
-    <div className="flex flex-col gap-4 rounded-3xl bg-white p-5 shadow-sm border border-gray-100">
+    <div className="flex flex-col gap-4">
       {/* HEADER */}
       <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">
-            Barcode Manager
-          </h2>
-
-          <p className="text-sm text-gray-500">
-            Manage inventory item barcodes
-          </p>
-        </div>
-
         {showView === "view" ? (
           <Button
             label="Add Barcode"
@@ -235,13 +269,8 @@ const BarcodeComponent = ({
                 <input
                   type="text"
                   placeholder="Enter barcode"
-                  value={form.barcode}
-                  onChange={(e) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      barcode: e.target.value,
-                    }))
-                  }
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
                   className="
                   w-full rounded-2xl border border-gray-200
                   px-4 py-3
@@ -257,23 +286,33 @@ const BarcodeComponent = ({
           </div>
 
           {/* PREVIEW */}
-          {form.barcode && (
+          {barcode !== "" && (
             <div className="rounded-2xl bg-primary-1/5 border border-primary-1/10 p-4">
               <div className="text-xs text-primary-1 font-medium">
                 Detected Barcode
               </div>
 
               <div className="mt-1 font-mono text-xl tracking-widest text-gray-900">
-                {form.barcode}
+                {barcode}
               </div>
             </div>
           )}
 
           {/* ACTIONS */}
           <div className="flex justify-end gap-3">
-            <Button label="Cancel" color="secondary" onClick={onCancel} />
+            <Button
+              label="Cancel"
+              color="secondary"
+              onClick={onCancel}
+              disabled={isLoading}
+            />
 
-            <Button label="Save Barcode" disabled={!form.barcode} />
+            <Button
+              label="Save Barcode"
+              disabled={barcode === ""}
+              loading={isLoading}
+              onClick={handleSaveBarcode}
+            />
           </div>
         </>
       )}

@@ -681,3 +681,36 @@ export const hardDeleteVariantComponents = async ({
 
   return result;
 };
+
+export const selectVariantComponents = async ({
+  connection,
+  keyFields = {},
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof VariantComponents, any>>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = `SELECT * FROM VariantComponents WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND ${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows as VariantComponents[];
+};

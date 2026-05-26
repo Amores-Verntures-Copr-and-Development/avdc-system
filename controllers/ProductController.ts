@@ -42,11 +42,10 @@ export const createProductController = async (data: CreateProductDtos) => {
       success: true,
       message: "Product added successfully!",
     };
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
     return {
       success: false,
-      message: "Failed to add product!",
+      message: e.message,
       error: e,
     };
   }

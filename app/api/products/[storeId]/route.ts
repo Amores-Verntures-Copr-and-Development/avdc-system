@@ -17,8 +17,7 @@ export async function GET(
     const res = await getProduct({ keyFields: { storeId: storeId }, search });
 
     if (!res.success) {
-      console.log(res.message);
-      throw new Error(`${res.error}`);
+      throw new Error(res.message || "Failed to add product.");
     }
 
     return NextResponse.json(
@@ -55,7 +54,13 @@ export async function POST(
     const res = await createProductController(data);
     if (!res.success) {
       console.log(res.message);
-      throw new Error(`${res.error}`);
+      return NextResponse.json(
+        {
+          success: false,
+          message: res.message,
+        },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json(
@@ -67,11 +72,14 @@ export async function POST(
       { status: 201 },
     );
   } catch (err: any) {
+    console.log({ err });
+    const errorMessage = err?.message || String(err);
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to fetched products!",
-        error: err?.message || String(err),
+        message: errorMessage,
+        error: errorMessage,
       },
       { status: 500 },
     );

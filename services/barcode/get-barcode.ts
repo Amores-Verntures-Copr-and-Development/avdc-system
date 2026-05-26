@@ -8,7 +8,7 @@ export async function getBarcodeByFields({
   keyFields = {},
 }: {
   connection?: PoolConnection;
-  keyFields?: Partial<Barcodes>;
+  keyFields?: Partial<Record<keyof Barcodes, any>>;
   search?: string;
 }) {
   return await selectBarcodes({ connection, keyFields });

@@ -501,7 +501,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }
         toast.success(res.message);
         mutate();
-        return false;
+        return true;
       }
       return false;
     } catch (e) {
@@ -1127,7 +1127,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 }}
                 label={"View"}
                 bg={"nobg"}
-                icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                icon={<Eye className="w-5 h-5 xl:w-5 xl:h-5" />}
               />
               <IconButton
                 onClick={function (): void {
@@ -1136,7 +1136,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 }}
                 label={"Barcode"}
                 bg={"blue"}
-                icon={<Barcode className="w-3 h-3 xl:w-4 xl:h-4" />}
+                icon={<Barcode className="w-5 h-5 xl:w-5 xl:h-5" />}
               />
               <IconButton
                 onClick={function (): void {
@@ -1145,7 +1145,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 }}
                 label={"Delete"}
                 bg={"red"}
-                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                icon={<Trash className="w-5 h-5 xl:w-5 xl:h-5" />}
               />
             </div>
           )

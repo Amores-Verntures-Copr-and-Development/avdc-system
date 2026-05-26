@@ -278,17 +278,20 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   };
   const handleAddProduct = async (data: CreateProductDtos) => {
     setIsAddingProduct(true);
+
     if (!storeId || storeId === 0) {
+      setIsAddingProduct(false);
       return false;
     }
+
     const newData: CreateProductDtos = {
       ...data,
-      storeId: storeId,
+      storeId,
       prodCreatedBy: user?.userId ?? 0,
     };
 
     try {
-      const data = await fetch(`/api/products/${storeId}`, {
+      const response = await fetch(`/api/products/${storeId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -297,17 +300,17 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         credentials: "include",
       });
 
-      const res = await data.json();
+      const res = await response.json();
 
-      if (!res.success) {
-        throw new Error(res.err);
+      if (!response.ok || !res.success) {
+        throw new Error(res.message || "Failed to add product.");
       }
+
       toast.success(res.message);
       mutate();
       return true;
-    } catch (e) {
-      console.log({ e });
-      toast.error("Failed to add product.");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to add product.");
       return false;
     } finally {
       setIsAddingProduct(false);

@@ -153,7 +153,10 @@ const SelectedSalesPage = ({
                   Date
                 </div>
                 <div className="text-xs 2xl:text-sm font-medium text-gray-900">
-                  {formatDateToWords(salesData?.salesCreatedAt ?? "")}
+                  {formatDateToWords(salesData?.salesCreatedAt ?? "", {
+                    showHour: true,
+                    showMinute: true,
+                  })}
                 </div>
               </div>
               <div>

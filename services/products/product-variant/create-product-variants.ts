@@ -10,6 +10,7 @@ import { PoolConnection } from "mysql2/promise";
 import { createVariantComponent } from "./variant-component/create-variant-component";
 import ItemMovementCard from "@/app/inventory/components/ItemMovementCard";
 import { getDBConnection } from "@/lib/db";
+import { getProductVariants } from "./get-product-variants";
 
 export async function createProductVariant({
   connection,
@@ -46,6 +47,10 @@ export async function createProductVariants({
 
     // Use for...of instead of map to properly await async operations
     for (const item of data) {
+      const existingVarId = await getProductVariants({
+        connection: connection ? connection : newConnection,
+      });
+
       const prodVarId = await insertProductVariant({
         connection: connection ? connection : newConnection,
         data: { ...item, isDeductInv: true },

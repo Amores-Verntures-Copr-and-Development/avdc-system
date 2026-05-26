@@ -10,17 +10,36 @@ export const createBarcodeController = async ({
   data: CreateBarcodeDto[];
 }) => {
   try {
-    const res = await createBarcode({ data: data });
+    const res = await createBarcode({ data });
 
     return {
       success: true,
       message: "Product barcode created successfully!",
       data: res,
     };
-  } catch (error) {
+  } catch (error: any) {
+    const errorMessage = error?.message || String(error);
+
+    // Handle custom duplicate barcode error
+    if (errorMessage.includes("The following barcodes already exist")) {
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    }
+
+    // Handle SQL duplicate key error
+    if (error?.code === "ER_DUP_ENTRY") {
+      return {
+        success: false,
+        message: "Duplicate barcode already exists.",
+      };
+    }
+
     return {
       success: false,
-      message: "Failed to create product barcode!",
+      message: "Something went wrong.",
+      error: errorMessage,
     };
   }
 };
@@ -28,7 +47,7 @@ export const createBarcodeController = async ({
 export const getBarcodeController = async ({
   keyFields = {},
 }: {
-  keyFields?: Partial<Barcodes>;
+  keyFields?: Partial<Record<keyof Barcodes, any>>;
 }) => {
   try {
     const res = await getBarcodeByFields({ keyFields });
