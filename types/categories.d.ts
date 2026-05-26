@@ -1,7 +1,7 @@
 export type CategoryType = "product" | "item" | "services" | null;
 
 export interface CategoryInterface {
-  categoryId: number;
+  categoryId: number | null;
   categoryName: string;
   categoryType: CategoryType;
   categoryReferenceType: "stores" | "stock-room" | null;
