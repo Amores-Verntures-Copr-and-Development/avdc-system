@@ -108,7 +108,23 @@ const ViewEditAmountItemOrder = ({
 
     onClose();
   };
+  const handleQuantityChange = (value: number) => {
+    const qty = Math.max(value);
+    const price = Number(form?.prodVarPrice ?? 0);
 
+    setSelectedDiscount(null);
+
+    setForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            quantity: qty,
+            prodVarTotal: price * qty,
+            discounts: [],
+          }
+        : prev,
+    );
+  };
   return (
     <div className="flex h-full flex-col rounded-2xl bg-white p-5">
       {/* Header */}
@@ -129,6 +145,13 @@ const ViewEditAmountItemOrder = ({
 
       {/* Amount */}
       <div className="space-y-2">
+        <Input
+          label="Quantity"
+          sizes="sm"
+          type="number"
+          value={form?.quantity === 0 ? "" : form?.quantity}
+          onChange={(e) => handleQuantityChange(Number(e.target.value))}
+        />
         <Input
           label="Final Amount"
           sizes="sm"
@@ -192,7 +215,12 @@ const ViewEditAmountItemOrder = ({
       {/* Actions */}
       <div className="mt-auto flex justify-end gap-2 pt-6">
         <Button label="Cancel" size="sm" color="secondary" onClick={onClose} />
-        <Button label="Save Changes" size="sm" onClick={handleSave} />
+        <Button
+          label="Save Changes"
+          size="sm"
+          onClick={handleSave}
+          disabled={form?.quantity === 0}
+        />
       </div>
     </div>
   );

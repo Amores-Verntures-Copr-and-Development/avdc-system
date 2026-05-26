@@ -178,6 +178,34 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return true;
   };
 
+  const addProductBarcode = (barcode: string) => {
+    const foundVariant = productList
+      .flatMap((p) => p.productVariants || [])
+      .find((pv) => pv.variantComponents?.some((vc) => vc.barcode === barcode));
+
+    if (foundVariant) {
+      const existingOrder = selectedOrder?.find(
+        (s) => s.prodVarId === foundVariant?.prodVarId,
+      );
+
+      if (existingOrder) {
+        toast.success(`Already in order ${existingOrder.prodVarName}`);
+        return;
+      }
+      const orderListData: OrderList = {
+        prodVarId: foundVariant.prodVarId,
+        prodVarName: foundVariant.prodVarName,
+        prodVarPrice: foundVariant.prodVarPrice,
+        quantity: 1,
+        components: foundVariant.variantComponents,
+      };
+      addProductOrder(orderListData);
+      toast.success(`Found ${orderListData.prodVarName}`);
+    } else {
+      toast.error(`No found item with ${barcode}`);
+    }
+  };
+
   const calculateItemDiscount = (
     price: number,
     quantity: number,
@@ -1165,8 +1193,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       >
         <BarcodeScanner
           onScan={function (code: string): void {
-            toast.success(`Scanned: ${code}`);
+            addProductBarcode(code);
           }}
+          onClose={() => setIsShowIcons(null)}
         />
       </Modal>
     </PageLayout>

@@ -280,12 +280,15 @@ export const selectProducts = async ({
                   'quantityRequired', vc.quantityRequired,
                   'inventoryItemId', vc.inventoryItemId,
                   'left', ii.inventoryItemQuantity,
-                  'isDeductVar',vc.isDeductVar
+                  'isDeductVar',vc.isDeductVar,
+                  'barcode',b.barcode,
+                  'barcodeId',b.barcodeId
                   
                 )
               )
               FROM VariantComponents vc
               LEFT JOIN InventoryItems ii ON ii.inventoryItemId = vc.inventoryItemId
+              LEFT JOIN Barcodes b ON b.inventoryItemId = vc.inventoryItemId
               WHERE vc.prodVarId = pv.prodVarId 
               
             )

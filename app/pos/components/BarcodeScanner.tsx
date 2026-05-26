@@ -1,6 +1,6 @@
 "use client";
-
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 import { X } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 
@@ -13,28 +13,63 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    const reader = new BrowserMultiFormatReader();
+    if (!videoRef.current) return;
+
+    const hints = new Map();
+
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+    ]);
+
+    const reader = new BrowserMultiFormatReader(hints);
 
     let controls: IScannerControls | undefined;
     let stopped = false;
 
+    let lastCode = "";
+    let lastScanTime = 0;
+
     async function start() {
       try {
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices();
+        // check camera support
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error("Camera API not supported");
+          return;
+        }
 
-        const backCamera =
-          devices.find((d) => /back|rear|environment/i.test(d.label)) ??
-          devices[0];
-
-        controls = await reader.decodeFromVideoDevice(
-          backCamera?.deviceId,
+        controls = await reader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          },
           videoRef.current!,
           (result) => {
-            if (result) {
-              const code = result.getText();
+            if (stopped || !result) return;
 
-              onScan(code);
+            const code = result.getText().trim();
+            const now = Date.now();
+
+            // ignore urls / qr text
+            if (!/^\d{8,14}$/.test(code)) {
+              return;
             }
+
+            // prevent duplicate scans
+            if (code === lastCode && now - lastScanTime < 1500) {
+              return;
+            }
+
+            lastCode = code;
+            lastScanTime = now;
+
+            onScan(code);
           },
         );
       } catch (error) {
@@ -42,11 +77,16 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
       }
     }
 
-    start();
+    const timer = setTimeout(start, 300);
 
     return () => {
       stopped = true;
-      controls?.stop();
+
+      clearTimeout(timer);
+
+      if (controls) {
+        controls.stop();
+      }
     };
   }, [onScan]);
 

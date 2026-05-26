@@ -6,6 +6,7 @@ import { ApiResponse } from "@/types/api";
 import { Barcodes } from "@/types/barcode";
 import { fetcher } from "@/utils/fetcher";
 import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 import React, { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -80,7 +81,18 @@ const BarcodeComponent = ({
   useEffect(() => {
     if (showView !== "add" || addUse !== "scan") return;
 
-    const reader = new BrowserMultiFormatReader();
+    const hints = new Map();
+
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+    ]);
+
+    const reader = new BrowserMultiFormatReader(hints);
+
     let controls: IScannerControls | undefined;
     let stopped = false;
 
@@ -96,6 +108,11 @@ const BarcodeComponent = ({
           return;
         }
 
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.error("Camera API not supported");
+          return;
+        }
+
         controls = await reader.decodeFromConstraints(
           {
             video: {
@@ -108,14 +125,19 @@ const BarcodeComponent = ({
           (result) => {
             if (stopped || !result) return;
 
-            const code = result.getText();
+            const code = result.getText().trim();
             const now = Date.now();
 
-            if (code !== lastCode || now - lastScanTime > 1000) {
-              lastCode = code;
-              lastScanTime = now;
-              setBarcode(code);
-            }
+            // ignore QR links/text
+            if (!/^\d{8,14}$/.test(code)) return;
+
+            // prevent duplicate scans
+            if (code === lastCode && now - lastScanTime < 1500) return;
+
+            lastCode = code;
+            lastScanTime = now;
+
+            setBarcode(code);
           },
         );
       } catch (error) {

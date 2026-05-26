@@ -34,6 +34,8 @@ export interface VariantComponents {
   isDeductVar: boolean;
   sold?: number;
   left?: number;
+  barcode?: string;
+  barcodeId?: id;
 }
 
 export interface ProductPrices {
