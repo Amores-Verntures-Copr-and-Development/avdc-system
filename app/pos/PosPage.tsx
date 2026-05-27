@@ -120,7 +120,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
   const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
     data: DisplayProductsDtos[];
-  }>(storeId ? `/api/products/${storeId}` : null, fetcher);
+  }>(storeId ? `/api/products/${storeId}/pos` : null, fetcher);
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(storeId ? `/api/payment-method/store/${storeId}/` : null, fetcher);
