@@ -11,8 +11,7 @@ export async function getStoreDashboard(storeId: number) {
     const totalSales = await getSalesServices.findSalesTotalsByStoreId({
       storeId,
     });
-    const totalProducts = (await getProducts({ keyFields: { storeId } }))
-      .length;
+    const totalProducts = (await getProducts({ keyFields: { storeId } })).total;
     const totalRequest = await getRequestCount(storeId);
     const totalCustomers = await customerServices.countCustomerByStoreId({
       keyFields: { storeId },

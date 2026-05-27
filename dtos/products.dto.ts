@@ -27,6 +27,7 @@ export type CreateProductVariantDto = Pick<
   | "prodVarPrice"
   | "prodVarUnit"
   | "isDeductInv"
+  | "inventoryItemId"
 > & {
   variantComponents?: CreateVarianComponentDto[];
 };
@@ -48,6 +49,7 @@ export interface DisplayProductsDtos
 
 export interface DisplaProductVariantsDtos extends ProductVariants, Products {
   sold?: number;
+  inventoryItemQuantity: number | null;
   totalSales?: number;
   variantComponents: DisplayVariantComponents[];
 }

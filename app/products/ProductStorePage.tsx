@@ -16,8 +16,11 @@ import {
   ArrowLeftRight,
   Boxes,
   Eye,
+  FolderKanban,
   Layers,
   Package2,
+  PackagePlus,
+  PackageSearch,
   Pencil,
   PhilippinePeso,
   Plus,
@@ -46,6 +49,7 @@ import { ProductCategories } from "@/types/products";
 import Popup from "@/components/shared/Popup";
 import ProductVariantTable from "./components/ProductVariantTable";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import UnlistedItems from "./components/UnlistedItems";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -59,6 +63,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     "product" | "product-variants"
   >("product");
   const router = useRouter();
+
+  const [showUnlistedItems, setShowUnlistedItems] = useState(false);
   const { hasStore, isAdmin } = useSession();
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showAddProductCat, setShowAddProductCat] = useState(false);
@@ -125,12 +131,10 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     return `${url}?${params.toString()}`;
   }, [storeId, searchParams]);
   const {
-    data: itemResponse = { data: [] },
+    data: itemResponse,
     mutate,
     isLoading,
-  } = useSWR<{
-    data: DisplayProductsDtos[];
-  }>(user ? apiUrl : null, fetcher);
+  } = useSWR<ApiResponse<DisplayProductsDtos[]>>(user ? apiUrl : null, fetcher);
   const { stores } = useStores({ user, hasStore, isAdmin });
   const { data: reponse, mutate: mutateCategory } = useSWR<
     ApiResponse<ProductCategories[]>
@@ -141,10 +145,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
-  const { data: prodVarResponse = { data: [] }, isLoading: isLoadingProdVar } =
-    useSWR<{
-      data: DisplaProductVariantsDtos[];
-    }>(productView === "product-variants" ? prodVarApi : null, fetcher);
+  const { data: prodVarResponse, isLoading: isLoadingProdVar } = useSWR<
+    ApiResponse<DisplaProductVariantsDtos[]>
+  >(productView === "product-variants" ? prodVarApi : null, fetcher);
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
@@ -461,9 +464,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                 filterConfig={productConfig}
                 uniqueIdKey="prodId"
                 columns={hasStore ? columns : adminColumn}
-                data={itemResponse.data}
+                data={itemResponse?.data ?? []}
                 showPagination
-                totalCount={20}
+                totalCount={itemResponse?.count}
                 maxHeight="h-full"
                 searchUrl="products"
                 loading={isLoading}
@@ -505,45 +508,55 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     />
                   </div>
                 )}
-                renderTopActions={
-                  <div className="flex gap-2">
-                    <div>
-                      <Button
-                        className="text-sm"
-                        label="View Category"
-                        size="sm"
-                        icon={Layers}
-                        onClick={() => {
-                          setShowCategory(true);
-                        }}
-                        color="outline"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        className="text-sm"
-                        label="Add Category"
-                        size="sm"
-                        icon={Layers}
-                        onClick={() => {
-                          setShowAddProductCat(true);
-                        }}
-                        color="neutral"
-                      />
-                    </div>
-                    <div>
-                      <Button
-                        className="text-sm"
-                        label="Add Product"
-                        size="sm"
-                        icon={Plus}
-                        onClick={() => {
-                          setShowAddProductModal(true);
-                        }}
-                      />
-                    </div>
-                  </div>
-                }
+                renderTopActionButtons={[
+                  {
+                    props: {
+                      label: "View Category",
+                      icon: Eye,
+                      onClick: () => {
+                        setShowCategory(true);
+                      },
+                      size: "sm",
+                      className: "font-semibold",
+                      color: "outline",
+                    },
+                  },
+                  {
+                    props: {
+                      label: "Add Category",
+                      icon: FolderKanban,
+                      onClick: () => {
+                        setShowAddProductCat(true);
+                      },
+                      size: "sm",
+                      className: "font-semibold",
+                      color: "neutral",
+                    },
+                  },
+                  {
+                    props: {
+                      label: "Unlisted Items",
+                      icon: PackageSearch,
+                      onClick: () => {
+                        setShowUnlistedItems(true);
+                      },
+                      size: "sm",
+                      className: "font-semibold",
+                      color: "tertiary",
+                    },
+                  },
+                  {
+                    props: {
+                      label: "Add Product",
+                      icon: PackagePlus,
+                      onClick: () => {
+                        setShowAddProductModal(true);
+                      },
+                      size: "sm",
+                      className: "font-semibold",
+                    },
+                  },
+                ]}
                 addContentLeftTitle={
                   !hasStore && (
                     <div>
@@ -570,7 +583,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               />
             ) : (
               <ProductVariantTable
-                data={prodVarResponse.data}
+                totalCount={prodVarResponse?.count ?? 0}
+                data={prodVarResponse?.data ?? []}
                 isLoading={isLoadingProdVar}
                 onRowSelection={(row) => {
                   console.log(row);
@@ -650,6 +664,17 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
           setShowPopupComponent={setShowPopupComponent}
           mutateProduct={mutate}
         />
+      </Popup>
+
+      <Popup
+        background="bg-white/50"
+        isOpen={showUnlistedItems}
+        onClose={function (): void {
+          setShowUnlistedItems(false);
+        }}
+        title="Unlisted Items"
+      >
+        <UnlistedItems />
       </Popup>
       <ConfirmationModal
         title={`Delete ${showDeleteConfirmation?.prodName}`}

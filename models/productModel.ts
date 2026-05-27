@@ -148,8 +148,8 @@ export const insertProductVariant = async ({
   data: CreateProductVariantDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId,isDeductInv)
-                VALUES(?,?,?,?,?)`;
+  const sql = `INSERT INTO ProductVariants(prodVarName,prodVarPrice,prodVarCreatedBy,prodId,isDeductInv,inventoryItemId)
+                VALUES(?,?,?,?,?,?)`;
 
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.prodVarName,
@@ -157,6 +157,7 @@ export const insertProductVariant = async ({
     data.prodVarCreatedBy,
     data.prodId,
     data.isDeductInv,
+    data.inventoryItemId ?? null,
   ]);
   return results.insertId;
 };
@@ -172,17 +173,18 @@ export const insertProductVariantsBulk = async ({
   const pool = connection ? connection : await getDBConnection();
 
   // Build bulk insert query
-  const placeholders = data.map(() => "(?,?,?,?,?)").join(",");
+  const placeholders = data.map(() => "(?,?,?,?,?,?)").join(",");
   const values = data.flatMap((item) => [
     item.prodVarName,
     item.prodVarPrice,
     item.prodVarCreatedBy,
     item.prodId,
     item.isDeductInv,
+    item.inventoryItemId,
   ]);
   const sql = `
     INSERT INTO ProductVariants
-      (prodVarName, prodVarPrice, prodVarCreatedBy, prodId, isDeductInv)
+      (prodVarName, prodVarPrice, prodVarCreatedBy, prodId, isDeductInv,inventoryItemId)
     VALUES ${placeholders}
   `;
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
@@ -247,11 +249,17 @@ export const selectProducts = async ({
   keyFields = {},
   search,
   storeName,
+  limit,
+  offset,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
   search?: string;
   storeName?: string;
+  category?: string;
+  unit?: string;
+  limit?: number;
+  offset?: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `SELECT  
@@ -265,42 +273,48 @@ export const selectProducts = async ({
           'prodVarId', pv.prodVarId,
           'prodVarName', pv.prodVarName,
           'prodVarPrice', pv.prodVarPrice,
-          'isDeductInv',pv.isDeductInv,
+          'isDeductInv', pv.isDeductInv,
+          'stocks', iis.inventoryItemQuantity,
+          'inventoryItemId', pv.inventoryItemId,
+          'barcode', pb.barcode,
+          'barcodeId', pb.barcodeId,
           'sold', (
-                      SELECT COALESCE(SUM(si.salesItemQuantity), 0)
-                      FROM SalesItems si
-                      WHERE si.prodVarId = pv.prodVarId
-                    ),
-          'variantComponents',
-            (
-              SELECT JSON_ARRAYAGG(
-                JSON_OBJECT(
-                  'varComId', vc.varComId,
-                  'prodVarId', vc.prodVarId,
-                  'quantityRequired', vc.quantityRequired,
-                  'inventoryItemId', vc.inventoryItemId,
-                  'left', ii.inventoryItemQuantity,
-                  'isDeductVar',vc.isDeductVar,
-                  'barcode',b.barcode,
-                  'barcodeId',b.barcodeId
-                  
-                )
+            SELECT COALESCE(SUM(si.salesItemQuantity), 0)
+            FROM SalesItems si
+            WHERE si.prodVarId = pv.prodVarId
+          ),
+          'variantComponents', (
+            SELECT JSON_ARRAYAGG(
+              JSON_OBJECT(
+                'varComId', vc.varComId,
+                'prodVarId', vc.prodVarId,
+                'quantityRequired', vc.quantityRequired,
+                'inventoryItemId', vc.inventoryItemId,
+                'left', ii.inventoryItemQuantity,
+                'isDeductVar', vc.isDeductVar
               )
-              FROM VariantComponents vc
-              LEFT JOIN InventoryItems ii ON ii.inventoryItemId = vc.inventoryItemId
-              LEFT JOIN Barcodes b ON b.inventoryItemId = vc.inventoryItemId
-              WHERE vc.prodVarId = pv.prodVarId 
-              
             )
+            FROM VariantComponents vc
+            LEFT JOIN InventoryItems ii 
+              ON ii.inventoryItemId = vc.inventoryItemId
+            WHERE vc.prodVarId = pv.prodVarId
+          )
         )
       )
       FROM ProductVariants pv
-      WHERE pv.prodId = p.prodId AND pv.prodVarDeletedAt IS NULL
+      LEFT JOIN InventoryItems iis 
+        ON iis.inventoryItemId = pv.inventoryItemId
+      LEFT JOIN Barcodes pb 
+        ON pb.inventoryItemId = pv.inventoryItemId
+      WHERE pv.prodId = p.prodId 
+        AND pv.prodVarDeletedAt IS NULL
     ) AS productVariants
-  FROM Products p
-  LEFT JOIN Stores s ON s.storeId = p.storeId
-  LEFT JOIN ProductCategories pc ON pc.prodCatId = p.prodCatId
-  WHERE 1=1 AND p.prodDeletedAt IS NULL`;
+FROM Products p
+LEFT JOIN Stores s 
+  ON s.storeId = p.storeId
+LEFT JOIN ProductCategories pc 
+  ON pc.prodCatId = p.prodCatId
+WHERE p.prodDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
@@ -318,6 +332,57 @@ export const selectProducts = async ({
     sql += ` AND s.storeName LIKE ?`;
     params.push(`%${storeName}%`);
   }
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows;
+};
+
+export const selectProductCounts = async ({
+  connection,
+  keyFields = {},
+  search,
+  storeName,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Products>;
+  search?: string;
+  storeName?: string;
+  category?: string;
+  unit?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `SELECT  
+    COUNT(DISTINCT p.prodId) as totalItems
+FROM Products p
+LEFT JOIN Stores s 
+  ON s.storeId = p.storeId
+LEFT JOIN ProductCategories pc 
+  ON pc.prodCatId = p.prodCatId
+WHERE p.prodDeletedAt IS NULL`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND p.${key} IS NULL`;
+    } else {
+      sql += ` AND p.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (search) {
+    sql += ` AND p.prodName LIKE ?`;
+    params.push(`%${search}%`);
+  }
+  if (storeName) {
+    sql += ` AND s.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;
@@ -344,7 +409,7 @@ SELECT
     p.prodName,
     u.userName,
     u.userFname,
-    u.userRole,
+    iis.inventoryItemQuantity,
     (SELECT SUM(si.salesItemQuantity) 
      FROM SalesItems si 
      WHERE si.prodVarId = pv.prodVarId) AS sold,
@@ -376,6 +441,7 @@ SELECT
 FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
+LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -392,6 +458,30 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
+};
+
+export const selectProductVariantsTable = async ({
+  keyFields = {},
+  connection,
+}: {
+  keyFields?: Partial<ProductVariants>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = ` SELECT * FROM ProductVariants pv
+  WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND pv.${key} IS NULL`;
+    } else {
+      sql += ` AND pv.${key} = ?`;
+      params.push(value);
+    }
+  }
+  console.log({ sql, params });
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as ProductVariants[];
 };
 
 export const insertProductCategories = async ({

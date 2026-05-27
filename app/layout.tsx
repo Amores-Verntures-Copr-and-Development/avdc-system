@@ -13,6 +13,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "AVDC",
   description: "AVDC System",
+  icons: {
+    icon: "/AVDCLogoOnly.png", // 32x32 or default size
+    apple: "/AVDCLogoOnly.png", // optional for iOS
+    shortcut: "/AVDCLogoOnly.png", // optional for old browsers
+  },
 };
 
 export default function RootLayout({

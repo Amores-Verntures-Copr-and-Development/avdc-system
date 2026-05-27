@@ -45,14 +45,11 @@ const ProductCard = ({
           prodVarName,
           quantity: 1,
           prodVarPrice: variant.prodVarPrice,
-
-          components: [
-            {
-              inventoryItemId: variant.variantComponents[0].inventoryItemId,
-
-              quantityRequired: variant.variantComponents[0].quantityRequired,
-            },
-          ],
+          inventoryItemId: variant.inventoryItemId,
+          components: variant.variantComponents.map((vc) => ({
+            inventoryItemId: vc.inventoryItemId,
+            quantityRequired: vc.quantityRequired,
+          })),
         });
       } else {
         addProductOrder({
@@ -60,7 +57,7 @@ const ProductCard = ({
           prodVarName,
           quantity: 1,
           prodVarPrice: variant.prodVarPrice,
-
+          inventoryItemId: variant.inventoryItemId,
           components:
             variant.variantComponents
               ?.filter((i) => Boolean(i.isDeductVar) === true)
@@ -81,12 +78,10 @@ const ProductCard = ({
 
   const hasOneVariant = variantCount === 1;
 
-  const isDeductibleSingle = singleVariant?.isDeductInv === true;
+  const isDeductibleSingle = Number(singleVariant?.isDeductInv) === 1;
 
-  const available =
-    singleVariant?.variantComponents?.length === 1
-      ? (singleVariant.variantComponents[0].left ?? 0)
-      : 0;
+  const available = Number(singleVariant?.stocks || 0);
+
   const isAvailable = !hasOneVariant
     ? true
     : !isDeductibleSingle

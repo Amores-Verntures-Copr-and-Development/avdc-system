@@ -490,3 +490,20 @@ export const deleteInventoryItemById = async ({
     };
   }
 };
+
+// export const getInventoryItemsNotInProduct = async () => {
+//   try {
+//     const data = await findInventoryForReport({ range, inventoryId });
+//     return {
+//       success: true,
+//       message: "Item fetched successfully!",
+//       data: data ?? null,
+//     };
+//   } catch (e) {
+//     return {
+//       success: true,
+//       message: e,
+//       error: e,
+//     };
+//   }
+// };

@@ -78,6 +78,7 @@ export async function processCreateSales(data: CreateSaleDto) {
         salesId: salesId,
         saleItemQuantity: item.salesItemQuantity,
         prodVarId: item.prodVarId,
+        inventoryItemId: item.inventoryItemId,
         components: item.components,
         salesItemDiscounts: item.salesItemDiscounts,
       })) ?? [];
@@ -99,31 +100,23 @@ export async function processCreateSales(data: CreateSaleDto) {
     if (salesPaymentData.length > 0) {
       await createSalePayments({ connection, data: salesPaymentData });
     }
-    const needDeductInventory = saleItemData.filter(
-      (i) => i.components?.length !== 0,
+
+    console.log({ saleItemData });
+
+    const needDeductInventoryProdVar = saleItemData.filter(
+      (i) => i.inventoryItemId !== null,
     );
-    const salesDiscounts: CreateSalesDiscount[] =
-      data.saleDiscounts?.map((dis) => ({
-        ...dis,
-        saleId: salesId,
-      })) ?? [];
-    if (salesDiscounts.length > 0) {
-      await createSalesDiscounts({ connection, data: salesDiscounts });
-    }
-    if (needDeductInventory.length > 0) {
+
+    if (needDeductInventoryProdVar.length > 0) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },
         connection,
       });
       const componentVar: Partial<InventoryItemInterface>[] =
-        needDeductInventory.flatMap(
-          (item) =>
-            item.components?.flatMap((comp) => ({
-              inventoryItemId: comp.inventoryItemId ?? 0,
-              inventoryItemQuantity:
-                comp.quantityRequired * item.salesItemQuantity,
-            })) ?? [],
-        ) ?? [];
+        needDeductInventoryProdVar.flatMap((item) => ({
+          inventoryItemId: item.inventoryItemId ?? 0,
+          inventoryItemQuantity: item.salesItemQuantity,
+        })) ?? [];
 
       const inventoryMovement: CreateInventoryMovementDto[] =
         componentVar.map((item) => ({
@@ -144,6 +137,51 @@ export async function processCreateSales(data: CreateSaleDto) {
       });
       await createInventoryMovement({ connection, data: inventoryMovement });
     }
+    // const needDeductInventory = saleItemData.filter(
+    //   (i) => i.components?.length !== 0,
+    // );
+    const salesDiscounts: CreateSalesDiscount[] =
+      data.saleDiscounts?.map((dis) => ({
+        ...dis,
+        saleId: salesId,
+      })) ?? [];
+    if (salesDiscounts.length > 0) {
+      await createSalesDiscounts({ connection, data: salesDiscounts });
+    }
+    // if (needDeductInventory.length > 0) {
+    //   const inventory = await findInventoryByStoreFields({
+    //     keyFields: { storeId: data.storeId },
+    //     connection,
+    //   });
+    //   const componentVar: Partial<InventoryItemInterface>[] =
+    //     needDeductInventory.flatMap(
+    //       (item) =>
+    //         item.components?.flatMap((comp) => ({
+    //           inventoryItemId: comp.inventoryItemId ?? 0,
+    //           inventoryItemQuantity:
+    //             comp.quantityRequired * item.salesItemQuantity,
+    //         })) ?? [],
+    //     ) ?? [];
+
+    //   const inventoryMovement: CreateInventoryMovementDto[] =
+    //     componentVar.map((item) => ({
+    //       inventoryId: inventory[0].inventoryId,
+    //       inventoryItemId: item.inventoryItemId ?? 0,
+    //       itemMovementReference: "sales",
+    //       itemMovementQuantity: item.inventoryItemQuantity ?? 0,
+    //       itemMovementReferenceId: salesId,
+    //       itemMovementType: "out",
+    //       itemMovementRemarks: "",
+    //     })) ?? [];
+
+    //   await updateInventoryItem({
+    //     connection,
+    //     fieldModes: { inventoryItemQuantity: "decrement" },
+    //     updates: componentVar,
+    //     keyFields: ["inventoryItemId"],
+    //   });
+    //   await createInventoryMovement({ connection, data: inventoryMovement });
+    // }
     const createSalesTransaction: CreateTransactionDto = {
       referenceId: salesId,
       transactionAmount: data.salesTotalAmount,

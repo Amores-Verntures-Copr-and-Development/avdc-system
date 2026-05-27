@@ -6,6 +6,7 @@ import { getProductVariants } from "../products/product-variant/get-product-vari
 import { getVariantComponents } from "../products/product-variant/variant-component/get-variant-components";
 import { updateBarcodesByFields } from "./update-barcode";
 import { getDBConnection } from "@/lib/db";
+import { selectProductVariantsTable } from "@/models/productModel";
 
 export async function createBarcode({
   data,
@@ -39,24 +40,28 @@ export async function createBarcode({
       );
     }
 
-    await insertBarcode({ data, connection });
+    const barcodeId = await insertBarcode({
+      data,
+      connection: connection ? connection : newConnection,
+    });
 
     for (const item of data) {
       if (item.inventoryItemId) {
         //check in prodId
 
-        const existingInProdVar = await getVariantComponents({
+        const existingInProdVar = await selectProductVariantsTable({
           keyFields: { inventoryItemId: item.inventoryItemId },
           connection: connection ? connection : newConnection,
         });
-
         if (existingInProdVar.length > 0) {
           await updateBarcodesByFields({
-            keyFields: ["barcode"],
-            updates: existingInProdVar.map((ev) => ({
-              barcode: item.barcode,
-              prodVarId: item.prodVarId,
-            })),
+            keyFields: ["barcodeId"],
+            updates: [
+              {
+                barcodeId: barcodeId,
+                prodVarId: existingInProdVar[0].prodVarId,
+              },
+            ],
             connection: connection ? connection : newConnection,
           });
           //update the barcodes to add prodVarId with the existing barcodes and ivnentoryitemId
@@ -72,6 +77,7 @@ export async function createBarcode({
       await newConnection.commit();
     }
   } catch (e) {
+    console.log({ e });
     if (localConnection) {
       await newConnection.rollback();
     }

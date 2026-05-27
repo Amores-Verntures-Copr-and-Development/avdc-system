@@ -36,6 +36,7 @@ export async function createProductVariants({
 }) {
   let localConnection = false;
   let newConnection: any;
+  const validProductVariants: CreateProductVariantDto[] = [];
   try {
     // If no connection is passed, start a transaction
     if (!connection) {
@@ -47,38 +48,38 @@ export async function createProductVariants({
 
     // Use for...of instead of map to properly await async operations
     for (const item of data) {
-      const existingVarId = await getProductVariants({
+      const existingProdVar = await getProductVariants({
         connection: connection ? connection : newConnection,
+        keyFields: {
+          inventoryItemId: item.inventoryItemId,
+        },
       });
 
-      const prodVarId = await insertProductVariant({
-        connection: connection ? connection : newConnection,
-        data: { ...item, isDeductInv: true },
-      });
-      console.log(item.variantComponents);
-      if (item.variantComponents && item.variantComponents.length > 0) {
-        const variantComponents: CreateVarianComponentDto[] =
-          item.variantComponents.map((vc) => ({ ...vc, prodVarId }));
-
-        await createVariantComponent({
-          connection: connection ? connection : newConnection,
-          data: variantComponents,
-        });
+      if (existingProdVar.length > 0) {
+        continue;
       }
+      // const prodVarId = await insertProductVariant({
+      //   connection: connection ? connection : newConnection,
+      //   data: { ...item, isDeductInv: true },
+      // });
+      validProductVariants.push(item);
     }
 
-    // Commit transaction if we started it
+    if (validProductVariants.length) {
+      await insertProductVariantsBulk({
+        connection: connection ? connection : newConnection,
+        data: validProductVariants,
+      });
+    }
     if (localConnection) {
       await newConnection.commit();
     }
   } catch (e) {
-    // Rollback if we started transaction
     if (localConnection) {
       await newConnection.rollback();
     }
     throw e;
   } finally {
-    // Release local connection if we created it
     if (localConnection) {
       await newConnection.release();
     }

@@ -17,6 +17,7 @@ export interface ProductVariants {
   prodVarPrice: number;
   prodVarUnit?: string | null;
   isDeductInv: boolean;
+  inventoryItemId: number | null;
   prodVarCreatedAt: string;
   prodVarUpdatedAt: string;
   prodVarDeletedAt: string;
@@ -24,6 +25,9 @@ export interface ProductVariants {
   prodId: number;
   variantComponents?: VariantComponents[];
   sold?: number;
+  stocks?: number;
+  barcode?: string;
+  barcodeId?: id;
 }
 
 export interface VariantComponents {
@@ -34,8 +38,6 @@ export interface VariantComponents {
   isDeductVar: boolean;
   sold?: number;
   left?: number;
-  barcode?: string;
-  barcodeId?: id;
 }
 
 export interface ProductPrices {

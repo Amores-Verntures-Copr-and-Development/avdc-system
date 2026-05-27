@@ -61,6 +61,7 @@ const VariantComponentPage = ({
     prodVarUpdatedAt: data?.prodVarUpdatedAt ?? "",
     prodVarUnit: data?.prodVarUnit,
     isDeductInv: Boolean(data?.isDeductInv),
+    inventoryItemId: data?.inventoryItemId ?? null,
   });
   const handleFormChange = handleChange(form, setForm);
   const handleSave = async () => {

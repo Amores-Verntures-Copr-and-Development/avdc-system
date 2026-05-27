@@ -91,8 +91,16 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
   }, [onScan]);
 
   return (
-    <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl">
-      <div className="relative aspect-video bg-black">
+    <div
+      className="
+    relative w-full
+    max-w-full sm:max-w-lg 2xl:max-w-3xl
+    overflow-hidden rounded-2xl sm:rounded-3xl
+    border border-zinc-800
+    bg-zinc-950 shadow-2xl
+  "
+    >
+      <div className="relative aspect-[4/5] sm:aspect-video bg-black">
         <video
           ref={videoRef}
           className="h-full w-full object-cover"
@@ -101,21 +109,61 @@ const BarcodeScanner = ({ onScan, onClose }: BarcodeScannerProps) => {
           autoPlay
         />
 
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="relative h-[220px] w-[70%] overflow-hidden rounded-2xl border-4 border-white">
-            <div className="absolute left-0 top-1/2 h-1 w-full bg-green-400 animate-pulse" />
+        {/* Scanner Frame */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
+          <div
+            className="
+          relative
+          h-[120px] w-full max-w-[280px]
+          sm:h-[150px] sm:w-[70%]
+          2xl:h-[220px]
+          overflow-hidden
+          rounded-xl sm:rounded-2xl
+          border-[3px] sm:border-4 border-white
+        "
+          >
+            {/* Scan line */}
+            <div
+              className="
+            absolute left-0 top-1/2
+            h-0.5 sm:h-1
+            w-full
+            bg-green-400
+            animate-pulse
+          "
+            />
           </div>
         </div>
 
+        {/* Overlay */}
         <div className="pointer-events-none absolute inset-0 bg-black/20" />
       </div>
 
-      <div className="flex items-center justify-between p-4 text-sm text-zinc-400">
-        <div>Supports EAN, UPC, Code128, QR</div>
+      {/* Footer */}
+      <div
+        className="
+      flex flex-col gap-3
+      sm:flex-row sm:items-center sm:justify-between
+      p-3 sm:p-4
+      text-xs sm:text-sm
+      text-zinc-400
+    "
+      >
+        <div className="text-center sm:text-left">
+          Supports EAN, UPC, Code128, QR
+        </div>
 
         <button
           type="button"
-          className="rounded-xl bg-pink-600 px-4 py-2 text-white hover:bg-pink-500"
+          className="
+        w-full sm:w-auto
+        rounded-xl
+        bg-pink-600
+        px-4 py-2.5
+        font-medium text-white
+        transition-colors
+        hover:bg-pink-500
+      "
           onClick={onClose}
         >
           Cancel

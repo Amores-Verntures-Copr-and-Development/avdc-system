@@ -13,18 +13,30 @@ export async function GET(
     const slug = (await params).storeId;
     const storeId = Number(slug);
     const { searchParams } = new URL(_request.url);
+
     const search = searchParams.get("search") || "";
-    const res = await getProduct({ keyFields: { storeId: storeId }, search });
+    const unit = searchParams.get("unit") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
+    const res = await getProduct({
+      keyFields: { storeId: storeId },
+      search,
+      unit,
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
+    });
 
     if (!res.success) {
       throw new Error(res.message || "Failed to add product.");
     }
-
     return NextResponse.json(
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data,
+        count: res.count, // could sanitize before returning
       },
       { status: 201 },
     );

@@ -13,6 +13,7 @@ import RefundPage from "./components/RefundPage";
 import EditSalesPage from "./components/EditSalesPage";
 import { SalesStatus } from "@/types/sales";
 import { getSalesStatusOption } from "@/utils/salesUtils";
+import PrintSales from "./components/PrintSales";
 
 interface SelectedSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -24,7 +25,9 @@ const SelectedSalesPage = ({
   salesData,
   onBack,
 }: SelectedSalesPageProps) => {
-  const [showViews, setShowViews] = useState<null | "refund" | "edit">(null);
+  const [showViews, setShowViews] = useState<
+    null | "refund" | "edit" | "print"
+  >(null);
   const {
     data: response,
     mutate,
@@ -97,7 +100,12 @@ const SelectedSalesPage = ({
               <div className="flex flex-col 2xl:flex-row items-center gap-3">
                 <div className="flex items-center gap-2">
                   <div>
-                    <Button label="Print" color="outline" size="sm" />
+                    <Button
+                      label="Print"
+                      color="outline"
+                      size="sm"
+                      onClick={() => setShowViews("print")}
+                    />
                   </div>
                   <div>
                     <Button label="Download PDF" color="outline" size="sm" />
@@ -490,6 +498,8 @@ const SelectedSalesPage = ({
           onBack={() => setShowViews(null)}
           mutateSales={updateDataSales}
         />
+      ) : showViews === "print" ? (
+        <PrintSales salesData={salesData} onBack={() => setShowViews(null)} />
       ) : (
         <div></div>
       )}

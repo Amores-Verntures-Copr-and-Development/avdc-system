@@ -85,15 +85,6 @@ const AddItemToProductModal = ({
           prodVarUnit: item.itemUnit,
           prodVarPrice: 0,
           isDeductInv: false,
-          variantComponents: [
-            {
-              varComId: 0,
-              quantityRequired: 1,
-              prodVarId: 0,
-              inventoryItemId: item.inventoryItemId,
-              isDeductVar: true,
-            },
-          ],
         })),
       );
     }
@@ -106,7 +97,7 @@ const AddItemToProductModal = ({
       productVariant: products,
       storeId: storeId,
     };
-
+    console.log(addProdct);
     const success = await onSubmit(addProdct);
     if (success) {
       console.log({ success });

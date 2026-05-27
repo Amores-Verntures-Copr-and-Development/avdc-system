@@ -133,3 +133,12 @@ export async function findInventoryForReport({
     throw e;
   }
 }
+
+export async function getInventoryNotInProduct({
+  storeId,
+}: {
+  storeId: number;
+}) {
+  try {
+  } catch (e) {}
+}

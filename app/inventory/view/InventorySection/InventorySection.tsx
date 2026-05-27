@@ -475,15 +475,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
                 prodVarCreatedBy: user?.userId ?? 0,
                 prodVarName: p.prodVarName,
                 prodVarPrice: p.prodVarPrice,
-                prodVarUnit: "",
+                prodVarUnit: p.prodVarUnit,
+                inventoryItemId: p.inventoryItemId,
                 isDeductInv: true,
-                variantComponents:
-                  p.variantComponents?.map((vc) => ({
-                    inventoryItemId: vc.inventoryItemId,
-                    prodVarId: 0,
-                    quantityRequired: vc.quantityRequired,
-                    isDeductVar: true,
-                  })) ?? [],
               },
             ],
           })) ?? [];

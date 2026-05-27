@@ -68,6 +68,7 @@ export interface OrderList {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
+  inventoryItemId?: number | null;
   quantity: number;
   prodVarSubtotal?: number;
   prodVarTotal?: number;
@@ -181,7 +182,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const addProductBarcode = (barcode: string) => {
     const foundVariant = productList
       .flatMap((p) => p.productVariants || [])
-      .find((pv) => pv.variantComponents?.some((vc) => vc.barcode === barcode));
+      .find((pv) => pv.barcode === barcode);
 
     if (foundVariant) {
       const existingOrder = selectedOrder?.find(
@@ -315,17 +316,38 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     setProductList((prev) =>
       prev.map((product) => ({
         ...product,
+
         productVariants: product.productVariants?.map((variant) => {
-          if (variant.prodVarId !== prodVarId) return variant;
+          if (variant.prodVarId !== prodVarId) {
+            return variant;
+          }
+
+          const hasInventoryItem = Boolean(variant.inventoryItemId);
 
           return {
             ...variant,
-            variantComponents: variant.variantComponents
-              ?.filter((i) => Boolean(i.isDeductVar) === true)
-              .map((vc) => ({
+
+            // deduct direct stocks
+            stocks: hasInventoryItem
+              ? Math.max(0, Number(variant.stocks || 0) - quantityToAdd)
+              : variant.stocks,
+
+            // deduct components
+            variantComponents: variant.variantComponents?.map((vc) => {
+              if (!Boolean(vc.isDeductVar)) {
+                return vc;
+              }
+
+              return {
                 ...vc,
-                left: (vc.left ?? 0) - vc.quantityRequired * quantityToAdd,
-              })),
+
+                left: Math.max(
+                  0,
+                  Number(vc.left || 0) -
+                    Number(vc.quantityRequired || 0) * quantityToAdd,
+                ),
+              };
+            }),
           };
         }),
       })),
@@ -338,15 +360,36 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     setProductList((prev) =>
       prev.map((product) => ({
         ...product,
+
         productVariants: product.productVariants?.map((variant) => {
-          if (variant.prodVarId !== prodVarId) return variant;
+          if (variant.prodVarId !== prodVarId) {
+            return variant;
+          }
+
+          const hasInventoryItem = Boolean(variant.inventoryItemId);
 
           return {
             ...variant,
-            variantComponents: variant.variantComponents?.map((vc) => ({
-              ...vc,
-              left: (vc.left ?? 0) + vc.quantityRequired * quantityToRestore,
-            })),
+
+            // restore direct stocks
+            stocks: hasInventoryItem
+              ? Number(variant.stocks || 0) + quantityToRestore
+              : variant.stocks,
+
+            // restore components
+            variantComponents: variant.variantComponents?.map((vc) => {
+              if (!Boolean(vc.isDeductVar)) {
+                return vc;
+              }
+
+              return {
+                ...vc,
+
+                left:
+                  Number(vc.left || 0) +
+                  Number(vc.quantityRequired || 0) * quantityToRestore,
+              };
+            }),
           };
         }),
       })),
@@ -533,6 +576,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         salesItemSubtotal: Number(items.prodVarSubtotal),
         salesItemTotal: Number(items.prodVarTotal),
         prodVarId: items.prodVarId,
+        inventoryItemId: items.inventoryItemId ?? null,
         components:
           items.components?.map((i) => ({
             inventoryItemId: i.inventoryItemId,

@@ -134,22 +134,31 @@ export const getProduct = async ({
   search,
   storeName,
   keyFields = {},
+  limit,
+  offset,
 }: {
   storeId?: number;
   search?: string;
   storeName?: string;
   keyFields?: Partial<Products>;
+  category?: string;
+  unit?: string;
+  limit?: number;
+  offset?: number;
 }) => {
   try {
     const data = await getProducts({
       keyFields,
       search,
       storeName,
+      limit,
+      offset,
     });
     return {
-      data: data,
+      data: data.data,
       message: "Product fetched successfully!",
       success: true,
+      count: data.total,
     };
   } catch (e) {
     console.error(e);

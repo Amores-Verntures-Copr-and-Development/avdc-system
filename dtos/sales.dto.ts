@@ -42,7 +42,7 @@ export interface DisplaySalesDto extends Sales {
   customerName: string;
   salesCreatedByName: string;
   storeName: string;
-  saleItems: DisplaySalesItems[];
+  salesItems: DisplaySalesItems[];
   salesRefunds: SalesRefund[];
   paymentMethods: SalePaymentMethods[];
   totalItem: number;
@@ -69,6 +69,7 @@ export type CreateSaleItemDto = Pick<
   | "prodVarId"
   | "salesItemTotal"
 > & {
+  inventoryItemId: number | null;
   components?: ComponentsVariant[];
   salesItemDiscounts?: CreateSaleItemDisc[];
 };

@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo } from "react";
 interface ProductVariantTableProps {
   data: DisplaProductVariantsDtos[];
+  totalCount: number;
   isLoading: boolean;
   onRowSelection: (data: DisplaProductVariantsDtos) => void;
 }

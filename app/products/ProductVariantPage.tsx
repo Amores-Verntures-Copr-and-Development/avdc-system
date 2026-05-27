@@ -40,11 +40,14 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     ),
   },
   {
+    key: "prodVarUnit",
+    name: "Unit",
+  },
+  {
     key: "prodVarPrice",
     name: "Price",
     selector: (row) => formatPeso(row.prodVarPrice),
   },
-
   {
     key: "isDeductInv",
     name: "Deduct Inventory",
@@ -63,7 +66,24 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
       );
     },
   },
-  { key: "sold", name: "Sold", selector: (row) => (row.sold ? row.sold : 0) },
+  {
+    key: "inventoryItemQuantity",
+    name: "Stocks",
+    selector: (row) => (
+      <span className="font-semibold text-green-600">
+        {row.inventoryItemQuantity ? row.inventoryItemQuantity : 0}
+      </span>
+    ),
+  },
+  {
+    key: "sold",
+    name: "Sold",
+    selector: (row) => (
+      <span className="font-semibold text-red-600">
+        {row.sold ? row.sold : 0}
+      </span>
+    ),
+  },
   {
     key: "totalSales",
     name: "Total Sales",

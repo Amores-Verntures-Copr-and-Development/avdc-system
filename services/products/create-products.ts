@@ -7,11 +7,13 @@ import { getDBConnection } from "@/lib/db";
 import {
   insertProducts,
   insertProductsBulk,
+  insertProductVariantsBulk,
   selectProducts,
 } from "@/models/productModel";
 import { PoolConnection } from "mysql2/promise";
 import { createProductVariantsBulk } from "./product-variant/create-product-variants";
 import { createVariantComponent } from "./product-variant/variant-component/create-variant-component";
+import { getProductVariants } from "./product-variant/get-product-variants";
 
 export async function createProducts({
   connection,
@@ -52,11 +54,11 @@ export async function createBulkProducts({
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   await connection.beginTransaction();
-
+  console.log(data[0].productVariants);
   try {
     const validProducts: CreateProductDtos[] = [];
     const skippedProducts: string[] = [];
-
+    const validVariants: CreateProductVariantDto[] = [];
     for (const product of data) {
       const isExistingProducts = await selectProducts({
         keyFields: {
@@ -105,40 +107,32 @@ export async function createBulkProducts({
           prodVarPrice: Number(pv.prodVarPrice),
           prodVarUnit: pv.prodVarUnit,
           isDeductInv: pv.isDeductInv,
+          inventoryItemId: pv.inventoryItemId,
         });
       });
     });
 
-    const variantIds = await createProductVariantsBulk({
-      connection,
-      data: allVariants,
-    });
-
-    const allVariantComponents: CreateVarianComponentDto[] = [];
-    let variantIndex = 0;
-
-    validProducts.forEach((product) => {
-      product.productVariants?.forEach((pv) => {
-        const prodVarId = variantIds[variantIndex++];
-
-        pv.variantComponents?.forEach((vc) => {
-          allVariantComponents.push({
-            prodVarId,
-            inventoryItemId: vc.inventoryItemId,
-            quantityRequired: Number(vc.quantityRequired),
-            isDeductVar: vc.isDeductVar,
-          });
-        });
+    for (const variant of allVariants) {
+      const isExistingVariants = await getProductVariants({
+        keyFields: {
+          inventoryItemId: variant.inventoryItemId,
+          prodId: variant.prodId,
+        },
       });
-    });
 
-    if (allVariantComponents.length) {
-      await createVariantComponent({
-        connection,
-        data: allVariantComponents,
-      });
+      if (isExistingVariants.length > 0) {
+        continue;
+      }
+
+      validVariants.push(variant);
     }
 
+    if (validVariants.length) {
+      await insertProductVariantsBulk({
+        connection: connection,
+        data: validVariants,
+      });
+    }
     await connection.commit();
 
     return {
