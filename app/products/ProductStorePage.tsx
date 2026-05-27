@@ -674,7 +674,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         }}
         title="Unlisted Items"
       >
-        <UnlistedItems />
+        <UnlistedItems storeId={storeId!} />
       </Popup>
       <ConfirmationModal
         title={`Delete ${showDeleteConfirmation?.prodName}`}

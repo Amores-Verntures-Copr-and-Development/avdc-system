@@ -2,12 +2,14 @@ import {
   selectInventoryItemReport,
   selectInventoryItems,
   selectInventoryItemsCount,
+  selectInventoryItemsNotInProdVar,
   selectInventoryItemsStockStatus,
   selectInventoryItemUnitById,
   selectStockRoomInventoryItems,
 } from "@/models/inventoryModels";
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 import { PoolConnection } from "mysql2/promise";
+import { findInventoryByFields } from "../get-inventory";
 
 export async function findInventoryItemsByField({
   keyFields = {},
@@ -134,11 +136,24 @@ export async function findInventoryForReport({
   }
 }
 
-export async function getInventoryNotInProduct({
+export async function findInventoryNotInProduct({
   storeId,
 }: {
   storeId: number;
 }) {
   try {
-  } catch (e) {}
+    const inventory = await findInventoryByFields({keyFields:{inventoryReferenceId:storeId,inventoryReference:"store"}})
+
+    if(inventory.length === 0)
+    {
+      throw new Error("No inventory found in this store!")
+    }
+
+    const data = await selectInventoryItemsNotInProdVar({inventoryId:inventory[0].inventoryId})
+
+    return data;
+  } catch (e) {
+    throw e;
+  }
 }
+

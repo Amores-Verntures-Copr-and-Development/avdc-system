@@ -33,6 +33,7 @@ import {
   findInventoryForReport,
   findInventoryItemsByField,
   findInventoryItemUnitByInventoryId,
+  findInventoryNotInProduct,
   getInventoryItemsStatus,
 } from "@/services/inventory/inventory-items/get-inventory-items";
 import { getInventoryMovement } from "@/services/inventory/inventory-movement/get-inventory-movement";
@@ -507,3 +508,24 @@ export const deleteInventoryItemById = async ({
 //     };
 //   }
 // };
+
+
+export const getInventoryNotInProduct = async ({storeId}:{storeId:number,search?:string,limit?:number,offset?:number}) => {
+  try{
+    const res = await findInventoryNotInProduct({storeId:storeId})
+
+    return {
+      success:true,
+      message:"Fetch inventory items not in product!",
+      data:res
+    }
+
+  }
+  catch(e){
+    return {
+      success:false,
+      message:"Failed to fetch inventory items not in product!",
+      error:e
+    }
+  }
+}

@@ -1,9 +1,24 @@
 import Button from "@/components/shared/Button";
+import { ApiResponse } from "@/types/api";
+import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
+import { ItemInterface } from "@/types/items";
+import { fetcher } from "@/utils/fetcher";
 import { RefreshCw, ShoppingBasket } from "lucide-react";
 import React from "react";
 import toast from "react-hot-toast";
+import useSWR from "swr";
 
-const UnlistedItems = () => {
+interface DisplayItems extends InventoryItemInterface, ItemInterface {}
+
+interface UnlistedItemsProps {
+  storeId: number;
+}
+const UnlistedItems = ({ storeId }: UnlistedItemsProps) => {
+  const { data: itemData, isLoading } = useSWR<ApiResponse<DisplayItems[]>>(
+    storeId ? `/api/inventory/store/${storeId}/item/not-in-product` : null,
+    fetcher,
+  );
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden p-2 2xl:p-0 gap-2">
       {/* Header */}
@@ -26,7 +41,7 @@ const UnlistedItems = () => {
       {/* Top actions */}
       <div className="flex justify-between items-center shrink-0">
         <span className="font-semibold text-xs 2xl:text-sm">
-          Items not in products (5)
+          Items not in products ({itemData?.count})
         </span>
 
         <button className="p-2 hover:bg-gray-200 rounded">
@@ -37,26 +52,33 @@ const UnlistedItems = () => {
       {/* ONLY THIS SCROLLS */}
       <div className="flex-1 overflow-y-auto min-h-0 pr-1">
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center border-border rounded-lg border shadow p-2">
-            <div className="flex gap-3">
-              <div className="h-10 w-10 rounded-sm bg-border"></div>
-              <div className="flex flex-col justify-between">
-                <h1 className="font-semibold text-sm">Mineral Water</h1>
-                <span className="font-medium text-xs text-gray-700">
-                  Stock:45
-                </span>
+          {itemData?.data.map((i, index) => (
+            <div
+              key={index}
+              className="flex justify-between items-center border-border rounded-lg border shadow p-2"
+            >
+              <div className="flex gap-3">
+                <div className="h-10 w-10 rounded-sm bg-border"></div>
+                <div className="flex flex-col justify-between">
+                  <h1 className="font-semibold text-sm">
+                    {i.itemName}({i.itemUnit})
+                  </h1>
+                  <span className="font-medium text-xs text-gray-700">
+                    Stock:{i.inventoryItemQuantity}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <Button
+                  size="sm"
+                  label="Add"
+                  onClick={() => {
+                    toast.success("Item added to product successfully!");
+                  }}
+                />
               </div>
             </div>
-            <div>
-              <Button
-                size="sm"
-                label="Add"
-                onClick={() => {
-                  toast.success("Item added to product successfully!");
-                }}
-              />
-            </div>
-          </div>
+          ))}
           <div className="flex justify-between items-center border-border rounded-lg border shadow p-2">
             <div className="flex gap-3">
               <div className="h-10 w-10 rounded-sm bg-border"></div>

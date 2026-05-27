@@ -721,3 +721,21 @@ ORDER BY
   ]);
   return rows;
 };
+
+
+
+export const selectInventoryItemsNotInProdVar = async ({inventoryId}:{  inventoryId:number}) => {
+
+const pool = await getDBConnection();
+const sql = `SELECT i.*,ii.*
+FROM InventoryItems ii
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+WHERE ii.inventoryId = ?
+AND NOT EXISTS (
+    SELECT 1
+    FROM ProductVariants pv
+    WHERE pv.inventoryItemId = ii.inventoryItemId
+);`
+  const [rows] = await pool.execute(sql, [inventoryId]);
+  return rows;
+}
