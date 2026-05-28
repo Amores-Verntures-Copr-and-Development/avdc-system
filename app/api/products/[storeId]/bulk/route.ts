@@ -15,8 +15,14 @@ export async function POST(
     const data = (await _request.json()) as CreateProductDtos[];
     const res = await createProductBulkController(data);
     if (!res.success) {
-      console.log(res.message);
-      throw new Error(`${res.error}`);
+      return NextResponse.json(
+        {
+          success: false,
+          message: res.message,
+          error: res.error,
+        },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json(
@@ -31,7 +37,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to add products!",
+        message: err?.message,
         error: err?.message || String(err),
       },
       { status: 500 },

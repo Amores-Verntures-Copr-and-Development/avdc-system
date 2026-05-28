@@ -399,9 +399,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       setShowRequestStockMode(false);
       setSelectedRequestRows([]);
       return true;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     }
   };
@@ -455,7 +454,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         );
         const res = await result.json();
         if (!res.success) {
-          throw new Error(res.err);
+          throw new Error(res.message || res.error || "Failed to add products");
         }
         toast.success("Inventory added successfully!");
         mutate();
@@ -482,7 +481,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             ],
           })) ?? [];
 
-        const result = await fetch(`api/products/${user?.storeId}/bulk`, {
+        const result = await fetch(`/api/products/${user?.storeId}/bulk`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -490,17 +489,16 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           body: JSON.stringify(createProduct),
         });
         const res = await result.json();
-        if (!res.success) {
-          throw new Error(res.err);
+        if (!result.ok || !res.success) {
+          throw new Error(res.message || res.error || "Failed to add products");
         }
         toast.success(res.message);
         mutate();
         return true;
       }
       return false;
-    } catch (e) {
-      console.log(e);
-      toast.error("Failed to add Inventory.");
+    } catch (e: any) {
+      toast.error(e.message);
       return false;
     } finally {
       setIsAddingProduct(false);

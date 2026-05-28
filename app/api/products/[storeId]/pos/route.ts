@@ -11,10 +11,21 @@ export async function GET(
     const { searchParams } = new URL(_request.url);
 
     const search = searchParams.get("search") || "";
-
+    const barcode = searchParams.get("barcode") || "";
+    const order = searchParams.get("order") || "";
+    const category = searchParams.get("category") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
+    console.log({ search });
     const res = await getProduct({
       keyFields: { storeId: storeId },
       search,
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
+      barcode,
+      category,
     });
 
     if (!res.success) {

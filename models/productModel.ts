@@ -251,6 +251,8 @@ export const selectProducts = async ({
   storeName,
   limit,
   offset,
+  barcode,
+  category,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
@@ -260,62 +262,69 @@ export const selectProducts = async ({
   unit?: string;
   limit?: number;
   offset?: number;
+  barcode?: string;
 }) => {
-  const pool = connection ? connection : await getDBConnection();
-  let sql = `SELECT  
-    p.*,
-    s.*,
-    pc.prodCatId,
-    pc.prodCatName,
-    (
-      SELECT JSON_ARRAYAGG(
-        JSON_OBJECT(
-          'prodVarId', pv.prodVarId,
-          'prodVarName', pv.prodVarName,
-          'prodVarPrice', pv.prodVarPrice,
-          'isDeductInv', pv.isDeductInv,
-          'stocks', iis.inventoryItemQuantity,
-          'inventoryItemId', pv.inventoryItemId,
-          'barcode', pb.barcode,
-          'barcodeId', pb.barcodeId,
-          'sold', (
-            SELECT COALESCE(SUM(si.salesItemQuantity), 0)
-            FROM SalesItems si
-            WHERE si.prodVarId = pv.prodVarId
-          ),
-          'variantComponents', (
-            SELECT JSON_ARRAYAGG(
-              JSON_OBJECT(
-                'varComId', vc.varComId,
-                'prodVarId', vc.prodVarId,
-                'quantityRequired', vc.quantityRequired,
-                'inventoryItemId', vc.inventoryItemId,
-                'left', ii.inventoryItemQuantity,
-                'isDeductVar', vc.isDeductVar
+  const pool = connection ?? (await getDBConnection());
+
+  let sql = `
+    SELECT
+      p.*,
+      s.*,
+      pc.prodCatId,
+      pc.prodCatName,
+      (
+        SELECT JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'prodVarId', pv.prodVarId,
+            'prodVarName', pv.prodVarName,
+            'prodVarPrice', pv.prodVarPrice,
+            'isDeductInv', pv.isDeductInv,
+            'stocks', iis.inventoryItemQuantity,
+            'inventoryItemId', pv.inventoryItemId,
+            'barcode', pb.barcode,
+            'barcodeId', pb.barcodeId,
+            'sold', (
+              SELECT COALESCE(SUM(si.salesItemQuantity), 0)
+              FROM SalesItems si
+              WHERE si.prodVarId = pv.prodVarId
+            ),
+            'variantComponents', (
+              SELECT JSON_ARRAYAGG(
+                JSON_OBJECT(
+                  'varComId', vc.varComId,
+                  'prodVarId', vc.prodVarId,
+                  'quantityRequired', vc.quantityRequired,
+                  'inventoryItemId', vc.inventoryItemId,
+                  'left', ii.inventoryItemQuantity,
+                  'isDeductVar', vc.isDeductVar
+                )
               )
+              FROM VariantComponents vc
+              LEFT JOIN InventoryItems ii
+                ON ii.inventoryItemId = vc.inventoryItemId
+              WHERE vc.prodVarId = pv.prodVarId
             )
-            FROM VariantComponents vc
-            LEFT JOIN InventoryItems ii 
-              ON ii.inventoryItemId = vc.inventoryItemId
-            WHERE vc.prodVarId = pv.prodVarId
           )
         )
-      )
-      FROM ProductVariants pv
-      LEFT JOIN InventoryItems iis 
-        ON iis.inventoryItemId = pv.inventoryItemId
-      LEFT JOIN Barcodes pb 
-        ON pb.inventoryItemId = pv.inventoryItemId
-      WHERE pv.prodId = p.prodId 
-        AND pv.prodVarDeletedAt IS NULL
-    ) AS productVariants
-FROM Products p
-LEFT JOIN Stores s 
-  ON s.storeId = p.storeId
-LEFT JOIN ProductCategories pc 
-  ON pc.prodCatId = p.prodCatId
-WHERE p.prodDeletedAt IS NULL`;
+        FROM ProductVariants pv
+        LEFT JOIN InventoryItems iis
+          ON iis.inventoryItemId = pv.inventoryItemId
+        LEFT JOIN Barcodes pb
+          ON pb.inventoryItemId = pv.inventoryItemId
+        WHERE pv.prodId = p.prodId
+          AND pv.prodVarDeletedAt IS NULL
+      ) AS productVariants
+    FROM Products p
+    LEFT JOIN Stores s
+      ON s.storeId = p.storeId
+    LEFT JOIN ProductCategories pc
+      ON pc.prodCatId = p.prodCatId
+    WHERE p.prodDeletedAt IS NULL
+  `;
+
   const params: any[] = [];
+
+  // Dynamic key fields
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND p.${key} IS NULL`;
@@ -324,22 +333,79 @@ WHERE p.prodDeletedAt IS NULL`;
       params.push(value);
     }
   }
-  if (search) {
-    sql += ` AND p.prodName LIKE ?`;
-    params.push(`%${search}%`);
+
+  // Search by product name OR barcode
+  if (search?.trim()) {
+    sql += `
+    AND (
+      p.prodName LIKE ?
+      OR EXISTS (
+        SELECT 1
+        FROM ProductVariants pvs
+        LEFT JOIN Barcodes bc
+          ON bc.prodVarId = pvs.prodVarId
+        WHERE pvs.prodId = p.prodId
+          AND pvs.prodVarDeletedAt IS NULL
+          AND (
+            pvs.prodVarName LIKE ?
+            OR bc.barcode LIKE ?
+          )
+      )
+    )
+  `;
+
+    params.push(
+      `%${search.trim()}%`,
+      `%${search.trim()}%`,
+      `%${search.trim()}%`,
+    );
   }
-  if (storeName) {
+
+  // Store filter
+  if (storeName?.trim()) {
     sql += ` AND s.storeName LIKE ?`;
-    params.push(`%${storeName}%`);
+    params.push(`%${storeName.trim()}%`);
   }
+
+  // Exact barcode filter
+  if (barcode?.trim()) {
+    sql += `
+      AND EXISTS (
+        SELECT 1
+        FROM ProductVariants pvs
+        LEFT JOIN Barcodes bc
+          ON bc.prodVarId = pvs.prodVarId
+        WHERE pvs.prodId = p.prodId
+          AND bc.barcode = ?
+      )
+    `;
+
+    params.push(barcode.trim());
+  }
+
+  // Category filter
+  if (category?.trim() && category !== "all") {
+    if (category === "null") {
+      sql += ` AND pc.prodCatName IS NULL`;
+    } else {
+      sql += ` AND TRIM(pc.prodCatName) = TRIM(?)`;
+      params.push(category.trim());
+    }
+  }
+
+  // Order
+  sql += ` ORDER BY p.prodId DESC`;
+
+  // Pagination
   if (limit !== undefined) {
     sql += ` LIMIT ${limit}`;
   }
+
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
-  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
 
@@ -348,6 +414,7 @@ export const selectProductCounts = async ({
   keyFields = {},
   search,
   storeName,
+  barcode,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
@@ -355,6 +422,7 @@ export const selectProductCounts = async ({
   storeName?: string;
   category?: string;
   unit?: string;
+  barcode?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `SELECT  
@@ -374,13 +442,48 @@ WHERE p.prodDeletedAt IS NULL`;
       params.push(value);
     }
   }
-  if (search) {
-    sql += ` AND p.prodName LIKE ?`;
-    params.push(`%${search}%`);
+  if (search?.trim()) {
+    sql += `
+    AND (
+      p.prodName LIKE ?
+      OR EXISTS (
+        SELECT 1
+        FROM ProductVariants pvs
+        LEFT JOIN Barcodes bc
+          ON bc.prodVarId = pvs.prodVarId
+        WHERE pvs.prodId = p.prodId
+          AND pvs.prodVarDeletedAt IS NULL
+          AND (
+            pvs.prodVarName LIKE ?
+            OR bc.barcode LIKE ?
+          )
+      )
+    )
+  `;
+
+    params.push(
+      `%${search.trim()}%`,
+      `%${search.trim()}%`,
+      `%${search.trim()}%`,
+    );
   }
-  if (storeName) {
+  if (storeName?.trim()) {
     sql += ` AND s.storeName LIKE ?`;
-    params.push(`%${storeName}%`);
+    params.push(`%${storeName.trim()}%`);
+  }
+  if (barcode?.trim()) {
+    sql += `
+      AND EXISTS (
+        SELECT 1
+        FROM ProductVariants pvs
+        LEFT JOIN Barcodes bc
+          ON bc.prodVarId = pvs.prodVarId
+        WHERE pvs.prodId = p.prodId
+          AND bc.barcode = ?
+      )
+    `;
+
+    params.push(barcode.trim());
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
@@ -526,6 +629,7 @@ export const selectProductCategories = async ({
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log({ rows });
   return rows;
 };
 

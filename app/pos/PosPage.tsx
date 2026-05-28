@@ -26,7 +26,7 @@ import useSWR from "swr";
 import ProductContent from "./components/layout/ProductContent";
 
 import ProductVariant from "./components/layout/ProductVariant";
-import { ProductVariants } from "@/types/products";
+import { ProductCategories, ProductVariants } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/Popup";
@@ -58,6 +58,7 @@ import ViewEditAmountItemOrder from "./components/ViewEditAmountItemOrder";
 import SalesOrder from "./components/sidebar/SalesOrder";
 import AddCustomer from "./components/sidebar/AddCustomer";
 import BarcodeScanner from "./components/BarcodeScanner";
+import { ApiResponse } from "@/types/api";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -93,7 +94,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [editOrderAmount, setEditOrderAmount] = useState<OrderList | null>(
     null,
   );
-  const [categoryFilter, setCategoryFilter] = useState<string | "all">("all");
+  const [searchProd, setSearchProd] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string | "all" | null>(
+    "all",
+  );
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
@@ -118,9 +122,24 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     CreateSalesDiscount[] | null
   >(null);
   const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
+  const { data: prodCat, mutate: mutateProdCat } = useSWR<
+    ApiResponse<ProductCategories[]>
+  >(storeId ? `/api/products/${storeId}/product-categories/` : null, fetcher);
   const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
     data: DisplayProductsDtos[];
-  }>(storeId ? `/api/products/${storeId}/pos` : null, fetcher);
+  }>(
+    storeId
+      ? `/api/products/${storeId}/pos?search=${encodeURIComponent(
+          searchProd.trim(),
+        )}&category=${
+          categoryFilter === "all"
+            ? ""
+            : encodeURIComponent(categoryFilter ?? "null")
+        }&limit=100`
+      : null,
+    fetcher,
+  );
+
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(storeId ? `/api/payment-method/store/${storeId}/` : null, fetcher);
@@ -134,7 +153,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     } else {
       setProductList([]);
     }
-  }, [itemResponse.data?.length]);
+  }, [itemResponse.data]);
 
   const subtotal = useMemo(() => {
     return selectedOrder?.reduce((t, o) => t + Number(o.prodVarTotal), 0) ?? 0;
@@ -179,16 +198,32 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return true;
   };
 
-  const addProductBarcode = (barcode: string) => {
-    const foundVariant = productList
-      .flatMap((p) => p.productVariants || [])
-      .find((pv) => pv.barcode === barcode);
-
-    if (foundVariant) {
-      const existingOrder = selectedOrder?.find(
-        (s) => s.prodVarId === foundVariant?.prodVarId,
+  const addProductBarcode = async (barcode: string) => {
+    try {
+      if (!barcode.trim()) return;
+      const res = await fetch(
+        `/api/products/${storeId}/pos?barcode=${encodeURIComponent(barcode)}`,
+        {
+          method: "GET",
+          credentials: "include",
+        },
       );
-
+      const data: ApiResponse<DisplayProductsDtos[]> = await res.json();
+      if (!data.success || !data.data.length) {
+        toast.error(`No found item with ${barcode}`);
+        return;
+      }
+      const foundProduct = data.data[0];
+      const foundVariant = foundProduct.productVariants?.find(
+        (pv) => pv.barcode === barcode,
+      );
+      if (!foundVariant) {
+        toast.error(`No variant found with ${barcode}`);
+        return;
+      }
+      const existingOrder = selectedOrder?.find(
+        (s) => s.prodVarId === foundVariant.prodVarId,
+      );
       if (existingOrder) {
         toast.success(`Already in order ${existingOrder.prodVarName}`);
         return;
@@ -198,12 +233,16 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         prodVarName: foundVariant.prodVarName,
         prodVarPrice: foundVariant.prodVarPrice,
         quantity: 1,
+        inventoryItemId: foundVariant.inventoryItemId,
         components: foundVariant.variantComponents,
       };
+
       addProductOrder(orderListData);
+
       toast.success(`Found ${orderListData.prodVarName}`);
-    } else {
-      toast.error(`No found item with ${barcode}`);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to fetch barcode product");
     }
   };
 
@@ -496,46 +535,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       });
     });
   };
-  const [searchProd, setSearchProd] = useState("");
-  // const removeQuantity = (product: DisplayProductsDtos) => {};
-  const productCategoriesList = useMemo(() => {
-    return Array.from(
-      new Set(
-        productList
-          .filter((p) => p.prodCatId !== null)
-          .map((p) => p.prodCatName),
-      ),
-    );
-  }, [productList]);
-  const filteredProductList = useMemo(() => {
-    let list = productList;
 
-    // 🔹 Category filter
-    if (categoryFilter !== "all") {
-      list = list.filter((product) => product.prodCatName === categoryFilter);
-    }
-
-    // 🔹 Search filter
-    if (searchProd.trim()) {
-      const keyword = searchProd.toLowerCase();
-
-      list = list.filter((item) => {
-        if (showProductView === "product") {
-          return item.prodName?.toLowerCase().includes(keyword);
-        }
-
-        if (showProductView === "product-variant") {
-          return item.productVariants?.some((variant) =>
-            variant.prodVarName?.toLowerCase().includes(keyword),
-          );
-        }
-
-        return true;
-      });
-    }
-
-    return list;
-  }, [productList, categoryFilter, searchProd, showProductView]);
   const removeProduct = (product: OrderList) => {
     const findQuantity = selectedOrder?.find(
       (p) => p.prodVarId === product.prodVarId,
@@ -906,16 +906,26 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 />
               </div>
 
-              {productCategoriesList.map((pc, index) => (
+              {prodCat?.data.map((pc, index) => (
                 <div key={index} className="flex-shrink-0">
                   <Button
                     size="sm"
-                    label={pc}
-                    color={categoryFilter === pc ? "primary" : "outline"}
-                    onClick={() => setCategoryFilter(pc)}
+                    label={pc.prodCatName}
+                    color={
+                      categoryFilter === pc.prodCatName ? "primary" : "outline"
+                    }
+                    onClick={() => setCategoryFilter(pc.prodCatName)}
                   />
                 </div>
               ))}
+              <div className="flex-shrink-0">
+                <Button
+                  size="sm"
+                  label={"No category"}
+                  color={categoryFilter === null ? "primary" : "outline"}
+                  onClick={() => setCategoryFilter("null")}
+                />
+              </div>
             </div>
           </div>
           {showProductView === "product" ? (
@@ -933,7 +943,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             ) : (
               <ProductContent
-                data={filteredProductList ?? []}
+                data={productList ?? []}
                 selectProduct={(data) => {
                   setSelectedProduct(data);
                 }}
@@ -942,7 +952,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             )
           ) : (
             <div className="flex-1 bg-white border  border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
-              {filteredProductList.flatMap((p) =>
+              {productList.flatMap((p) =>
                 p.productVariants?.flatMap((pv) => (
                   <ProductVariantCard
                     key={pv.prodVarId}

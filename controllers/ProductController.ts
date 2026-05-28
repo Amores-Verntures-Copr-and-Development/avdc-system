@@ -61,8 +61,15 @@ export const createProductBulkController = async (
       success: true,
       message: "Products added successfully!",
     };
-  } catch (e) {
-    console.error(e);
+  } catch (e: any) {
+    if (e.message?.includes("All products already exist")) {
+      return {
+        success: false,
+        message: e.message,
+        error: e,
+      };
+    }
+
     return {
       success: false,
       message: "Failed to add products!",
@@ -136,6 +143,8 @@ export const getProduct = async ({
   keyFields = {},
   limit,
   offset,
+  barcode,
+  category,
 }: {
   storeId?: number;
   search?: string;
@@ -145,6 +154,7 @@ export const getProduct = async ({
   unit?: string;
   limit?: number;
   offset?: number;
+  barcode?: string;
 }) => {
   try {
     const data = await getProducts({
@@ -153,6 +163,8 @@ export const getProduct = async ({
       storeName,
       limit,
       offset,
+      barcode,
+      category,
     });
     return {
       data: data.data,

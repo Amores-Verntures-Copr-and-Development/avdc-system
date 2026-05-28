@@ -9,7 +9,7 @@ import {
   DisplayProductsDtos,
 } from "@/dtos/products.dto";
 import { fetcher } from "@/utils/fetcher";
-import { ArrowLeft, Eye, Plus, Trash } from "lucide-react";
+import { ArrowLeft, Barcode, Eye, Plus, Trash } from "lucide-react";
 import React, { useState } from "react";
 import useSWR from "swr";
 import AddVariantModal from "./components/AddVariantModal";
@@ -20,6 +20,7 @@ import IconButton from "@/components/shared/IconButton";
 import Popup from "@/components/shared/Popup";
 import VariantComponentPage from "./components/VariantComponentPage";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import BarcodeProductComponent from "./components/BarcodeProductComponent";
 
 interface ProductVariantPageProps {
   data: DisplayProductsDtos | null;
@@ -98,6 +99,8 @@ const ProductVariantPage = ({
   user,
 }: ProductVariantPageProps) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showBarcode, setShowBarcode] =
+    useState<DisplaProductVariantsDtos | null>(null);
   const [showDeleteConfirmation, setShowDeleteComfirmation] =
     useState<DisplaProductVariantsDtos | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -233,7 +236,15 @@ const ProductVariantPage = ({
                 }}
                 label={"View"}
                 bg={"nobg"}
-                icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                icon={<Eye className="w-5 h-5 xl:w-5 xl:h-5" />}
+              />
+              <IconButton
+                onClick={function (): void {
+                  setShowBarcode(row);
+                }}
+                label={"Barcode"}
+                bg={"blue"}
+                icon={<Barcode className="w-5 h-5 xl:w-5 xl:h-5" />}
               />
               <IconButton
                 onClick={function (): void {
@@ -241,7 +252,7 @@ const ProductVariantPage = ({
                 }}
                 label={"Delete"}
                 bg={"red"}
-                icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                icon={<Trash className="w-5 h-5 xl:w-5 xl:h-5" />}
               />
             </div>
           )}
@@ -273,6 +284,23 @@ const ProductVariantPage = ({
           onSubmit={handleAddVariant}
           mutate={mutate}
           isSubmitting={isSubmitting}
+        />
+      </Modal>
+      <Modal
+        isOpen={showBarcode !== null}
+        onClose={function (): void {
+          setShowBarcode(null);
+        }}
+        title={`${showBarcode?.prodVarName} Barcode`}
+      >
+        <BarcodeProductComponent
+          data={showBarcode}
+          onCancel={function (): void {
+            setShowBarcode(null);
+          }}
+          mutate={function (): void {
+            mutate();
+          }}
         />
       </Modal>
       <Popup

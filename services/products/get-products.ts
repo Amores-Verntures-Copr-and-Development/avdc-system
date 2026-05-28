@@ -7,6 +7,8 @@ export async function getProducts({
   storeName,
   limit,
   offset,
+  barcode,
+  category,
 }: {
   keyFields?: Partial<Products>;
   search?: string;
@@ -15,6 +17,7 @@ export async function getProducts({
   unit?: string;
   limit?: number;
   offset?: number;
+  barcode?: string;
 }) {
   try {
     const data = await selectProducts({
@@ -23,9 +26,17 @@ export async function getProducts({
       storeName,
       limit,
       offset,
+      barcode,
+      category,
     });
 
-    const total = await selectProductCounts({ keyFields, search, storeName });
+    const total = await selectProductCounts({
+      keyFields,
+      search,
+      storeName,
+      barcode,
+      category,
+    });
     return {
       data: data,
       total: total[0].totalItems,

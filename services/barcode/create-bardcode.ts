@@ -26,50 +26,99 @@ export async function createBarcode({
   try {
     // could add more logic here like checking for duplicates before inserting,
 
-    const existingBarcodes = await getBarcodeByFields({
-      connection: connection ? connection : newConnection,
-      keyFields: { barcode: data.map((item) => item.barcode) },
-    });
-
-    if (existingBarcodes.length > 0) {
-      const existingBarcodesStr = existingBarcodes
-        .map((b) => b.barcode)
-        .join(", ");
-      throw new Error(
-        `The following barcodes already exist: ${existingBarcodesStr}`,
-      );
-    }
-
-    const barcodeId = await insertBarcode({
-      data,
-      connection: connection ? connection : newConnection,
-    });
-
     for (const item of data) {
-      if (item.inventoryItemId) {
-        //check in prodId
+      const barcodeExisting = await getBarcodeByFields({
+        connection: connection ? connection : newConnection,
+        keyFields: {
+          barcode: item.barcode,
+        },
+      });
 
-        const existingInProdVar = await selectProductVariantsTable({
-          keyFields: { inventoryItemId: item.inventoryItemId },
+      if (barcodeExisting.length === 0) {
+        const barcodeId = await insertBarcode({
+          data: [item],
           connection: connection ? connection : newConnection,
         });
-        if (existingInProdVar.length > 0) {
-          await updateBarcodesByFields({
-            keyFields: ["barcodeId"],
-            updates: [
-              {
-                barcodeId: barcodeId,
-                prodVarId: existingInProdVar[0].prodVarId,
-              },
-            ],
+
+        if (item.inventoryItemId) {
+          const existingInProdVar = await selectProductVariantsTable({
+            keyFields: { inventoryItemId: item.inventoryItemId },
             connection: connection ? connection : newConnection,
           });
-          //update the barcodes to add prodVarId with the existing barcodes and ivnentoryitemId
+          if (existingInProdVar.length > 0) {
+            await updateBarcodesByFields({
+              keyFields: ["barcodeId"],
+              updates: [
+                {
+                  barcodeId: barcodeId,
+                  prodVarId: existingInProdVar[0].prodVarId,
+                },
+              ],
+              connection: connection ? connection : newConnection,
+            });
+            //update the barcodes to add prodVarId with the existing barcodes and ivnentoryitemId
+          }
+        }
+
+        if (item.prodVarId) {
+          const existingInProdVar = await selectProductVariantsTable({
+            keyFields: { prodVarId: item.prodVarId },
+            connection: connection ? connection : newConnection,
+          });
+          if (existingInProdVar.length > 0) {
+            await updateBarcodesByFields({
+              keyFields: ["barcodeId"],
+              updates: [
+                {
+                  barcodeId: barcodeId,
+                  inventoryItemId: existingInProdVar[0].inventoryItemId,
+                },
+              ],
+              connection: connection ? connection : newConnection,
+            });
+          }
         }
       }
 
-      if (item.prodVarId) {
-        // check in prodVarId
+      if (barcodeExisting.length > 0) {
+        for (const barcode of barcodeExisting) {
+          if (item.inventoryItemId) {
+            if (barcode.inventoryItemId !== null) {
+              throw new Error(
+                `Barcode ${barcode.barcode} already has an inventory item`,
+              );
+            }
+
+            await updateBarcodesByFields({
+              keyFields: ["barcodeId"],
+              updates: [
+                {
+                  barcodeId: barcode.barcodeId,
+                  inventoryItemId: item.inventoryItemId,
+                },
+              ],
+              connection: connection ? connection : newConnection,
+            });
+          }
+          if (item.prodVarId) {
+            if (barcode.prodVarId !== null) {
+              throw new Error(
+                `Barcode ${barcode.barcode} already has a product variant`,
+              );
+            }
+
+            await updateBarcodesByFields({
+              keyFields: ["barcodeId"],
+              updates: [
+                {
+                  barcodeId: barcode.barcodeId,
+                  prodVarId: item.prodVarId,
+                },
+              ],
+              connection: connection ? connection : newConnection,
+            });
+          }
+        }
       }
     }
 
