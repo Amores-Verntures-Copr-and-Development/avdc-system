@@ -7,12 +7,12 @@ export async function GET(
 ) {
   try {
     const type = (await params).type;
-    console.log({ type });
+
     const res = await getCategories({ controller: null });
 
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
+
       throw new Error(`${res.message ?? "Failed to fetch category"}`);
     }
 

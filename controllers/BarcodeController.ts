@@ -21,7 +21,10 @@ export const createBarcodeController = async ({
     };
   } catch (error: any) {
     const errorMessage = error?.message || String(error);
-    if (errorMessage.includes("already has an inventory item")) {
+    if (
+      errorMessage.includes("already has an inventory item") ||
+      errorMessage.includes("already has a product variant")
+    ) {
       return {
         success: false,
         message: errorMessage,
@@ -91,6 +94,7 @@ export const deleteBarcodeByFields = async ({
       data: res,
     };
   } catch (error) {
+    console.log({ error });
     return {
       success: false,
       message: "Failed to delete product barcode!",

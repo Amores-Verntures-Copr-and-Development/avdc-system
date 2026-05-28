@@ -50,7 +50,7 @@ const AddCustomerModal = ({
   const [importDataKeys, setImportDataKeys] = useState<string[]>([]);
   const [fileName, setFileName] = useState("");
   const [previewPage, setPreviewPage] = useState(1);
-  console.log({ storeId });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [customerForm, setCustomerForm] = useState<CreateCustomerDto>({
@@ -111,7 +111,6 @@ const AddCustomerModal = ({
   };
 
   const handleSubmitAddCustomer = async () => {
-    console.log({ selectedStores });
     if (!customerForm.storeId && selectedStores.length === 0) {
       toast.error("Select store to add customer!");
       return;
@@ -135,7 +134,7 @@ const AddCustomerModal = ({
       customerCreatedBy: user.userId,
       storeId: user.storeId || storeId,
     };
-    console.log({ cusData });
+
     if (selectedStores.length > 0) {
       const success = await onSubmitCustomerStores([cusData], selectedStores);
       if (success) {

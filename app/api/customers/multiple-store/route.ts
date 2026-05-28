@@ -6,10 +6,8 @@ export async function POST(_request: Request) {
     const { data, store } = await _request.json();
     const res = await createCustomerMultipleStore(data, store);
     if (!res.success) {
-      console.log(res.message);
-      throw new Error(`${res.error}`);
+      throw new Error(res.message);
     }
-    console.log("[STORE]: ", { store });
 
     return NextResponse.json(
       {

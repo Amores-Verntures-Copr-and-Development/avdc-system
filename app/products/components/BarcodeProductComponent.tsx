@@ -209,11 +209,10 @@ const BarcodeProductComponent = ({
       if (!result.success) {
         throw new Error(result.message);
       }
-
+      mutateBarcode();
       toast.success("Barcode deleted successfully!");
       setShowView("view");
     } catch (e: any) {
-      mutateBarcode();
       toast.error(e.message);
     } finally {
       setIsDeleting(false);

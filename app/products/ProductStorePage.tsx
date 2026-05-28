@@ -319,10 +319,16 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
       setIsAddingProduct(false);
     }
   };
-  const categoryOpions = reponse?.data.map((cat) => ({
-    label: cat.prodCatName,
-    value: String(cat.prodCatId),
-  }));
+  const categoryOpions = [
+    {
+      label: "No Category",
+      value: "null",
+    },
+    ...(reponse?.data.map((cat) => ({
+      label: cat.prodCatName,
+      value: String(cat.prodCatId),
+    })) ?? []),
+  ];
   const { data: reponseCategory } = useSWR<ApiResponse<ProductCategories[]>>(
     storeId ? `/api/products/${storeId}/product-categories/` : null,
     fetcher,

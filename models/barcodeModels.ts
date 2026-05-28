@@ -67,6 +67,7 @@ export const updateBarcodes = async ({
   updates: Partial<Barcodes>[];
   keyFields?: (keyof Barcodes)[];
 }) => {
+  console.log({ updates });
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
@@ -121,6 +122,53 @@ export const updateBarcodes = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
+  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
+
+  return result;
+};
+
+export const deleteBarcodes = async ({
+  connection,
+  updates,
+  keyFields = ["barcodeId"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<Barcodes>[];
+  keyFields?: (keyof Barcodes)[];
+}) => {
+  console.log({ updates });
+
+  const pool = connection ?? (await getDBConnection());
+
+  if (!updates || updates.length === 0) return;
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const params: any[] = [];
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    DELETE FROM Barcodes
+    WHERE ${whereSql};
+  `;
+
+  console.log({ sql, params });
+
+  const [result] = await pool.execute(sql, params);
+
   return result;
 };
