@@ -204,7 +204,7 @@ const VariantComponentPage = ({
               <div className="flex flex-col">
                 <span className="text-xs text-gray-400 uppercase">Price</span>
                 <span className="text-sm font-semibold text-gray-800">
-                  ₱{data?.prodVarPrice.toLocaleString()}
+                  ₱{Number(data?.prodVarPrice ?? 0).toLocaleString()}
                 </span>
               </div>
               {/* <div className="flex flex-col">

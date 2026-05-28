@@ -399,7 +399,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               title={"Products"}
               subtitle="Add, edit, and track products"
             />
-            <div>
+            {/* <div>
               <div>
                 {productView === "product" ? (
                   <Button
@@ -423,7 +423,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                   />
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="grid grid-cols-4 gap-4">
             <ProductCardDetails

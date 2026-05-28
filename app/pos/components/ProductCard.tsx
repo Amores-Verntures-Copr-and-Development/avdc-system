@@ -245,8 +245,8 @@ const ProductCard = ({
                 2xl:text-sm
               "
             >
-              {Number(
-                data.productVariants?.[0]?.prodVarPrice || 0,
+              {(
+                Number(data.productVariants?.[0]?.prodVarPrice ?? 0) || 0
               ).toLocaleString("en-PH", {
                 style: "currency",
                 currency: "PHP",
