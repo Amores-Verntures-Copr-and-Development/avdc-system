@@ -9,6 +9,7 @@ export async function getProductVariants({
   from,
   to,
   connection,
+  storeId,
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
@@ -16,6 +17,7 @@ export async function getProductVariants({
   from?: string;
   to?: string;
   connection?: PoolConnection;
+  storeId?: number;
 }) {
   try {
     const data = await selectProductVariants({
@@ -25,6 +27,7 @@ export async function getProductVariants({
       from,
       to,
       connection,
+      storeId,
     });
     return data;
   } catch (e) {

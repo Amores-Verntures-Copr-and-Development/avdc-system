@@ -1,7 +1,7 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -84,6 +84,10 @@ interface PosPageProps {
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
   const [clearSignal, setClearSignal] = useState(0);
+
+  const limit = 100;
+  const [productPage, setProductPage] = useState(1);
+
   const handleClearCustomerComponent = () => {
     setClearSignal((prev) => prev + 1);
     setCustomer(null);
@@ -135,7 +139,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           categoryFilter === "all"
             ? ""
             : encodeURIComponent(categoryFilter ?? "null")
-        }&limit=100`
+        }&page=${productPage}&limit=${limit}`
       : null,
     fetcher,
   );
@@ -148,11 +152,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
 
   useEffect(() => {
-    if (itemResponse.data && itemResponse.data.length > 0) {
-      setProductList(itemResponse.data ?? []);
-    } else {
-      setProductList([]);
-    }
+    const nextData = itemResponse.data ?? [];
+
+    setProductList((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(nextData)) {
+        return prev;
+      }
+
+      return nextData;
+    });
   }, [itemResponse.data]);
 
   const subtotal = useMemo(() => {
@@ -210,7 +218,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       );
       const data: ApiResponse<DisplayProductsDtos[]> = await res.json();
       if (!data.success || !data.data.length) {
-        toast.error(`No found item with ${barcode}`);
+        toast.error(`No found item with ${barcode}`, {
+          position: "bottom-center",
+        });
         return;
       }
       const foundProduct = data.data[0];
@@ -218,14 +228,18 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         (pv) => pv.barcode === barcode,
       );
       if (!foundVariant) {
-        toast.error(`No variant found with ${barcode}`);
+        toast.error(`No variant found with ${barcode}`, {
+          position: "bottom-center",
+        });
         return;
       }
       const existingOrder = selectedOrder?.find(
         (s) => s.prodVarId === foundVariant.prodVarId,
       );
       if (existingOrder) {
-        toast.success(`Already in order ${existingOrder.prodVarName}`);
+        toast.success(`Already in order ${existingOrder.prodVarName}`, {
+          position: "bottom-center",
+        });
         return;
       }
       const orderListData: OrderList = {
@@ -239,10 +253,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
       addProductOrder(orderListData);
 
-      toast.success(`Found ${orderListData.prodVarName}`);
+      toast.success(`Found ${orderListData.prodVarName}`, {
+        position: "bottom-center",
+      });
     } catch (e) {
-      console.error(e);
-      toast.error("Failed to fetch barcode product");
+      toast.error("Failed to fetch barcode product", {
+        position: "bottom-center",
+      });
     }
   };
 
@@ -895,35 +912,68 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             <h2 className="text-xs 2xl:text-base font-semibold text-gray-800 px-2">
               Categories
             </h2>
-            <div className="flex overflow-x-auto gap-2 px-2 py-1 scrollbar-th scrollbar-thumb-gray-200 scrollbar-track-gray-100">
-              {/* Wrap each button in a div, but prevent it from shrinking */}
-              <div className="flex-shrink-0">
-                <Button
-                  size="sm"
-                  label="All"
-                  color={categoryFilter === "all" ? "primary" : "outline"}
-                  onClick={() => setCategoryFilter("all")}
-                />
+
+            <div className="flex items-center gap-2">
+              {/* Scrollable categories */}
+              <div className="flex-1 overflow-x-auto scrollbar-th scrollbar-thumb-gray-200 scrollbar-track-gray-100">
+                <div className="flex gap-2 px-2 py-1 min-w-max">
+                  <div className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      label="All"
+                      color={categoryFilter === "all" ? "primary" : "outline"}
+                      onClick={() => setCategoryFilter("all")}
+                    />
+                  </div>
+
+                  {prodCat?.data.map((pc, index) => (
+                    <div key={index} className="flex-shrink-0">
+                      <Button
+                        size="sm"
+                        label={pc.prodCatName}
+                        color={
+                          categoryFilter === pc.prodCatName
+                            ? "primary"
+                            : "outline"
+                        }
+                        onClick={() => setCategoryFilter(pc.prodCatName)}
+                      />
+                    </div>
+                  ))}
+
+                  <div className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      label="No category"
+                      color={categoryFilter === null ? "primary" : "outline"}
+                      onClick={() => setCategoryFilter(null)}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {prodCat?.data.map((pc, index) => (
-                <div key={index} className="flex-shrink-0">
-                  <Button
-                    size="sm"
-                    label={pc.prodCatName}
-                    color={
-                      categoryFilter === pc.prodCatName ? "primary" : "outline"
-                    }
-                    onClick={() => setCategoryFilter(pc.prodCatName)}
-                  />
-                </div>
-              ))}
-              <div className="flex-shrink-0">
+              {/* Fixed right-side pagination */}
+              <div className="flex items-center gap-2 flex-shrink-0 pr-2">
                 <Button
                   size="sm"
-                  label={"No category"}
-                  color={categoryFilter === null ? "primary" : "outline"}
-                  onClick={() => setCategoryFilter("null")}
+                  label="Prev"
+                  color="outline"
+                  disabled={productPage === 1}
+                  onClick={() =>
+                    setProductPage((prev) => Math.max(prev - 1, 1))
+                  }
+                />
+
+                <span className="text-xs text-gray-500 whitespace-nowrap">
+                  {productPage}
+                </span>
+
+                <Button
+                  size="sm"
+                  label="Next"
+                  color="outline"
+                  disabled={(itemResponse.data?.length ?? 0) < limit}
+                  onClick={() => setProductPage((prev) => prev + 1)}
                 />
               </div>
             </div>

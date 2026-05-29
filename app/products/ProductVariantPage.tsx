@@ -45,6 +45,11 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     name: "Unit",
   },
   {
+    key: "barcode",
+    name: "Barcode",
+    selector: (row) => <span className="font-semibold">{row.barcode}</span>,
+  },
+  {
     key: "prodVarPrice",
     name: "Price",
     selector: (row) => formatPeso(row.prodVarPrice),

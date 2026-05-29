@@ -15,6 +15,7 @@ export async function POST(
     if (!storeId) {
       throw new Error("No storeId found");
     }
+
     const data = (await _request.json()) as CreateProductVariantDto;
     const res = await createProductVariantController(data);
     if (!res.success) {
@@ -67,7 +68,7 @@ export async function GET(
           ? "slow"
           : undefined;
     const res = await getProductVariantController(
-      storeId ? { search, statusSold: status, from, to } : {},
+      storeId ? { search, statusSold: status, from, to, storeId: storeId } : {},
     );
     if (!res.success) {
       console.log(res.message);

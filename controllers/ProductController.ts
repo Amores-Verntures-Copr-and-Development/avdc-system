@@ -250,12 +250,14 @@ export const getProductVariantController = async ({
   statusSold,
   from,
   to,
+  storeId,
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
   statusSold?: "fast" | "slow";
   from?: string;
   to?: string;
+  storeId?: number;
 }) => {
   try {
     const data = await getProductVariants({
@@ -264,6 +266,7 @@ export const getProductVariantController = async ({
       statusSold,
       from,
       to,
+      storeId,
     });
     return {
       data: data,
@@ -314,7 +317,6 @@ export const getProductCategories = async ({
       success: true,
     };
   } catch (e) {
-    console.log(e);
     return {
       error: e,
       message: "Failed to fetched product variants!",

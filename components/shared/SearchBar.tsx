@@ -9,8 +9,9 @@ interface SearchBarProps {
   debounce?: number;
   label?: string;
   placeholder?: string;
-  useUrl?: boolean; // NEW FLAG
-  onSearch?: (value: string) => void; // optional callback
+  useUrl?: boolean;
+  onSearch?: (value: string) => void;
+  height?: string; // NEW
 }
 
 export default function SearchBar({
@@ -20,12 +21,17 @@ export default function SearchBar({
   placeholder = "Search...",
   useUrl = true,
   onSearch,
+  height = "h-8", // DEFAULT
 }: SearchBarProps) {
   const router = useRouter();
+  const onSearchRef = useRef(onSearch);
   const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = useState(
     searchParams.get("search") || "",
   );
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
   const [debouncedSearch, setDebouncedSearch] = useState(
     searchParams.get("search") || "",
   );
@@ -55,10 +61,10 @@ export default function SearchBar({
     router.push(`${url}?${params.toString()}`);
   }, [debouncedSearch, searchParams, url, router, useUrl]);
   useEffect(() => {
-    if (!useUrl && onSearch) {
-      onSearch(debouncedSearch);
+    if (!useUrl) {
+      onSearchRef.current?.(debouncedSearch);
     }
-  }, [debouncedSearch, useUrl, onSearch]);
+  }, [debouncedSearch, useUrl]);
   // Debounce the local search
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -103,7 +109,21 @@ export default function SearchBar({
           value={localSearch}
           onChange={onChange}
           onKeyDown={onKeyDown}
-          className="w-full pr-4 pl-5 py-0.5 xl:pl-10 xl:py-1 border border-gray-300 bg-white text-gray-800 text-xs xl:text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+          className={`
+    w-full
+    ${height}
+    pr-4 pl-5
+    xl:pl-10
+    border border-gray-300
+    bg-white text-gray-800
+    text-xs xl:text-sm
+    rounded-md
+    focus:outline-none
+    focus:ring-2
+    focus:ring-blue-500
+    focus:border-blue-500
+    transition
+  `}
         />
         {localSearch && (
           <button

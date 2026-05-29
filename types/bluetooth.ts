@@ -1,35 +1,57 @@
-interface BluetoothDevice {
-  gatt?: BluetoothRemoteGATTServer;
-}
+// src/types/bluetooth.d.ts
+export {};
 
-interface BluetoothRemoteGATTServer {
-  connect(): Promise<BluetoothRemoteGATTServer>;
-  disconnect(): void;
-  getPrimaryService(service: string): Promise<BluetoothRemoteGATTService>;
-}
+declare global {
+  interface Navigator {
+    bluetooth: Bluetooth;
+  }
 
-interface BluetoothRemoteGATTService {
-  getCharacteristic(
-    characteristic: string,
-  ): Promise<BluetoothRemoteGATTCharacteristic>;
-}
+  interface Bluetooth {
+    requestDevice(options: {
+      acceptAllDevices?: boolean;
+      optionalServices?: string[];
+      filters?: {
+        name?: string;
+        namePrefix?: string;
+        services?: string[];
+      }[];
+    }): Promise<BluetoothDevice>;
+  }
 
-interface BluetoothRemoteGATTCharacteristic {
-  writeValue(value: BufferSource): Promise<void>;
-}
+  interface BluetoothDevice {
+    gatt?: BluetoothRemoteGATTServer;
+  }
 
-interface Bluetooth {
-  requestDevice(options: {
-    acceptAllDevices?: boolean;
-    optionalServices?: string[];
-    filters?: {
-      name?: string;
-      namePrefix?: string;
-      services?: string[];
-    }[];
-  }): Promise<BluetoothDevice>;
-}
+  interface BluetoothRemoteGATTServer {
+    connect(): Promise<BluetoothRemoteGATTServer>;
+    disconnect(): void;
+    getPrimaryService(service: string): Promise<BluetoothRemoteGATTService>;
+    getPrimaryServices(): Promise<BluetoothRemoteGATTService[]>;
+  }
 
-interface Navigator {
-  bluetooth: Bluetooth;
+  interface BluetoothRemoteGATTService {
+    uuid: string;
+    getCharacteristic(
+      characteristic: string,
+    ): Promise<BluetoothRemoteGATTCharacteristic>;
+    getCharacteristics(): Promise<BluetoothRemoteGATTCharacteristic[]>;
+  }
+
+  interface BluetoothRemoteGATTCharacteristic {
+    uuid: string;
+    properties: BluetoothCharacteristicProperties;
+    writeValue(value: BufferSource): Promise<void>;
+  }
+
+  interface BluetoothCharacteristicProperties {
+    broadcast: boolean;
+    read: boolean;
+    writeWithoutResponse: boolean;
+    write: boolean;
+    notify: boolean;
+    indicate: boolean;
+    authenticatedSignedWrites: boolean;
+    reliableWrite: boolean;
+    writableAuxiliaries: boolean;
+  }
 }

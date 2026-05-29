@@ -14,6 +14,7 @@ import useSWR from "swr";
 import ProductCardDetails from "./components/ProductCardDetails";
 import {
   ArrowLeftRight,
+  Barcode,
   Boxes,
   Eye,
   FolderKanban,
@@ -50,6 +51,7 @@ import Popup from "@/components/shared/Popup";
 import ProductVariantTable from "./components/ProductVariantTable";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import UnlistedItems from "./components/UnlistedItems";
+import BarcodeScanner from "../pos/components/BarcodeScanner";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -71,6 +73,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [selectedRow, setSelectedRow] = useState<DisplayProductsDtos | null>(
     null,
   );
+  const [showBarcode, setShowBarcode] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
@@ -81,7 +84,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const prodVarUrl = hasStore
     ? `/api/products/${storeId}/product-variants/`
     : `/api/products/${storeId}/product-variants/`;
-
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
   const prodVarApi = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -106,6 +109,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
 
     return `${prodVarUrl}?${params.toString()}`;
   }, [storeId, searchParams]);
+
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -145,9 +149,14 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
-  const { data: prodVarResponse, isLoading: isLoadingProdVar } = useSWR<
-    ApiResponse<DisplaProductVariantsDtos[]>
-  >(productView === "product-variants" ? prodVarApi : null, fetcher);
+  const {
+    data: prodVarResponse,
+    isLoading: isLoadingProdVar,
+    mutate: mutateProdVar,
+  } = useSWR<ApiResponse<DisplaProductVariantsDtos[]>>(
+    productView === "product-variants" ? prodVarApi : null,
+    fetcher,
+  );
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
@@ -348,14 +357,14 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const handleFilterSave = useCallback(
     (newFilters: Record<string, string[]>) => {
       console.log({ newFilters });
-      // setFilters(newFilters);
-      // const currentParams = new URLSearchParams(window.location.search);
-      // const filterKeys = [...inventoryConfig.map((f) => f.id), "branch"];
-      // filterKeys.forEach((key) => currentParams.delete(key));
-      // Object.entries(newFilters).forEach(([key, values]) => {
-      //   values.forEach((value) => currentParams.append(key, value));
-      // });
-      // router.push(`?${currentParams.toString()}`);
+      setFilters(newFilters);
+      const currentParams = new URLSearchParams(window.location.search);
+      const filterKeys = [...productConfig.map((f) => f.id), "branch"];
+      filterKeys.forEach((key) => currentParams.delete(key));
+      Object.entries(newFilters).forEach(([key, values]) => {
+        values.forEach((value) => currentParams.append(key, value));
+      });
+      router.push(`?${currentParams.toString()}`);
     },
     [router, productConfig],
   );
@@ -405,7 +414,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               title={"Products"}
               subtitle="Add, edit, and track products"
             />
-            {/* <div>
+            <div>
               <div>
                 {productView === "product" ? (
                   <Button
@@ -429,7 +438,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                   />
                 )}
               </div>
-            </div> */}
+            </div>
           </div>
           <div className="grid grid-cols-4 gap-4">
             <ProductCardDetails
@@ -517,6 +526,18 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                 renderTopActionButtons={[
                   {
                     props: {
+                      label: "Scan Barcode",
+                      icon: Barcode,
+                      onClick: () => {
+                        setShowBarcode(true);
+                      },
+                      size: "sm",
+                      className: "font-semibold",
+                      color: "success",
+                    },
+                  },
+                  {
+                    props: {
                       label: "View Category",
                       icon: Eye,
                       onClick: () => {
@@ -589,12 +610,12 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               />
             ) : (
               <ProductVariantTable
+                storeId={storeId!}
+                mutate={mutateProdVar}
                 totalCount={prodVarResponse?.count ?? 0}
                 data={prodVarResponse?.data ?? []}
                 isLoading={isLoadingProdVar}
-                onRowSelection={(row) => {
-                  console.log(row);
-                }}
+                onRowSelection={(row) => {}}
               />
             )}
           </div>
@@ -702,6 +723,23 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         isShow={showDeleteConfirmation !== null}
         confirmLabel="Delete"
       />
+      <Modal
+        isOpen={showBarcode}
+        onClose={function (): void {
+          setShowBarcode(false);
+        }}
+        title="Scan Barcode"
+      >
+        <BarcodeScanner
+          onScan={(code: string) => {
+            const params = new URLSearchParams(searchParams.toString());
+
+            params.set("search", code);
+
+            router.push(`/products?${params.toString()}`);
+          }}
+        />
+      </Modal>
     </PageLayout>
   );
 };

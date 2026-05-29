@@ -415,6 +415,7 @@ export const selectProductCounts = async ({
   search,
   storeName,
   barcode,
+  category,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
@@ -485,6 +486,14 @@ WHERE p.prodDeletedAt IS NULL`;
 
     params.push(barcode.trim());
   }
+  if (category?.trim() && category !== "all") {
+    if (category === "null") {
+      sql += ` AND pc.prodCatName IS NULL`;
+    } else {
+      sql += ` AND TRIM(pc.prodCatName) = TRIM(?)`;
+      params.push(category.trim());
+    }
+  }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
@@ -497,6 +506,8 @@ export const selectProductVariants = async ({
   statusSold,
   from,
   to,
+  storeId,
+  search,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ProductVariants>;
@@ -504,6 +515,7 @@ export const selectProductVariants = async ({
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
+  storeId?: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
@@ -512,6 +524,8 @@ SELECT
     p.prodName,
     u.userName,
     u.userFname,
+    b.barcodeId,
+    b.barcode,
     iis.inventoryItemQuantity,
     (SELECT SUM(si.salesItemQuantity) 
      FROM SalesItems si 
@@ -545,6 +559,7 @@ FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
+LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -554,6 +569,23 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
       sql += ` AND pv.${key} = ?`;
       params.push(value);
     }
+  }
+  if (storeId) {
+    sql += ` AND p.storeId = ?`;
+    params.push(storeId);
+  }
+  if (search?.trim()) {
+    const keyword = `%${search.trim()}%`;
+
+    sql += `
+    AND (
+      p.prodName LIKE ?
+      OR pv.prodVarName LIKE ?
+      OR b.barcode LIKE ?
+    )
+  `;
+
+    params.push(keyword, keyword, keyword);
   }
   if (statusSold) {
   }
@@ -629,7 +661,6 @@ export const selectProductCategories = async ({
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  console.log({ rows });
   return rows;
 };
 

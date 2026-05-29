@@ -22,7 +22,7 @@ export function generateReceiptData(
   lines.push("\x1B\x40");
   lines.push("\x1B\x61\x01");
   lines.push(`${salesData.storeName ?? "STORE"}\n`);
-  lines.push("OFFICIAL RECEIPT\n\n");
+  lines.push("NOT OFFICIAL RECEIPT\n\n");
   lines.push("\x1B\x61\x00");
 
   lines.push(`Order #: ${salesData.salesNo}\n`);
@@ -132,7 +132,40 @@ const PrintSales = ({ salesData, onBack }: PrintSalesProps) => {
       : null,
     fetcher,
   );
+
+  async function inspectBluetoothDevice() {
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: [
+        "battery_service",
+        "device_information",
+        "0000ffe0-0000-1000-8000-00805f9b34fb",
+      ],
+    });
+
+    const server = await device.gatt?.connect();
+
+    if (!server) {
+      console.log("No GATT server");
+      return;
+    }
+
+    const services = await server.getPrimaryServices();
+
+    for (const service of services) {
+      console.log("SERVICE UUID:", service.uuid);
+
+      const characteristics = await service.getCharacteristics();
+
+      for (const characteristic of characteristics) {
+        console.log("  CHARACTERISTIC UUID:", characteristic.uuid);
+
+        console.log("  PROPERTIES:", characteristic.properties);
+      }
+    }
+  }
   async function printViaBluetooth(receiptLines: string[]) {
+    await inspectBluetoothDevice();
     if (!("bluetooth" in navigator)) {
       throw new Error("Web Bluetooth is not supported on this browser.");
     }

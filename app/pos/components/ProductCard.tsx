@@ -256,7 +256,7 @@ const ProductCard = ({
         </div>
 
         {/* Category */}
-        <div>
+        <div className="flex flex-col 2xl:flex-row 2xl:justify-between 2xl:items-center">
           <span
             className="
               inline-flex items-center
@@ -271,6 +271,11 @@ const ProductCard = ({
           >
             {data.prodCatName || "No Category"}
           </span>
+          {hasOneVariant && (
+            <span className="text-[10px] 2xl:text-xs font-semibold">
+              {singleVariant?.barcode}
+            </span>
+          )}
         </div>
       </div>
 

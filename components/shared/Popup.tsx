@@ -79,7 +79,7 @@ const Popup: React.FC<PopupProps> = ({
     left: `left-0 top-0 h-full w-90 xl:w-96 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "-translate-x-full"
     }`,
-    right: `right-0 top-0 h-full w-110 xl:w-110 transform transition-transform duration-300 ease-in-out ${
+    right: `right-0 top-0 h-full sm:90 lg:110 xl:w-110 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "translate-x-full"
     }`,
     top: `top-0 left-0 w-full h-72 transform transition-transform duration-300 ease-in-out ${
@@ -137,7 +137,7 @@ const Popup: React.FC<PopupProps> = ({
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Close popup"
           >
-            <X className="w-3 h-3 xl:w-5 xl:h-5 text-gray-500" />
+            <X className="w-5 h-5 xl:w-5 xl:h-5 text-gray-500" />
           </button>
         </div>
 

@@ -13,7 +13,9 @@ export async function GET(
     const slug = (await params).storeId;
     const storeId = Number(slug);
     const { searchParams } = new URL(_request.url);
-
+    const barcode = searchParams.get("barcode") || "";
+    const order = searchParams.get("order") || "";
+    const category = searchParams.get("category") || "";
     const search = searchParams.get("search") || "";
     const unit = searchParams.get("unit") || "";
     const limit = searchParams.get("limit") || "";
@@ -26,6 +28,8 @@ export async function GET(
       unit,
       limit: limitNumber,
       offset: limitNumber * (pageNumber - 1),
+      barcode,
+      category,
     });
 
     if (!res.success) {
