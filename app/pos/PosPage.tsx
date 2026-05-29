@@ -657,7 +657,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         throw new Error(res.err);
       }
       const sales = res.data as Sales[];
-
+      console.log({ sales });
       setRecentSales(sales[0]);
       toast.success(res.message);
       mutateProducts();

@@ -1,4 +1,7 @@
-import { selectProductVariants } from "@/models/productModel";
+import {
+  selectProductCountVariants,
+  selectProductVariants,
+} from "@/models/productModel";
 import { ProductVariants } from "@/types/products";
 import { PoolConnection } from "mysql2/promise";
 
@@ -10,6 +13,8 @@ export async function getProductVariants({
   to,
   connection,
   storeId,
+  limit,
+  offset,
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
@@ -18,6 +23,8 @@ export async function getProductVariants({
   to?: string;
   connection?: PoolConnection;
   storeId?: number;
+  limit?: number;
+  offset?: number;
 }) {
   try {
     const data = await selectProductVariants({
@@ -28,8 +35,23 @@ export async function getProductVariants({
       to,
       connection,
       storeId,
+      limit,
+      offset,
     });
-    return data;
+
+    const total = await selectProductCountVariants({
+      keyFields,
+      search,
+      statusSold,
+      from,
+      to,
+      connection,
+      storeId,
+    });
+    return {
+      data: data,
+      total: total,
+    };
   } catch (e) {
     throw e;
   }

@@ -101,8 +101,6 @@ export async function processCreateSales(data: CreateSaleDto) {
       await createSalePayments({ connection, data: salesPaymentData });
     }
 
-    console.log({ saleItemData });
-
     const needDeductInventoryProdVar = saleItemData.filter(
       (i) => i.inventoryItemId !== null,
     );
@@ -196,13 +194,10 @@ export async function processCreateSales(data: CreateSaleDto) {
       connection: connection,
       data: createSalesTransaction,
     });
-    //check if there is items can be deducted
-    //if exist deduct inventory
-    //check if there is discounts
-    //insert if there is discounts
     const sales = await getSalesServices.findSalesBySaleId({
       connection,
       salesId,
+      includeSaleItems: true,
     });
 
     await connection.commit();

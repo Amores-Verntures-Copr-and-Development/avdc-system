@@ -58,9 +58,10 @@ export async function GET(
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     // const unit = searchParams.get("unit") || "";
-    // const limit = searchParams.get("limit") || "";
-    // const page = searchParams.get("page") || "";
-
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
     const status: "fast" | "slow" | undefined =
       statusParam === "fast"
         ? "fast"
@@ -68,7 +69,17 @@ export async function GET(
           ? "slow"
           : undefined;
     const res = await getProductVariantController(
-      storeId ? { search, statusSold: status, from, to, storeId: storeId } : {},
+      storeId
+        ? {
+            search,
+            statusSold: status,
+            from,
+            to,
+            storeId: storeId,
+            limit: limitNumber,
+            offset: limitNumber * (pageNumber - 1),
+          }
+        : {},
     );
     if (!res.success) {
       console.log(res.message);
@@ -79,7 +90,8 @@ export async function GET(
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data,
+        count: res.total, // could sanitize before returning
       },
       { status: 201 },
     );

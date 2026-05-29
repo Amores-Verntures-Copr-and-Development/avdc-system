@@ -2,8 +2,7 @@ import { CreateBarcodeDto } from "@/dtos/barcode.dto";
 import { insertBarcode, selectBarcodes } from "@/models/barcodeModels";
 import { PoolConnection } from "mysql2/promise";
 import { getBarcodeByFields } from "./get-barcode";
-import { getProductVariants } from "../products/product-variant/get-product-variants";
-import { getVariantComponents } from "../products/product-variant/variant-component/get-variant-components";
+
 import { updateBarcodesByFields } from "./update-barcode";
 import { getDBConnection } from "@/lib/db";
 import { selectProductVariantsTable } from "@/models/productModel";

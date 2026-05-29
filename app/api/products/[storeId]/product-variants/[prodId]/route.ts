@@ -62,7 +62,9 @@ export async function GET(
       {
         success: true,
         message: res.message,
-        data: res.data, // could sanitize before returning
+        data: res.data,
+        count: res.total,
+        // could sanitize before returning
       },
       { status: 201 },
     );
