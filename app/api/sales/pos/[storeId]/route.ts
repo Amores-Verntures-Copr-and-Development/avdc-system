@@ -17,7 +17,6 @@ export async function POST(
     }
     const res = await createSale(data);
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message || "Failed to process order");
     }
 

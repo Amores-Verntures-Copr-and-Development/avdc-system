@@ -74,6 +74,7 @@ const adminColumns: Column<DisplayCustomerDto>[] = [
 const CustomerPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [selectCus, setSelectedCus] = useState<DisplayCustomerDto | null>(null);
   const [selectedStore, setSelectedStore] = useState<number | null>(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user, hasStore, isAdmin } = useSession();
@@ -269,6 +270,7 @@ const CustomerPage = () => {
           totalCount={response?.count}
           maxHeight="h-full"
           loading={isLoading}
+          onRowSelection={(row) => router.push(`/customers/${row.customerId}`)}
         />
       </div>
       <Modal

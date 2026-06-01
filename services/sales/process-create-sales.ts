@@ -28,14 +28,13 @@ import { updateSalesByFields } from "./update-sales";
 import { SalesPaymentStatus } from "../../types/sales";
 import { CreateTransactionDto } from "@/dtos/transaction.dto";
 import { createTransactions } from "../transaction/create-transaction";
+import { sendEmailSalesBasePaymentMethods } from "./send-email-sales";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-    //generate sales invoice by getting counting all sales records and plus 1 -
-    //generate salesNo by getting stores sales and plus 1 SALE-000001
     const salesNo = await generateSalesNo({
       connection,
       storeId: data.storeId,
@@ -53,7 +52,6 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesRemarks: data.salesRemarks,
     };
 
-    //insert into sale table
     const salesId = await createSale({ connection, data: salesData });
     const salesInvoice = await generateSalesInvoice({
       connection,
@@ -196,16 +194,13 @@ export async function processCreateSales(data: CreateSaleDto) {
       connection: connection,
       data: createSalesTransaction,
     });
-    //check if there is items can be deducted
-    //if exist deduct inventory
-    //check if there is discounts
-    //insert if there is discounts
     const sales = await getSalesServices.findSalesBySaleId({
       connection,
       salesId,
     });
 
-    await connection.commit();
+    void sendEmailSalesBasePaymentMethods({ salesId });
+
     return sales;
   } catch (e) {
     await connection.rollback();

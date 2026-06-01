@@ -98,7 +98,7 @@ export const getSalesServices = {
     salesId,
   }: {
     salesId: number;
-    connection: PoolConnection;
+    connection?: PoolConnection;
     includeSaleItems?: boolean;
   }) => {
     try {
