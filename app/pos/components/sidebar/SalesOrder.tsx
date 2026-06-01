@@ -60,7 +60,7 @@ const SalesOrder = ({ storeId, user }: SalesOrderProps) => {
 
               {/* ITEMS */}
               <div className="flex flex-col gap-2">
-                {sale.salesItems?.map((item, i) => (
+                {sale.saleItems?.map((item, i) => (
                   <div
                     key={item.salesItemId}
                     className="flex justify-between items-center bg-gray-50 rounded-lg px-3 py-2"

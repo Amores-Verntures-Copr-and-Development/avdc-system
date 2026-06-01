@@ -87,3 +87,30 @@ export const getCustomer = async ({
     };
   }
 };
+
+export const updateCustomerController = async ({
+  keyFields = ["customerId"],
+  updateData,
+}: {
+  keyFields?: (keyof Customer)[];
+  updateData: Partial<Customer>[];
+}) => {
+  try {
+    const data = await customerServices.updateCustomerByFields({
+      keyFields: keyFields,
+      updateData,
+    });
+    return {
+      success: true,
+      message: "Customer updated successfully!",
+      data: data,
+    };
+  } catch (e) {
+    console.log({ e });
+    return {
+      success: false,
+      message: "Failed to update customer!",
+      error: e,
+    };
+  }
+};

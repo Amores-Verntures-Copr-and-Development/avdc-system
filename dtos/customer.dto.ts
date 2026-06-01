@@ -8,6 +8,7 @@ export type CreateCustomerDto = Pick<
   | "storeId"
   | "customerCreatedBy"
   | "customerType"
+  | "customerAddress"
 >;
 
 export interface DisplayCustomerDto extends Customer {

@@ -1,20 +1,27 @@
 "use client";
 
+import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import Modal from "@/components/shared/Modal";
 import PageLayout from "@/components/shared/PageLayout";
 import { DisplayCustomerDto } from "@/dtos/customer.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
-import { useParams } from "next/navigation";
-import React from "react";
+import { CalendarDays, Mail, MapPin, Pencil, Phone } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useState } from "react";
 import useSWR from "swr";
+import EditCustomerModal from "../components/EditCustomerModal";
+import { formatDateToWords } from "@/utils/formatDateToWords";
+import { formatPeso } from "@/utils/formatPeso";
 
-const page = () => {
+const Page = () => {
   const params = useParams();
-
+  const router = useRouter();
+  const [isShowEdit, setIsShowEdit] = useState(false);
   const { id } = params;
 
-  const { data, isLoading } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
+  const { data, isLoading, mutate } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
     id ? `/api/customers/${id}` : null,
     fetcher,
   );
@@ -26,54 +33,169 @@ const page = () => {
   if (!customer) return <div>No Customer found with that ID: {id}</div>;
 
   return (
-    <PageLayout className="p-4 flex flex-col">
-      <div className="p-2 flex items-center gap-2">
+    <PageLayout className="p-4 flex flex-col overflow-y-auto">
+      <button
+        onClick={() => router.push("/customers")}
+        className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-1 transition-colors"
+      >
+        <span className="text-base">←</span>
+        Back to Customers
+      </button>
+      <div className="p-2 flex  items-center gap-2">
         <div className="h-20 w-20 rounded-full text-4xl bg-primary-1 flex items-center justify-center text-white font-semibold">
           {initial}
         </div>
-        <div className="flex flex-col justify-between gap-3">
-          <h1 className="font-semibold text-2xl">{customer.customerName}</h1>
-          <span className="text-md font-medium">
-            {" "}
-            ({customer.customerType.toLocaleLowerCase()})
-          </span>
-          {/* <div className="flex flex-col gap-2">
-            <span className="text-xs text-gray-600">
-              Customer ID # {customer.customerId}
+        <div className="flex flex-col justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h1 className="font-semibold text-2xl">{customer.customerName}</h1>
+            <span className="text-md font-medium">
+              {" "}
+              ({customer.customerType.toLocaleLowerCase()})
             </span>
-
-            <span className="text-xs text-gray-600">
-              Email: {customer.customerEmail ?? "No Email"}
+          </div>
+          <div>
+            <span className="text-xs bg-green-100 text-green-800 py-1 px-2 rounded font-medium border border-green-300">
+              Active Customer
             </span>
-            <span className="text-xs text-gray-600">
-              Phone: {customer.customerPhone ?? "No Email"}
-            </span>
-          </div> */}
+          </div>
         </div>
       </div>
-      <div className="flex flex-1 gap-2 rounded">
-        <div className="flex-[2] gap-2 flex-col border-border border rounded bg-white shadow p-2">
-          <h1 className=" text-gray-600 text-lg font-medium">
-            CUSTOMER DETAILS
-          </h1>
+      <div className="flex 2xl:flex-row flex-col flex-1 gap-2 rounded">
+        <div className="flex-[2] flex gap-2 h-full flex-col border-border border rounded bg-white shadow ">
+          <div className="flex justify-between p-2">
+            <h1 className=" font=- text-sm font-medium">CUSTOMER DETAILS</h1>
+            <div>
+              <Button
+                label="Edit"
+                size="sm"
+                icon={Pencil}
+                color="outline"
+                hasBorder={false}
+                isRounded={false}
+                onClick={() => setIsShowEdit(true)}
+              />
+            </div>
+          </div>
 
-          <div className="flex flex-col">
-            <label className="text-gray-600 text-xs">Phone</label>
-            <span>{customer.customerPhone}</span>
+          <div className="grid grid-cols-2 2xl:grid-cols-1 gap-4 mt-4 p-2">
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <Phone size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Phone
+                </label>
+                <span className="text-xs font-medium">
+                  {customer.customerPhone || "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <Mail size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Email
+                </label>
+                <span className="text-xs font-medium">
+                  {customer.customerEmail || "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <MapPin size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Address
+                </label>
+                <span className="text-xs font-medium">
+                  {customer.customerAddress || "-"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <CalendarDays size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Created At
+                </label>
+                <span className="text-xs font-medium">
+                  {formatDateToWords(customer.customerCreatedAt ?? "")}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <CalendarDays size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Last updated
+                </label>
+                <span className="text-xs font-medium">
+                  {formatDateToWords(customer.customerUpdatedAt ?? "")}
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex flex-col">
-            <label className="text-gray-600 text-xs">Email</label>
-            <span>{customer.customerEmail}</span>
-          </div>
-          <div className="flex flex-col">
-            <label className="text-gray-600 text-xs">Phone</label>
-            <span>{customer.customerPhone}</span>
+          <div className="mt-auto border-t border-border p-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-lg border border-border bg-gray-50 p-3 text-center">
+                <p className="text-lg font-semibold text-primary-1">
+                  {Number(customer.totalSpent) !== 0
+                    ? formatPeso(customer.totalSpent)
+                    : "-"}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">Total Spent</p>
+              </div>
+
+              <div className="rounded-lg border border-border bg-gray-50 p-3 text-center">
+                <p className="text-sm font-semibold text-primary-1">
+                  {customer.lastVisit
+                    ? formatDateToWords(customer.lastVisit)
+                    : "-"}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">Last Visit</p>
+              </div>
+
+              <div className="rounded-lg border border-border bg-gray-50 p-3 text-center">
+                <p className="text-sm font-semibold text-primary-1">
+                  {customer.firstVisit
+                    ? formatDateToWords(customer.firstVisit)
+                    : "-"}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">First Visit</p>
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex-[8] border-border border rounded bg-white shadow"></div>
       </div>
+
+      <Modal
+        isOpen={isShowEdit}
+        onClose={function (): void {
+          setIsShowEdit(false);
+        }}
+        title="Edit Customer"
+      >
+        <EditCustomerModal
+          data={customer}
+          mutate={mutate}
+          onClick={() => setIsShowEdit(false)}
+        />
+      </Modal>
     </PageLayout>
   );
 };
 
-export default page;
+export default Page;

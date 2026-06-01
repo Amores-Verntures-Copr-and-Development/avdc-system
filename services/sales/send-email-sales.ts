@@ -1,6 +1,10 @@
 import { PoolConnection } from "mysql2/promise";
 import { getSalesServices } from "./get-sales";
 import { getPaymentMethodServices } from "../payment-method/get-payment-method";
+import { sendEmail } from "@/utils/send-email";
+import { generateSalesEmailHTML } from "@/utils/email-html";
+import { DisplaySalesDto } from "@/dtos/sales.dto";
+import { customerServices } from "../customer/customerServices";
 
 export async function sendEmailSalesBasePaymentMethods({
   connection,
@@ -10,8 +14,8 @@ export async function sendEmailSalesBasePaymentMethods({
   salesId: number;
 }) {
   try {
+    console.log("Checking if sales has payment method with isEmail...");
     let isEmail: boolean = false;
-    //get sales
 
     const salesData = await getSalesServices.findSalesBySaleId({
       salesId,
@@ -24,19 +28,17 @@ export async function sendEmailSalesBasePaymentMethods({
 
     const sales = salesData[0];
 
-    if (!sales.salePayments?.length) {
+    if (!sales.paymentMethods?.length) {
       return;
     }
-    for (const pm of sales.salePayments) {
+    for (const pm of sales.paymentMethods) {
       //check sales payments if one has isEmail
-
       const paymentMethod =
         await getPaymentMethodServices.findPaymentMethodByKeyFields({
           keyFields: {
             payMetId: pm.payMetId,
           },
         });
-
       if (paymentMethod.length === 0) {
         continue;
       }
@@ -50,14 +52,26 @@ export async function sendEmailSalesBasePaymentMethods({
       return;
     }
 
-    console.log({ isEmail });
+    const customers = await customerServices.findCustomerByFields({
+      keyFields: { customerId: sales.customerId },
+    });
 
-    //generate Email Body Format
+    if (customers && customers.length === 0) {
+      return;
+    }
 
-    //if no just return
-    //check if their is customer
-    //if customer exist, get customer
-    //if has customer email
-    //generate a email for customer and only send the payment method with isEmail total
-  } catch (e) {}
+    const customer = customers[0];
+
+    if (!customer.customerEmail || customer.customerEmail === "") {
+      return;
+    }
+    await sendEmail({
+      from: '"Amores Ventures Receipts" <noreply@amoresventures.com>',
+      to: customer.customerEmail,
+      subject: `Receipt - ${sales.salesNo}`,
+      html: generateSalesEmailHTML(sales as DisplaySalesDto),
+    });
+  } catch (e) {
+    throw e;
+  }
 }

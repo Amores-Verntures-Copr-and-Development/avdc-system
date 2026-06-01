@@ -198,6 +198,8 @@ export async function processCreateSales(data: CreateSaleDto) {
       includeSaleItems: true,
     });
 
+    await connection.commit();
+
     void sendEmailSalesBasePaymentMethods({ salesId });
 
     return sales;

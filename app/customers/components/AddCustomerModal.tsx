@@ -60,6 +60,7 @@ const AddCustomerModal = ({
     customerEmail: "",
     customerCreatedBy: 0,
     customerType: "",
+    customerAddress: "",
   });
 
   const handleCusChange = handleChange(customerForm, setCustomerForm);
@@ -167,6 +168,7 @@ const AddCustomerModal = ({
       customerType: cus["Type(staff)"] ?? "",
       customerCreatedBy: user.userId,
       storeId: user.storeId!,
+      customerAddress: "",
     }));
 
     const success = await onSumit(createCustomer);
@@ -194,6 +196,7 @@ const AddCustomerModal = ({
       customerPhone: cus.Phone ?? "",
       customerType: cus["Type(staff)"] ?? "",
       storeId: 0,
+      customerAddress: "",
     }));
 
     const success = await onSubmitCustomerStores(

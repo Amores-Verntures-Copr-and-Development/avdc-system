@@ -253,6 +253,7 @@ export const selectProducts = async ({
   offset,
   barcode,
   category,
+  isPos = false,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Products>;
@@ -263,6 +264,7 @@ export const selectProducts = async ({
   limit?: number;
   offset?: number;
   barcode?: string;
+  isPos?: boolean;
 }) => {
   const pool = connection ?? (await getDBConnection());
 
@@ -393,8 +395,23 @@ export const selectProducts = async ({
     }
   }
 
-  // Order
-  sql += ` ORDER BY p.prodId DESC`;
+  if (isPos) {
+    sql += `
+    ORDER BY
+      EXISTS (
+        SELECT 1
+        FROM ProductVariants pv2
+        LEFT JOIN InventoryItems ii2
+          ON ii2.inventoryItemId = pv2.inventoryItemId
+        WHERE pv2.prodId = p.prodId
+          AND pv2.prodVarDeletedAt IS NULL
+          AND COALESCE(ii2.inventoryItemQuantity, 0) > 0
+      ) DESC,
+      p.prodName ASC
+  `;
+  } else {
+    sql += ` ORDER BY p.prodName ASC`;
+  }
 
   // Pagination
   if (limit !== undefined) {

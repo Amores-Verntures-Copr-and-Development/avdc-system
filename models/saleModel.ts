@@ -191,7 +191,7 @@ WHERE 1=1`;
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows as Sales[];
+  return rows;
 };
 
 export const countSales = async ({
@@ -610,7 +610,7 @@ SELECT *, (
   FROM SalesItemsDiscount sid
   LEFT JOIN Discounts d ON d.discountId = sid.discountId
   WHERE sid.salesItemId = si.salesItemId
-) AS salesItemsDiscount, (
+) AS salesItemDiscounts, (
   SELECT JSON_ARRAYAGG(
     JSON_OBJECT(
       'salesItemRefId', sr.salesItemRefId,

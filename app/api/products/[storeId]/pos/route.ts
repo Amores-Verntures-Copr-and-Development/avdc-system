@@ -13,6 +13,7 @@ export async function GET(
     const search = searchParams.get("search") || "";
     const barcode = searchParams.get("barcode") || "";
     const order = searchParams.get("order") || "";
+
     const category = searchParams.get("category") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
@@ -26,6 +27,7 @@ export async function GET(
       offset: limitNumber * (pageNumber - 1),
       barcode,
       category,
+      isPos: true,
     });
 
     if (!res.success) {

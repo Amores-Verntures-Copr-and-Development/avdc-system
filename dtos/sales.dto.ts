@@ -42,7 +42,7 @@ export interface DisplaySalesDto extends Sales {
   customerName: string;
   salesCreatedByName: string;
   storeName: string;
-  salesItems: DisplaySalesItems[];
+  saleItems: DisplaySalesItems[];
   salesRefunds: SalesRefund[];
   paymentMethods: SalePaymentMethods[];
   totalItem: number;
@@ -56,7 +56,7 @@ interface SaleDiscountExtends extends SalesDiscounts, Discounts {}
 export interface DisplaySalesItems
   extends SaleItems, Products, ProductVariants {
   saleItemName?: string;
-  salesItemsDiscount?: DisplaySaleItemDiscounts[];
+  salesItemDiscounts?: DisplaySaleItemDiscounts[];
   salesItemsRefunds: SalesItemRefund[];
 }
 

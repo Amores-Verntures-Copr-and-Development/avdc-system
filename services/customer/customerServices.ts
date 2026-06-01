@@ -4,6 +4,7 @@ import {
   insertCustomer,
   selectCountCustomers,
   selectCustomers,
+  updateCustomers,
 } from "@/models/customerModels";
 import { Customer } from "@/types/customer";
 import { StoreInterface } from "@/types/stores";
@@ -59,6 +60,7 @@ export const customerServices = {
             customerType: customer.customerType,
             customerCreatedBy: customer.customerCreatedBy,
             storeId: store.storeId ?? 0,
+            customerAddress: customer.customerAddress,
           });
         });
       });
@@ -138,5 +140,21 @@ export const customerServices = {
     } catch (e) {
       throw e;
     }
+  },
+
+  updateCustomerByFields: async ({
+    keyFields = ["customerId"],
+    updateData,
+    connection,
+  }: {
+    keyFields?: (keyof Customer)[];
+    updateData: Partial<Customer>[];
+    connection?: PoolConnection;
+  }) => {
+    return await updateCustomers({
+      keyFields: keyFields,
+      updates: updateData,
+      connection,
+    });
   },
 };

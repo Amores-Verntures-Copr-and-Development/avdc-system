@@ -20,6 +20,7 @@ const AddCustomer = ({ storeId, user, onClose }: AddCustomerProps) => {
     customerName: "",
     customerPhone: "",
     customerType: "",
+    customerAddress: "",
   });
   const handleCusChange = handleChange(customerForm, setCustomerForm);
   const [isSubmitting, setIsSubmitting] = useState(false);

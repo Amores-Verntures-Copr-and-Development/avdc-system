@@ -145,6 +145,7 @@ export const getProduct = async ({
   offset,
   barcode,
   category,
+  isPos,
 }: {
   storeId?: number;
   search?: string;
@@ -155,6 +156,7 @@ export const getProduct = async ({
   limit?: number;
   offset?: number;
   barcode?: string;
+  isPos?: boolean;
 }) => {
   try {
     const data = await getProducts({
@@ -165,6 +167,7 @@ export const getProduct = async ({
       offset,
       barcode,
       category,
+      isPos,
     });
     return {
       data: data.data,
