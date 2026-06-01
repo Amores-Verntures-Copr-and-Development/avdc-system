@@ -55,7 +55,7 @@ export async function createProductVariants({
         },
       });
 
-      if (existingProdVar.length > 0) {
+      if (existingProdVar.data.length > 0) {
         continue;
       }
       // const prodVarId = await insertProductVariant({

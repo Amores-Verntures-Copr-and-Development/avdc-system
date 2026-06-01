@@ -80,6 +80,7 @@ const ProductVariantTable = ({
   data,
   isLoading,
   onRowSelection,
+  totalCount,
   mutate,
   storeId,
 }: ProductVariantTableProps) => {
@@ -188,7 +189,7 @@ const ProductVariantTable = ({
         loading={isLoading}
         showActions
         onRowSelection={(row) => setSelectedRow(row)}
-        totalCount={10}
+        totalCount={totalCount}
         showPagination
         searchUrl="/products"
         renderActions={(row) => (

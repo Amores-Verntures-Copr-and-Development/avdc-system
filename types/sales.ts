@@ -87,3 +87,59 @@ export interface SalesItemDiscounts {
   salesItemDiscCreatedBy: number;
   salesItemDiscStatus: SalesItemDiscStatus;
 }
+
+export interface SalesItemDiscountV2 {
+  discountAmount: number;
+}
+
+export interface SaleItemV2 {
+  prodVarName: string;
+  salesItemId: number;
+  saleItemName: string;
+  salesItemPrice: number;
+  salesItemTotal: number;
+  salesItemQuantity: number;
+  salesItemSubtotal: number;
+  salesItemDiscounts: SalesItemDiscountV2[] | null;
+}
+
+export interface PaymentMethodV2 {
+  payMetId: number;
+  payMetName: string;
+  salesPaymentId: number;
+  paymentReference: string;
+  salesPaymentAmount: number;
+}
+
+export interface SalesDiscountV2 {
+  discountName: string;
+  discountAmount: number;
+}
+
+export interface SalesV2 {
+  salesId: number;
+  salesNo: string;
+  salesInvoice: string;
+  salesTotalAmount: string;
+  salesSubTotal: string;
+  salesTotalPaid: string;
+  salesRemarks: string;
+  salesStatus: string;
+  salesCreatedAt: string;
+  salesUpdatedAt: string;
+  salesDeletedAt: string | null;
+  salesCreatedBy: number;
+  customerId: number | null;
+  storeId: number;
+  storeName: string;
+  salesCreatedByName: string;
+  customerName: string | null;
+  totalItem: number;
+  saleItems: SaleItemV2[];
+  paymentMethods: PaymentMethodV2[];
+  salesDiscounts: SalesDiscountV2[] | null;
+  salesRefunds: unknown[] | null;
+  salesPaymentRefunds: unknown[] | null;
+}
+
+export type SalesResponseV2 = SalesV2[];

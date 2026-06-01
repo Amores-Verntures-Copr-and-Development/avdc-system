@@ -133,53 +133,62 @@ const PrintSales = ({ salesData, onBack }: PrintSalesProps) => {
     fetcher,
   );
 
-  async function inspectBluetoothDevice() {
-    const device = await navigator.bluetooth.requestDevice({
-      acceptAllDevices: true,
-      optionalServices: [
-        "battery_service",
-        "device_information",
-        "0000ffe0-0000-1000-8000-00805f9b34fb",
-      ],
-    });
+  // async function inspectBluetoothDevice() {
+  //   const device = await navigator.bluetooth.requestDevice({
+  //     acceptAllDevices: true,
+  //     optionalServices: [
+  //       "0000ffe0-0000-1000-8000-00805f9b34fb",
+  //       "0000ff00-0000-1000-8000-00805f9b34fb",
+  //       "000018f0-0000-1000-8000-00805f9b34fb",
+  //       "device_information",
+  //       "battery_service",
+  //     ],
+  //   });
 
-    const server = await device.gatt?.connect();
+  //   alert(`Device: ${device}`);
 
-    if (!server) {
-      console.log("No GATT server");
-      return;
-    }
+  //   const server = await device.gatt?.connect();
+  //   if (!server)
+  //     throw new Error("No GATT server. This may not be a BLE device.");
 
-    const services = await server.getPrimaryServices();
+  //   const services = await server.getPrimaryServices();
 
-    for (const service of services) {
-      console.log("SERVICE UUID:", service.uuid);
+  //   console.log("Services found:", services.length);
 
-      const characteristics = await service.getCharacteristics();
+  //   for (const service of services) {
+  //     console.log("SERVICE:", service.uuid);
 
-      for (const characteristic of characteristics) {
-        console.log("  CHARACTERISTIC UUID:", characteristic.uuid);
+  //     const characteristics = await service.getCharacteristics();
 
-        console.log("  PROPERTIES:", characteristic.properties);
-      }
-    }
-  }
+  //     for (const ch of characteristics) {
+  //       console.log("CHAR:", ch.uuid, {
+  //         write: ch.properties.write,
+  //         writeWithoutResponse: ch.properties.writeWithoutResponse,
+  //         notify: ch.properties.notify,
+  //         read: ch.properties.read,
+  //       });
+  //     }
+  //   }
+
+  //   server.disconnect();
+  // }
   async function printViaBluetooth(receiptLines: string[]) {
-    await inspectBluetoothDevice();
     if (!("bluetooth" in navigator)) {
       throw new Error("Web Bluetooth is not supported on this browser.");
     }
 
-    const bluetooth = navigator.bluetooth as Bluetooth;
-
-    const device = await bluetooth.requestDevice({
+    const device = await navigator.bluetooth.requestDevice({
       acceptAllDevices: true,
       optionalServices: [
-        PRINTER_SERVICE_UUID,
+        "0000ffe0-0000-1000-8000-00805f9b34fb",
         "0000ff00-0000-1000-8000-00805f9b34fb",
         "000018f0-0000-1000-8000-00805f9b34fb",
+        "device_information",
+        "battery_service",
       ],
     });
+
+    alert(`Device selected:\n${device.name ?? "Unnamed device"}`);
 
     const server = await device.gatt?.connect();
 
@@ -188,11 +197,45 @@ const PrintSales = ({ salesData, onBack }: PrintSalesProps) => {
     }
 
     try {
-      const service = await server.getPrimaryService(PRINTER_SERVICE_UUID);
+      const services = await server.getPrimaryServices();
 
-      const characteristic = await service.getCharacteristic(
-        PRINTER_CHARACTERISTIC_UUID,
-      );
+      const debug: string[] = [];
+      let writable: BluetoothRemoteGATTCharacteristic | null = null;
+
+      debug.push(`Services found: ${services.length}`);
+
+      for (const service of services) {
+        debug.push("");
+        debug.push(`SERVICE: ${service.uuid}`);
+
+        const characteristics = await service.getCharacteristics();
+
+        for (const ch of characteristics) {
+          debug.push(`  CHAR: ${ch.uuid}`);
+          debug.push(`    Write: ${ch.properties.write}`);
+          debug.push(
+            `    WriteWithoutResponse: ${ch.properties.writeWithoutResponse}`,
+          );
+          debug.push(`    Read: ${ch.properties.read}`);
+          debug.push(`    Notify: ${ch.properties.notify}`);
+
+          if (
+            !writable &&
+            (ch.properties.write || ch.properties.writeWithoutResponse)
+          ) {
+            writable = ch;
+            debug.push("    ✅ SELECTED FOR PRINTING");
+          }
+        }
+      }
+
+      alert(debug.join("\n"));
+
+      if (!writable) {
+        throw new Error(
+          "No writable BLE characteristic found. This printer may be Bluetooth Classic, not BLE.",
+        );
+      }
 
       const encoder = new TextEncoder();
       const data = encoder.encode(receiptLines.join(""));
@@ -200,8 +243,20 @@ const PrintSales = ({ salesData, onBack }: PrintSalesProps) => {
       const chunkSize = 180;
 
       for (let i = 0; i < data.length; i += chunkSize) {
-        await characteristic.writeValue(data.slice(i, i + chunkSize));
+        const chunk = data.slice(i, i + chunkSize);
+
+        if (writable.properties.writeWithoutResponse) {
+          await writable.writeValueWithoutResponse?.(chunk);
+        } else if (writable.properties.write) {
+          await writable.writeValueWithResponse?.(chunk);
+        } else {
+          await writable.writeValue(chunk);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
+
+      alert("Print command sent.");
     } finally {
       server.disconnect();
     }

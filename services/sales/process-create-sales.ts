@@ -99,8 +99,6 @@ export async function processCreateSales(data: CreateSaleDto) {
       await createSalePayments({ connection, data: salesPaymentData });
     }
 
-    console.log({ saleItemData });
-
     const needDeductInventoryProdVar = saleItemData.filter(
       (i) => i.inventoryItemId !== null,
     );
@@ -197,6 +195,7 @@ export async function processCreateSales(data: CreateSaleDto) {
     const sales = await getSalesServices.findSalesBySaleId({
       connection,
       salesId,
+      includeSaleItems: true,
     });
 
     void sendEmailSalesBasePaymentMethods({ salesId });

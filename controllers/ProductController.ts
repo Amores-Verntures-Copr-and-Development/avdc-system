@@ -251,6 +251,8 @@ export const getProductVariantController = async ({
   from,
   to,
   storeId,
+  limit,
+  offset,
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
@@ -258,6 +260,8 @@ export const getProductVariantController = async ({
   from?: string;
   to?: string;
   storeId?: number;
+  offset?: number;
+  limit?: number;
 }) => {
   try {
     const data = await getProductVariants({
@@ -267,9 +271,12 @@ export const getProductVariantController = async ({
       from,
       to,
       storeId,
+      limit,
+      offset,
     });
     return {
-      data: data,
+      data: data.data,
+      total: data.total,
       message: "Product variants fetched successfully!",
       success: true,
     };

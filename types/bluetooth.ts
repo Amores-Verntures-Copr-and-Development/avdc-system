@@ -7,40 +7,77 @@ declare global {
   }
 
   interface Bluetooth {
-    requestDevice(options: {
-      acceptAllDevices?: boolean;
-      optionalServices?: string[];
-      filters?: {
-        name?: string;
-        namePrefix?: string;
-        services?: string[];
-      }[];
-    }): Promise<BluetoothDevice>;
+    requestDevice(options: RequestDeviceOptions): Promise<BluetoothDevice>;
+    getDevices(): Promise<BluetoothDevice[]>;
   }
 
+  interface RequestDeviceOptions {
+    acceptAllDevices?: boolean;
+    optionalServices?: BluetoothServiceUUID[];
+    filters?: BluetoothLEScanFilter[];
+  }
+
+  interface BluetoothLEScanFilter {
+    name?: string;
+    namePrefix?: string;
+    services?: BluetoothServiceUUID[];
+  }
+
+  type BluetoothServiceUUID = string | number;
+  type BluetoothCharacteristicUUID = string | number;
+
   interface BluetoothDevice {
+    id: string;
+    name?: string;
     gatt?: BluetoothRemoteGATTServer;
   }
 
   interface BluetoothRemoteGATTServer {
+    device: BluetoothDevice;
+    connected: boolean;
+
     connect(): Promise<BluetoothRemoteGATTServer>;
     disconnect(): void;
-    getPrimaryService(service: string): Promise<BluetoothRemoteGATTService>;
-    getPrimaryServices(): Promise<BluetoothRemoteGATTService[]>;
+
+    getPrimaryService(
+      service: BluetoothServiceUUID,
+    ): Promise<BluetoothRemoteGATTService>;
+
+    getPrimaryServices(
+      service?: BluetoothServiceUUID,
+    ): Promise<BluetoothRemoteGATTService[]>;
   }
 
   interface BluetoothRemoteGATTService {
+    device: BluetoothDevice;
     uuid: string;
+    isPrimary: boolean;
+
     getCharacteristic(
-      characteristic: string,
+      characteristic: BluetoothCharacteristicUUID,
     ): Promise<BluetoothRemoteGATTCharacteristic>;
-    getCharacteristics(): Promise<BluetoothRemoteGATTCharacteristic[]>;
+
+    getCharacteristics(
+      characteristic?: BluetoothCharacteristicUUID,
+    ): Promise<BluetoothRemoteGATTCharacteristic[]>;
   }
 
   interface BluetoothRemoteGATTCharacteristic {
+    service: BluetoothRemoteGATTService;
     uuid: string;
     properties: BluetoothCharacteristicProperties;
+
     writeValue(value: BufferSource): Promise<void>;
+
+    writeValueWithResponse?(value: BufferSource): Promise<void>;
+
+    writeValueWithoutResponse?(value: BufferSource): Promise<void>;
+
+    readValue(): Promise<DataView>;
+
+    startNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
+
+    stopNotifications(): Promise<BluetoothRemoteGATTCharacteristic>;
   }
 
   interface BluetoothCharacteristicProperties {

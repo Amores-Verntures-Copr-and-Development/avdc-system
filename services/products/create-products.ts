@@ -120,7 +120,7 @@ export async function createBulkProducts({
         },
       });
 
-      if (isExistingVariants.length > 0) {
+      if (isExistingVariants.data.length > 0) {
         continue;
       }
 

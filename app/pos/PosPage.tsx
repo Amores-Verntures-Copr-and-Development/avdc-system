@@ -1,7 +1,7 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -33,7 +33,6 @@ import Popup from "@/components/shared/Popup";
 import DiscountList from "./components/sidebar/DiscountList";
 import PaymentMethodList from "./components/sidebar/PaymentMethodList";
 import ProductList from "./components/sidebar/ProductList";
-import SalesHistory from "./components/sidebar/SalesOrder";
 import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import {
@@ -59,6 +58,7 @@ import SalesOrder from "./components/sidebar/SalesOrder";
 import AddCustomer from "./components/sidebar/AddCustomer";
 import BarcodeScanner from "./components/BarcodeScanner";
 import { ApiResponse } from "@/types/api";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 export interface ComponentsVariant {
   inventoryItemId: number;
@@ -88,23 +88,24 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const limit = 100;
   const [productPage, setProductPage] = useState(1);
 
-  const handleClearCustomerComponent = () => {
-    setClearSignal((prev) => prev + 1);
-    setCustomer(null);
-  };
   const [showProductView, setShowProductView] = useState<
     "product" | "product-variant"
   >("product");
+
   const [editOrderAmount, setEditOrderAmount] = useState<OrderList | null>(
     null,
   );
+
   const [searchProd, setSearchProd] = useState("");
+
   const [categoryFilter, setCategoryFilter] = useState<string | "all" | null>(
     "all",
   );
+
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
   const [recentSales, setRecentSales] = useState<Sales | null>(null);
+
   const [isShowIcons, setIsShowIcons] = useState<
     | "discount"
     | "methods"
@@ -114,21 +115,36 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     | "add-customer"
     | "open-scanner"
   >(null);
+  const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [isCheckOut, setIsCheckOut] = useState(false);
+
   const [selectedProduct, setSelectedProduct] =
     useState<DisplayProductsDtos | null>(null);
-  const [productList, setProductList] = useState<DisplayProductsDtos[]>([]);
+
   const [paymentMethod, setPaymentMethod] = useState<
     CreateSalePaymentDto[] | null
   >([]);
+
   const [selectedDiscount, setSelectedDiscount] = useState<
     CreateSalesDiscount[] | null
   >(null);
-  const [selectedOrder, setSelectedOrder] = useState<OrderList[] | null>(null);
-  const { data: prodCat, mutate: mutateProdCat } = useSWR<
-    ApiResponse<ProductCategories[]>
-  >(storeId ? `/api/products/${storeId}/product-categories/` : null, fetcher);
+
+  const [selectedOrder, setSelectedOrder] = useLocalStorage<OrderList[]>(
+    "selectedOrder",
+    [],
+  );
+
+  const handleClearCustomerComponent = () => {
+    setClearSignal((prev) => prev + 1);
+    setCustomer(null);
+  };
+
+  const { data: prodCat } = useSWR<ApiResponse<ProductCategories[]>>(
+    storeId ? `/api/products/${storeId}/product-categories/` : null,
+    fetcher,
+  );
+
   const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
     data: DisplayProductsDtos[];
   }>(
@@ -147,29 +163,59 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(storeId ? `/api/payment-method/store/${storeId}/` : null, fetcher);
+
   const { data: discountResponse = { data: [] } } = useSWR<{
     data: Discounts[];
   }>(storeId ? `/api/sales-discount/store/${storeId}/` : null, fetcher);
 
-  useEffect(() => {
-    const nextData = itemResponse.data ?? [];
-
-    setProductList((prev) => {
-      if (JSON.stringify(prev) === JSON.stringify(nextData)) {
-        return prev;
-      }
-
-      return nextData;
-    });
+  const rawProductList = useMemo(() => {
+    return itemResponse.data ?? [];
   }, [itemResponse.data]);
 
+  const productList = useMemo(() => {
+    if (selectedOrder.length === 0) return rawProductList;
+
+    return rawProductList.map((product) => ({
+      ...product,
+      productVariants: product.productVariants?.map((variant) => {
+        const order = selectedOrder.find(
+          (item) => item.prodVarId === variant.prodVarId,
+        );
+
+        if (!order) return variant;
+
+        return {
+          ...variant,
+          stocks: variant.inventoryItemId
+            ? Math.max(0, Number(variant.stocks || 0) - order.quantity)
+            : variant.stocks,
+
+          variantComponents: variant.variantComponents?.map((vc) => {
+            if (!vc.isDeductVar) return vc;
+
+            return {
+              ...vc,
+              left: Math.max(
+                0,
+                Number(vc.left || 0) -
+                  Number(vc.quantityRequired || 0) * order.quantity,
+              ),
+            };
+          }),
+        };
+      }),
+    }));
+  }, [rawProductList, selectedOrder]);
+
   const subtotal = useMemo(() => {
-    return selectedOrder?.reduce((t, o) => t + Number(o.prodVarTotal), 0) ?? 0;
+    return selectedOrder.reduce((t, o) => t + Number(o.prodVarTotal), 0);
   }, [selectedOrder]);
+
   const totalPaid = paymentMethod?.reduce(
     (sum, p) => sum + p.salesPaymentAmount,
     0,
   );
+
   const getTotalAmount = (): number => {
     if (!selectedDiscount || selectedDiscount.length === 0) return subtotal;
 
@@ -178,12 +224,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       0,
     );
 
-    return Math.max(subtotal - totalDiscount, 0); // prevent negative
+    return Math.max(subtotal - totalDiscount, 0);
   };
+
   const remaining = Math.max(0, getTotalAmount() - (totalPaid || 0));
   const change = Math.max(0, (totalPaid || 0) - getTotalAmount());
-
   const canComplete = (totalPaid || 0) >= getTotalAmount();
+
   const hasSufficientInventory = (
     prodVarId: number,
     quantityToAdd = 1,
@@ -195,8 +242,18 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
       if (!variant) continue;
 
+      if (
+        variant.inventoryItemId &&
+        Number(variant.stocks || 0) < quantityToAdd
+      ) {
+        return false;
+      }
+
       for (const vc of variant.variantComponents ?? []) {
+        if (!vc.isDeductVar) continue;
+
         const required = vc.quantityRequired * quantityToAdd;
+
         if ((vc.left ?? 0) < required) {
           return false;
         }
@@ -206,9 +263,198 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     return true;
   };
 
+  const calculateItemDiscount = (
+    price: number,
+    quantity: number,
+    discounts: CreateSaleItemDisc[] = [],
+  ) => {
+    const subtotal = price * quantity;
+    let discountTotal = 0;
+
+    for (const d of discounts) {
+      const discountDef = discountResponse.data.find(
+        (dis) => dis.discountId === d.discountId,
+      );
+
+      if (!discountDef) continue;
+
+      const value = Number(discountDef.discountValue);
+
+      if (d.discountType === "percent") {
+        discountTotal += subtotal * (value / 100);
+      }
+
+      if (d.discountType === "fixed") {
+        discountTotal += value * quantity;
+      }
+    }
+
+    return Math.min(discountTotal, subtotal);
+  };
+
+  const addProductOrder = (newProduct: OrderList) => {
+    if (!hasSufficientInventory(newProduct.prodVarId)) {
+      toast.error("Insufficient inventory");
+      return;
+    }
+
+    setSelectedOrder((prev) => {
+      const existing = prev.find((p) => p.prodVarId === newProduct.prodVarId);
+
+      if (!existing) {
+        const quantity = 1;
+        const subtotal = newProduct.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          newProduct.prodVarPrice,
+          quantity,
+          newProduct.discounts,
+        );
+
+        return [
+          ...prev,
+          {
+            ...newProduct,
+            quantity,
+            prodVarSubtotal: subtotal,
+            prodVarTotal: subtotal - discount,
+            discounts: newProduct.discounts
+              ? newProduct.discounts.map((d) => ({
+                  ...d,
+                  discountAmount: calculateItemDiscount(
+                    newProduct.prodVarPrice,
+                    1,
+                    [d],
+                  ),
+                }))
+              : [],
+          },
+        ];
+      }
+
+      return prev.map((item) => {
+        if (item.prodVarId !== newProduct.prodVarId) return item;
+
+        const quantity = item.quantity + 1;
+        const subtotal = item.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          item.prodVarPrice,
+          quantity,
+          item.discounts,
+        );
+
+        return {
+          ...item,
+          quantity,
+          prodVarSubtotal: subtotal,
+          prodVarTotal: subtotal - discount,
+        };
+      });
+    });
+  };
+
+  const addQuantity = (product: OrderList) => {
+    if (!hasSufficientInventory(product.prodVarId)) {
+      toast.error("Insufficient inventory");
+      return;
+    }
+
+    setSelectedOrder((prev) =>
+      prev.map((item) => {
+        if (item.prodVarId !== product.prodVarId) return item;
+
+        const quantity = item.quantity + 1;
+        const subtotal = item.prodVarPrice * quantity;
+        const discount = calculateItemDiscount(
+          item.prodVarPrice,
+          quantity,
+          item.discounts,
+        );
+
+        return {
+          ...item,
+          quantity,
+          prodVarSubtotal: subtotal,
+          prodVarTotal: subtotal - discount,
+        };
+      }),
+    );
+  };
+
+  const removeQuantityProductList = (product: OrderList) => {
+    setSelectedOrder((prev) =>
+      prev
+        .map((p) => {
+          if (p.prodVarId !== product.prodVarId) return p;
+
+          const quantity = Math.max(p.quantity - 1, 0);
+          const subtotal = p.prodVarPrice * quantity;
+          const discount = calculateItemDiscount(
+            p.prodVarPrice,
+            quantity,
+            p.discounts,
+          );
+
+          return {
+            ...p,
+            quantity,
+            prodVarSubtotal: subtotal,
+            prodVarTotal: subtotal - discount,
+          };
+        })
+        .filter((p) => p.quantity > 0),
+    );
+  };
+
+  const removeProduct = (product: OrderList) => {
+    setSelectedOrder((prev) =>
+      prev.filter((prod) => prod.prodVarId !== product.prodVarId),
+    );
+  };
+
+  const updateOrderList = (updatedOrder: OrderList) => {
+    setSelectedOrder((prev) =>
+      prev.map((order) =>
+        order.prodVarId === updatedOrder.prodVarId ? updatedOrder : order,
+      ),
+    );
+  };
+
+  useEffect(() => {
+    if (!selectedProduct) return;
+
+    const updatedProduct = productList.find(
+      (p) => p.prodId === selectedProduct.prodId,
+    );
+
+    if (updatedProduct) {
+      setSelectedProduct(updatedProduct);
+    }
+  }, [productList, selectedProduct?.prodId]);
+
+  const getDiscountMeta = (discountId: number) =>
+    discountResponse.data.find((d) => d.discountId === discountId);
+
+  useEffect(() => {
+    setSelectedDiscount(
+      (prev) =>
+        prev?.map((d) => {
+          const disc = getDiscountMeta(d.discountId);
+
+          return {
+            ...d,
+            discountAmount:
+              disc?.discountType === "fixed"
+                ? Number(disc.discountValue)
+                : Math.max(0, subtotal * (Number(disc?.discountValue) / 100)),
+          };
+        }) || [],
+    );
+  }, [subtotal]);
+
   const addProductBarcode = async (barcode: string) => {
     try {
       if (!barcode.trim()) return;
+
       const res = await fetch(
         `/api/products/${storeId}/pos?barcode=${encodeURIComponent(barcode)}`,
         {
@@ -216,32 +462,40 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           credentials: "include",
         },
       );
+
       const data: ApiResponse<DisplayProductsDtos[]> = await res.json();
+
       if (!data.success || !data.data.length) {
         toast.error(`No found item with ${barcode}`, {
           position: "bottom-center",
         });
         return;
       }
+
       const foundProduct = data.data[0];
+
       const foundVariant = foundProduct.productVariants?.find(
         (pv) => pv.barcode === barcode,
       );
+
       if (!foundVariant) {
         toast.error(`No variant found with ${barcode}`, {
           position: "bottom-center",
         });
         return;
       }
-      const existingOrder = selectedOrder?.find(
+
+      const existingOrder = selectedOrder.find(
         (s) => s.prodVarId === foundVariant.prodVarId,
       );
+
       if (existingOrder) {
         toast.success(`Already in order ${existingOrder.prodVarName}`, {
           position: "bottom-center",
         });
         return;
       }
+
       const orderListData: OrderList = {
         prodVarId: foundVariant.prodVarId,
         prodVarName: foundVariant.prodVarName,
@@ -263,359 +517,48 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     }
   };
 
-  const calculateItemDiscount = (
-    price: number,
-    quantity: number,
-    discounts: CreateSaleItemDisc[] = [],
-  ) => {
-    const subtotal = price * quantity;
-    let discountTotal = 0;
-
-    for (const d of discounts) {
-      const discountDef = discountResponse.data.find(
-        (dis) => dis.discountId === d.discountId,
-      );
-
-      if (!discountDef) continue;
-
-      const value = Number(discountDef.discountValue);
-
-      if (d.discountType === "percent") {
-        // Example: 10% of subtotal
-        discountTotal += subtotal * (value / 100);
-      }
-
-      if (d.discountType === "fixed") {
-        // Example: ₱50 off per item
-        discountTotal += value * quantity;
-      }
-    }
-
-    return Math.min(discountTotal, subtotal);
-  };
-  const addProductOrder = (newProduct: OrderList) => {
-    if (!hasSufficientInventory(newProduct.prodVarId)) {
-      toast.error("Insufficient inventory");
-      return;
-    }
-
-    // deduct once, outside setSelectedOrder
-    deductVariantComponents(newProduct.prodVarId, 1);
-
-    setSelectedOrder((prev) => {
-      const orders = prev ?? [];
-      const existing = orders.find((p) => p.prodVarId === newProduct.prodVarId);
-
-      if (!existing) {
-        const quantity = 1;
-        const subtotal = newProduct.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          newProduct.prodVarPrice,
-          quantity,
-          newProduct.discounts,
-        );
-
-        return [
-          ...orders,
-          {
-            ...newProduct,
-            quantity,
-            prodVarSubtotal: subtotal,
-            prodVarTotal: subtotal - discount,
-            discounts: newProduct.discounts
-              ? newProduct.discounts.map((d) => ({
-                  ...d,
-                  discountAmount: calculateItemDiscount(
-                    newProduct.prodVarPrice,
-                    1,
-                    [d],
-                  ),
-                }))
-              : [],
-          },
-        ];
-      }
-
-      return orders.map((item) => {
-        if (item.prodVarId !== newProduct.prodVarId) return item;
-
-        const quantity = item.quantity + 1;
-        const subtotal = item.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          item.prodVarPrice,
-          quantity,
-          item.discounts,
-        );
-
-        return {
-          ...item,
-          quantity,
-          prodVarSubtotal: subtotal,
-          prodVarTotal: subtotal - discount,
-        };
-      });
-    });
-  };
-  useEffect(() => {
-    if (!selectedProduct) return;
-
-    const updatedProduct = productList.find(
-      (p) => p.prodId === selectedProduct.prodId,
-    );
-
-    if (updatedProduct) {
-      setSelectedProduct(updatedProduct);
-    }
-  }, [productList, selectedProduct?.prodId]);
-
-  const deductVariantComponents = (prodVarId: number, quantityToAdd = 1) => {
-    setProductList((prev) =>
-      prev.map((product) => ({
-        ...product,
-
-        productVariants: product.productVariants?.map((variant) => {
-          if (variant.prodVarId !== prodVarId) {
-            return variant;
-          }
-
-          const hasInventoryItem = Boolean(variant.inventoryItemId);
-
-          return {
-            ...variant,
-
-            // deduct direct stocks
-            stocks: hasInventoryItem
-              ? Math.max(0, Number(variant.stocks || 0) - quantityToAdd)
-              : variant.stocks,
-
-            // deduct components
-            variantComponents: variant.variantComponents?.map((vc) => {
-              if (!Boolean(vc.isDeductVar)) {
-                return vc;
-              }
-
-              return {
-                ...vc,
-
-                left: Math.max(
-                  0,
-                  Number(vc.left || 0) -
-                    Number(vc.quantityRequired || 0) * quantityToAdd,
-                ),
-              };
-            }),
-          };
-        }),
-      })),
-    );
-  };
-  const restoreVariantComponents = (
-    prodVarId: number,
-    quantityToRestore = 1,
-  ) => {
-    setProductList((prev) =>
-      prev.map((product) => ({
-        ...product,
-
-        productVariants: product.productVariants?.map((variant) => {
-          if (variant.prodVarId !== prodVarId) {
-            return variant;
-          }
-
-          const hasInventoryItem = Boolean(variant.inventoryItemId);
-
-          return {
-            ...variant,
-
-            // restore direct stocks
-            stocks: hasInventoryItem
-              ? Number(variant.stocks || 0) + quantityToRestore
-              : variant.stocks,
-
-            // restore components
-            variantComponents: variant.variantComponents?.map((vc) => {
-              if (!Boolean(vc.isDeductVar)) {
-                return vc;
-              }
-
-              return {
-                ...vc,
-
-                left:
-                  Number(vc.left || 0) +
-                  Number(vc.quantityRequired || 0) * quantityToRestore,
-              };
-            }),
-          };
-        }),
-      })),
-    );
-  };
-  const removeQuantityProductList = (product: OrderList) => {
-    // Restore inventory first
-    restoreVariantComponents(product.prodVarId, 1);
-    console.log({ product });
-    setSelectedOrder((prev) => {
-      if (!prev) return [];
-
-      return prev
-        .map((p) => {
-          if (p.prodVarId !== product.prodVarId) return p;
-
-          const newQuantity = Math.max((p.quantity || 0) - 1, 0);
-
-          // Recalculate subtotal
-          const newSubtotal = p.prodVarPrice * newQuantity;
-
-          // Recalculate total with discounts
-          const newDiscount = calculateItemDiscount(
-            p.prodVarPrice,
-            newQuantity,
-            p.discounts,
-          );
-
-          return {
-            ...p,
-            quantity: newQuantity,
-            prodVarSubtotal: newSubtotal,
-            prodVarTotal: newSubtotal - newDiscount,
-          };
-        })
-        .filter((p) => p.quantity > 0); // remove items with 0 quantity
-    });
-  };
-  useEffect(() => {
-    setSelectedDiscount(
-      (prev) =>
-        prev?.map((d) => {
-          const disc = getDiscountMeta(d.discountId);
-          return {
-            ...d,
-            discountAmount:
-              disc?.discountType === "fixed"
-                ? disc.discountValue
-                : Math.max(0, subtotal * (Number(disc?.discountValue) / 100)), // or the field you want to reset
-          };
-        }) || [],
-    );
-  }, [subtotal]);
-  const addQuantity = (product: OrderList) => {
-    if (!hasSufficientInventory(product.prodVarId)) {
-      toast.error("Insufficient inventory");
-      return;
-    }
-
-    deductVariantComponents(product.prodVarId, 1);
-
-    setSelectedOrder((prev) => {
-      const orders = prev ?? [];
-
-      const existing = orders.find((p) => p.prodVarId === product.prodVarId);
-
-      if (!existing) {
-        const quantity = 1;
-        const subtotal = product.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          product.prodVarPrice,
-          quantity,
-          product.discounts,
-        );
-
-        return [
-          ...orders,
-          {
-            ...product,
-            quantity,
-            prodVarSubtotal: subtotal,
-            prodVarTotal: subtotal - discount,
-          },
-        ];
-      }
-
-      return orders.map((item) => {
-        if (item.prodVarId !== product.prodVarId) return item;
-
-        const quantity = item.quantity + 1;
-        const subtotal = item.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          item.prodVarPrice,
-          quantity,
-          item.discounts,
-        );
-
-        return {
-          ...item,
-          quantity,
-          prodVarSubtotal: subtotal,
-          prodVarTotal: subtotal - discount,
-        };
-      });
-    });
-  };
-
-  const removeProduct = (product: OrderList) => {
-    const findQuantity = selectedOrder?.find(
-      (p) => p.prodVarId === product.prodVarId,
-    )?.quantity;
-    restoreVariantComponents(product.prodVarId, findQuantity);
-    const newSelectedOrder = selectedOrder?.filter(
-      (prod) => prod.prodVarId !== product.prodVarId,
-    );
-    setSelectedOrder(newSelectedOrder ?? []);
-  };
-  function getCookie(name: string): string | null {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()!.split(";").shift() || null;
-    return null;
-  }
-  const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
   const handleConfirmOrder = async (remarks?: string) => {
-    const totalAmount = getTotalAmount(); // total to pay
+    const totalAmount = getTotalAmount();
     let remaining = totalAmount;
-
-    // const token = getCookie("avdc_accessToken");
-
-    if (!selectedOrder || selectedOrder.length === 0) {
+    setIsConfirmingOrder(true);
+    if (selectedOrder.length === 0) {
       toast.error("No selected order!");
       return;
     }
+
     if (!storeId || storeId === 0) {
       toast.error("No store found!");
       return;
     }
-    setIsConfirmingOrder(true);
-    const saleItems: CreateSaleItemDto[] =
-      selectedOrder?.map((items) => ({
-        salesItemPrice: items.prodVarPrice,
-        salesItemQuantity: items.quantity,
-        salesId: 0,
-        salesItemSubtotal: Number(items.prodVarSubtotal),
-        salesItemTotal: Number(items.prodVarTotal),
-        prodVarId: items.prodVarId,
-        inventoryItemId: items.inventoryItemId ?? null,
-        components:
-          items.components?.map((i) => ({
-            inventoryItemId: i.inventoryItemId,
-            quantityRequired: i.quantityRequired,
-          })) ?? [],
-        salesItemDiscounts:
-          items.discounts?.map((dis) => ({
-            discountAmount: dis.discountAmount,
-            discountId: dis.discountId,
-            salesItemId: 0,
-            salesItemDiscCreatedBy: user?.userId ?? 0,
-            discountType: dis.discountType,
-          })) ?? [],
-      })) ?? [];
+
+    const saleItems: CreateSaleItemDto[] = selectedOrder.map((items) => ({
+      salesItemPrice: items.prodVarPrice,
+      salesItemQuantity: items.quantity,
+      salesId: 0,
+      salesItemSubtotal: Number(items.prodVarSubtotal),
+      salesItemTotal: Number(items.prodVarTotal),
+      prodVarId: items.prodVarId,
+      inventoryItemId: items.inventoryItemId ?? null,
+      components:
+        items.components?.map((i) => ({
+          inventoryItemId: i.inventoryItemId,
+          quantityRequired: i.quantityRequired,
+        })) ?? [],
+      salesItemDiscounts:
+        items.discounts?.map((dis) => ({
+          discountAmount: dis.discountAmount,
+          discountId: dis.discountId,
+          salesItemId: 0,
+          salesItemDiscCreatedBy: user?.userId ?? 0,
+          discountType: dis.discountType,
+        })) ?? [],
+    }));
+
     const paymentMethodData: CreateSalePaymentDto[] = paymentMethod
       ?.map((pm) => {
-        if (remaining <= 0) return null; // nothing left to pay
+        if (remaining <= 0) return null;
 
-        // apply either the payment amount or the remaining, whichever is smaller
         const appliedAmount = Math.min(pm.salesPaymentAmount, remaining);
-
-        // reduce remaining
         remaining -= appliedAmount;
 
         return {
@@ -627,8 +570,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         };
       })
       .filter(Boolean) as CreateSalePaymentDto[];
+
     const salesData: CreateSaleDto = {
-      customerId: customer?.customerId ? customer?.customerId : 0,
+      customerId: customer?.customerId ? customer.customerId : 0,
       salesInvoice: "",
       salesCreatedBy: user?.userId ?? 0,
       salesNo: "",
@@ -642,6 +586,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesPayments: paymentMethodData,
       salesRemarks: remarks ?? "",
     };
+
     try {
       const result = await fetch(`api/sales/pos/${salesData.storeId}`, {
         method: "POST",
@@ -651,34 +596,26 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         credentials: "include",
         body: JSON.stringify(salesData),
       });
+
       const res = await result.json();
+
       if (!res.success) {
-        console.log("Res: ", res);
         throw new Error(res.err);
       }
+
       const sales = res.data as Sales[];
 
       setRecentSales(sales[0]);
       toast.success(res.message);
-      mutateProducts();
-      setProductList((prev) =>
-        prev.map((product) => ({
-          ...product,
-          productVariants: product.productVariants?.map((variant) => {
-            const soldItem = selectedOrder?.find(
-              (o) => o.prodVarId === variant.prodVarId,
-            );
-            return soldItem
-              ? { ...variant, sold: (variant.sold ?? 0) + soldItem.quantity }
-              : variant;
-          }),
-        })),
-      );
+
+      await mutateProducts();
+
       setIsPaymentSuccess(true);
       setPaymentMethod([]);
       setSelectedOrder([]);
       setSelectedDiscount([]);
       handleClearCustomerComponent();
+
       return true;
     } catch (e) {
       console.log(e);
@@ -693,9 +630,12 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     const res = await fetch(
       `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`,
     );
+
     const json = await res.json();
+
     return json.data || [];
   };
+
   const addPayment = (payment: CreateSalePaymentDto) => {
     setPaymentMethod((prev) => [
       ...(prev ?? []),
@@ -708,22 +648,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       },
     ]);
   };
+
   const handleViewToggle = () => {
     const newView =
       showProductView === "product" ? "product-variant" : "product";
+
     setShowProductView(newView);
   };
+
   const addDiscount = (newDisc: Discounts) => {
     setSelectedDiscount((prev) => {
       const existing = prev?.some((d) => d.discountId === newDisc.discountId);
+
       if (existing) {
         return prev;
       }
-
-      // const discount =
-      //   newDisc.discountType === "fixed"
-      //     ? newDisc.discountValue
-      //     : subtotal * (Number(newDisc.discountValue) / 100);
 
       return [
         ...(prev ?? []),
@@ -740,38 +679,32 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       ];
     });
   };
-  const getDiscountMeta = (discountId: number) =>
-    discountResponse.data.find((d) => d.discountId === discountId);
+
   const removeDiscount = (newDisc: Discounts) => {
     const filter = selectedDiscount?.filter(
       (disc) => disc.discountId !== newDisc.discountId,
     );
+
     setSelectedDiscount(filter ?? []);
   };
-  const updateOrderList = (updatedOrder: OrderList) => {
-    setSelectedOrder((prev) =>
-      prev!.map((order) =>
-        order.prodVarId === updatedOrder.prodVarId ? updatedOrder : order,
-      ),
-    );
-  };
+
   return (
     <PageLayout>
       <div className="flex flex-1 overflow-visible min-h-0 h-full">
-        {/* Left section */}
-        <div className="flex flex-col flex-[0.75]  min-w-0 h-full">
+        <div className="flex flex-col flex-[0.75] min-w-0 h-full">
           <div className="bg-white min-h-10 border border-gray-200 flex justify-between items-center px-2 2xl:px-4 py-1 2xl:py-2 overflow-visible">
             {selectedProduct ? (
               <>
-                {/* Product Detail Header */}
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-gradient-to-br from-primary-1 to-primary-1/50 rounded-lg shadow-sm">
                     <Package className="text-white w-3 h-3 2xl:w-5 2xl:h-5" />
                   </div>
+
                   <div>
                     <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900">
                       {selectedProduct.prodName}
                     </h1>
+
                     <p className="text-[10px] 2xl:text-xs text-gray-500">
                       {selectedProduct.productVariants?.length || 0} variant
                       {selectedProduct.productVariants?.length !== 1 ? "s" : ""}
@@ -780,7 +713,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 </div>
 
                 <div>
-                  {" "}
                   <Button
                     label="Back"
                     size="sm"
@@ -791,12 +723,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             ) : (
               <>
-                {/* Main Header */}
                 <div className="flex items-center flex-1">
-                  <div className=" flex gap-2 p-2 flex-1">
+                  <div className="flex gap-2 p-2 flex-1">
                     <div className="flex gap-2 items-center">
                       {showProductView === "product" ? (
-                        <div className="">
+                        <div>
                           <Button
                             label=""
                             icon={
@@ -805,11 +736,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                             color="outline"
                             size="sm"
                             onClick={handleViewToggle}
-                            aria-label={`Switch to ${showProductView === "product" ? "variant" : "product"} view`}
+                            aria-label={`Switch to ${
+                              showProductView === "product"
+                                ? "variant"
+                                : "product"
+                            } view`}
                           />
                         </div>
                       ) : (
-                        <div className="">
+                        <div>
                           <Button
                             label=""
                             icon={Package}
@@ -821,6 +756,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                           />
                         </div>
                       )}
+
                       <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900 mr-5">
                         Products
                       </h1>
@@ -828,7 +764,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
                     <div className="flex gap-2">
                       <div>
-                        {" "}
                         <SearchBar
                           useUrl={false}
                           onSearch={(value) => {
@@ -839,6 +774,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                       </div>
                     </div>
                   </div>
+
                   <div className="flex flex-col gap-2 items-end justify-start h-full">
                     <div className="flex gap-2">
                       <IconButton
@@ -850,6 +786,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         icon={<Barcode className="w-5 h-5 2xl:w-7 2xl:h-5" />}
                         isRounded={true}
                       />
+
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("add-customer");
@@ -861,6 +798,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         }
                         isRounded={true}
                       />
+
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("methods");
@@ -872,10 +810,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         }
                         isRounded={true}
                       />
+
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("discount");
-                          // TODO: Implement product list functionality
                         }}
                         label="Discount List"
                         bg="blue"
@@ -884,15 +822,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         }
                         isRounded={true}
                       />
-                      {/* <IconButton
-                        onClick={() => {
-                          setIsShowIcons("product");
-                        }}
-                        label="Product List"
-                        bg="yellow"
-                        icon={<Files className="w-5 h-5 2xl:w-7 2xl:h-5" />}
-                        isRounded={true}
-                      /> */}
+
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("history");
@@ -908,13 +838,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             )}
           </div>
+
           <div className="flex flex-col w-full 2xl:gap-2 p-2 bg-white border border-gray-200">
             <h2 className="text-xs 2xl:text-base font-semibold text-gray-800 px-2">
               Categories
             </h2>
 
             <div className="flex items-center gap-2">
-              {/* Scrollable categories */}
               <div className="flex-1 overflow-x-auto scrollbar-th scrollbar-thumb-gray-200 scrollbar-track-gray-100">
                 <div className="flex gap-2 px-2 py-1 min-w-max">
                   <div className="flex-shrink-0">
@@ -952,7 +882,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 </div>
               </div>
 
-              {/* Fixed right-side pagination */}
               <div className="flex items-center gap-2 flex-shrink-0 pr-2">
                 <Button
                   size="sm"
@@ -978,6 +907,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </div>
             </div>
           </div>
+
           {showProductView === "product" ? (
             selectedProduct ? (
               <ProductVariant
@@ -1001,7 +931,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             )
           ) : (
-            <div className="flex-1 bg-white border  border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
+            <div className="flex-1 bg-white border border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
               {productList.flatMap((p) =>
                 p.productVariants?.flatMap((pv) => (
                   <ProductVariantCard
@@ -1022,12 +952,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         <div className="flex-[.50] lg:flex-[0.30] 2xl:flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
             <h1 className="font-semibold text-xs 2xl:text-sm">Order Details</h1>
+
             <span className="text-[9px] 2xl:text-sm font-semibold">
-              {selectedOrder?.length} items
+              {selectedOrder.length} items
             </span>
           </div>
-          <div className="flex-[0.05] border-b p-2 border-gray-200 flex  items-center gap-5">
+
+          <div className="flex-[0.05] border-b p-2 border-gray-200 flex items-center gap-5">
             <h1 className="font-semibold text-xs 2xl:text-sm">Customer:</h1>
+
             <div className="flex-1">
               <DropdownSearch<Customer>
                 sizes="sm"
@@ -1048,6 +981,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             </div>
           </div>
+
           <div className="flex-1 p-2 overflow-auto border-b border-gray-300">
             <OrderDetails
               setEditOrderAmount={setEditOrderAmount}
@@ -1057,16 +991,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               removeProduct={removeProduct}
             />
           </div>
+
           <div className="flex-[0.25] p-2 2xl:p-5 border-gray-200 flex flex-col gap-1 2xl:gap-4">
-            <div className="flex items-center gap-3 pb-2  border-gray-200 justify-between">
+            <div className="flex items-center gap-3 pb-2 border-gray-200 justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 2xl:w-7 2xl:h-7 rounded-lg bg-gradient-to-br from-primary-1/80 to-primary-1/70 flex items-center justify-center shadow-md">
                   <Receipt className="w-2 h-2 2xl:w-4 2xl:h-4 text-white" />
                 </div>
-                <h1 className="font-semibold text-[9px] lg:text-sm 2xl:text-md  text-gray-800">
+
+                <h1 className="font-semibold text-[9px] lg:text-sm 2xl:text-md text-gray-800">
                   Payment Details
                 </h1>
               </div>
+
               <div>
                 <Button
                   icon={Tag}
@@ -1087,11 +1024,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </span>
             </div>
 
-            {/* Discounts */}
             {selectedDiscount && selectedDiscount.length > 0 && (
               <>
                 {selectedDiscount.map((disc, index) => {
                   const discount = getDiscountMeta(disc.discountId);
+
                   return (
                     <div
                       key={index}
@@ -1104,6 +1041,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                           : `₱${discount?.discountValue}`}
                         )
                       </span>
+
                       <span>- {formatPeso(disc.discountAmount)}</span>
                     </div>
                   );
@@ -1111,34 +1049,32 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             )}
 
-            {/* Total */}
-            <div className="flex justify-between  pt-2">
-              <span className=" font-semibold text-xs 2xl:text-sm">Total</span>
+            <div className="flex justify-between pt-2">
+              <span className="font-semibold text-xs 2xl:text-sm">Total</span>
               <span className="font-semibold text-xs 2xl:text-sm">
                 {formatPeso(getTotalAmount())}
               </span>
             </div>
           </div>
-          {/* Footer / bottom button */}
+
           <div className="p-2 border-t border-gray-200">
             <Button
               size="md"
               label="Checkout"
               className="w-full"
               onClick={() => {
-                const hasNoOrder =
-                  !selectedOrder || selectedOrder?.length === 0;
-
-                if (hasNoOrder) {
+                if (selectedOrder.length === 0) {
                   toast.error("No order selected!");
                   return;
                 }
+
                 setIsCheckOut(true);
               }}
             />
           </div>
         </div>
       </div>
+
       {isShowIcons !== null && (
         <Popup
           icon={
@@ -1194,6 +1130,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </Popup>
       )}
+
       {showDiscountModal && (
         <Modal
           className="h-[50%]"
@@ -1212,22 +1149,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           />
         </Modal>
       )}
+
       {isCheckOut && (
         <Modal
-          // leftTitleContent={
-          //   isPaymentSuccess ? (
-          //     <div></div>
-          //   ) : (
-          //     <span className="font-semibold">
-          //       Total: {formatPeso(getTotalAmount())}
-          //     </span>
-          //   )
-          // }
           title={!isPaymentSuccess ? "Confirm Order" : ""}
           className={isPaymentSuccess ? `` : `h-[95%]`}
           isOpen={isCheckOut}
           onClose={function (): void {
             setIsCheckOut(false);
+
             if (isPaymentSuccess) {
               setIsPaymentSuccess(false);
               setRecentSales(null);
@@ -1271,6 +1201,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </Modal>
       )}
+
       <Modal
         isOpen={editOrderAmount !== null}
         onClose={function (): void {

@@ -96,6 +96,7 @@ export const getSalesServices = {
   findSalesBySaleId: async ({
     connection,
     salesId,
+    includeSaleItems = false,
   }: {
     salesId: number;
     connection?: PoolConnection;
@@ -107,6 +108,7 @@ export const getSalesServices = {
         keyFields: {
           salesId,
         },
+        includeSaleItems: includeSaleItems,
       });
       return data;
     } catch (e) {
