@@ -14,7 +14,6 @@ export async function sendEmailSalesBasePaymentMethods({
   salesId: number;
 }) {
   try {
-    console.log("Checking if sales has payment method with isEmail...");
     let isEmail: boolean = false;
 
     const salesData = await getSalesServices.findSalesBySaleId({

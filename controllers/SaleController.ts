@@ -103,6 +103,7 @@ export const getSalesByStoreId = async ({
   keyFields,
   offset,
   limit,
+  method,
 }: {
   storeId: number;
   search?: string;
@@ -113,6 +114,7 @@ export const getSalesByStoreId = async ({
   keyFields?: Partial<Sales>;
   limit?: number;
   offset?: number;
+  method?: string;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -124,6 +126,7 @@ export const getSalesByStoreId = async ({
       to,
       offset,
       limit,
+      method,
     });
     const count = await getSalesServices.getSalesCount({
       keyFields: { storeId: storeId },

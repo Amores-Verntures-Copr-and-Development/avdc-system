@@ -24,7 +24,7 @@ export async function GET(
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
-
+    const method = searchParams.get("method") || "";
     const res = await getSalesByStoreId({
       storeId,
       search,
@@ -34,6 +34,7 @@ export async function GET(
       to,
       offset: offset,
       limit: limitNumber,
+      method,
     });
 
     if (!res.success) {

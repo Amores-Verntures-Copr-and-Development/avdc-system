@@ -519,7 +519,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(
-    selectedStoreId ? `/api/payment-method/store/${selectedStoreId}/` : null,
+    hasStore
+      ? `/api/payment-method/store/${user?.storeId}/`
+      : selectedStoreId
+        ? `/api/payment-method/store/${selectedStoreId}/`
+        : null,
     fetcher,
   );
   const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(

@@ -102,14 +102,6 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
           </Suspense>
         </div>
       </div>
-
-      {/* Store Selection Modal (alternative to separate page) */}
-      {/* <StoreSelectionModal
-        isOpen={showStoreModal}
-        stores={stores}
-        onSelect={handleStoreSelect}
-        onClose={() => setShowStoreModal(false)}
-      /> */}
     </div>
   );
 };
