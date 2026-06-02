@@ -14,10 +14,12 @@ import useSWR from "swr";
 import EditCustomerModal from "../components/EditCustomerModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
+import CusRecentActivity from "./components/CusRecentActivity";
 
 const Page = () => {
   const params = useParams();
   const router = useRouter();
+
   const [isShowEdit, setIsShowEdit] = useState(false);
   const { id } = params;
 
@@ -33,7 +35,7 @@ const Page = () => {
   if (!customer) return <div>No Customer found with that ID: {id}</div>;
 
   return (
-    <PageLayout className="p-4 flex flex-col overflow-y-auto">
+    <PageLayout className="p-4 flex flex-col xs:min-h-screen overflow-y-auto 2xl:h-full 2xl:overflow-hidden">
       <button
         onClick={() => router.push("/customers")}
         className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-1 transition-colors"
@@ -42,26 +44,27 @@ const Page = () => {
         Back to Customers
       </button>
       <div className="p-2 flex  items-center gap-2">
-        <div className="h-20 w-20 rounded-full text-4xl bg-primary-1 flex items-center justify-center text-white font-semibold">
+        <div className="h-10 w-10 2xl:h-20 2xl:w-20 rounded-full text-sm 2xl:text-4xl bg-primary-1 flex items-center justify-center text-white font-semibold">
           {initial}
         </div>
-        <div className="flex flex-col justify-between gap-2">
+        <div className="flex flex-col justify-between gap-1 2xl:gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-2xl">{customer.customerName}</h1>
-            <span className="text-md font-medium">
-              {" "}
+            <h1 className="font-semibold text-sm 2xl:text-2xl">
+              {customer.customerName}
+            </h1>
+            <span className="text-xs 2xl:text-md font-medium">
               ({customer.customerType.toLocaleLowerCase()})
             </span>
           </div>
           <div>
-            <span className="text-xs bg-green-100 text-green-800 py-1 px-2 rounded font-medium border border-green-300">
+            <span className="text-[10px] 2xl:text-xs bg-green-100 text-green-800 py-1 px-2 rounded font-medium border border-green-300">
               Active Customer
             </span>
           </div>
         </div>
       </div>
-      <div className="flex 2xl:flex-row flex-col flex-1 gap-2 rounded">
-        <div className="flex-[2] flex gap-2 h-full flex-col border-border border rounded bg-white shadow ">
+      <div className="flex flex-col 2xl:flex-row gap-2 rounded overflow-visible 2xl:flex-1 2xl:min-h-0 2xl:overflow-hidden">
+        <div className="flex-[2] flex flex-col gap-2 border-border border rounded bg-white shadow">
           <div className="flex justify-between p-2">
             <h1 className=" font=- text-sm font-medium">CUSTOMER DETAILS</h1>
             <div>
@@ -76,7 +79,6 @@ const Page = () => {
               />
             </div>
           </div>
-
           <div className="grid grid-cols-2 2xl:grid-cols-1 gap-4 mt-4 p-2">
             <div className="flex gap-2 items-center">
               <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
@@ -150,12 +152,14 @@ const Page = () => {
           <div className="mt-auto border-t border-border p-4">
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded-lg border border-border bg-gray-50 p-3 text-center">
-                <p className="text-lg font-semibold text-primary-1">
+                <p className="text-xs 2xl:text-sm  font-semibold text-primary-1">
                   {Number(customer.totalSpent) !== 0
                     ? formatPeso(customer.totalSpent)
                     : "-"}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">Total Spent</p>
+                <p className="mt-1 text-[11px] 2xl:text-xs text-gray-500">
+                  Total Spent
+                </p>
               </div>
 
               <div className="rounded-lg border border-border bg-gray-50 p-3 text-center">
@@ -178,9 +182,11 @@ const Page = () => {
             </div>
           </div>
         </div>
-        <div className="flex-[8] border-border border rounded bg-white shadow"></div>
+        <CusRecentActivity
+          customerId={customer.customerId}
+          storeId={customer.storeId}
+        />
       </div>
-
       <Modal
         isOpen={isShowEdit}
         onClose={function (): void {

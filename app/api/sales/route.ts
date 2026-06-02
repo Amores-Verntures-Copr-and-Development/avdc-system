@@ -10,6 +10,7 @@ export async function GET(_request: Request) {
     const store = searchParams.get("store") || "";
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
+    const method = searchParams.get("method") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
     const limitNumber = Number(limit) || 100;
@@ -26,6 +27,7 @@ export async function GET(_request: Request) {
       customer: customer === "true",
       offset: offset,
       limit: limitNumber,
+      method,
     });
 
     if (!res.success) {

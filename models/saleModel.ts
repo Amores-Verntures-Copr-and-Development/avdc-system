@@ -26,6 +26,9 @@ export const selectSales = async ({
   customer,
   limit,
   offset,
+  customerId,
+  storeId,
+  method,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -37,6 +40,9 @@ export const selectSales = async ({
   customer?: boolean;
   limit?: number;
   offset?: number;
+  customerId?: number;
+  storeId?: number;
+  method?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -167,6 +173,14 @@ WHERE 1=1`;
     params.push(`%${storeName}%`);
   }
 
+  if (customerId) {
+    sql += ` AND s.customerId = ? `;
+    params.push(customerId);
+  }
+  if (storeId) {
+    sql += ` AND s.storeId = ? `;
+    params.push(customerId);
+  }
   if (from && to) {
     sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
     params.push(from);
@@ -181,6 +195,20 @@ WHERE 1=1`;
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
   }
+  if (method) {
+    sql += `
+    AND EXISTS (
+      SELECT 1
+      FROM SalesPayments sp
+      INNER JOIN PaymentMethods pm
+        ON pm.payMetId = sp.payMetId
+      WHERE sp.salesId = s.salesId
+        AND pm.payMetName = ?
+    )
+  `;
+    params.push(method);
+  }
+
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
   if (limit !== undefined) {
@@ -201,8 +229,10 @@ export const countSales = async ({
   storeName,
   from,
   to,
-
+  customerId,
   customer,
+  storeId,
+  method,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -211,6 +241,9 @@ export const countSales = async ({
   from?: string;
   to?: string;
   customer?: boolean;
+  customerId?: number;
+  storeId?: number;
+  method?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -245,6 +278,27 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   }
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
+  }
+  if (customerId) {
+    sql += ` AND s.customerId = ? `;
+    params.push(customerId);
+  }
+  if (storeId) {
+    sql += ` AND s.storeId = ? `;
+    params.push(storeId);
+  }
+  if (method) {
+    sql += `
+    AND EXISTS (
+      SELECT 1
+      FROM SalesPayments sp
+      INNER JOIN PaymentMethods pm
+        ON pm.payMetId = sp.payMetId
+      WHERE sp.salesId = s.salesId
+        AND pm.payMetName = ?
+    )
+  `;
+    params.push(method);
   }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
