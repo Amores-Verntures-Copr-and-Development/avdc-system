@@ -17,6 +17,7 @@ export interface ProductVariants {
   prodVarPrice: number;
   prodVarUnit?: string | null;
   isDeductInv: boolean;
+  isAvailableOnline: boolean;
   inventoryItemId: number | null;
   prodVarCreatedAt: string;
   prodVarUpdatedAt: string;

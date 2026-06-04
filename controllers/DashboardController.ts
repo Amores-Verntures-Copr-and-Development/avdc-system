@@ -55,7 +55,7 @@ export const getPendingRequest = async (
   }
 };
 
-export const getOwnerDashboardStats = async () => {
+export const getOwnerDashboardStats = async ({ store }: { store: string }) => {
   try {
     const data = await getOwnerDashboardServices.getTotalMetrics();
     return {

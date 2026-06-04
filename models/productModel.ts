@@ -623,6 +623,144 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   return rows;
 };
 
+export const selectProductVariantForOnline = async ({
+  connection,
+  keyFields = {},
+  statusSold,
+  from,
+  to,
+  storeId,
+  search,
+  limit,
+  offset,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<ProductVariants>;
+  search?: string;
+  statusSold?: "fast" | "slow" | null;
+  from?: string;
+  to?: string;
+  storeId?: number;
+  limit?: number;
+  offset?: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `
+SELECT
+pv.prodId,
+pv.prodVarName,
+pv.prodVarUnit,
+pv.prodVarPrice,
+pv.prodVarId,
+    p.prodName,
+    iis.inventoryItemQuantity
+FROM ProductVariants pv
+LEFT JOIN Products p ON p.prodId = pv.prodId
+LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
+WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND pv.${key} IS NULL`;
+    } else {
+      sql += ` AND pv.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (storeId) {
+    sql += ` AND p.storeId = ?`;
+    params.push(storeId);
+  }
+  if (search?.trim()) {
+    const keyword = `%${search.trim()}%`;
+
+    sql += `
+    AND (
+      p.prodName LIKE ?
+      OR pv.prodVarName LIKE ?
+      OR b.barcode LIKE ?
+    )
+  `;
+
+    params.push(keyword, keyword, keyword);
+  }
+  if (statusSold) {
+  }
+  if (from && to) {
+  }
+
+  if (limit) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset) {
+    sql += ` OFFSET ${offset}`;
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const selectProductCountVariantForOnline = async ({
+  connection,
+  keyFields = {},
+  statusSold,
+  from,
+  to,
+  storeId,
+  search,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<ProductVariants>;
+  search?: string;
+  statusSold?: "fast" | "slow" | null;
+  from?: string;
+  to?: string;
+  storeId?: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  let sql = `
+SELECT 
+    COUNT(pv.prodVarId) as totalItems
+FROM ProductVariants pv
+LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
+LEFT JOIN Products p ON p.prodId = pv.prodId
+LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
+LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
+WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
+  const params: any[] = [];
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND pv.${key} IS NULL`;
+    } else {
+      sql += ` AND pv.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (storeId) {
+    sql += ` AND p.storeId = ?`;
+    params.push(storeId);
+  }
+  if (search?.trim()) {
+    const keyword = `%${search.trim()}%`;
+
+    sql += `
+    AND (
+      p.prodName LIKE ?
+      OR pv.prodVarName LIKE ?
+      OR b.barcode LIKE ?
+    )
+  `;
+
+    params.push(keyword, keyword, keyword);
+  }
+  if (statusSold) {
+  }
+  if (from && to) {
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows[0].totalItems;
+};
+
 export const selectProductCountVariants = async ({
   connection,
   keyFields = {},

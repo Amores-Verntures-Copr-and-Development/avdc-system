@@ -21,6 +21,11 @@ export const createCustomer = async (data: CreateCustomerDto[]) => {
   }
 };
 
+export const registerCustomerOnlineController = async () => {
+  try {
+  } catch (e) {}
+};
+
 export const createCustomerMultipleStore = async (
   data: CreateCustomerDto[],
   store: StoreInterface[],

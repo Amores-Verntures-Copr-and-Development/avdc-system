@@ -1,4 +1,4 @@
-import { Customer } from "@/types/customer";
+import { Customer, CustomerAccount } from "@/types/customer";
 
 export type CreateCustomerDto = Pick<
   Customer,
@@ -18,3 +18,11 @@ export interface DisplayCustomerDto extends Customer {
   firstVisit: string;
   lastVisit: string;
 }
+
+export type CreateCustomerAccountDto = Pick<
+  CustomerAccount,
+  "customerId" | "customerPassword" | "customerVerified"
+>;
+
+export interface CreateCustomerOnline
+  extends CreateCustomerDto, CreateCustomerAccountDto {}

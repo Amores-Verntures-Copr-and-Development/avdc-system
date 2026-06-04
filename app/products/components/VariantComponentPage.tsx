@@ -10,7 +10,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import React, { useState } from "react";
 import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
-import { Pencil, Save, Trash, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash, X } from "lucide-react";
 import Input from "@/components/shared/Input";
 import { ProductVariants } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
@@ -62,6 +62,7 @@ const VariantComponentPage = ({
     prodVarUnit: data?.prodVarUnit,
     isDeductInv: Boolean(data?.isDeductInv),
     inventoryItemId: data?.inventoryItemId ?? null,
+    isAvailableOnline: Boolean(data?.isAvailableOnline),
   });
   const handleFormChange = handleChange(form, setForm);
   const handleSave = async () => {
@@ -71,8 +72,9 @@ const VariantComponentPage = ({
       prodVarName: form.prodVarName,
       prodVarPrice: Number(form.prodVarPrice),
       isDeductInv: form.isDeductInv,
+      isAvailableOnline: form.isAvailableOnline,
     };
-
+    console.log({ variantForm });
     try {
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${data?.prodId}/${data?.prodVarId}`,
@@ -178,73 +180,45 @@ const VariantComponentPage = ({
         }
       >
         {!isEdit ? (
-          <div className="flex flex-col gap-4">
-            {/* Top row: ID and Name */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">ID</span>
-                <span className="text-sm font-semibold text-gray-800">
-                  {data?.prodVarId}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">Name</span>
-                <span className="text-sm font-semibold text-gray-800">
-                  {data?.prodVarName}
-                </span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">Unit</span>
-                <span className="text-sm text-gray-600">
-                  {data?.prodVarUnit ? data?.prodVarUnit : "-"}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">Price</span>
-                <span className="text-sm font-semibold text-gray-800">
-                  ₱{Number(data?.prodVarPrice ?? 0).toLocaleString()}
-                </span>
-              </div>
-              {/* <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">
-                  Is Deduct
-                </span>
-                <span className="text-sm text-gray-600">
-                  {data?.isDeductInv === Boolean(1) ? "True" : "False"}
-                </span>
-              </div> */}
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">
-                  Is Deduct
-                </span>
-                <span className="text-sm text-gray-600">
-                  {data?.isDeductInv === Boolean(1) ? "True" : "False"}
-                </span>
-              </div>
-            </div>
-            {/* Bottom row: Price and Created At */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">
-                  Updated At
-                </span>
-                <span className="text-sm text-gray-600">
-                  {formatDateToWords(data?.prodVarUpdatedAt || "")}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xs text-gray-400 uppercase">
-                  Created At
-                </span>
-                <span className="text-sm text-gray-600">
-                  {formatDateToWords(data?.prodVarCreatedAt || "")}
-                </span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <DetailCard label="ID" value={data?.prodVarId} icon="#" />
+            <DetailCard label="Name" value={data?.prodVarName} icon="▣" />
+            <DetailCard
+              label="Unit"
+              value={data?.prodVarUnit || "-"}
+              icon="□"
+            />
+            <DetailCard
+              label="Price"
+              value={`₱${Number(data?.prodVarPrice ?? 0).toLocaleString()}`}
+              icon="₱"
+            />
+
+            <DetailCard
+              label="Is Deduct"
+              value={Boolean(data?.isDeductInv) ? "Yes" : "No"}
+              icon="✓"
+              badge={Boolean(data?.isDeductInv)}
+            />
+
+            <DetailCard
+              label="Is Available Online"
+              value={Boolean(data?.isAvailableOnline) ? "Yes" : "No"}
+              icon="🌐"
+              badge={Boolean(data?.isAvailableOnline)}
+            />
+
+            <DetailCard
+              label="Updated At"
+              value={formatDateToWords(data?.prodVarUpdatedAt || "")}
+              icon="📅"
+            />
+
+            <DetailCard
+              label="Created At"
+              value={formatDateToWords(data?.prodVarCreatedAt || "")}
+              icon="📅"
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -287,16 +261,30 @@ const VariantComponentPage = ({
                   name="prodVarUnit"
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-6">
+              <Toggle
+                sizes="xs"
+                label="Is Deduct?"
+                flexType="flex-col"
+                initial={form.isDeductInv === true}
+                onToggle={(state) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    isDeductInv: Boolean(state) === true ? true : false,
+                  }))
+                }
+              />
               <div className="flex flex-col">
                 <Toggle
                   sizes="xs"
-                  label="Is Deduct?"
+                  label="Is Available Online?"
                   flexType="flex-col"
-                  initial={form.isDeductInv === true}
+                  initial={form.isAvailableOnline === true}
                   onToggle={(state) =>
                     setForm((prev) => ({
                       ...prev,
-                      isDeductInv: Boolean(state) === true ? true : false,
+                      isAvailableOnline: Boolean(state) === true ? true : false,
                     }))
                   }
                 />
@@ -309,12 +297,14 @@ const VariantComponentPage = ({
       </BigCard>
       <BigCard
         title={"Components"}
+        subtitle="Manage the ingredients or items that make up this product"
         isRounded={false}
         leftTitle={
           <div className="h-full">
             <Button
-              label="Assign Component"
+              label="Assign "
               size="sm"
+              icon={Plus}
               onClick={() => {
                 setShowAddComponent(true);
                 setShowComponent(true);
@@ -447,3 +437,37 @@ const VariantComponentPage = ({
 };
 
 export default VariantComponentPage;
+
+const DetailCard = ({
+  label,
+  value,
+  icon,
+  badge = false,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  badge?: boolean;
+}) => (
+  <div className="flex items-center gap-2 2xl:gap-4 rounded-xl border border-gray-200 bg-white p-2 2xl:p-4 shadow-sm">
+    <div className="flex 2xl:h-10 2xl:w-10 w-5 h-5 items-center justify-center rounded-xl bg-pink-50 text-pink-600 font-semibold">
+      {icon}
+    </div>
+
+    <div className="flex flex-col">
+      <span className="text-[11px] 2xl:text-xs font-medium text-gray-500">
+        {label}
+      </span>
+
+      {badge ? (
+        <span className="mt-1 w-fit rounded-full border border-green-200 bg-green-50 px-3 py-0.5 text-[11px]  2xl:text-xs font-medium text-green-700">
+          {value}
+        </span>
+      ) : (
+        <span className="text-xs 2xl:text-sm font-semibold text-gray-900">
+          {value}
+        </span>
+      )}
+    </div>
+  </div>
+);
