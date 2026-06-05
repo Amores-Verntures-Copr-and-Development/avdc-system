@@ -824,11 +824,25 @@ export const selectSalesTotalDetails = async ({
   ${totalSalesWhereClause};
 `;
 
-  const totalSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) AS salesPayAmount, pm.payMetName  FROM Sales s
-LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
-LEFT JOIN Stores st ON s.storeId = st.storeId 
-LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId ${totalSalesPaymentMethodsClause}
-GROUP BY pm.payMetName`;
+  const totalSalesPaymentMethodsSql = `
+  SELECT
+    COALESCE(SUM(sp.salesPaymentAmount), 0)
+    - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount,
+    pm.payMetName
+  FROM Sales s
+  LEFT JOIN SalesPayments sp 
+    ON sp.salesId = s.salesId
+  LEFT JOIN Stores st 
+    ON s.storeId = st.storeId
+  LEFT JOIN PaymentMethods pm 
+    ON pm.payMetId = sp.payMetId
+  LEFT JOIN SalesRefunds sr 
+    ON sr.salesId = s.salesId
+  LEFT JOIN SalesPaymentRefunds spr 
+    ON spr.salesRefId = sr.salesRefId
+  ${totalSalesPaymentMethodsClause}
+  GROUP BY pm.payMetName
+`;
 
   // 2️⃣ Total Count of Sales
   const totalCountSalesSql = `
@@ -838,13 +852,25 @@ GROUP BY pm.payMetName`;
     ${totalCountSaleWhereClause};
   `;
 
-  const todaysSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount, pm.payMetName  FROM Sales s
-LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
-LEFT JOIN Stores st ON s.storeId = st.storeId 
-LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId 
-LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
-LEFT JOIN SalesPaymentRefunds spr ON spr.salesRefId = sr.salesRefId ${todaysSalesPaymentMethodsClause}
-GROUP BY pm.payMetName`;
+  const todaysSalesPaymentMethodsSql = `
+  SELECT
+    COALESCE(SUM(sp.salesPaymentAmount), 0)
+    - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount,
+    pm.payMetName
+  FROM Sales s
+  LEFT JOIN SalesPayments sp 
+    ON sp.salesId = s.salesId
+  LEFT JOIN Stores st 
+    ON s.storeId = st.storeId
+  LEFT JOIN PaymentMethods pm 
+    ON pm.payMetId = sp.payMetId
+  LEFT JOIN SalesRefunds sr 
+    ON sr.salesId = s.salesId
+  LEFT JOIN SalesPaymentRefunds spr 
+    ON spr.salesRefId = sr.salesRefId
+  ${todaysSalesPaymentMethodsClause}
+  GROUP BY pm.payMetName
+`;
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `
