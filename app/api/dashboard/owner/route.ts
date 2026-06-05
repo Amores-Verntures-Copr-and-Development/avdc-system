@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const store = searchParams.get("store") || "";
-    const res = await getOwnerDashboardStats({ store });
+    const storeId = searchParams.get("store") || "";
+    const res = await getOwnerDashboardStats({ storeId:Number(storeId) });
 
     if (!res.success) {
       // propagate the actual message if available

@@ -74,17 +74,25 @@ WHERE sp.userId = ? AND ro.requestStatus = 'pending';`;
   return rows;
 };
 
-export const selectOwnerDashboardStats = async () => {
+export const selectOwnerDashboardStats = async ({
+  storeId,
+}: {
+  storeId?: number;
+}) => {
   const pool = await getDBConnection();
+  const params: any[] = [];
   const sql = `SELECT 
-(SELECT SUM(s.salesTotalAmount) FROM Sales s) AS totalSales, 
+(SELECT SUM(s.salesTotalAmount) FROM Sales s ${storeId ? `WHERE s.storeId = ?` : ``}) AS totalSales, 
 (SELECT COUNT(*) FROM Stores s) AS totalStores,
-(SELECT SUM(ii.inventoryItemQuantity * i.itemPrice ) FROM InventoryItems ii INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND  ii.inventoryItemReferenceType = 'item' WHERE ii.inventoryItemDeletedAt IS NULL)
+(SELECT SUM(ii.inventoryItemQuantity * i.itemPrice ) FROM InventoryItems ii INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND  ii.inventoryItemReferenceType = 'item' ${storeId ? ` LEFT JOIN Inventories iis ON iis.inventoryId = ii.inventoryId` : ``} WHERE ii.inventoryItemDeletedAt IS NULL ${storeId ? ` AND inventoryReference = 'store' AND inventoryReferenceId = ?` : ``})
 AS totalInventoryCost,
 (SELECT SUM(poi.unitPrice * poi.poItemReceivedQty)  FROM PurchaseOrderItems poi WHERE poi.poItemStatus = 'received' OR poi.poItemStatus = 'delivered' OR poi.poItemStatus = 'completed') AS  totalPurchase
-;`;
-
-  const [rows] = await pool.execute(sql);
+; `;
+  if (storeId) {
+    params.push(storeId);
+    params.push(storeId);
+  }
+  const [rows] = await pool.execute(sql, params);
   return rows;
 };
 

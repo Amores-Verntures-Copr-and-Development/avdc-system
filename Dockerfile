@@ -1,5 +1,5 @@
 # Base dependencies layer
-FROM node:18-bookworm-slim AS base
+FROM node:20-bookworm-slim AS base
 
 WORKDIR /app
 

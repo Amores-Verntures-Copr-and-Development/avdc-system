@@ -55,9 +55,13 @@ export const getPendingRequest = async (
   }
 };
 
-export const getOwnerDashboardStats = async ({ store }: { store: string }) => {
+export const getOwnerDashboardStats = async ({
+  storeId,
+}: {
+  storeId?: number;
+}) => {
   try {
-    const data = await getOwnerDashboardServices.getTotalMetrics();
+    const data = await getOwnerDashboardServices.getTotalMetrics({ storeId });
     return {
       success: true,
       data: data,
@@ -89,9 +93,18 @@ export const getOwnerRecentStoreSales = async () => {
   }
 };
 
-export const getOwnerSalesChartData = async (year: string) => {
+export const getOwnerSalesChartData = async ({
+  year,
+  storeId,
+}: {
+  year: string;
+  storeId?: number;
+}) => {
   try {
-    const data = await getOwnerDashboardServices.getSalesChartData({ year });
+    const data = await getOwnerDashboardServices.getSalesChartData({
+      year,
+      storeId,
+    });
     return {
       success: true,
       data: data,

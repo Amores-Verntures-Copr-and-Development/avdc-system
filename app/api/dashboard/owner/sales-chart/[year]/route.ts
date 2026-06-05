@@ -2,12 +2,17 @@ import { getOwnerSalesChartData } from "@/controllers/DashboardController";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ year: string }> }
+  req: Request,
+  { params }: { params: Promise<{ year: string }> },
 ) {
   try {
     const slug = (await params).year;
-    const res = await getOwnerSalesChartData(slug);
+    const { searchParams } = new URL(req.url);
+    const storeId = searchParams.get("store") || "";
+    const res = await getOwnerSalesChartData({
+      year: slug,
+      storeId: Number(storeId),
+    });
 
     if (!res.success) {
       // propagate the actual message if available
@@ -21,7 +26,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -31,7 +36,7 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

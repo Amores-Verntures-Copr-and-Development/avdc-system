@@ -47,7 +47,7 @@ const OwnerDashboard = () => {
   const [yearPO, setYearPO] = useState(new Date().getFullYear().toString());
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedStore, setSelectedStore] = useState<string | null>(null);
+  const [selectedStore, setSelectedStore] = useState<number | null>(null);
   const storeQuery = selectedStore ? `?store=${selectedStore}` : "";
   const { data: dailyStoreSales = { data: [] } } =
     useSWR<DailyStoreSalesResponse>(
@@ -70,6 +70,7 @@ const OwnerDashboard = () => {
     fetcher,
   );
   const defaultStoreFromUrl = searchParams.get("store") || "";
+
   const { data: recentStoreSales = { data: [] } } = useSWR<
     ApiResponse<StoreRecentSales[]>
   >(`/api/dashboard/owner/recent-sales`, fetcher);
@@ -113,6 +114,9 @@ const OwnerDashboard = () => {
         id: s.storeId,
       }))
     : [];
+  const storeName = storeOptions.find(
+    (s) => s.id === Number(defaultStoreFromUrl),
+  )?.value;
   return (
     <div className="min-h-0 p-2 flex flex-col gap-2  overflow-y-auto ">
       <div className="flex justify-between">
@@ -121,23 +125,20 @@ const OwnerDashboard = () => {
           subtitle="Welcome back! Here's your system overview."
         />
         <div className="flex gap-2">
-          <div>
-            {" "}
-            <DateRange />
-          </div>
           <div className="min-w-40">
             <DynamicDropdown
+              isRounded={false}
               size="sm"
               options={storeOptions}
-              defaultValue={defaultStoreFromUrl}
+              defaultValue={storeName}
               onChange={function (value: string | number): void {
                 if (value) {
                   const findStore = Array.isArray(stores)
                     ? stores.find((i) => i.storeName === value)
                     : undefined;
-                  setSelectedStore(findStore?.storeName ?? null);
+                  setSelectedStore(findStore?.storeId ?? null);
                   const url = new URL(window.location.href);
-                  url.searchParams.set("store", String(value));
+                  url.searchParams.set("store", String(findStore?.storeId));
                   router.push(url.toString());
                 } else {
                   const url = new URL(window.location.href);
