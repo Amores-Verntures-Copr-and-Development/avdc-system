@@ -8,7 +8,7 @@ import { DisplayCustomerDto } from "@/dtos/customer.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { CalendarDays, Mail, MapPin, Pencil, Phone } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 import EditCustomerModal from "../components/EditCustomerModal";
@@ -19,7 +19,7 @@ import CusRecentActivity from "./components/CusRecentActivity";
 const Page = () => {
   const params = useParams();
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   const [isShowEdit, setIsShowEdit] = useState(false);
   const { id } = params;
 
@@ -37,7 +37,7 @@ const Page = () => {
   return (
     <PageLayout className="p-4 flex flex-col xs:min-h-screen overflow-y-auto 2xl:h-full 2xl:overflow-hidden">
       <button
-        onClick={() => router.push("/customers")}
+        onClick={() => router.back()}
         className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-primary-1 transition-colors"
       >
         <span className="text-base">←</span>
