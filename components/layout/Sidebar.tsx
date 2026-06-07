@@ -26,6 +26,7 @@ import {
   Warehouse,
   Weight,
   ShieldUser,
+  Factory,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
@@ -245,6 +246,12 @@ const sideMenu = [
           "hr",
           "owner",
         ],
+      },
+      {
+        name: "ISR",
+        href: "/isr",
+        icon: Factory,
+        roles: ["superadmin", "admin", "owner"],
       },
       {
         name: "Account",
