@@ -116,12 +116,19 @@ const SalesReportModal = ({
   ).join(", ");
 
   const uniqueStores = new Set(salesData.map((sale) => sale.storeName));
-
   const paymentSummary = salesData.reduce<Record<string, number>>(
     (acc, sale) => {
+      const refundAmount = getSaleRefundAmount(sale);
+      const saleTotal = Number(sale.salesTotalAmount || 0);
+
       sale.paymentMethods?.forEach((payment) => {
         const name = payment.payMetName;
-        acc[name] = (acc[name] || 0) + Number(payment.salesPaymentAmount || 0);
+        const paymentAmount = Number(payment.salesPaymentAmount || 0);
+
+        const refundShare =
+          saleTotal > 0 ? (paymentAmount / saleTotal) * refundAmount : 0;
+
+        acc[name] = (acc[name] || 0) + (paymentAmount - refundShare);
       });
 
       return acc;

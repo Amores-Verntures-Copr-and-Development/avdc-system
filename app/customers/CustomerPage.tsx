@@ -79,6 +79,8 @@ const CustomerPage = () => {
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user, hasStore, isAdmin } = useSession();
   const { stores } = useStores({ user, hasStore, isAdmin });
+  const defaultStoreFromUrl = searchParams.get("store") || "";
+
   const url =
     user && hasStore
       ? `api/customers/store/${user?.storeId}`
@@ -235,8 +237,9 @@ const CustomerPage = () => {
           }
           addContentLeftTitle={
             !hasStore && (
-              <div>
+              <div className="min-w-30 2xl:min-w-50">
                 <DynamicDropdown
+                  defaultValue={defaultStoreFromUrl}
                   options={storeOptions}
                   onChange={function (value: string | number): void {
                     if (value) {

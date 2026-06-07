@@ -196,11 +196,10 @@ const SelectedSalesPage = ({
                     <th className="text-center text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
                       Qty
                     </th>
-                    {salesData?.salesRefunds && (
-                      <th className="text-center text-[10px] 2xl:text-xs font-medium text-red-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
-                        Refund Qty
-                      </th>
-                    )}
+
+                    <th className="text-center text-[10px] 2xl:text-xs font-medium text-red-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
+                      Refund Qty
+                    </th>
 
                     <th className="text-right text-[10px] 2xl:text-xs font-medium text-gray-500 uppercase tracking-wider pb-1.5 2xl:pb-3">
                       Subtotal
@@ -247,8 +246,10 @@ const SelectedSalesPage = ({
                           {Number(item.salesItemQuantity).toFixed(0)}
                         </td>
 
-                        {item.salesItemsRefunds &&
-                        item.salesItemsRefunds.length > 0 ? (
+                        {Boolean(
+                          item.salesItemsRefunds &&
+                          item.salesItemsRefunds.length > 0,
+                        ) ? (
                           <td className="py-2 text-center text-xs 2xl:text-sm text-gray-700">
                             {item.salesItemsRefunds?.reduce(
                               (count, i) => i.salesRefItemQty + count,
@@ -264,7 +265,7 @@ const SelectedSalesPage = ({
                           {formatPeso(item.salesItemSubtotal)}
                         </td>
                         <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
-                          {item.salesItemsDiscount?.map((dis) => {
+                          {item.salesItemDiscounts?.map((dis) => {
                             const formatDiscount =
                               dis.discountType === "percent"
                                 ? `${formatDiscountValue(dis.discountValue)}%`

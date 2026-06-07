@@ -28,6 +28,9 @@ export const getSalesServices = {
     customer,
     limit,
     offset,
+    customerId,
+    storeId,
+    method,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -39,6 +42,9 @@ export const getSalesServices = {
     customer?: boolean;
     limit?: number;
     offset?: number;
+    customerId?: number;
+    storeId?: number;
+    method?: string;
   }) => {
     try {
       const data = await selectSales({
@@ -52,6 +58,9 @@ export const getSalesServices = {
         customer,
         limit,
         offset,
+        customerId,
+        storeId,
+        method,
       });
       return data;
     } catch (e) {
@@ -65,8 +74,10 @@ export const getSalesServices = {
     storeName,
     from,
     to,
-
+    customerId,
     customer,
+    storeId,
+    method,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -74,8 +85,10 @@ export const getSalesServices = {
     storeName?: string;
     from?: string;
     to?: string;
-
+    customerId?: number;
     customer?: boolean;
+    storeId?: number;
+    method?: string;
   }) => {
     try {
       const data = await countSales({
@@ -86,6 +99,9 @@ export const getSalesServices = {
         to,
         search,
         customer,
+        customerId,
+        storeId,
+        method,
       });
 
       return data;

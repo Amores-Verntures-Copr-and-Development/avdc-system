@@ -31,7 +31,7 @@ interface EditableItem {
   salesItemQuantity: number;
   salesItemSubtotal: number;
   salesItemTotal: number;
-  salesItemsDiscount: {
+  salesItemDiscounts: {
     discountType: string;
     discountValue: number;
     discountAmount: number;
@@ -99,7 +99,7 @@ const EditSalesPage = ({
           salesItemQuantity: item.salesItemQuantity,
           salesItemSubtotal: item.salesItemSubtotal,
           salesItemTotal: item.salesItemTotal,
-          salesItemsDiscount: item.salesItemsDiscount ?? [],
+          salesItemDiscounts: item.salesItemDiscounts ?? [],
         })),
       );
     }
@@ -130,7 +130,7 @@ const EditSalesPage = ({
   );
   const recalcItem = (item: EditableItem): EditableItem => {
     const subtotal = item.salesItemPrice * item.salesItemQuantity;
-    const totalDiscount = item.salesItemsDiscount.reduce(
+    const totalDiscount = item.salesItemDiscounts.reduce(
       (sum, d) => sum + (d.discountAmount ?? 0),
       0,
     );
@@ -480,7 +480,7 @@ const EditSalesPage = ({
                         {formatPeso(item.salesItemSubtotal)}
                       </td>
                       <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
-                        {item.salesItemsDiscount?.map((dis, i) => {
+                        {item.salesItemDiscounts?.map((dis, i) => {
                           const formatDiscount =
                             dis.discountType === "percent"
                               ? `${formatDiscountValue(dis.discountValue)}%`

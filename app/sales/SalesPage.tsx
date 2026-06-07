@@ -51,6 +51,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const [showSalesBreakdown, setShowSalesBreakdown] = useState<
     "totalSales" | "todaysSales" | null
   >(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -70,8 +71,9 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     const store = searchParams.get("store");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
-
+    const method = searchParams.get("method");
     const params = new URLSearchParams();
+    if (method) params.append("method", method);
     if (search) params.append("search", search);
     if (status) params.append("status", status);
     if (category) params.append("category", category);
@@ -94,7 +96,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     fetcher,
   );
   const [openDiscountId, setOpenDiscountId] = useState<number | null>(null);
-  const columns: Column<DisplaySalesDto>[] = useMemo(() => {
+  const columns = useMemo<Column<DisplaySalesDto>[]>(() => {
     return [
       {
         key: "#",
@@ -303,7 +305,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       },
     ];
   }, [response?.data]);
-  const adminColumns: Column<DisplaySalesDto>[] = useMemo(
+  const adminColumns = useMemo<Column<DisplaySalesDto>[]>(
     () => [
       {
         key: "#",
@@ -517,11 +519,15 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(
-    selectedStoreId ? `/api/payment-method/store/${selectedStoreId}/` : null,
+    hasStore
+      ? `/api/payment-method/store/${user?.storeId}/`
+      : selectedStoreId
+        ? `/api/payment-method/store/${selectedStoreId}/`
+        : null,
     fetcher,
   );
   const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
-    (p) => ({ label: p.payMetName, value: String(p.payMetId) }),
+    (p) => ({ label: p.payMetName, value: String(p.payMetName) }),
   );
 
   const defaultStoreFromUrl = searchParams.get("store") || "";
@@ -537,7 +543,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
-
+    const method = searchParams.get("method");
     const store = searchParams.get("store");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
@@ -547,7 +553,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     if (status) params.append("status", status);
     if (category) params.append("category", category);
     if (unit) params.append("unit", unit);
-
+    if (method) params.append("method", method);
     if (store) params.append("store", store);
     if (to) params.append("to", to);
     if (from) params.append("from", from);
@@ -642,7 +648,21 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       },
       {} as Record<string, number>,
     );
+  const handleSave = useCallback(
+    (newFilters: Record<string, string[]>) => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const filterKeys = [...salesFilterConfig.map((f) => f.id), "branch"];
 
+      filterKeys.forEach((key) => currentParams.delete(key));
+
+      Object.entries(newFilters).forEach(([key, values]) => {
+        values.forEach((value) => currentParams.append(key, value));
+      });
+
+      router.push(`?${currentParams.toString()}`);
+    },
+    [router, salesFilterConfig],
+  );
   return (
     <PageLayout className="p-2 gap-1 2xl:gap-2">
       {isViewSales && seletectedSales ? (
@@ -661,53 +681,64 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       ) : (
         <>
           <div className="flex justify-between">
-            <PageHeader title={"Sales"} subtitle="Manage sales" />
+            {" "}
+            <PageHeader title={"Sales"} subtitle="Manage sales" />{" "}
+            <div className="">
+              <Button
+                label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
+                size="sm"
+                icon={Eye}
+                onClick={() => setShowBreakdown((prev) => !prev)}
+              />
+            </div>
           </div>
 
           <div className="flex flex-1 flex-col min-h-0 gap-2">
-            <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
-              <SalesCard
-                icon={PhilippinePeso}
-                title="Total Sales"
-                value={formatPeso(totalSales)}
-              >
-                <PaymentBreakdown
-                  data={totalSalesPaymentMethods}
-                  total={totalSales}
+            {showBreakdown && (
+              <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
+                <SalesCard
+                  icon={PhilippinePeso}
+                  title="Total Sales"
+                  value={formatPeso(totalSales)}
+                >
+                  <PaymentBreakdown
+                    data={totalSalesPaymentMethods}
+                    total={totalSales}
+                  />
+                </SalesCard>
+
+                <SalesCard
+                  icon={CalendarCheck}
+                  title="Total Orders"
+                  value={totalCountSales}
+                  bgColor="bg-emerald-50"
+                  textColor="text-emerald-600"
+                  subtitle="All time orders"
                 />
-              </SalesCard>
 
-              <SalesCard
-                icon={CalendarCheck}
-                title="Total Orders"
-                value={totalCountSales}
-                bgColor="bg-emerald-50"
-                textColor="text-emerald-600"
-                subtitle="All time orders"
-              />
-
-              <SalesCard
-                icon={Users}
-                title="Total Customer"
-                value={totalCustomer}
-                bgColor="bg-amber-50"
-                textColor="text-amber-600"
-                subtitle="Unique customers"
-              />
-
-              <SalesCard
-                icon={Calendar}
-                title="Today's Sales"
-                value={formatPeso(todaySales)}
-                bgColor="bg-blue-50"
-                textColor="text-blue-600"
-              >
-                <PaymentBreakdown
-                  data={todaysSalesPaymentMethods}
-                  total={todaySales}
+                <SalesCard
+                  icon={Users}
+                  title="Total Customer"
+                  value={totalCustomer}
+                  bgColor="bg-amber-50"
+                  textColor="text-amber-600"
+                  subtitle="Unique customers"
                 />
-              </SalesCard>
-            </div>
+
+                <SalesCard
+                  icon={Calendar}
+                  title="Today's Sales"
+                  value={formatPeso(todaySales)}
+                  bgColor="bg-blue-50"
+                  textColor="text-blue-600"
+                >
+                  <PaymentBreakdown
+                    data={todaysSalesPaymentMethods}
+                    total={todaySales}
+                  />
+                </SalesCard>
+              </div>
+            )}
             <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
               <Table
                 onDateRangeChange={handleDateRangeChange}
@@ -719,7 +750,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   setSelectedSales(row);
                   setIsViewSales(true);
                 }}
-                onSave={() => {}}
+                onSave={handleSave}
                 renderTopActions={
                   <div className="flex gap-2">
                     <DynamicDropdown

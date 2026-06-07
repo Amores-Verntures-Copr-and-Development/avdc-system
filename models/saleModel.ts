@@ -26,6 +26,9 @@ export const selectSales = async ({
   customer,
   limit,
   offset,
+  customerId,
+  storeId,
+  method,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -37,6 +40,9 @@ export const selectSales = async ({
   customer?: boolean;
   limit?: number;
   offset?: number;
+  customerId?: number;
+  storeId?: number;
+  method?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -167,6 +173,14 @@ WHERE 1=1`;
     params.push(`%${storeName}%`);
   }
 
+  if (customerId) {
+    sql += ` AND s.customerId = ? `;
+    params.push(customerId);
+  }
+  if (storeId) {
+    sql += ` AND s.storeId = ? `;
+    params.push(customerId);
+  }
   if (from && to) {
     sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
     params.push(from);
@@ -181,6 +195,20 @@ WHERE 1=1`;
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
   }
+  if (method) {
+    sql += `
+    AND EXISTS (
+      SELECT 1
+      FROM SalesPayments sp
+      INNER JOIN PaymentMethods pm
+        ON pm.payMetId = sp.payMetId
+      WHERE sp.salesId = s.salesId
+        AND pm.payMetName = ?
+    )
+  `;
+    params.push(method);
+  }
+
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
   if (limit !== undefined) {
@@ -191,7 +219,7 @@ WHERE 1=1`;
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  return rows as Sales[];
+  return rows;
 };
 
 export const countSales = async ({
@@ -201,8 +229,10 @@ export const countSales = async ({
   storeName,
   from,
   to,
-
+  customerId,
   customer,
+  storeId,
+  method,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -211,6 +241,9 @@ export const countSales = async ({
   from?: string;
   to?: string;
   customer?: boolean;
+  customerId?: number;
+  storeId?: number;
+  method?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -245,6 +278,27 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   }
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
+  }
+  if (customerId) {
+    sql += ` AND s.customerId = ? `;
+    params.push(customerId);
+  }
+  if (storeId) {
+    sql += ` AND s.storeId = ? `;
+    params.push(storeId);
+  }
+  if (method) {
+    sql += `
+    AND EXISTS (
+      SELECT 1
+      FROM SalesPayments sp
+      INNER JOIN PaymentMethods pm
+        ON pm.payMetId = sp.payMetId
+      WHERE sp.salesId = s.salesId
+        AND pm.payMetName = ?
+    )
+  `;
+    params.push(method);
   }
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
@@ -610,7 +664,7 @@ SELECT *, (
   FROM SalesItemsDiscount sid
   LEFT JOIN Discounts d ON d.discountId = sid.discountId
   WHERE sid.salesItemId = si.salesItemId
-) AS salesItemsDiscount, (
+) AS salesItemDiscounts, (
   SELECT JSON_ARRAYAGG(
     JSON_OBJECT(
       'salesItemRefId', sr.salesItemRefId,
@@ -770,11 +824,25 @@ export const selectSalesTotalDetails = async ({
   ${totalSalesWhereClause};
 `;
 
-  const totalSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) AS salesPayAmount, pm.payMetName  FROM Sales s
-LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
-LEFT JOIN Stores st ON s.storeId = st.storeId 
-LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId ${totalSalesPaymentMethodsClause}
-GROUP BY pm.payMetName`;
+  const totalSalesPaymentMethodsSql = `
+  SELECT
+    COALESCE(SUM(sp.salesPaymentAmount), 0)
+    - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount,
+    pm.payMetName
+  FROM Sales s
+  LEFT JOIN SalesPayments sp 
+    ON sp.salesId = s.salesId
+  LEFT JOIN Stores st 
+    ON s.storeId = st.storeId
+  LEFT JOIN PaymentMethods pm 
+    ON pm.payMetId = sp.payMetId
+  LEFT JOIN SalesRefunds sr 
+    ON sr.salesId = s.salesId
+  LEFT JOIN SalesPaymentRefunds spr 
+    ON spr.salesRefId = sr.salesRefId
+  ${totalSalesPaymentMethodsClause}
+  GROUP BY pm.payMetName
+`;
 
   // 2️⃣ Total Count of Sales
   const totalCountSalesSql = `
@@ -784,13 +852,25 @@ GROUP BY pm.payMetName`;
     ${totalCountSaleWhereClause};
   `;
 
-  const todaysSalesPaymentMethodsSql = `SELECT SUM(sp.salesPaymentAmount) - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount, pm.payMetName  FROM Sales s
-LEFT JOIN SalesPayments sp ON sp.salesId = s.salesId
-LEFT JOIN Stores st ON s.storeId = st.storeId 
-LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId 
-LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
-LEFT JOIN SalesPaymentRefunds spr ON spr.salesRefId = sr.salesRefId ${todaysSalesPaymentMethodsClause}
-GROUP BY pm.payMetName`;
+  const todaysSalesPaymentMethodsSql = `
+  SELECT
+    COALESCE(SUM(sp.salesPaymentAmount), 0)
+    - COALESCE(SUM(spr.salesPayRefAmount), 0) AS salesPayAmount,
+    pm.payMetName
+  FROM Sales s
+  LEFT JOIN SalesPayments sp 
+    ON sp.salesId = s.salesId
+  LEFT JOIN Stores st 
+    ON s.storeId = st.storeId
+  LEFT JOIN PaymentMethods pm 
+    ON pm.payMetId = sp.payMetId
+  LEFT JOIN SalesRefunds sr 
+    ON sr.salesId = s.salesId
+  LEFT JOIN SalesPaymentRefunds spr 
+    ON spr.salesRefId = sr.salesRefId
+  ${todaysSalesPaymentMethodsClause}
+  GROUP BY pm.payMetName
+`;
 
   // 3️⃣ Today Sales (CURDATE)
   const todaySalesSql = `

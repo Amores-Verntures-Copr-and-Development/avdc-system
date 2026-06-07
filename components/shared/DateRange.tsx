@@ -7,9 +7,13 @@ import { createPortal } from "react-dom";
 
 interface DateRangeProps {
   onDateRangeChange?: (range: { from: string; to: string }) => void;
+  isRounded?: boolean;
 }
 
-const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
+const DateRange: React.FC<DateRangeProps> = ({
+  onDateRangeChange,
+  isRounded = true,
+}) => {
   const [isShow, setIsShow] = useState(false);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
@@ -154,7 +158,7 @@ const DateRange: React.FC<DateRangeProps> = ({ onDateRangeChange }) => {
         onClick={toggleDropdown}
         className={`
     flex min-w-[80px] items-center gap-2
-    rounded-xl border px-2 py-1
+    ${isRounded ? `rounded-xl` : `rounded-sm`} border px-2 py-1
     text-[8px] 2xl:text-xs font-medium  transition
     2xl:px-3 2xl:py-1.5
     ${

@@ -9,6 +9,7 @@ export async function getProducts({
   offset,
   barcode,
   category,
+  isPos,
 }: {
   keyFields?: Partial<Products>;
   search?: string;
@@ -18,6 +19,7 @@ export async function getProducts({
   limit?: number;
   offset?: number;
   barcode?: string;
+  isPos?: boolean;
 }) {
   try {
     const data = await selectProducts({
@@ -28,6 +30,7 @@ export async function getProducts({
       offset,
       barcode,
       category,
+      isPos,
     });
 
     const total = await selectProductCounts({
@@ -54,6 +57,7 @@ export async function getProductCounts({
   keyFields?: Partial<Products>;
   search?: string;
   storeName?: string;
+  isPos?: boolean;
 }) {
   try {
     const data = await selectProducts({ keyFields, search, storeName });

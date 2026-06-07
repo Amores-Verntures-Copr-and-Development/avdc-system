@@ -1,97 +1,46 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { pathname, hostname } = request.nextUrl;
-  const token = request.cookies.get("avdc_accessToken")?.value;
-  // Debug logging
+const allowedOrigin = "http://localhost:3060";
 
-  // ✅ Public API routes that don't require authentication
-  const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];
-  if (publicApiRoutes.includes(pathname)) {
-    return NextResponse.next();
-  }
-
-  // ✅ Block other API routes if no token
-  if (pathname.startsWith("/api") && !token) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  // ✅ Define protected pages (EXCLUDING login)
-  const protectedPages = [
-    "/categories",
-    "/customers",
-    "/dashboard",
-    "/employees",
-    "/inventory",
-    "/procurement-history",
-    "/products",
-    "/purchase-orders",
-    "/requisitions",
-    "/sales",
-    "/stock-room",
-    "/stores",
-    "/suppliers",
-    "/users",
-    "/store-selection",
-    "/pos",
-    "/account",
-  ];
-
-  const isProtectedPage = protectedPages.some((route) =>
-    pathname.startsWith(route),
+function withCors(response: NextResponse) {
+  response.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+  response.headers.set("Access-Control-Allow-Credentials", "true");
+  response.headers.set(
+    "Access-Control-Allow-Methods",
+    "GET,POST,PUT,PATCH,DELETE,OPTIONS",
   );
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization",
+  );
+  return response;
+}
 
-  // ✅ Handle root path - redirect to dashboard if logged in, otherwise to login
-  if (pathname === "/") {
-    if (token) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    } else {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      return NextResponse.redirect(url);
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const token = request.cookies.get("avdc_accessToken")?.value;
+
+  if (pathname.startsWith("/api")) {
+    if (request.method === "OPTIONS") {
+      return withCors(new NextResponse(null, { status: 204 }));
     }
+
+    const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];
+
+    if (!publicApiRoutes.includes(pathname) && !token) {
+      return withCors(
+        NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
+      );
+    }
+
+    return withCors(NextResponse.next());
   }
 
-  // ✅ Redirect to login if accessing protected page without token
-  if (isProtectedPage && !token) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // ✅ Redirect to dashboard if accessing login page with token
-  if (pathname === "/login" && token) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
-
+  // your page redirects below...
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/login",
-    "/categories/:path*",
-    "/customers/:path*",
-    "/dashboard/:path*",
-    "/employees/:path*",
-    "/inventory/:path*",
-    "/procurement-history/:path*",
-    "/products/:path*",
-    "/purchase-orders/:path*",
-    "/requisitions/:path*",
-    "/sales/:path*",
-    "/stock-room/:path*",
-    "/stores/:path*",
-    "/users/:path*",
-    "/suppliers/:path*",
-    "/api/:path*",
-    "/pos/:path*",
-    "/account/:path*",
-  ],
+  matcher: ["/api/:path*", "/"],
 };

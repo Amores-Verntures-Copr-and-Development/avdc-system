@@ -21,7 +21,10 @@ import {
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
 import { deleteProductVariants } from "@/services/products/product-variant/delete-product-variants";
-import { getProductVariants } from "@/services/products/product-variant/get-product-variants";
+import {
+  getProductVariantForOnline,
+  getProductVariants,
+} from "@/services/products/product-variant/get-product-variants";
 import { updateProductVariantServices } from "@/services/products/product-variant/update-product-variants";
 import { createVariantComponent } from "@/services/products/product-variant/variant-component/create-variant-component";
 import { deleteVariantComponentServices } from "@/services/products/product-variant/variant-component/delete-variant-components";
@@ -145,6 +148,7 @@ export const getProduct = async ({
   offset,
   barcode,
   category,
+  isPos,
 }: {
   storeId?: number;
   search?: string;
@@ -155,6 +159,7 @@ export const getProduct = async ({
   limit?: number;
   offset?: number;
   barcode?: string;
+  isPos?: boolean;
 }) => {
   try {
     const data = await getProducts({
@@ -165,6 +170,7 @@ export const getProduct = async ({
       offset,
       barcode,
       category,
+      isPos,
     });
     return {
       data: data.data,
@@ -289,6 +295,50 @@ export const getProductVariantController = async ({
   }
 };
 
+export const getProductVariantForOnlineController = async ({
+  keyFields = {},
+  search,
+  statusSold,
+  from,
+  to,
+  storeId,
+  limit,
+  offset,
+}: {
+  keyFields?: Partial<ProductVariants>;
+  search?: string;
+  statusSold?: "fast" | "slow";
+  from?: string;
+  to?: string;
+  storeId?: number;
+  offset?: number;
+  limit?: number;
+}) => {
+  try {
+    const data = await getProductVariantForOnline({
+      keyFields,
+      search,
+      statusSold,
+      from,
+      to,
+      storeId,
+      limit,
+      offset,
+    });
+    return {
+      data: data.data,
+      total: data.total,
+      message: "Product variants fetched successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to fetched product variants!",
+      success: false,
+    };
+  }
+};
 export const createProductCategories = async (
   data: CreateProductCategoryDto[],
 ) => {

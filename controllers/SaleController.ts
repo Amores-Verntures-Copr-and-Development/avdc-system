@@ -103,6 +103,7 @@ export const getSalesByStoreId = async ({
   keyFields,
   offset,
   limit,
+  method,
 }: {
   storeId: number;
   search?: string;
@@ -113,6 +114,7 @@ export const getSalesByStoreId = async ({
   keyFields?: Partial<Sales>;
   limit?: number;
   offset?: number;
+  method?: string;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -124,6 +126,7 @@ export const getSalesByStoreId = async ({
       to,
       offset,
       limit,
+      method,
     });
     const count = await getSalesServices.getSalesCount({
       keyFields: { storeId: storeId },
@@ -158,6 +161,9 @@ export const getSales = async ({
   customer,
   limit,
   offset,
+  customerId,
+  storeId,
+  method,
 }: {
   keyFields?: Partial<Sales>;
   search?: string;
@@ -168,6 +174,9 @@ export const getSales = async ({
   customer?: boolean;
   limit?: number;
   offset?: number;
+  customerId?: number;
+  storeId?: number;
+  method?: string;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -180,6 +189,9 @@ export const getSales = async ({
       customer,
       offset,
       limit,
+      customerId,
+      storeId,
+      method,
     });
     const count = await getSalesServices.getSalesCount({
       keyFields,
@@ -187,6 +199,9 @@ export const getSales = async ({
       storeName,
       from,
       to,
+      storeId,
+      customerId,
+      method,
     });
 
     return {

@@ -21,6 +21,11 @@ export const createCustomer = async (data: CreateCustomerDto[]) => {
   }
 };
 
+export const registerCustomerOnlineController = async () => {
+  try {
+  } catch (e) {}
+};
+
 export const createCustomerMultipleStore = async (
   data: CreateCustomerDto[],
   store: StoreInterface[],
@@ -83,6 +88,33 @@ export const getCustomer = async ({
     return {
       success: false,
       message: "Failed to fetched customer!",
+      error: e,
+    };
+  }
+};
+
+export const updateCustomerController = async ({
+  keyFields = ["customerId"],
+  updateData,
+}: {
+  keyFields?: (keyof Customer)[];
+  updateData: Partial<Customer>[];
+}) => {
+  try {
+    const data = await customerServices.updateCustomerByFields({
+      keyFields: keyFields,
+      updateData,
+    });
+    return {
+      success: true,
+      message: "Customer updated successfully!",
+      data: data,
+    };
+  } catch (e) {
+    console.log({ e });
+    return {
+      success: false,
+      message: "Failed to update customer!",
       error: e,
     };
   }

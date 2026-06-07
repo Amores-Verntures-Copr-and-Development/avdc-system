@@ -338,7 +338,7 @@ const Button: React.FC<ButtonProps> = ({
       className={`
         relative flex w-full items-center justify-center gap-2
         
-        ${isRounded ? "rounded-xl" : ""}
+        ${isRounded ? "rounded-xl" : "rounded-sm"}
         
         transition-all duration-200 ease-out
         

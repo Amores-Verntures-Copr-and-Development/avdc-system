@@ -7,9 +7,9 @@ import {
 import { get } from "http";
 
 export const getOwnerDashboardServices = {
-  getTotalMetrics: async () => {
+  getTotalMetrics: async ({storeId}:{storeId?:number}) => {
     try {
-      const data = await selectOwnerDashboardStats();
+      const data = await selectOwnerDashboardStats({storeId});
       return data;
     } catch (e) {
       console.error("Error fetching owner dashboard metrics:", e);

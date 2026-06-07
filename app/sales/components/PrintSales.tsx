@@ -43,7 +43,7 @@ export function generateReceiptData(
       `${Number(item.salesItemQuantity)} x ${peso(Number(item.salesItemPrice))}\n`,
     );
 
-    item.salesItemsDiscount?.forEach((disc) => {
+    item.salesItemDiscounts?.forEach((disc) => {
       lines.push(`  DISC: -${peso(Number(disc.discountAmount))}\n`);
     });
 

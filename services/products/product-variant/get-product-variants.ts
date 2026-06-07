@@ -1,5 +1,7 @@
 import {
+  selectProductCountVariantForOnline,
   selectProductCountVariants,
+  selectProductVariantForOnline,
   selectProductVariants,
 } from "@/models/productModel";
 import { ProductVariants } from "@/types/products";
@@ -40,6 +42,58 @@ export async function getProductVariants({
     });
 
     const total = await selectProductCountVariants({
+      keyFields,
+      search,
+      statusSold,
+      from,
+      to,
+      connection,
+      storeId,
+    });
+    return {
+      data: data,
+      total: total,
+    };
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getProductVariantForOnline({
+  keyFields = {},
+  search,
+  statusSold,
+  from,
+  to,
+  connection,
+  storeId,
+  limit,
+  offset,
+}: {
+  keyFields?: Partial<ProductVariants>;
+  search?: string;
+  statusSold?: "fast" | "slow" | null;
+  from?: string;
+  to?: string;
+  connection?: PoolConnection;
+  storeId?: number;
+  limit?: number;
+  offset?: number;
+}) {
+  try {
+    const data = await selectProductVariantForOnline({
+      keyFields,
+      search,
+      statusSold,
+      from,
+      to,
+      connection,
+      storeId,
+      limit,
+      offset,
+    });
+
+    const total = await selectProductCountVariantForOnline({
       keyFields,
       search,
       statusSold,

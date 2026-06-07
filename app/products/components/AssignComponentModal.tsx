@@ -121,6 +121,7 @@ const AssignComponentModal = ({
             label="Cancel"
             color="outline"
             disabled={isAdding}
+            onClick={onClose}
           />
         </div>{" "}
         <div>

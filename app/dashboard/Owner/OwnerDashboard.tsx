@@ -7,7 +7,7 @@ import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { Calendar, PhilippinePeso, Store } from "lucide-react";
 import { formatPeso } from "@/utils/formatPeso";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { ApiResponse } from "@/types/api";
 import StoreRecentSalesCard from "../components/StoreRecentSalesCard";
@@ -46,23 +46,31 @@ const OwnerDashboard = () => {
   const [year, setYear] = useState(new Date().getFullYear().toString());
   const [yearPO, setYearPO] = useState(new Date().getFullYear().toString());
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedStore, setSelectedStore] = useState<number | null>(null);
+  const storeQuery = selectedStore ? `?store=${selectedStore}` : "";
   const { data: dailyStoreSales = { data: [] } } =
     useSWR<DailyStoreSalesResponse>(
-      `/api/dashboard/store-daily-sales/`,
+      `/api/dashboard/store-daily-sales/${storeQuery}`,
       fetcher,
     );
-  const { data: dashboardStats = { data: [] } } = useSWR<any>(
-    `/api/dashboard/owner`,
+
+  const { data: dashboardStats = { data: [] } } = useSWR(
+    `/api/dashboard/owner${storeQuery}`,
     fetcher,
   );
-  const { data: salesChart = { data: [] } } = useSWR<any>(
-    `/api/dashboard/owner/sales-chart/${year}`,
+
+  const { data: salesChart = { data: [] } } = useSWR(
+    `/api/dashboard/owner/sales-chart/${year}${storeQuery}`,
     fetcher,
   );
-  const { data: purchaseOrderChart = { data: [] } } = useSWR<any>(
-    `/api/dashboard/owner/sales-chart/${yearPO}/po-chart`,
+
+  const { data: purchaseOrderChart = { data: [] } } = useSWR(
+    `/api/dashboard/owner/sales-chart/${yearPO}/po-chart${storeQuery}`,
     fetcher,
   );
+  const defaultStoreFromUrl = searchParams.get("store") || "";
+
   const { data: recentStoreSales = { data: [] } } = useSWR<
     ApiResponse<StoreRecentSales[]>
   >(`/api/dashboard/owner/recent-sales`, fetcher);
@@ -91,7 +99,7 @@ const OwnerDashboard = () => {
     name: item.month,
     value: Number(item.totalSales),
   }));
-  const [selectedStore, setSelectedStore] = useState<number | null>(null);
+
   const { user, hasStore, isAdmin } = useSession();
   const totals = dashboardStats?.data[0];
   const totalSales = Number(totals?.totalSales) || 0;
@@ -106,6 +114,9 @@ const OwnerDashboard = () => {
         id: s.storeId,
       }))
     : [];
+  const storeName = storeOptions.find(
+    (s) => s.id === Number(defaultStoreFromUrl),
+  )?.value;
   return (
     <div className="min-h-0 p-2 flex flex-col gap-2  overflow-y-auto ">
       <div className="flex justify-between">
@@ -114,9 +125,31 @@ const OwnerDashboard = () => {
           subtitle="Welcome back! Here's your system overview."
         />
         <div className="flex gap-2">
-          <div>
-            {" "}
-            <DateRange />
+          <div className="min-w-40">
+            <DynamicDropdown
+              isRounded={false}
+              size="sm"
+              options={storeOptions}
+              defaultValue={storeName}
+              onChange={function (value: string | number): void {
+                if (value) {
+                  const findStore = Array.isArray(stores)
+                    ? stores.find((i) => i.storeName === value)
+                    : undefined;
+                  setSelectedStore(findStore?.storeId ?? null);
+                  const url = new URL(window.location.href);
+                  url.searchParams.set("store", String(findStore?.storeId));
+                  router.push(url.toString());
+                } else {
+                  const url = new URL(window.location.href);
+                  setSelectedStore(null);
+                  url.searchParams.delete("store"); // remove 'store'
+                  router.push(url.toString());
+                }
+              }}
+              placeholder={`Store (${storeOptions.length})`}
+              icon={<Store className="w-4 h-4" />}
+            />
           </div>
         </div>
       </div>

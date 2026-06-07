@@ -16,6 +16,7 @@ interface DynamicDropdownProps {
   icon: React.ReactNode;
   disabled?: boolean;
   size?: "xs" | "sm" | "md" | "lg";
+  isRounded?: boolean;
 }
 
 const sizeClasses: Record<"xs" | "sm" | "md" | "lg", string> = {
@@ -34,6 +35,7 @@ const DynamicDropdown = ({
   icon,
   disabled = false,
   size = "sm",
+  isRounded = true,
 }: DynamicDropdownProps) => {
   const [open, setOpen] = useState(false);
 
@@ -117,7 +119,7 @@ const DynamicDropdown = ({
         }}
         className={`
           flex w-full items-center justify-between gap-2
-          rounded-xl border
+           border ${isRounded ? ` rounded-xl` : ` rounded-sm`} 
           transition-all duration-200
           ${sizeClasses[size]}
           
