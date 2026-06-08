@@ -1,7 +1,9 @@
-import { CreateISRDto } from "@/dtos/isr.dto";
+import { CreateISRDto, CreateISRPurchaserDto } from "@/dtos/isr.dto";
 import { createISR } from "@/services/isr/create-isr";
 import { getISRByFields } from "@/services/isr/get-isr";
-import { InterStoreRequests } from "@/types/isr";
+import { createISRPurchaser } from "@/services/isr/isr-purchaser/create-isr-purchaser";
+import { getISRPurchaser } from "@/services/isr/isr-purchaser/get-isr-purchaser";
+import { InterStoreRequests, ISRPurchasers } from "@/types/isr";
 
 export const ISRController = {
   createISR: async ({ data }: { data: CreateISRDto }) => {
@@ -45,6 +47,45 @@ export const ISRController = {
       return {
         success: true,
         data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+};
+
+export const ISRPurchaserController = {
+  createISRPurchaser: async ({ data }: { data: CreateISRPurchaserDto }) => {
+    try {
+      const res = await createISRPurchaser({ data });
+      return {
+        success: true,
+        data: res,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  getISRPurchaser: async ({
+    keyFields = {},
+    code,
+  }: {
+    keyFields?: Partial<Record<keyof ISRPurchasers, any>>;
+    code?: string;
+  }) => {
+    try {
+      const res = await getISRPurchaser({ keyFields, code });
+      return {
+        success: true,
+        data: res.data,
+        count: res.count,
       };
     } catch (e) {
       return {

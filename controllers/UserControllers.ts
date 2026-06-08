@@ -1,7 +1,11 @@
 import { CreateEmployeeDto, CreateUserDto } from "@/dtos/user.dto";
 import { selectUsers, insertUser } from "../models/userModels";
 import { handleCreateUser } from "@/services/user/handle-create-user";
-import { getUserInfoByUserId } from "@/services/user/get-user";
+import {
+  getUserInfoByUserId,
+  getUserNotInISRPurchser,
+} from "@/services/user/get-user";
+import { InterStoreRequests } from "@/types/isr";
 
 export const createUser = async (data: CreateUserDto) => {
   try {
@@ -50,5 +54,23 @@ export const getUserInfo = async (userId: number) => {
       success: true,
       message: e,
     };
+  }
+};
+
+export const getUserNotInISRPurchaserController = async ({
+  keyFields,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  limit: number;
+  search?: string;
+}) => {
+  try {
+    const res = await getUserNotInISRPurchser({ keyFields, limit, search });
+
+    return res;
+  } catch (e) {
+    return e;
   }
 };

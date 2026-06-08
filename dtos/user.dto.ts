@@ -35,6 +35,7 @@ export type DisplayUserDto = Pick<
 > &
   Pick<EmployeeInterface, "empId" | "empPosition" | "storeId"> & {
     addedBy: String;
+    fullName: string;
   };
 
 export type DisplayUserInfoDto = Pick<

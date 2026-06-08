@@ -4,40 +4,78 @@ import Button from "@/components/shared/Button";
 import { Card, CardContent, CardHeader } from "@/components/shared/CustomCard";
 import Input from "@/components/shared/Input";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
-import PageLayout from "@/components/shared/PageLayout";
-import Table from "@/components/shared/Table";
+import Table, { Column } from "@/components/shared/Table";
+import { DisplayISRPurchaserDTO } from "@/dtos/isr.dto";
 import { ApiResponse } from "@/types/api";
 import { InterStoreRequests } from "@/types/isr";
 import { fetcher } from "@/utils/fetcher";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Plus, Store, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
+import AddPurchaserISR from "./components/AddPurchaserISR";
 
-const page = () => {
+const Page = () => {
   const params = useParams();
   const router = useRouter();
   const code = params.code;
+
+  const [showModals, setShowModals] = useState<
+    null | "purchaser" | "receiver" | "stores"
+  >(null);
 
   const { data: response, isLoading } = useSWR<
     ApiResponse<InterStoreRequests[]>
   >(code ? `/api/isr/${code}` : null, fetcher);
 
-  const isr = response?.data[0];
+  const isr = response?.data?.[0];
+
+  const { data: isrPuResponse, mutate: isrPuMutate } = useSWR<
+    ApiResponse<DisplayISRPurchaserDTO[]>
+  >(isr ? `/api/isr/${isr.isrCode}/purchaser` : null, fetcher);
+
+  const isrPuColumn: Column<DisplayISRPurchaserDTO>[] = [
+    {
+      key: "#",
+      name: "#",
+      selector: (_row, index) => index + 1,
+    },
+    {
+      key: "purchaser",
+      name: "Purchaser",
+      selector: (row) => row.purchaser,
+    },
+    {
+      key: "creator",
+      name: "Added by",
+      selector: (row) => row.creator,
+    },
+    {
+      key: "isrPuCreatedAt",
+      name: "Date Added",
+      selector: (row) => formatDateToWords(row.isrPurCreatedAt),
+    },
+  ];
 
   if (isLoading) return <LoaderComponent />;
 
   return (
-    <PageLayout className="p-2 gap-2 overflow-y-auto">
+    <div
+      className="
+  flex min-h-screen flex-col gap-2 p-2
+  overflow-y-auto
+  2xl:h-[calc(100vh-1rem)] 2xl:min-h-0 2xl:overflow-hidden
+"
+    >
       <button
-        onClick={() => {
-          router.back();
-        }}
-        className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+        onClick={() => router.back()}
+        className="flex shrink-0 items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-900"
       >
         <svg
-          className="w-4 h-4"
+          className="h-4 w-4"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -51,108 +89,175 @@ const page = () => {
         </svg>
         Back to ISR
       </button>
-      <PageHeader
-        title={`ISR - ${isr?.isrName}`}
-        subtitle="Manage isr set up and assign purchaser, request handler and stores"
-      />
-      <Card>
+
+      <div className="shrink-0">
+        <PageHeader
+          title={`ISR - ${isr?.isrName ?? ""}`}
+          subtitle="Manage ISR setup and assign purchasers, request handlers, and stores"
+        />
+      </div>
+
+      <Card className="shrink-0">
         <CardHeader>
-          <h1 className="font-semibold text-sm 2xl:text-lg">Details</h1>
+          <h1 className="text-sm font-semibold 2xl:text-lg">Details</h1>
         </CardHeader>
+
         <CardContent className="flex gap-2">
-          <Input disabled label="Name" sizes="sm" value={isr?.isrName} />
-          <Input disabled label="Code" sizes="sm" value={isr?.isrCode} />
+          <Input disabled label="Name" sizes="sm" value={isr?.isrName ?? ""} />
+          <Input disabled label="Code" sizes="sm" value={isr?.isrCode ?? ""} />
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-2 2xl:gap-4 flex-1">
-        <Card>
-          <CardHeader className="">
-            <div className="flex justify-between items-center">
-              {" "}
+      <div
+        className="
+  grid grid-cols-1 gap-2 2xl:gap-4
+  2xl:min-h-0 2xl:flex-1 2xl:grid-cols-2 2xl:overflow-hidden
+"
+      >
+        <Card
+          className="
+  flex flex-col overflow-hidden
+  min-h-[320px]
+  2xl:min-h-0
+"
+        >
+          <CardHeader className="shrink-0">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="flex text-primary-1 items-center gap-2">
+                <div className="flex items-center gap-2 text-primary-1">
                   <User className="h-5 w-5" />
-                  <h1 className="font-semibold text-sm">Purchaser</h1>
+                  <h1 className="text-sm font-semibold">
+                    Purchasers ({isrPuResponse?.count ?? 0})
+                  </h1>
                 </div>
-                <span className="text-xs text-gray-700 font-normal">
+
+                <span className="text-xs font-normal text-gray-700">
                   Select one or more purchasers who can handle purchase orders.
                 </span>
               </div>
+
               <div>
-                <Button label="Add Purchaser" size="sm" icon={Plus} />
+                {" "}
+                <Button
+                  label="Add Purchaser"
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => setShowModals("purchaser")}
+                />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table
-              columns={[]}
-              data={[]}
-              isRounded={false}
-              maxHeight="h-full"
-            />
+
+          <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
+            <div className="h-full min-h-0 overflow-y-auto p-2">
+              <Table
+                columns={isrPuColumn}
+                data={isrPuResponse?.data ?? []}
+                isRounded={false}
+                maxHeight="h-full"
+              />
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="">
-            <div className="flex justify-between items-center">
+
+        <Card
+          className="
+  flex flex-col overflow-hidden
+  min-h-[320px]
+  2xl:min-h-0
+"
+        >
+          <CardHeader className="shrink-0">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                {" "}
-                <div className="flex text-primary-1 items-center gap-2">
-                  <User className="h-5 w-5" />{" "}
-                  <h1 className="font-semibold text-sm">
+                <div className="flex items-center gap-2 text-primary-1">
+                  <User className="h-5 w-5" />
+                  <h1 className="text-sm font-semibold">
                     Receivers (Request Handler)
                   </h1>
                 </div>
-                <span className="text-xs text-gray-700 font-normal">
-                  Select one or more handler who will receive, process request
-                  and provide stocks.
+
+                <span className="text-xs font-normal text-gray-700">
+                  Select one or more handlers who will receive, process
+                  requests, and provide stocks.
                 </span>
               </div>
+
               <div>
+                {" "}
                 <Button label="Add Receiver" size="sm" icon={Plus} />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table
-              columns={[]}
-              data={[]}
-              isRounded={false}
-              maxHeight="h-full"
-            />
+
+          <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
+            <div className="h-full min-h-0 overflow-y-auto p-2">
+              <Table
+                columns={[]}
+                data={[]}
+                isRounded={false}
+                maxHeight="h-full"
+              />
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader className="">
-            <div className="flex justify-between items-center">
-              {" "}
+
+        <Card
+          className="
+  flex flex-col overflow-hidden
+  min-h-[320px]
+  2xl:min-h-0
+"
+        >
+          <CardHeader className="shrink-0">
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="flex text-primary-1 items-center gap-2">
-                  <Store className="h-5 w-5" />{" "}
-                  <h1 className="font-semibold text-sm">Stores</h1>
+                <div className="flex items-center gap-2 text-primary-1">
+                  <Store className="h-5 w-5" />
+                  <h1 className="text-sm font-semibold">Stores</h1>
                 </div>
-                <span className="text-xs text-gray-700 font-normal">
-                  Select one or more stores who can request under this ISR.
+
+                <span className="text-xs font-normal text-gray-700">
+                  Select one or more stores that can request under this ISR.
                 </span>
               </div>
+
               <div>
                 <Button label="Add Store" size="sm" icon={Plus} />
               </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <Table
-              columns={[]}
-              data={[]}
-              isRounded={false}
-              maxHeight="h-full"
-            />
+
+          <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
+            <div className="h-full min-h-0 overflow-y-auto p-2">
+              <Table
+                columns={[]}
+                data={[]}
+                isRounded={false}
+                maxHeight="h-full"
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
-    </PageLayout>
+
+      {showModals !== null && (
+        <Modal
+          isOpen={showModals !== null}
+          onClose={() => setShowModals(null)}
+          title={showModals === "purchaser" ? "Add ISR Purchaser" : ""}
+        >
+          {showModals === "purchaser" && isr ? (
+            <AddPurchaserISR
+              data={isr}
+              onClose={() => setShowModals(null)}
+              mutate={isrPuMutate}
+            />
+          ) : null}
+        </Modal>
+      )}
+    </div>
   );
 };
 
-export default page;
+export default Page;

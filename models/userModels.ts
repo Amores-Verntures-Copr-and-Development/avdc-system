@@ -2,6 +2,7 @@ import { CreateUserDto } from "@/dtos/user.dto";
 import { UserInterface } from "@/types/users";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { InterStoreRequests } from "@/types/isr";
 
 export const insertUser = async ({
   connection,
@@ -165,3 +166,104 @@ export const selectUserWithUserId = async ({
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [userId]);
   return rows;
 };
+
+export const selectUserNotInISRPurchaser = async ({
+  keyFields = {},
+  connection,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  connection?: PoolConnection;
+  limit: number;
+  search?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: string[] = [];
+  let whereISR: string = "";
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      whereISR += ` AND isrp.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        whereISR += ` AND isrp.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      whereISR += ` AND ${key} = ?`;
+      params.push(value);
+    }
+  }
+  let sql = `SELECT u.userId,CONCAT(u.userFname," ",u.userLname) as fullName,u.userRole
+FROM Users u
+WHERE u.userId NOT IN (
+    SELECT userId
+    FROM ISRPurchasers isr 
+    LEFT JOIN InterStoreRequests isrp ON isrp.isrId = isrp.isrId WHERE 1=1 ${whereISR}
+)`;
+
+  if (search) {
+    sql += ` AND
+    (
+      u.userFname LIKE ?
+      OR u.userLname LIKE ?
+      OR CONCAT(u.userFname, ' ', u.userLname) LIKE ?
+    )
+  `;
+
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+  }
+  if (limit) {
+    sql += ` LIMIT ${limit}`;
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows;
+};
+
+// xport const selectISRPurchaser = async ({
+//   connection,
+//   keyFields = {},
+// }: {
+//   connection?: PoolConnection;
+//   keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+// }) => {
+//   const pool = connection ? connection : await getDBConnection();
+
+//   let sql = `SELECT
+//     isrp.isrPurid,
+//     isrp.userId,
+//     isrp.isrId,
+//     isrp.isrPurCreatedat,
+//     isrp.isrPurCreatedBy,
+//     isrp.isrPurUpdatedat,
+//     CONCAT(u.userName, ' ', u.userFname) AS creator
+// FROM ISRPurchasers isrp
+// LEFT JOIN Users u
+//     ON u.userId = isrp.userId
+//  FROM ISRPurchasers WHERE 1=1`;
+//   const params: any[] = [];
+
+//   for (const [key, value] of Object.entries(keyFields)) {
+//     if (value === null) {
+//       sql += ` AND isrp.${key} IS NULL`;
+//     } else if (Array.isArray(value)) {
+//       // multiple values
+//       if (value.length > 0) {
+//         sql += ` AND isrp.${key} IN (${value.map(() => "?").join(", ")})`;
+//         params.push(...value);
+//       }
+//     } else {
+//       // single value
+//       sql += ` AND ${key} = ?`;
+//       params.push(value);
+//     }
+//   }
+
+//   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+//   return rows as DisplayISRPurchaserDTO[];
+// };

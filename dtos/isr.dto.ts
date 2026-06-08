@@ -1,6 +1,31 @@
-import { InterStoreRequests } from "@/types/isr";
+import {
+  InterStoreRequests,
+  ISRPurchasers,
+  ISRRequestHandlers,
+  ISRStores,
+} from "@/types/isr";
 
 export type CreateISRDto = Pick<
   InterStoreRequests,
   "isrCode" | "isrName" | "isrCreatedBy"
+>;
+
+export type CreateISRPurchaserDto = Pick<
+  ISRPurchasers,
+  "isrPurCreatedBy" | "userId" | "isrId"
+>;
+
+export interface DisplayISRPurchaserDTO extends ISRPurchasers {
+  creator: string;
+  purchaser: string;
+}
+
+export type CreateISRRequestHandlerDto = Pick<
+  ISRRequestHandlers,
+  "isrId" | "userId" | "isrReqHanCreatedBy"
+>;
+
+export type CreateISRStoreDto = Pick<
+  ISRStores,
+  "isrId" | "isrStoreCreatedBy" | "storeId"
 >;

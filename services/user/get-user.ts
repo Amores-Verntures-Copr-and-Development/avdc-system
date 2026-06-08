@@ -2,8 +2,10 @@ import {
   selectPurchaserNotInStockPurchaser,
   selectStoreSuperVisorWithHasPassword,
   selectUserInfo,
+  selectUserNotInISRPurchaser,
   selectUserWithUserId,
 } from "@/models/userModels";
+import { InterStoreRequests } from "@/types/isr";
 import { PoolConnection } from "mysql2/promise";
 export async function getUserInfoByUserId({ userId }: { userId: number }) {
   try {
@@ -48,4 +50,23 @@ export async function getOwnInfoForRefund({
   } catch (e) {
     throw e;
   }
+}
+
+export async function getUserNotInISRPurchser({
+  keyFields = {},
+  connection,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  connection?: PoolConnection;
+  limit: number;
+  search?: string;
+}) {
+  return await selectUserNotInISRPurchaser({
+    keyFields,
+    connection,
+    limit,
+    search,
+  });
 }
