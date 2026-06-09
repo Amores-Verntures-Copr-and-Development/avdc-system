@@ -3,6 +3,7 @@ import {
   selectStoreSuperVisorWithHasPassword,
   selectUserInfo,
   selectUserNotInISRPurchaser,
+  selectUserNotInISRRequestHandler,
   selectUserWithUserId,
 } from "@/models/userModels";
 import { InterStoreRequests } from "@/types/isr";
@@ -64,6 +65,25 @@ export async function getUserNotInISRPurchser({
   search?: string;
 }) {
   return await selectUserNotInISRPurchaser({
+    keyFields,
+    connection,
+    limit,
+    search,
+  });
+}
+
+export async function getUserNotInISRRequestHandler({
+  keyFields = {},
+  connection,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  connection?: PoolConnection;
+  limit: number;
+  search?: string;
+}) {
+  return await selectUserNotInISRRequestHandler({
     keyFields,
     connection,
     limit,

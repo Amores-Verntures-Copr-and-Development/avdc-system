@@ -76,6 +76,11 @@ export async function processReceivedPO(data: UpdatePurchaseOrdersDto) {
         const warehouseInv = await findInventoryByStockPurchaserFields({
           keyFields: { userId: data.updatedBy },
         });
+        if (!warehouseInv || warehouseInv.length === 0) {
+          throw new Error(
+            `No warehouse inventory found for userId ${data.updatedBy}`,
+          );
+        }
         const addItemsData: Partial<InventoryItemInterface>[] =
           validReceivedData.flatMap((item) => ({
             inventoryItemReferenceId: item.itemId,

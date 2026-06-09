@@ -7,7 +7,11 @@ import LoaderComponent from "@/components/shared/LoaderComponent";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import Table, { Column } from "@/components/shared/Table";
-import { DisplayISRPurchaserDTO } from "@/dtos/isr.dto";
+import {
+  DisplayISRPurchaserDTO,
+  DisplayISRRequestHandlerDTO,
+  DisplayISRStoresDTO,
+} from "@/dtos/isr.dto";
 import { ApiResponse } from "@/types/api";
 import { InterStoreRequests } from "@/types/isr";
 import { fetcher } from "@/utils/fetcher";
@@ -17,6 +21,8 @@ import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 import AddPurchaserISR from "./components/AddPurchaserISR";
+import AddStoresISR from "./components/AddStoresISR";
+import AddReceiverISR from "./components/AddReceiverISR";
 
 const Page = () => {
   const params = useParams();
@@ -36,6 +42,12 @@ const Page = () => {
   const { data: isrPuResponse, mutate: isrPuMutate } = useSWR<
     ApiResponse<DisplayISRPurchaserDTO[]>
   >(isr ? `/api/isr/${isr.isrCode}/purchaser` : null, fetcher);
+  const { data: isrRHResponse, mutate: isrRHMutate } = useSWR<
+    ApiResponse<DisplayISRRequestHandlerDTO[]>
+  >(isr ? `/api/isr/${isr.isrCode}/request-handler` : null, fetcher);
+  const { data: isrSResponse, mutate: isrSMutate } = useSWR<
+    ApiResponse<DisplayISRStoresDTO[]>
+  >(isr ? `/api/isr/${isr.isrCode}/stores` : null, fetcher);
 
   const isrPuColumn: Column<DisplayISRPurchaserDTO>[] = [
     {
@@ -60,6 +72,51 @@ const Page = () => {
     },
   ];
 
+  const isrRHColumn: Column<DisplayISRRequestHandlerDTO>[] = [
+    {
+      key: "#",
+      name: "#",
+      selector: (_row, index) => index + 1,
+    },
+    {
+      key: "requestHandler",
+      name: "Name",
+      selector: (row) => row.requestHandler,
+    },
+    {
+      key: "creator",
+      name: "Added by",
+      selector: (row) => row.creator,
+    },
+    {
+      key: "isrPuCreatedAt",
+      name: "Date Added",
+      selector: (row) => formatDateToWords(row.isrReqHanCreatedAt),
+    },
+  ];
+
+  const isrSColumn: Column<DisplayISRStoresDTO>[] = [
+    {
+      key: "#",
+      name: "#",
+      selector: (_row, index) => index + 1,
+    },
+    {
+      key: "storeName",
+      name: "Store",
+      selector: (row) => row.storeName,
+    },
+    {
+      key: "creator",
+      name: "Added by",
+      selector: (row) => row.creator,
+    },
+    {
+      key: "isrPuCreatedAt",
+      name: "Date Added",
+      selector: (row) => formatDateToWords(row.isrStoreCreatedAt),
+    },
+  ];
   if (isLoading) return <LoaderComponent />;
 
   return (
@@ -185,7 +242,12 @@ const Page = () => {
 
               <div>
                 {" "}
-                <Button label="Add Receiver" size="sm" icon={Plus} />
+                <Button
+                  label="Add Receiver"
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => setShowModals("receiver")}
+                />
               </div>
             </div>
           </CardHeader>
@@ -193,8 +255,8 @@ const Page = () => {
           <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
             <div className="h-full min-h-0 overflow-y-auto p-2">
               <Table
-                columns={[]}
-                data={[]}
+                columns={isrRHColumn}
+                data={isrRHResponse?.data ?? []}
                 isRounded={false}
                 maxHeight="h-full"
               />
@@ -223,7 +285,14 @@ const Page = () => {
               </div>
 
               <div>
-                <Button label="Add Store" size="sm" icon={Plus} />
+                <Button
+                  label="Add Store"
+                  size="sm"
+                  icon={Plus}
+                  onClick={() => {
+                    setShowModals("stores");
+                  }}
+                />
               </div>
             </div>
           </CardHeader>
@@ -231,8 +300,8 @@ const Page = () => {
           <CardContent className="min-h-0 flex-1 overflow-hidden p-0">
             <div className="h-full min-h-0 overflow-y-auto p-2">
               <Table
-                columns={[]}
-                data={[]}
+                columns={isrSColumn}
+                data={isrSResponse?.data ?? []}
                 isRounded={false}
                 maxHeight="h-full"
               />
@@ -245,13 +314,33 @@ const Page = () => {
         <Modal
           isOpen={showModals !== null}
           onClose={() => setShowModals(null)}
-          title={showModals === "purchaser" ? "Add ISR Purchaser" : ""}
+          title={
+            showModals === "purchaser"
+              ? "Add ISR Purchaser"
+              : showModals === "receiver"
+                ? "Add ISR Receiver"
+                : showModals === "stores"
+                  ? "Add ISR Store"
+                  : ""
+          }
         >
           {showModals === "purchaser" && isr ? (
             <AddPurchaserISR
               data={isr}
               onClose={() => setShowModals(null)}
               mutate={isrPuMutate}
+            />
+          ) : showModals === "receiver" && isr ? (
+            <AddReceiverISR
+              data={isr}
+              onClose={() => setShowModals(null)}
+              mutate={isrRHMutate}
+            />
+          ) : showModals === "stores" && isr ? (
+            <AddStoresISR
+              data={isr}
+              onClose={() => setShowModals(null)}
+              mutate={isrSMutate}
             />
           ) : null}
         </Modal>

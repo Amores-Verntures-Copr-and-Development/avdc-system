@@ -1,5 +1,12 @@
-import { ISRPurchaserController } from "@/controllers/ISRController";
-import { CreateISRPurchaserDto } from "@/dtos/isr.dto";
+import {
+  ISRController,
+  ISRPurchaserController,
+  ISRRequestHandlerController,
+} from "@/controllers/ISRController";
+import {
+  CreateISRPurchaserDto,
+  CreateISRRequestHandlerDto,
+} from "@/dtos/isr.dto";
 import { NextRequest, NextResponse } from "next/server";
 
 const getCode = async (params: Promise<{ code: string }>): Promise<string> => {
@@ -18,21 +25,24 @@ export async function POST(
   try {
     const code = await getCode(params);
 
-    const data = (await req.json()) as CreateISRPurchaserDto;
+    const data = (await req.json()) as CreateISRRequestHandlerDto;
     if (!code) {
       throw new Error("Missing ISR code!");
     }
     if (!data) {
       throw new Error("No data found!");
     }
-    const res = await ISRPurchaserController.createISRPurchaser({ data: data });
+    const res = await ISRRequestHandlerController.createISRRequestHandler({
+      data: data,
+    });
+
     if (!res.success) {
-      throw new Error(`Failed to add purchser in ISR`);
+      throw new Error(`Failed to add request handler in ISR`);
     }
     return NextResponse.json(
       {
         success: true,
-        message: "ISR Purchaser added successfully!",
+        message: "ISR Request Handler added successfully!",
       },
       {
         status: 201,
@@ -43,7 +53,7 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-        message: `Failed to add purchser in ISR`,
+        message: `Failed to add request handler in ISR`,
       },
       { status: 400 },
     );
@@ -57,7 +67,7 @@ export async function GET(
   try {
     const code = await getCode(params);
 
-    const res = await ISRPurchaserController.getISRPurchaser({
+    const res = await ISRRequestHandlerController.getISRRequestHandler({
       code: code,
     });
     if (!res.success) {

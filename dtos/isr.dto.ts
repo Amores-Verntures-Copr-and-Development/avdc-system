@@ -25,7 +25,17 @@ export type CreateISRRequestHandlerDto = Pick<
   "isrId" | "userId" | "isrReqHanCreatedBy"
 >;
 
+export interface DisplayISRRequestHandlerDTO extends ISRRequestHandlers {
+  creator: string;
+  requestHandler: string;
+}
+
 export type CreateISRStoreDto = Pick<
   ISRStores,
   "isrId" | "isrStoreCreatedBy" | "storeId"
 >;
+
+export interface DisplayISRStoresDTO extends ISRStores {
+  storeName: string;
+  creator: string;
+}

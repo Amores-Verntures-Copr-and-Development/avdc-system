@@ -4,6 +4,7 @@ import { handleCreateUser } from "@/services/user/handle-create-user";
 import {
   getUserInfoByUserId,
   getUserNotInISRPurchser,
+  getUserNotInISRRequestHandler,
 } from "@/services/user/get-user";
 import { InterStoreRequests } from "@/types/isr";
 
@@ -71,6 +72,28 @@ export const getUserNotInISRPurchaserController = async ({
 
     return res;
   } catch (e) {
-    return e;
+    throw e;
+  }
+};
+
+export const getUserNotInISRRequestHandlerController = async ({
+  keyFields,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  limit: number;
+  search?: string;
+}) => {
+  try {
+    const res = await getUserNotInISRRequestHandler({
+      keyFields,
+      limit,
+      search,
+    });
+
+    return res;
+  } catch (e) {
+    throw e;
   }
 };

@@ -1,10 +1,19 @@
 import {
   CreateISRDto,
   CreateISRPurchaserDto,
+  CreateISRRequestHandlerDto,
+  CreateISRStoreDto,
   DisplayISRPurchaserDTO,
+  DisplayISRRequestHandlerDTO,
+  DisplayISRStoresDTO,
 } from "@/dtos/isr.dto";
 import { getDBConnection } from "@/lib/db";
-import { InterStoreRequests, ISRPurchasers } from "@/types/isr";
+import {
+  InterStoreRequests,
+  ISRPurchasers,
+  ISRRequestHandlers,
+  ISRStores,
+} from "@/types/isr";
 import {
   PoolClusterOptions,
   PoolConnection,
@@ -208,4 +217,269 @@ LEFT JOIN Users u
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows[0].count;
+};
+
+export const insertISRRequestHandler = async ({
+  data,
+  connection,
+}: {
+  data: CreateISRRequestHandlerDto;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO ISRRequestHandlers(isrId,userid,isrReqHanCreatedBy) VALUES(?,?,?)`;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
+    data.isrId,
+    data.userId,
+    data.isrReqHanCreatedBy,
+  ]);
+
+  return result.insertId;
+};
+
+export const selectISRRequestHandler = async ({
+  connection,
+  keyFields = {},
+  code,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof ISRRequestHandlers, any>>;
+  code?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = `  SELECT isrh.isrReqHanId, isrh.userId, isrh.isrId, isrh.isrReqHanCreatedBy, isrh.isrReqHanCreatedAt,    
+ CONCAT(uc.userfname, ' ', uc.userLname) AS creator,
+CONCAT(u.userfname, ' ', u.userLname) AS requestHandler FROM  ISRRequestHandlers isrh
+ LEFT JOIN InterStoreRequests isr ON isr.isrId = isrh.isrId
+ LEFT JOIN Users u ON u.userId = isrh.userId
+ LEFT JOIN Users uc ON uc.userId = isrh.isrReqHanCreatedBy
+ WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND isrh.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND isrh.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND isrh.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (code) {
+    sql += ` AND isr.isrCode = ?`;
+    params.push(code);
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows as DisplayISRRequestHandlerDTO[];
+};
+
+export const selectCountISRRequestHandler = async ({
+  connection,
+  keyFields = {},
+  code,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof ISRRequestHandlers, any>>;
+  code?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = `  SELECT COUNT(isrh.isrReqHanId) as count FROM  ISRRequestHandlers isrh
+ LEFT JOIN InterStoreRequests isr ON isr.isrId = isrh.isrId
+ LEFT JOIN Users u ON u.userId = isrh.userId
+ LEFT JOIN Users uc ON uc.userId = isrh.isrReqHanCreatedBy
+ WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND isrh.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND isrh.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND isrh.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (code) {
+    sql += ` AND isr.isrCode = ?`;
+    params.push(code);
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows[0].count;
+};
+
+export const insertISRStore = async ({
+  data,
+  connection,
+}: {
+  data: CreateISRStoreDto;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO ISRStores(isrId,storeId,isrStoreCreatedBy) VALUES(?,?,?)`;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
+    data.isrId,
+    data.storeId,
+    data.isrStoreCreatedBy,
+  ]);
+
+  return result.insertId;
+};
+
+export const selectISRStore = async ({
+  connection,
+  keyFields = {},
+  code,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof ISRStores, any>>;
+  code?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = ` SELECT isrs.isrStoreId,isrs.isrId,isrs.isrStoreCreatedBy,isrs.isrStoreCreatedBy,s.storeName, CONCAT(u.userfname, ' ', u.userLname) AS creator 
+FROM ISRStores isrs
+LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId
+LEFT JOIN Stores s ON s.storeId = isrs.storeId
+ LEFT JOIN Users u ON u.userId = isrs.isrStoreCreatedBy
+ WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND isrs.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND isrs.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND isrs.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (code) {
+    sql += ` AND isr.isrCode = ?`;
+    params.push(code);
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows as DisplayISRStoresDTO[];
+};
+
+export const selectCountISRStore = async ({
+  connection,
+  keyFields = {},
+  code,
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof ISRStores, any>>;
+  code?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  let sql = ` SELECT COUNT(isrs.isrStoreId) as count
+FROM ISRStores isrs
+LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId
+LEFT JOIN Stores s ON s.storeId = isrs.storeId
+ LEFT JOIN Users u ON u.userId = isrs.isrStoreCreatedBy
+ WHERE 1=1`;
+  const params: any[] = [];
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND isrs.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND isrs.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND isrs.${key} = ?`;
+      params.push(value);
+    }
+  }
+  if (code) {
+    sql += ` AND isr.isrCode = ?`;
+    params.push(code);
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
+  return rows[0].count;
+};
+
+export const selectStoreNotInISR = async ({
+  keyFields = {},
+  connection,
+  limit,
+  search,
+}: {
+  keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+  connection?: PoolConnection;
+  limit: number;
+  search?: string;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: string[] = [];
+  let whereISR: string = "";
+
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      whereISR += ` AND isr.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        whereISR += ` AND isr.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      whereISR += ` AND isr.${key} = ?`;
+      params.push(value);
+    }
+  }
+  let sql = ` 
+SELECT s.storeId,s.storeName FROM Stores s
+WHERE s.storeId NOT IN (
+ SELECT storeId FROM ISRStores isrs
+ LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId  WHERE 1 = 1 ${whereISR}
+)
+   `;
+
+  if (search) {
+    sql += ` AND
+    (
+      s.storeName LIKE ?
+    
+    )
+  `;
+
+    params.push(`%${search}%`);
+  }
+  if (limit) {
+    sql += ` LIMIT ${limit}`;
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };

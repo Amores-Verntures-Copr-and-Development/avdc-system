@@ -1,9 +1,23 @@
-import { CreateISRDto, CreateISRPurchaserDto } from "@/dtos/isr.dto";
+import {
+  CreateISRDto,
+  CreateISRPurchaserDto,
+  CreateISRRequestHandlerDto,
+  CreateISRStoreDto,
+} from "@/dtos/isr.dto";
 import { createISR } from "@/services/isr/create-isr";
 import { getISRByFields } from "@/services/isr/get-isr";
 import { createISRPurchaser } from "@/services/isr/isr-purchaser/create-isr-purchaser";
 import { getISRPurchaser } from "@/services/isr/isr-purchaser/get-isr-purchaser";
+import { createISRRequestHandler } from "@/services/isr/isr-request-handler/create-isr-request-handler";
+import { getISRRequestHandler } from "@/services/isr/isr-request-handler/get-isr-request-handler";
+import { createISRStore } from "@/services/isr/isr-store/create-isr-store";
+import {
+  getISRStores,
+  getStoreNotInISR,
+} from "@/services/isr/isr-store/get-isr-store";
+
 import { InterStoreRequests, ISRPurchasers } from "@/types/isr";
+import { PoolConnection } from "mysql2/promise";
 
 export const ISRController = {
   createISR: async ({ data }: { data: CreateISRDto }) => {
@@ -86,6 +100,118 @@ export const ISRPurchaserController = {
         success: true,
         data: res.data,
         count: res.count,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+};
+
+export const ISRRequestHandlerController = {
+  createISRRequestHandler: async ({
+    data,
+  }: {
+    data: CreateISRRequestHandlerDto;
+  }) => {
+    try {
+      const res = await createISRRequestHandler({ data });
+      return {
+        success: true,
+        data: res,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  getISRRequestHandler: async ({
+    keyFields = {},
+    code,
+  }: {
+    keyFields?: Partial<Record<keyof ISRPurchasers, any>>;
+    code?: string;
+  }) => {
+    try {
+      const res = await getISRRequestHandler({ keyFields, code });
+      return {
+        success: true,
+        data: res.data,
+        count: res.count,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+};
+
+export const ISRStoreController = {
+  createISRStore: async ({ data }: { data: CreateISRStoreDto }) => {
+    try {
+      const res = await createISRStore({ data });
+      return {
+        success: true,
+        data: res,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  getISRStores: async ({
+    keyFields = {},
+    code,
+  }: {
+    keyFields?: Partial<Record<keyof CreateISRStoreDto, any>>;
+    code?: string;
+  }) => {
+    try {
+      const res = await getISRStores({ keyFields, code });
+      return {
+        success: true,
+        data: res.data,
+        count: res.count,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+
+  getStoreNotInISR: async ({
+    keyFields = {},
+    connection,
+    limit,
+    search,
+  }: {
+    keyFields?: Partial<Record<keyof InterStoreRequests, any>>;
+    connection?: PoolConnection;
+    limit: number;
+    search?: string;
+  }) => {
+    try {
+      const res = await getStoreNotInISR({
+        keyFields,
+        connection,
+        limit,
+        search,
+      });
+      return {
+        success: true,
+        data: res,
       };
     } catch (e) {
       return {
