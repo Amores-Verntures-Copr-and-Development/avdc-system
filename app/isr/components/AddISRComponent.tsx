@@ -12,7 +12,7 @@ interface AddISRComponentProps {
   onCancel: () => void;
 }
 
-const AddISRComponent = ({ onCancel }: AddISRComponentProps) => {
+const AddISRComponent = ({ onCancel, mutate }: AddISRComponentProps) => {
   const router = useRouter();
   const { user } = useSession();
   const [form, setForm] = useState<CreateISRDto>({
@@ -75,7 +75,7 @@ const AddISRComponent = ({ onCancel }: AddISRComponentProps) => {
         <div>
           <Button
             label="Cancel"
-            onClick={() => {}}
+            onClick={onCancel}
             size="sm"
             color="secondary"
             icon={X}
