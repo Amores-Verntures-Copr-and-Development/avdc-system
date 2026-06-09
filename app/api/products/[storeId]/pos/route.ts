@@ -19,7 +19,7 @@ export async function GET(
     const page = searchParams.get("page") || "";
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
-    console.log({ search });
+
     const res = await getProduct({
       keyFields: { storeId: storeId },
       search,

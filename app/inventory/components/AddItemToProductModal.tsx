@@ -100,7 +100,6 @@ const AddItemToProductModal = ({
     console.log(addProdct);
     const success = await onSubmit(addProdct);
     if (success) {
-      console.log({ success });
       onCancel();
     }
   };

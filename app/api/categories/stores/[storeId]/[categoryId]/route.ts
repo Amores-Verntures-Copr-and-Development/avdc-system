@@ -8,7 +8,6 @@ export async function PATCH(
 ) {
   try {
     const { storeId, categoryId } = await params;
-    console.log({ storeId, categoryId });
 
     const body = (await _request.json()) as Partial<CategoryInterface>;
     const res = await editCategory({
@@ -48,7 +47,6 @@ export async function DELETE(
 ) {
   try {
     const { storeId, categoryId } = await params;
-    console.log({ storeId, categoryId });
 
     // Implement delete logic here, e.g., call a deleteCategory function
     const res = await deleteCategory({

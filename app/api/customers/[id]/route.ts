@@ -56,7 +56,6 @@ export async function PATCH(
       );
     }
     const body = (await request.json()) as Partial<Customer>;
-    console.log({ body });
     const res = await updateCustomerController({
       keyFields: ["customerId"],
       updateData: [body],

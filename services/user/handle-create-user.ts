@@ -31,7 +31,6 @@ export const handleCreateUser = async (data: CreateUserDto) => {
     }
     await connection.commit();
   } catch (e) {
-    console.log(e);
     await connection.rollback();
     throw e;
   } finally {

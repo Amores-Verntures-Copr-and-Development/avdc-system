@@ -31,7 +31,7 @@ const EditCustomerModal = ({
   const handleCusChange = handleChange(form, setForm);
   const handleSubmit = async () => {
     setIsLoading(true);
-    console.log({ form });
+
     try {
       const res = await fetch(`/api/customers/${data.customerId}`, {
         method: "PATCH",

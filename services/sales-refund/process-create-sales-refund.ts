@@ -40,7 +40,6 @@ export async function processCreateSaleRefund({
     storeId: number | null;
   };
 }) {
-  console.log({ data });
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   await connection.beginTransaction();
@@ -195,6 +194,6 @@ export async function processCreateSaleRefund({
     await connection.rollback();
     throw e;
   } finally {
-    await connection.beginTransaction();
+    connection.release();
   }
 }
