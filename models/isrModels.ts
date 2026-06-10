@@ -153,6 +153,8 @@ LEFT JOIN Users u
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrp.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrp.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -161,7 +163,7 @@ LEFT JOIN Users u
       }
     } else {
       // single value
-      sql += ` AND ${key} = ?`;
+      sql += ` AND isrp.${key} = ?`;
       params.push(value);
     }
   }
@@ -198,6 +200,8 @@ LEFT JOIN Users u
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrp.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrp.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -206,7 +210,7 @@ LEFT JOIN Users u
       }
     } else {
       // single value
-      sql += ` AND ${key} = ?`;
+      sql += ` AND isrp.${key} = ?`;
       params.push(value);
     }
   }
@@ -217,6 +221,73 @@ LEFT JOIN Users u
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows[0].count;
+};
+
+export const updateISRPurchaser = async ({
+  connection,
+  updates,
+  keyFields = ["isrPurId"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<ISRPurchasers>[];
+  keyFields?: (keyof ISRPurchasers)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof ISRPurchasers),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE ISRPurchasers
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
 };
 
 export const insertISRRequestHandler = async ({
@@ -261,6 +332,8 @@ CONCAT(u.userfname, ' ', u.userLname) AS requestHandler FROM  ISRRequestHandlers
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrh.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrh.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -303,6 +376,8 @@ export const selectCountISRRequestHandler = async ({
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrh.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrh.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -322,6 +397,73 @@ export const selectCountISRRequestHandler = async ({
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows[0].count;
+};
+
+export const updateISRRequestHandlerModel = async ({
+  connection,
+  updates,
+  keyFields = ["isrReqHanId"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<ISRRequestHandlers>[];
+  keyFields?: (keyof ISRRequestHandlers)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof ISRRequestHandlers),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE ISRRequestHandlers
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
 };
 
 export const insertISRStore = async ({
@@ -354,7 +496,7 @@ export const selectISRStore = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
 
-  let sql = ` SELECT isrs.isrStoreId,isrs.isrId,isrs.isrStoreCreatedBy,isrs.isrStoreCreatedBy,s.storeName, CONCAT(u.userfname, ' ', u.userLname) AS creator 
+  let sql = ` SELECT isrs.isrStoreId,isrs.isrId,isrs.isrStoreCreatedBy,isrs.isrStoreCreatedAt,s.storeName, CONCAT(u.userfname, ' ', u.userLname) AS creator 
 FROM ISRStores isrs
 LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId
 LEFT JOIN Stores s ON s.storeId = isrs.storeId
@@ -365,6 +507,8 @@ LEFT JOIN Stores s ON s.storeId = isrs.storeId
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrs.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrs.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -408,6 +552,8 @@ LEFT JOIN Stores s ON s.storeId = isrs.storeId
   for (const [key, value] of Object.entries(keyFields)) {
     if (value === null) {
       sql += ` AND isrs.${key} IS NULL`;
+    } else if (value === "NOTNULL") {
+      sql += ` AND isrs.${key} IS NOT NULL`;
     } else if (Array.isArray(value)) {
       // multiple values
       if (value.length > 0) {
@@ -463,7 +609,7 @@ export const selectStoreNotInISR = async ({
 SELECT s.storeId,s.storeName FROM Stores s
 WHERE s.storeId NOT IN (
  SELECT storeId FROM ISRStores isrs
- LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId  WHERE 1 = 1 ${whereISR}
+ LEFT JOIN InterStoreRequests isr ON isr.isrId = isrs.isrId  WHERE 1 = 1 AND isrs.isrStoreDeletedAt IS NULL ${whereISR}
 )
    `;
 
@@ -482,4 +628,71 @@ WHERE s.storeId NOT IN (
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
+};
+
+export const updateISRStoresModel = async ({
+  connection,
+  updates,
+  keyFields = ["isrStoreId"],
+}: {
+  connection?: PoolConnection;
+  updates: Partial<ISRStores>[];
+  keyFields?: (keyof ISRStores)[];
+}) => {
+  const pool = connection ?? (await getDBConnection());
+  if (!updates || updates.length === 0) return;
+
+  const updateFields = Object.keys(updates[0]).filter(
+    (field) => !keyFields.includes(field as keyof ISRStores),
+  );
+
+  if (updateFields.length === 0)
+    throw new Error("No fields to update (all are key fields).");
+
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  // Build SET clauses for each field to update
+  for (const field of updateFields) {
+    const caseParts: string[] = [];
+
+    for (const row of updates) {
+      const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      caseParts.push(`WHEN ${whenClause} THEN ?`);
+
+      // Add key values + update value
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+
+    // Build the CASE statement for this field and add to setClauses
+    const caseStatement = `${field} = (CASE ${caseParts.join(
+      " ",
+    )} ELSE ${field} END)`;
+    setClauses.push(caseStatement);
+  }
+
+  // Build WHERE clause
+  const uniqueKeyCombinations = updates.map((row) =>
+    keyFields.map((k) => (row as any)[k]),
+  );
+
+  const whereSql =
+    keyFields.length > 1
+      ? `(${keyFields.join(", ")}) IN (${uniqueKeyCombinations
+          .map((row) => `(${row.map(() => "?").join(",")})`)
+          .join(",")})`
+      : `${keyFields[0]} IN (${uniqueKeyCombinations
+          .map(() => "?")
+          .join(",")})`;
+
+  uniqueKeyCombinations.forEach((vals) => params.push(...vals));
+
+  const sql = `
+    UPDATE ISRStores
+    SET ${setClauses.join(", ")}
+    WHERE ${whereSql};
+  `;
+  const [result] = await pool.execute(sql, params);
+  return result;
 };

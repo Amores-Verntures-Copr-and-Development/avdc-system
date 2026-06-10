@@ -102,6 +102,8 @@ const AdminRequisitionPage = () => {
     useState<DisplayRequestOrderDto | null>();
   const url = `/api/requests/request-orders/`;
 
+  const { data } = useSWR(`/api/isr/user/${user?.userId}`, fetcher);
+  //Check if user is a at ISR Purchaser,Request Handler?
   //Check first from if the user has StockRoom if not part of the store
   //Check first if the purchase has a StockRoom
   //Display it

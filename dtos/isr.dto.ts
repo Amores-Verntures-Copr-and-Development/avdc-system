@@ -39,3 +39,11 @@ export interface DisplayISRStoresDTO extends ISRStores {
   storeName: string;
   creator: string;
 }
+
+export interface ISRConfiguration {
+  userId: number;
+  isrId: number;
+  purchaser: ISRPurchasers[];
+  requestHandler: ISRRequestHandlers[];
+  store: ISRStores[];
+}

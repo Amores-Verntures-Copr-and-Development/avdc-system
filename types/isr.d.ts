@@ -15,7 +15,7 @@ export interface ISRPurchasers {
   isrPurCreatedBy: number;
   isrPurCreatedAt: string;
   isrPurUpdatedAt: string;
-  isrPurDeletedAt: string;
+  isrPurDeletedAt: string | null;
 }
 
 export interface ISRRequestHandlers {
@@ -25,7 +25,7 @@ export interface ISRRequestHandlers {
   isrReqHanCreatedBy: number;
   isrReqHanCreatedAt: string;
   isrReqHanUpdatedAt: string;
-  isrReqHanDeletedAt: string;
+  isrReqHanDeletedAt: string | null;
 }
 
 export interface ISRStores {
@@ -35,5 +35,5 @@ export interface ISRStores {
   isrStoreCreatedBy: number;
   isrStoreCreatedAt: string;
   isrStorenUpdatedAt: string;
-  isrStoreDeletedAt: string;
+  isrStoreDeletedAt: string | null;
 }

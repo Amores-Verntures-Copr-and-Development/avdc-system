@@ -16,23 +16,39 @@ import { ApiResponse } from "@/types/api";
 import { InterStoreRequests } from "@/types/isr";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { Plus, Store, User } from "lucide-react";
+import { Plus, Store, Trash, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
 import AddPurchaserISR from "./components/AddPurchaserISR";
 import AddStoresISR from "./components/AddStoresISR";
 import AddReceiverISR from "./components/AddReceiverISR";
+import IconButton from "@/components/shared/IconButton";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
+import toast from "react-hot-toast";
+type RowSection =
+  | {
+      type: "purchaser";
+      data: DisplayISRPurchaserDTO;
+    }
+  | {
+      type: "receiver";
+      data: DisplayISRRequestHandlerDTO;
+    }
+  | {
+      type: "store";
+      data: DisplayISRStoresDTO;
+    };
 
 const Page = () => {
   const params = useParams();
   const router = useRouter();
   const code = params.code;
-
+  const [onRowSection, setOnRowSelection] = useState<RowSection | null>(null);
   const [showModals, setShowModals] = useState<
     null | "purchaser" | "receiver" | "stores"
   >(null);
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: response, isLoading } = useSWR<
     ApiResponse<InterStoreRequests[]>
   >(code ? `/api/isr/${code}` : null, fetcher);
@@ -112,13 +128,120 @@ const Page = () => {
       selector: (row) => row.creator,
     },
     {
-      key: "isrPuCreatedAt",
+      key: "isrStoreCreatedAt",
       name: "Date Added",
       selector: (row) => formatDateToWords(row.isrStoreCreatedAt),
     },
   ];
   if (isLoading) return <LoaderComponent />;
+  const confirmationInfo = (() => {
+    if (!onRowSection) return "";
 
+    switch (onRowSection.type) {
+      case "purchaser":
+        return `Are you sure you want to remove ${onRowSection.data.purchaser} as ${isr?.isrCode} Purchaser?`;
+
+      case "receiver":
+        return `Are you sure you want to remove ${onRowSection.data.requestHandler} as ${isr?.isrCode} Request Handler?`;
+
+      case "store":
+        return `Are you sure you want to remove ${onRowSection.data.storeName} from this ${isr?.isrCode}?`;
+    }
+  })();
+
+  const handleRemovePurchaser = async () => {
+    setIsSubmitting(true);
+    try {
+      if (onRowSection?.type !== "purchaser") {
+        toast.error("Cannot proceed this action!");
+        return;
+      }
+      if (!onRowSection?.data) {
+        toast.error("No data found!");
+        return;
+      }
+
+      const res = await fetch(
+        `/api/isr/${isr?.isrCode}/purchaser/${onRowSection.data.isrPurId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) {
+        toast.error("Failed to remove ISR Purchaser!");
+        return;
+      }
+      toast.success("ISR Purchaser removed successfully!");
+      isrPuMutate();
+      setOnRowSelection(null);
+    } catch (e) {
+      toast.error("Failed to remove ISR Purchaser");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleRemovestore = async () => {
+    setIsSubmitting(true);
+    try {
+      if (onRowSection?.type !== "store") {
+        toast.error("Cannot proceed this action!");
+        return;
+      }
+      if (!onRowSection?.data) {
+        toast.error("No data found!");
+        return;
+      }
+
+      const res = await fetch(
+        `/api/isr/${isr?.isrCode}/stores/${onRowSection.data.isrStoreId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) {
+        toast.error("Failed to remove ISR Store!");
+        return;
+      }
+      toast.success("ISR Stores removed successfully!");
+      isrSMutate();
+      setOnRowSelection(null);
+    } catch (e) {
+      toast.error("Failed to remove ISR Store");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  const handleRemoveRequestHandler = async () => {
+    setIsSubmitting(true);
+    try {
+      if (onRowSection?.type !== "receiver") {
+        toast.error("Cannot proceed this action!");
+        return;
+      }
+      if (!onRowSection?.data) {
+        toast.error("No data found!");
+        return;
+      }
+
+      const res = await fetch(
+        `/api/isr/${isr?.isrCode}/request-handler/${onRowSection.data.isrReqHanId}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (!res.ok) {
+        toast.error("Failed to remove ISR Request Handler!");
+        return;
+      }
+      toast.success("ISR Request Handler removed successfully!");
+      isrRHMutate();
+      setOnRowSelection(null);
+    } catch (e) {
+      toast.error("Failed to remove ISR Request Handler");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   return (
     <div
       className="
@@ -212,6 +335,22 @@ const Page = () => {
                 data={isrPuResponse?.data ?? []}
                 isRounded={false}
                 maxHeight="h-full"
+                showActions={true}
+                renderActions={(row) => (
+                  <div className="flex gap-2 justify-center items-center">
+                    <IconButton
+                      onClick={() => {
+                        setOnRowSelection({
+                          data: row,
+                          type: "purchaser",
+                        });
+                      }}
+                      label={"Remove"}
+                      bg={"red"}
+                      icon={<Trash className="w-3 h-3" />}
+                    />
+                  </div>
+                )}
               />
             </div>
           </CardContent>
@@ -230,7 +369,7 @@ const Page = () => {
                 <div className="flex items-center gap-2 text-primary-1">
                   <User className="h-5 w-5" />
                   <h1 className="text-sm font-semibold">
-                    Receivers (Request Handler)
+                    Request Handler ({isrRHResponse?.count})
                   </h1>
                 </div>
 
@@ -259,6 +398,22 @@ const Page = () => {
                 data={isrRHResponse?.data ?? []}
                 isRounded={false}
                 maxHeight="h-full"
+                showActions={true}
+                renderActions={(row) => (
+                  <div className="flex gap-2 justify-center items-center">
+                    <IconButton
+                      onClick={() => {
+                        setOnRowSelection({
+                          data: row,
+                          type: "receiver",
+                        });
+                      }}
+                      label={"Remove"}
+                      bg={"red"}
+                      icon={<Trash className="w-3 h-3" />}
+                    />
+                  </div>
+                )}
               />
             </div>
           </CardContent>
@@ -304,6 +459,22 @@ const Page = () => {
                 data={isrSResponse?.data ?? []}
                 isRounded={false}
                 maxHeight="h-full"
+                showActions={true}
+                renderActions={(row) => (
+                  <div className="flex gap-2 justify-center items-center">
+                    <IconButton
+                      onClick={() => {
+                        setOnRowSelection({
+                          data: row,
+                          type: "store",
+                        });
+                      }}
+                      label={"Remove"}
+                      bg={"red"}
+                      icon={<Trash className="w-3 h-3" />}
+                    />
+                  </div>
+                )}
               />
             </div>
           </CardContent>
@@ -344,6 +515,37 @@ const Page = () => {
             />
           ) : null}
         </Modal>
+      )}
+
+      {onRowSection && onRowSection.data && (
+        <ConfirmationModal
+          onConfirm={
+            onRowSection.type === "purchaser"
+              ? handleRemovePurchaser
+              : onRowSection.type === "receiver"
+                ? handleRemoveRequestHandler
+                : onRowSection.type === "store"
+                  ? handleRemovestore
+                  : function (): void {
+                      throw new Error("Function not implemented.");
+                    }
+          }
+          confirmationInfo={confirmationInfo}
+          onClose={function (): void {
+            setOnRowSelection(null);
+          }}
+          title={
+            onRowSection.type === "purchaser"
+              ? "Remove Purchaser"
+              : onRowSection.type === "receiver"
+                ? "Remove Request Handler"
+                : onRowSection.type === "store"
+                  ? "Remove Store"
+                  : ""
+          }
+          isLoading={isSubmitting}
+          isShow={onRowSection !== null}
+        />
       )}
     </div>
   );

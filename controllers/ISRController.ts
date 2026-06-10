@@ -5,18 +5,26 @@ import {
   CreateISRStoreDto,
 } from "@/dtos/isr.dto";
 import { createISR } from "@/services/isr/create-isr";
-import { getISRByFields } from "@/services/isr/get-isr";
+import { getISRByFields, getISRUserInfoById } from "@/services/isr/get-isr";
 import { createISRPurchaser } from "@/services/isr/isr-purchaser/create-isr-purchaser";
+import { deleteISRPurcahserByID } from "@/services/isr/isr-purchaser/delete-isr-purchaser";
 import { getISRPurchaser } from "@/services/isr/isr-purchaser/get-isr-purchaser";
 import { createISRRequestHandler } from "@/services/isr/isr-request-handler/create-isr-request-handler";
+import { deleteISRRequestHandlerByID } from "@/services/isr/isr-request-handler/delete-isr-request-handler";
 import { getISRRequestHandler } from "@/services/isr/isr-request-handler/get-isr-request-handler";
 import { createISRStore } from "@/services/isr/isr-store/create-isr-store";
+import { deleteISRStoreByID } from "@/services/isr/isr-store/delete-isr-store";
 import {
   getISRStores,
   getStoreNotInISR,
 } from "@/services/isr/isr-store/get-isr-store";
 
-import { InterStoreRequests, ISRPurchasers } from "@/types/isr";
+import {
+  InterStoreRequests,
+  ISRPurchasers,
+  ISRRequestHandlers,
+  ISRStores,
+} from "@/types/isr";
 import { PoolConnection } from "mysql2/promise";
 
 export const ISRController = {
@@ -57,7 +65,21 @@ export const ISRController = {
     try {
       // Implement the logic to fetch all ISRs here
       // For example, you might have a service function like fetchAllISRs()
-      const res = await getISRByFields({});
+      const res = await getISRByFields({ keyFields });
+      return {
+        success: true,
+        data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  getISRUserInfo: async (userId: number) => {
+    try {
+      const res = await getISRUserInfoById(userId);
       return {
         success: true,
         data: res,
@@ -108,6 +130,21 @@ export const ISRPurchaserController = {
       };
     }
   },
+
+  deleteISRPurchaserByISRPurID: async (id: number) => {
+    try {
+      await deleteISRPurcahserByID({ isrPurId: id });
+      return {
+        success: true,
+        message: "ISR Purchaser remove successfully!",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to remove ISR Purchaser",
+      };
+    }
+  },
 };
 
 export const ISRRequestHandlerController = {
@@ -134,7 +171,7 @@ export const ISRRequestHandlerController = {
     keyFields = {},
     code,
   }: {
-    keyFields?: Partial<Record<keyof ISRPurchasers, any>>;
+    keyFields?: Partial<Record<keyof ISRRequestHandlers, any>>;
     code?: string;
   }) => {
     try {
@@ -145,9 +182,25 @@ export const ISRRequestHandlerController = {
         count: res.count,
       };
     } catch (e) {
+      console.log({ e });
       return {
         success: false,
         error: e,
+      };
+    }
+  },
+  deleteISRRequestHandlerByID: async (id: number) => {
+    try {
+      await deleteISRRequestHandlerByID({ isrReqHanId: id });
+      return {
+        success: true,
+        message: "ISR Request Handler remove successfully!",
+      };
+    } catch (e) {
+      console.log({ e });
+      return {
+        success: false,
+        message: "Failed to remove ISR Request Handler!",
       };
     }
   },
@@ -173,7 +226,7 @@ export const ISRStoreController = {
     keyFields = {},
     code,
   }: {
-    keyFields?: Partial<Record<keyof CreateISRStoreDto, any>>;
+    keyFields?: Partial<Record<keyof ISRStores, any>>;
     code?: string;
   }) => {
     try {
@@ -217,6 +270,21 @@ export const ISRStoreController = {
       return {
         success: false,
         error: e,
+      };
+    }
+  },
+  deleteISRStoresByID: async (id: number) => {
+    try {
+      await deleteISRStoreByID({ isrStoreId: id });
+      return {
+        success: true,
+        message: "ISR Store remove successfully!",
+      };
+    } catch (e) {
+      console.log({ e });
+      return {
+        success: false,
+        message: "Failed to remove ISR Store!",
       };
     }
   },

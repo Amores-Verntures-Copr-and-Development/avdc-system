@@ -212,7 +212,7 @@ SELECT userId
     FROM ISRPurchasers isrpur
     LEFT JOIN InterStoreRequests isrp 
         ON isrp.isrId = isrpur.isrId
-    WHERE 1 = 1 ${whereISR}
+    WHERE 1 = 1 AND isrpur.isrPurDeletedAt IS NULL ${whereISR}
 )`;
 
   if (search) {
@@ -270,7 +270,7 @@ SELECT isrh.userId
     FROM ISRRequestHandlers isrh
     LEFT JOIN InterStoreRequests isrp 
         ON isrp.isrId = isrh.isrId
-    WHERE 1 = 1
+    WHERE 1 = 1 AND isrh.isrReqHanDeletedAt IS NULL
 
     UNION
 
@@ -278,7 +278,7 @@ SELECT isrh.userId
     FROM ISRPurchasers isrpur
     LEFT JOIN InterStoreRequests isrp 
         ON isrp.isrId = isrpur.isrId
-    WHERE 1 = 1 ${whereISR}
+    WHERE 1 = 1 AND isrpur.isrPurDeletedAt IS NULL ${whereISR}
 )`;
 
   if (search) {

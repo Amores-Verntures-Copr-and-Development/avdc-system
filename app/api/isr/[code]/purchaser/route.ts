@@ -2,7 +2,9 @@ import { ISRPurchaserController } from "@/controllers/ISRController";
 import { CreateISRPurchaserDto } from "@/dtos/isr.dto";
 import { NextRequest, NextResponse } from "next/server";
 
-const getCode = async (params: Promise<{ code: string }>): Promise<string> => {
+export const getCode = async (
+  params: Promise<{ code: string }>,
+): Promise<string> => {
   const { code } = await params;
 
   if (!code) {
@@ -59,6 +61,9 @@ export async function GET(
 
     const res = await ISRPurchaserController.getISRPurchaser({
       code: code,
+      keyFields: {
+        isrPurDeletedAt: null,
+      },
     });
     if (!res.success) {
       throw new Error("Failed to fetch!");

@@ -71,6 +71,9 @@ export async function GET(
 
     const res = await ISRStoreController.getISRStores({
       code: code,
+      keyFields: {
+        isrStoreDeletedAt: null,
+      },
     });
     if (!res.success) {
       throw new Error("Failed to fetch!");

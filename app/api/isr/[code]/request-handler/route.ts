@@ -69,6 +69,7 @@ export async function GET(
 
     const res = await ISRRequestHandlerController.getISRRequestHandler({
       code: code,
+      keyFields: { isrReqHanDeletedAt: null },
     });
     if (!res.success) {
       throw new Error("Failed to fetch!");
