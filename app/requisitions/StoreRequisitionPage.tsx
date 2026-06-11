@@ -32,6 +32,7 @@ import toast from "react-hot-toast";
 import PageLayout from "@/components/shared/PageLayout";
 import ViewRequestModal from "./ViewRequestModal";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
   { name: "Order No", key: "requestNo" },
   { name: "Total Items", key: "totalItems" },
@@ -75,8 +76,10 @@ const StoreRequisitionPage = () => {
   const [selectedRow, setSelectedRow] = useState<DisplayRequestOrderDto | null>(
     null,
   );
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isShowCreateRequest, setIsShowCreateRequest] = useState(false);
   const [isShowViewRequest, setIsShowViewRequest] = useState(false);
+  const [isShowDeleteRequest, setIsShowDeleteRequest] = useState(false);
   const { user } = useSession();
   const {
     data: itemResponse = { data: [] },
@@ -103,6 +106,37 @@ const StoreRequisitionPage = () => {
     );
     if (findSelectedRo) {
       setSelectedRow(findSelectedRo);
+    }
+  };
+  const handleDeleteRequest = async () => {
+    setIsDeleting(true);
+    try {
+      if (!isShowDeleteRequest) {
+        toast.error("Cannot proceed this action!");
+        return;
+      }
+      if (!selectedRow) {
+        toast.error("No selected request to delete!");
+      }
+
+      const res = await fetch(`/api/requests/${selectedRow?.requestId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      toast.success(`Requset ${selectedRow?.requestNo} deleted successfully!`);
+      mutate();
+      setSelectedRow(null);
+      setIsShowDeleteRequest(false);
+    } catch (e) {
+      toast.error("Failed to delete request!");
+    } finally {
+      setIsDeleting(false);
     }
   };
   // const handleSubmitCreateRequest = async (data: CreateRequestItemDto[]) => {
@@ -246,83 +280,30 @@ const StoreRequisitionPage = () => {
                   />
                   <IconButton
                     onClick={() => {
-                      handleEditRow(row);
+                      setSelectedRow(row);
+                      setIsShowDeleteRequest(true);
                     }}
-                    label={"Edit"}
+                    label={"Delete"}
                     bg={"red"}
                     icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
                   />
-
-                  {/* Delete Button */}
                 </div>
               )}
             />
           </div>
         </>
       )}
-      {/* <Modal
-        title="Create Request Order"
-        size="xl"
-        isOpen={isShowCreateRequest}
-        hasPadding={false}
-        onClose={() => {
-          setIsShowCreateRequest(false);
+      <ConfirmationModal
+        onConfirm={handleDeleteRequest}
+        confirmationInfo={`Are you sure you want to delete request with (${selectedRow?.totalItems}) items?`}
+        onClose={function (): void {
+          setIsShowDeleteRequest(false);
         }}
-      >
-        <CreateRequestModal
-          user={user}
-          onSubmit={handleSubmitCreateRequest}
-          onCancel={() => {
-            setIsShowCreateRequest(false);
-          }}
-        />
-      </Modal> */}
-      {/* <Modal
-        hasPadding={false}
-        className="bg-white h-[95%]"
-        title={`Request Order (${selectedRow?.requestNo})`}
-        modalDetails={(() => {
-          const { status, bgClass, textClass, borderClass } =
-            getRequestStatusFormat(selectedRow?.requestStatus ?? "pending");
-          return (
-            <div className="flex flex-1 justify-between align-middle items-center">
-              <div className="flex gap-2 xl:gap-0 xl:flex-col">
-                <span className="text-[10px] xl:text-xs text-gray-600">
-                  Store:{" "}
-                  <span className="font-bold text-black">
-                    {selectedRow?.storeName}
-                  </span>
-                </span>
-                <span className=" text-[10px] xl:text-xs text-gray-600">
-                  Requestor:{" "}
-                  <span className="font-bold text-black">
-                    {selectedRow?.requestedByName}
-                  </span>
-                </span>
-              </div>
-              <span className="text-[10px] xl:text-xs text-gray-600">
-                Status:{" "}
-                <span
-                  className={`${bgClass} ${textClass} ${borderClass} text-[10px] xl:text-xs rounded px-0.5 py-0.5 xl:px-1 xl:py-1 text-center font-semibold`}
-                >
-                  {status}
-                </span>
-              </span>
-            </div>
-          );
-        })()}
-        size="xl"
-        isOpen={isShowViewRequest}
-        onClose={() => {
-          setIsShowViewRequest(false);
-        }}
-      >
-        <ViewRequestModal
-          selectedReq={selectedRow}
-          mutateRequest={handleUpdateData}
-          user={user}
-        />
-      </Modal> */}
+        title={`Delete Request ${selectedRow?.requestNo}`}
+        isShow={isShowDeleteRequest}
+        confirmLabel="Delete Request"
+        isLoading={isDeleting}
+      />
     </PageLayout>
   );
 };

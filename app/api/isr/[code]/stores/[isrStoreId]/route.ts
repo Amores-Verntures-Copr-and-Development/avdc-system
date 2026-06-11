@@ -4,7 +4,7 @@ import { ISRStoreController } from "@/controllers/ISRController";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ code: string; isrStoreId: number }> },
+  { params }: { params: Promise<{ code: string; isrStoreId: string }> },
 ) {
   try {
     await getCode(params);

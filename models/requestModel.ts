@@ -84,12 +84,14 @@ export const selectRequestOrders = async ({
   to,
   search,
   store,
+  keyfields = {},
 }: {
   storeId?: number;
   from?: string;
   to?: string;
   search?: string;
   store?: string;
+  keyfields?: Partial<Request>;
 }) => {
   const pool = await getDBConnection();
   const whereClauses: string[] = [];
@@ -111,6 +113,16 @@ export const selectRequestOrders = async ({
   if (search) {
     whereClauses.push("(ro.requestNo LIKE ?)");
     values.push(`%${search}%`);
+  }
+  for (const [key, value] of Object.entries(keyfields)) {
+    if (value === undefined) continue;
+
+    if (value === null) {
+      whereClauses.push(`ro.${key} IS NULL`);
+    } else {
+      whereClauses.push(`ro.${key} = ?`);
+      values.push(value);
+    }
   }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
@@ -136,7 +148,7 @@ export const selectRequestOrders = async ({
 FROM RequestOrders ro
 LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 LEFT JOIN Users u ON u.userId = ro.requestById
-LEFT JOIN Stores s ON s.storeId = ro.storeId ${whereSQL}
+LEFT JOIN Stores s ON s.storeId = ro.storeId  ${whereSQL}
 GROUP BY ro.requestId
 ORDER BY 
     CASE ro.requestStatus
@@ -578,7 +590,7 @@ WHERE ro.storeId IN (
     INNER JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
     INNER JOIN Stores s ON s.storeId = ss.storeId
     WHERE sp.userId = ?
-) 
+) AND ro.requestDeletedAt IS NULL
 ORDER BY 
     CASE ro.requestStatus 
         WHEN 'pending' THEN 1

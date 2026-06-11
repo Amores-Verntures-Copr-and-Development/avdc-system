@@ -43,11 +43,12 @@ export const selectStores = async ({
 }) => {
   console.log({ keyfields });
   const pool = await getDBConnection();
-  const whereClauses: string[] = [];
 
   const params: any[] = [];
   let sql = `SELECT * FROM Stores s WHERE 1=1`;
   for (const [key, value] of Object.entries(keyfields)) {
+    if (value === undefined) continue;
+
     if (value === null) {
       sql += ` AND s.${key} IS NULL`;
     } else {
@@ -57,7 +58,7 @@ export const selectStores = async ({
   }
   if (search) {
     const wildcard = `%${search}%`;
-    whereClauses.push(`(storeName LIKE ?)`);
+    sql += ` AND s.storeName LIKE ?`;
     params.push(wildcard);
   }
 
@@ -69,8 +70,9 @@ export const selectStores = async ({
     sql += ` OFFSET ${skip}`;
   }
 
-  const [result] = await pool.execute(sql, params);
-  return result;
+  const [rows] = await pool.execute(sql, params);
+  console.log({ sql, params, rows });
+  return rows;
 };
 
 export const selectStoresByEmpKeyFields = async ({
@@ -92,6 +94,7 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  console.log({ sql, params });
   return rows;
 };
 

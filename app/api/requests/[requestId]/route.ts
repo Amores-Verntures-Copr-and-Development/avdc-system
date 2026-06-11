@@ -1,4 +1,5 @@
 import {
+  deleteRequestByIDController,
   updateRequest,
   updateRequestById,
 } from "@/controllers/RequestController";
@@ -33,6 +34,35 @@ export async function PATCH(
         error: err?.message || String(err),
       },
       { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ requestId: string }> },
+) {
+  try {
+    const { requestId } = await params;
+
+    const res = await deleteRequestByIDController(Number(requestId));
+    if (!res.success) {
+      throw new Error(res.message);
+    }
+    return NextResponse.json(
+      {
+        message: res.message,
+        success: res.success,
+      },
+      { status: 200 },
+    );
+  } catch (e) {
+    return NextResponse.json(
+      {
+        message: "Failed to delete request!",
+        success: false,
+      },
+      { status: 400 },
     );
   }
 }

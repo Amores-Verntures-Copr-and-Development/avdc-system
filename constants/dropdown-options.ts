@@ -25,6 +25,7 @@ export const categoryTypeOptions = [
 export const unitOptions = [
   { label: "Select Unit", value: "" },
   { label: "kg", value: "kg" },
+  { label: "g", value: "g" },
   { label: "pack", value: "pack" },
   { label: "bot", value: "bot" },
   { label: "gal", value: "gal" },

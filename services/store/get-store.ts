@@ -24,6 +24,7 @@ export async function findStoreByEmpFields({
     const data = await selectStoresByEmpKeyFields({ keyFields });
     return data;
   } catch (e) {
+    console.log({ e });
     throw e;
   }
 }

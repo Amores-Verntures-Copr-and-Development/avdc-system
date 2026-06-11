@@ -1031,18 +1031,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               Boolean(user?.empPosition === "purchaser") &&
               !showRequestStockMode,
           },
-          {
-            props: {
-              label: "Add Item",
-              icon: Plus,
-              onClick: () => {
-                setShowAdddModal(true);
-              },
-              size: "sm",
-              className: "font-semibold",
-            },
-            isShow: !showRequestStockMode,
-          },
+
           {
             props: {
               label: "Exit Request",

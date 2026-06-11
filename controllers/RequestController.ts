@@ -1,6 +1,7 @@
 import { POAddToRequestItemForm } from "@/app/purchase-orders/components/_components/AddItemToRequestFromPOModal";
 import { AdditionalReceiveDto } from "@/app/requisitions/components/AdditionalReceiveModal";
 import { CreateRequestFormDto, CreateRequestItemDto } from "@/dtos/request.dto";
+import { deleteRequestById } from "@/services/request/delete-request";
 import {
   getRequestOrderFromStockRoomByPurchaserFields,
   getRequestOrders,
@@ -56,13 +57,17 @@ export const getRequest = async ({
   to?: string;
   search?: string;
   store?: string;
+  keyfields?: Partial<Request>;
 }) => {
   let data;
   try {
     if (controller === "stock-room" && userId) {
       data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
     } else if (controller === "store") {
-      data = await getRequestOrders({ storeId });
+      data = await getRequestOrders({
+        storeId,
+        keyfields: { requestDeletedAt: null },
+      });
     } else {
       data = await getRequestOrders({ from, to, search, store });
     }
@@ -302,6 +307,23 @@ export const AdditionalReceiveController = async (
     return {
       success: false,
       message: "Failed to process additional receive!",
+      error: e,
+    };
+  }
+};
+
+export const deleteRequestByIDController = async (requestId: number) => {
+  try {
+    const res = await deleteRequestById({ requestId: requestId });
+    return {
+      success: true,
+      message: "Request deleted successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to delete request!",
       error: e,
     };
   }

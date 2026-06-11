@@ -10,6 +10,7 @@ export type RequestStatus =
   | "partial";
 export type RequestItemStatus =
   | "pending"
+  | "removed"
   | "completed"
   | "cancelled"
   | "delivered"
@@ -27,7 +28,7 @@ export interface Request {
   requestStatus?: RequestStatus;
   requestCreatedAt: string;
   requestUpdatedAt: string;
-  requestDeletedAt: string;
+  requestDeletedAt: string | null;
   requestItems: RequestItems[];
   requestItemsData?: RequestItems[];
 }

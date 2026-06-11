@@ -4,11 +4,11 @@ import { deleteISRPurcahserByID } from "@/services/isr/isr-purchaser/delete-isr-
 import { ISRPurchaserController } from "@/controllers/ISRController";
 
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ code: string; isrPurId: number }> },
+  _req: NextRequest,
+  { params }: { params: Promise<{ code: string; isrPurId: string }> },
 ) {
   try {
-    const code = await getCode(params);
+    await getCode(params);
     const { isrPurId } = await params;
 
     const res = await ISRPurchaserController.deleteISRPurchaserByISRPurID(

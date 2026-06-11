@@ -146,14 +146,22 @@ const AddItemModal: React.FC<AddItemModalProps> = ({
               name="inventoryItemQuantity"
               sizes="xs"
               onChange={handleItemChange}
-              value={inventoryForm.inventoryItemQuantity}
+              value={
+                inventoryForm.inventoryItemQuantity === 0
+                  ? ""
+                  : inventoryForm.inventoryItemQuantity
+              }
             />
             <Input
               label={"Minimum Stock"}
               sizes="xs"
               type="number"
               onChange={handleItemChange}
-              value={inventoryForm.inventoryItemMin}
+              value={
+                inventoryForm.inventoryItemMin === 0
+                  ? ""
+                  : inventoryForm.inventoryItemMin
+              }
               name="inventoryItemMin"
             />
           </div>

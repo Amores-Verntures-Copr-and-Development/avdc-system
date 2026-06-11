@@ -9,7 +9,7 @@ import { getCode } from "../../purchaser/route";
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ code: string; isrReqHanId: number }> },
+  { params }: { params: Promise<{ code: string; isrReqHanId: string }> },
 ) {
   try {
     await getCode(params);

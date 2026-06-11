@@ -3,6 +3,7 @@ import {
   selectRequestOrderFromStockRoom,
   selectRequestOrders,
 } from "@/models/requestModel";
+import { Request } from "@/types/request";
 
 export async function getRequestOrders({
   storeId,
@@ -10,12 +11,14 @@ export async function getRequestOrders({
   to,
   search,
   store,
+  keyfields = {},
 }: {
   storeId?: number;
   from?: string;
   to?: string;
   search?: string;
   store?: string;
+  keyfields?: Partial<Request>;
 }) {
   try {
     const data = await selectRequestOrders({
@@ -24,6 +27,7 @@ export async function getRequestOrders({
       to,
       search,
       store,
+      keyfields,
     });
     return data;
   } catch (e) {

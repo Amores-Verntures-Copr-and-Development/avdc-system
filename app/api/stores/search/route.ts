@@ -6,12 +6,14 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const storeName = searchParams.get("storeName") || "";
-
+    console.log("agi here");
     const res = await getStore({
       search,
       limit: 10,
       skip: 0,
-      keyfields: { storeName: storeName },
+      keyfields: {
+        storeName: storeName !== "" ? storeName : undefined,
+      },
     });
     if (!res.success) {
       // propagate the actual message if available
