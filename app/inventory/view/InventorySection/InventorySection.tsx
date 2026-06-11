@@ -66,6 +66,7 @@ import { ApiResponse } from "@/types/api";
 import InStockModal from "../../components/InStockModal";
 import OutStockModal from "../../components/OutStockModal";
 import BarcodeComponent from "../../components/BarcodeComponent";
+import AddItemFromStore from "../../components/AddItemFromStore";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -94,7 +95,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     inventoryId: inventoryId ?? 0,
     reference: "inventoryId",
   });
-
+  const [showModal, setShowModal] = useState<"add-from-store" | null>(null);
   const router = useRouter();
   const tableRef = useRef<TableHandle>(null);
   const [showAddModal, setShowAdddModal] = useState(false);
@@ -1044,6 +1045,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               Boolean(user?.empPosition === "purchaser") &&
               !showRequestStockMode,
           },
+          {
+            props: {
+              label: "Add from Store",
+              icon: Plus,
+              onClick: () => {
+                setShowModal("add-from-store");
+              },
+              size: "sm",
+              color: "tertiary",
+            },
+            isShow: inventoryType === "stock-room",
+          },
 
           {
             props: {
@@ -1403,6 +1416,17 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           mutate={handleUpdateData}
         />
       </Modal>
+      <Popup
+        isOpen={showModal === "add-from-store"}
+        background="bg-white/20"
+        onClose={function (): void {
+          setShowModal(null);
+        }}
+        title="Add Item from stores"
+        subtitle="Browse and items to your list."
+      >
+        <AddItemFromStore />
+      </Popup>
     </>
   );
 };
