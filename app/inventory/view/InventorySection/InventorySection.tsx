@@ -998,7 +998,20 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               Boolean(
                 user?.empPosition !== "staff" &&
                 user?.empPosition !== "supervisor",
-              ) && !showRequestStockMode,
+              ) && selectedRows.length > 0,
+          },
+          {
+            props: {
+              label: "Add Item to stock room",
+              icon: Package,
+              onClick: () => {
+                setShowAddItemModal(true);
+              },
+              size: "sm",
+              className: "font-semibold",
+            },
+            isShow:
+              Boolean(user?.userRole !== "employee") && selectedRows.length > 0,
           },
           {
             props: {
