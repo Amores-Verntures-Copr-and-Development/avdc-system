@@ -722,12 +722,13 @@ ORDER BY
   return rows;
 };
 
-
-
-export const selectInventoryItemsNotInProdVar = async ({inventoryId}:{  inventoryId:number}) => {
-
-const pool = await getDBConnection();
-const sql = `SELECT i.*,ii.*
+export const selectInventoryItemsNotInProdVar = async ({
+  inventoryId,
+}: {
+  inventoryId: number;
+}) => {
+  const pool = await getDBConnection();
+  const sql = `SELECT i.*,ii.*
 FROM InventoryItems ii
 LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
 WHERE ii.inventoryId = ?
@@ -735,7 +736,63 @@ AND NOT EXISTS (
     SELECT 1
     FROM ProductVariants pv
     WHERE pv.inventoryItemId = ii.inventoryItemId
-);`
+);`;
   const [rows] = await pool.execute(sql, [inventoryId]);
   return rows;
-}
+};
+
+export const selectInventoryItemsNotInOther = async ({
+  from,
+  notIn,
+}: {
+  from: number;
+  notIn: number;
+}) => {
+  const pool = await getDBConnection();
+
+  const sql = `SELECT i.itemId,i.itemUnit,i.itemName,ii.inventoryItemId,ii.inventoryId,ii.inventoryItemReferenceType,ii.inventoryItemReferenceId
+FROM InventoryItems ii
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+WHERE ii.inventoryId = ?
+  AND ii.inventoryItemReferenceType = 'item'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM InventoryItems iis
+    WHERE iis.inventoryId = ?
+      AND iis.inventoryItemReferenceType = 'item'
+      AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
+  ) AND ii.inventoryItemDeletedAt IS NULL
+  ORDER BY i.itemName
+  ;`;
+
+  const [rows] = await pool.execute(sql, [from, notIn]);
+  return rows;
+};
+
+export const selectCountInventoryItemsNotInOther = async ({
+  from,
+  notIn,
+}: {
+  from: number;
+  notIn: number;
+}) => {
+  const pool = await getDBConnection();
+
+  const sql = `SELECT COUNT(ii.inventoryItemId) as count
+FROM InventoryItems ii
+LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+WHERE ii.inventoryId = ?
+  AND ii.inventoryItemReferenceType = 'item'
+  AND NOT EXISTS (
+    SELECT 1
+    FROM InventoryItems iis
+    WHERE iis.inventoryId = ?
+      AND iis.inventoryItemReferenceType = 'item'
+      AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
+  ) AND ii.inventoryItemDeletedAt IS NULL
+  ORDER BY i.itemName
+  ;`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [from, notIn]);
+  return rows[0].count;
+};

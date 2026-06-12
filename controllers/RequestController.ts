@@ -61,6 +61,7 @@ export const getRequest = async ({
 }) => {
   let data;
   try {
+    console.log({ controller });
     if (controller === "stock-room" && userId) {
       data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
     } else if (controller === "store") {
@@ -69,7 +70,13 @@ export const getRequest = async ({
         keyfields: { requestDeletedAt: null },
       });
     } else {
-      data = await getRequestOrders({ from, to, search, store });
+      data = await getRequestOrders({
+        from,
+        to,
+        search,
+        store,
+        keyfields: { requestDeletedAt: null },
+      });
     }
     return {
       success: true,

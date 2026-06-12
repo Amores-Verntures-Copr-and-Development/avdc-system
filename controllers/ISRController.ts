@@ -288,4 +288,5 @@ export const ISRStoreController = {
       };
     }
   },
+  getISRStoresByUserId: async (userId: number) => {},
 };

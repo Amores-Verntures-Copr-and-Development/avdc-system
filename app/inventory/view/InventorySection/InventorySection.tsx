@@ -1041,9 +1041,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
               size: "sm",
               className: "font-semibold",
             },
-            isShow:
-              Boolean(user?.empPosition === "purchaser") &&
-              !showRequestStockMode,
+            isShow: true,
           },
           {
             props: {
@@ -1424,8 +1422,13 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         }}
         title="Add Item from stores"
         subtitle="Browse and items to your list."
+        closeOnClickOutside={!showAddComponent}
       >
-        <AddItemFromStore />
+        <AddItemFromStore
+          setShowAddComponent={setShowAddComponent}
+          inventoryType={inventoryType}
+          inventoryId={inventoryId!}
+        />
       </Popup>
     </>
   );

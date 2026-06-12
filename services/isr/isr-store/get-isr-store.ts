@@ -33,3 +33,5 @@ export async function getStoreNotInISR({
 }) {
   return await selectStoreNotInISR({ keyFields, connection, limit, search });
 }
+
+export async function getISRStoreByUserID(userId: number) {}

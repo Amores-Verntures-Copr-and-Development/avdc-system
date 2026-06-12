@@ -32,6 +32,7 @@ import {
 import {
   findInventoryForReport,
   findInventoryItemsByField,
+  findInventoryItemsNotInStore,
   findInventoryItemUnitByInventoryId,
   findInventoryNotInProduct,
   getInventoryItemsStatus,
@@ -509,23 +510,54 @@ export const deleteInventoryItemById = async ({
 //   }
 // };
 
-
-export const getInventoryNotInProduct = async ({storeId}:{storeId:number,search?:string,limit?:number,offset?:number}) => {
-  try{
-    const res = await findInventoryNotInProduct({storeId:storeId})
+export const getInventoryNotInProduct = async ({
+  storeId,
+}: {
+  storeId: number;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  try {
+    const res = await findInventoryNotInProduct({ storeId: storeId });
 
     return {
-      success:true,
-      message:"Fetch inventory items not in product!",
-      data:res
-    }
-
-  }
-  catch(e){
+      success: true,
+      message: "Fetch inventory items not in product!",
+      data: res,
+    };
+  } catch (e) {
     return {
-      success:false,
-      message:"Failed to fetch inventory items not in product!",
-      error:e
-    }
+      success: false,
+      message: "Failed to fetch inventory items not in product!",
+      error: e,
+    };
   }
-}
+};
+
+export const getInventoryNotInStoreController = async ({
+  inventoryId,
+  storeId,
+}: {
+  inventoryId: number;
+  storeId: number;
+}) => {
+  try {
+    const res = await findInventoryItemsNotInStore({
+      inventoryId: inventoryId,
+      storeId: storeId,
+    });
+    return {
+      success: true,
+      data: res.data,
+      count: res.count,
+      message: "Good",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed",
+      error: e,
+    };
+  }
+};

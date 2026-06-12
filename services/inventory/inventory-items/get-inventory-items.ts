@@ -1,7 +1,9 @@
 import {
+  selectCountInventoryItemsNotInOther,
   selectInventoryItemReport,
   selectInventoryItems,
   selectInventoryItemsCount,
+  selectInventoryItemsNotInOther,
   selectInventoryItemsNotInProdVar,
   selectInventoryItemsStockStatus,
   selectInventoryItemUnitById,
@@ -142,14 +144,17 @@ export async function findInventoryNotInProduct({
   storeId: number;
 }) {
   try {
-    const inventory = await findInventoryByFields({keyFields:{inventoryReferenceId:storeId,inventoryReference:"store"}})
+    const inventory = await findInventoryByFields({
+      keyFields: { inventoryReferenceId: storeId, inventoryReference: "store" },
+    });
 
-    if(inventory.length === 0)
-    {
-      throw new Error("No inventory found in this store!")
+    if (inventory.length === 0) {
+      throw new Error("No inventory found in this store!");
     }
 
-    const data = await selectInventoryItemsNotInProdVar({inventoryId:inventory[0].inventoryId})
+    const data = await selectInventoryItemsNotInProdVar({
+      inventoryId: inventory[0].inventoryId,
+    });
 
     return data;
   } catch (e) {
@@ -157,3 +162,35 @@ export async function findInventoryNotInProduct({
   }
 }
 
+export async function findInventoryItemsNotInStore({
+  storeId,
+  inventoryId,
+}: {
+  inventoryId: number;
+  storeId: number;
+}) {
+  try {
+    const inventory = await findInventoryByFields({
+      keyFields: { inventoryReferenceId: storeId, inventoryReference: "store" },
+    });
+    if (inventory.length === 0) {
+      throw new Error("No inventory found!");
+    }
+    const storeInventory = inventory[0].inventoryId;
+    const data = await selectInventoryItemsNotInOther({
+      from: storeInventory,
+      notIn: inventoryId,
+    });
+
+    const count = await selectCountInventoryItemsNotInOther({
+      from: storeInventory,
+      notIn: inventoryId,
+    });
+    return {
+      data: data,
+      count: count,
+    };
+  } catch (e) {
+    throw e;
+  }
+}

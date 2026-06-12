@@ -51,6 +51,12 @@ export const statusOptions: StatusOption[] = [
     color: "text-red-600",
   },
   {
+    label: "Removed",
+    value: "removed",
+    bg: "bg-red-100",
+    color: "text-red-600",
+  },
+  {
     label: "Pending",
     value: "pending",
     bg: "bg-gray-100",
