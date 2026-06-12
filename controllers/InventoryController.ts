@@ -49,6 +49,7 @@ import { ItemInterface } from "@/types/items";
 import { updateItems } from "@/models/itemModel";
 import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-items/update-inventory-items";
 import { deleteInventoryItems } from "@/services/inventory/inventory-items/delete-inventory-items";
+import { createInventoryItem } from "@/services/inventory/inventory-items/create-inventory-items";
 
 // export const createInventory = async (data: CreateInventoryDto) => {
 //   try {
@@ -103,9 +104,11 @@ export const getInventory = async ({
   }
 };
 
-export const createInventoryItem = async (data: CreateInventoryItemDto) => {
+export const createInventoryItemController = async (
+  data: CreateInventoryItemDto,
+) => {
   try {
-    await insertInventoryItem({ data });
+    await createInventoryItem({ data });
     return {
       success: true,
       message: "Item added to inventory successfully!",

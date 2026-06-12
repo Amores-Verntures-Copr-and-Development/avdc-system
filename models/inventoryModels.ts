@@ -132,7 +132,7 @@ export const insertInventoryItem = async ({
   const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO InventoryItems(inventoryId,inventoryItemReferenceType,inventoryItemReferenceId,inventoryItemQuantity,inventoryItemMin,inventoryItemCreatedBy)
   VALUES(?,?,?,?,?,?)`;
-  const [results] = await pool.execute(sql, [
+  const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.inventoryId,
     data.inventoryItemReferenceType,
     data.inventoryItemReferenceId,
@@ -140,7 +140,7 @@ export const insertInventoryItem = async ({
     data.inventoryItemMin,
     data.inventoryItemCreatedBy,
   ]);
-  return results;
+  return results.insertId;
 };
 
 export const insertInventoryItemsBulk = async ({
