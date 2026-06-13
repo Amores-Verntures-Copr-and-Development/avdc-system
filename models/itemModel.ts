@@ -226,30 +226,40 @@ export const insertItemConversion = async ({
 export const selectItemConversionFromFields = async ({
   connection,
   keyFields,
+  inventoryId,
 }: {
   connection?: PoolConnection;
   keyFields: Partial<ItemConversions>;
+  inventoryId?: number;
 }) => {
   const params: any[] = [];
   const pool = connection ? connection : await getDBConnection();
-
+  console.log({ keyFields });
   let sql = `
-    SELECT 
+      SELECT 
       ic.*,
       fromItem.itemName AS fromItemName,
       fromItem.itemUnit AS fromItemUnit,
+      ii.inventoryItemId AS fromInventoryId,
       fromItem.itemPrice as fromItemPrice,
       toItem.itemName AS toItemName,
       toItem.itemPrice as toItemPrice,
-      toItem.itemUnit AS toItemUnit
+      toItem.itemUnit AS toItemUnit,
+      ii.inventoryItemId AS toInventoryId
+
     FROM ItemConversions ic
-    LEFT JOIN Items fromItem ON fromItem.itemId = ic.fromItemId
-    LEFT JOIN Items toItem ON toItem.itemId = ic.toItemId
-    WHERE 1=1
+    LEFT JOIN InventoryItems ii ON ii.inventoryItemReferenceId = ic.fromItemId AND ii.inventoryItemReferenceType = 'item'
+    LEFT JOIN InventoryItems iis ON iis.inventoryItemReferenceId = ic.toItemId AND ii.inventoryItemReferenceType = 'item'
+    LEFT JOIN Items fromItem ON fromItem.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+    LEFT JOIN Items toItem ON toItem.itemId = iis.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+    WHERE 1=1 
   `;
 
   const { fromItemId, toItemId, ...rest } = keyFields;
-
+  if (inventoryId) {
+    sql += ` AND ii.inventoryId = ? AND iis.inventoryId = ? `;
+    params.push(inventoryId, inventoryId);
+  }
   // 🔁 BOTH IDs → reversible
   if (fromItemId && toItemId) {
     sql += `
@@ -261,6 +271,7 @@ export const selectItemConversionFromFields = async ({
     `;
     params.push(fromItemId, toItemId, toItemId, fromItemId);
   }
+
   // 🧲 ONLY ONE ID → either side
   else if (fromItemId || toItemId) {
     const id = fromItemId ?? toItemId;

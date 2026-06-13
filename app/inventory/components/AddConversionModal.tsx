@@ -32,11 +32,17 @@ const AddConversionModal = ({
     toUnit: "",
     itemConCreatedBy: 0,
   });
-  const searchItems = async (query: string): Promise<ItemInterface[]> => {
+
+  const searchItems = async (
+    query: string,
+  ): Promise<DisplayInventoryItems[]> => {
     const res = await fetch(
-      `/api/items/search?search=${encodeURIComponent(query)}`,
+      `/api/inventory/item/${data?.inventoryId}?search=${encodeURIComponent(query)}`,
     );
+
     const json = await res.json();
+    console.log({ json });
+
     return json.data || [];
   };
   const handleQuantityChange = handleChange(convertForm, setConvertForm);
@@ -116,20 +122,28 @@ const AddConversionModal = ({
 
         <div className="space-y-4">
           {/* Search Item Dropdown */}
-          <DropdownSearch<ItemInterface>
-            label={"Select Unit"}
+          <DropdownSearch<DisplayInventoryItems>
+            label="Select Unit"
             sizes="xs"
             searchFn={searchItems}
             renderItem={(item) => (
               <span>
-                <span>
-                  {item.itemName}{" "}
-                  <span className="font-semibold">({item.itemUnit})</span>
-                </span>
+                {item.itemName}{" "}
+                <span className="font-semibold">({item.itemUnit})</span>
               </span>
             )}
             displayValue={(s) => `${s.itemName}`}
-            onSelect={function (item: ItemInterface): void {
+            canSelect={(item) => {
+              if (
+                item.inventoryItemReferenceId === data?.inventoryItemReferenceId
+              ) {
+                toast.error("Cannot convert item to same item!");
+                return false;
+              }
+
+              return true;
+            }}
+            onSelect={function (item: DisplayInventoryItems): void {
               if (item) {
                 setConvertForm((prev) => ({
                   ...prev,

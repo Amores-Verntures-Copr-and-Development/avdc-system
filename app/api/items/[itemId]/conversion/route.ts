@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   _request: Request,
-  { params }: { params: Promise<{ itemId: string }> }
+  { params }: { params: Promise<{ itemId: string }> },
 ) {
   try {
     const slug = (await params).itemId;
@@ -33,7 +33,7 @@ export async function POST(
         message: "Items imported successfully!",
         result: res,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -42,14 +42,14 @@ export async function POST(
         message: "Items import failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ itemId: string }> }
+  { params }: { params: Promise<{ itemId: string }> },
 ) {
   try {
     const slug = (await params).itemId;
@@ -74,7 +74,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -83,14 +83,14 @@ export async function GET(
         message: "Items import failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   _request: Request,
-  { params }: { params: Promise<{ itemId: string }> }
+  { params }: { params: Promise<{ itemId: string }> },
 ) {
   try {
     const slug = (await params).itemId;
@@ -118,7 +118,7 @@ export async function PUT(
         message: res.message,
         data: res.result, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -127,7 +127,7 @@ export async function PUT(
         message: "Items import failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

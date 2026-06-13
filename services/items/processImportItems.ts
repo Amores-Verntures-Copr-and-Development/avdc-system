@@ -3,7 +3,6 @@ import { getCategoriesByName } from "../categories/get-categories";
 import { getDBConnection } from "@/lib/db";
 import { CreateInventoryItemDto } from "@/dtos/inventory.dto";
 import { createItem } from "./create-items";
-import { createInventoryItem } from "@/controllers/InventoryController";
 import { createInventoryItems } from "../inventory/inventory-items/create-inventory-items";
 
 export async function processImportItems(data: ImportItemInfo) {

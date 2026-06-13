@@ -6,14 +6,17 @@ import { PoolConnection } from "mysql2/promise";
 export async function getItemConversionByFields({
   connection,
   keyFields,
+  inventoryId,
 }: {
   connection?: PoolConnection;
   keyFields: Partial<ItemConversions>;
+  inventoryId?: number;
 }) {
   try {
     const data = await selectItemConversionFromFields({
       connection,
       keyFields,
+      inventoryId,
     });
 
     // Normalize conversions so that fromItemId always matches the requested fromItemId

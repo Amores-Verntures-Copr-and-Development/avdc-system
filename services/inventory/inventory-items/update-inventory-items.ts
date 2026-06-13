@@ -48,7 +48,7 @@ export async function handleConvertItem({
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-
+    console.log({ data });
     const inventoryItem = await findInventoryItemsByField({
       connection,
       keyFields: {
@@ -57,7 +57,7 @@ export async function handleConvertItem({
         inventoryItemReferenceType: "item",
       },
     });
-
+    console.log({ inventoryItem });
     const fromInventoryItem: Partial<InventoryItemInterface>[] = [
       {
         inventoryId: data.inventoryId,

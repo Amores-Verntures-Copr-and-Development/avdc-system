@@ -87,11 +87,13 @@ export const createItemConversions = async ({
 
 export const getItemConversions = async ({
   keyFields,
+  inventoryId,
 }: {
   keyFields: Partial<ItemConversions>;
+  inventoryId?: number;
 }) => {
   try {
-    const data = await getItemConversionByFields({ keyFields });
+    const data = await getItemConversionByFields({ keyFields, inventoryId });
     return {
       data: data,
       message: "Item fetched successfully!",

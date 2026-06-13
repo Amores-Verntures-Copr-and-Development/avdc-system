@@ -62,7 +62,10 @@ const ConvertSection = ({
     mutate,
   } = useSWR<{
     data: DisplayItemConversionFromTo[];
-  }>(data ? `api/items/${data?.itemId}/conversion` : null, fetcher);
+  }>(
+    data ? `api/items/${data?.itemId}/conversion/${data.inventoryId}` : null,
+    fetcher,
+  );
 
   // Single useEffect to handle all related state updates
   useEffect(() => {
@@ -71,6 +74,7 @@ const ConvertSection = ({
     const findConvert = response.data.find(
       (item) => item.toItemId === Number(toForm.itemId),
     );
+    console.log({ findConvert });
     const isMultiply =
       Number(findConvert?.fromQuantity) < Number(findConvert?.toQuantity);
     // Update toForm quantity if fromForm quantity and conversion exist
@@ -116,6 +120,7 @@ const ConvertSection = ({
       convertedBy: user?.userId ?? 0,
       inventoryId: data?.inventoryId ?? 0,
     };
+    console.log({ convertFormData });
     if (!data) {
       return;
     }

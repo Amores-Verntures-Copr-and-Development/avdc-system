@@ -44,4 +44,6 @@ export interface DisplayItemConversionFromTo extends ItemConversions {
   toItemName: string;
   fromItemPrice: number;
   toItemPrice: number;
+  fromInventoryId: number;
+  toInventoryId: number;
 }

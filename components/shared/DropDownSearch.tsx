@@ -8,6 +8,7 @@ type DropdownSearchProps<T> = {
   onSelect: (item: T) => void;
   renderItem: (item: T) => React.ReactNode;
   displayValue: (item: T) => string;
+  canSelect?: (item: T) => boolean;
   selectedValue?: string;
   placeholder?: string;
   label?: string;
@@ -23,6 +24,7 @@ type DropdownSearchProps<T> = {
 export function DropdownSearch<T>({
   searchFn,
   onSelect,
+  canSelect,
   onQueryChange,
   renderItem,
   displayValue,
@@ -127,6 +129,10 @@ export function DropdownSearch<T>({
   }, []);
 
   const handleSelect = (item: T) => {
+    if (canSelect && !canSelect(item)) {
+      return;
+    }
+
     const display = displayValue(item);
     setQuery(display);
     setHasSelected(true);
