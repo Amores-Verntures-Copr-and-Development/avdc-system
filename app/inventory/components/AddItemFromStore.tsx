@@ -42,8 +42,8 @@ const AddItemFromStore = ({
     isLoading: isLoadingItems,
     mutate,
   } = useSWR<ApiResponse<DisplayInventoryItems[]>>(
-    inventoryId
-      ? `/api/inventory/${inventoryId}/not-in-store/${selectedStore}`
+    inventoryId && selectedStore
+      ? `/api/inventory/${inventoryId}/not-in-store/${selectedStore}?page=${productPage}&limit=${limit}`
       : null,
     fetcher,
   );
@@ -184,7 +184,7 @@ const AddItemFromStore = ({
             )}
           </CardTitle>
 
-          <CardContent className="flex-1 min-h-0 p-0 pt-2">
+          <CardContent className="flex-1 min-h-0 p-2">
             {!selectedStore ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
@@ -203,7 +203,7 @@ const AddItemFromStore = ({
               <>
                 <div className="h-full overflow-y-auto pr-1">
                   {" "}
-                  <div className="space-y-1 pb-2">
+                  <div className="space-y-1">
                     {items.map((i) => (
                       <div
                         key={i.inventoryItemId}

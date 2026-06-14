@@ -15,9 +15,16 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store ID found!");
     }
+    const { searchParams } = new URL(req.url);
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
     const res = await getInventoryNotInStoreController({
       inventoryId: Number(inventoryId),
       storeId: Number(storeId),
+      limit: limitNumber,
+      skip: pageNumber,
     });
     if (!res.success) {
       throw new Error(res.message);

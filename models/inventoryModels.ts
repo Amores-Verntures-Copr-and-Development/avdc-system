@@ -744,13 +744,17 @@ AND NOT EXISTS (
 export const selectInventoryItemsNotInOther = async ({
   from,
   notIn,
+  limit,
+  skip,
 }: {
   from: number;
   notIn: number;
+  limit?: number;
+  skip?: number;
 }) => {
   const pool = await getDBConnection();
 
-  const sql = `SELECT i.itemId,i.itemUnit,i.itemName,ii.inventoryItemId,ii.inventoryId,ii.inventoryItemReferenceType,ii.inventoryItemReferenceId
+  let sql = `SELECT i.itemId,i.itemUnit,i.itemName,ii.inventoryItemId,ii.inventoryId,ii.inventoryItemReferenceType,ii.inventoryItemReferenceId
 FROM InventoryItems ii
 LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
 WHERE ii.inventoryId = ?
@@ -760,11 +764,17 @@ WHERE ii.inventoryId = ?
     FROM InventoryItems iis
     WHERE iis.inventoryId = ?
       AND iis.inventoryItemReferenceType = 'item'
-      AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
-  ) AND ii.inventoryItemDeletedAt IS NULL
-  ORDER BY i.itemName
-  ;`;
+      AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId  
+      AND iis.inventoryItemDeletedAt IS NULL
+  ) AND ii.inventoryItemDeletedAt IS NULL  ORDER BY i.itemName
+  `;
 
+  if (limit) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (skip) {
+    sql += ` OFFSET ${skip}`;
+  }
   const [rows] = await pool.execute(sql, [from, notIn]);
   return rows;
 };
@@ -772,13 +782,17 @@ WHERE ii.inventoryId = ?
 export const selectCountInventoryItemsNotInOther = async ({
   from,
   notIn,
+  limit,
+  skip,
 }: {
   from: number;
   notIn: number;
+  limit?: number;
+  skip?: number;
 }) => {
   const pool = await getDBConnection();
 
-  const sql = `SELECT COUNT(ii.inventoryItemId) as count
+  let sql = `SELECT COUNT(ii.inventoryItemId) as count
 FROM InventoryItems ii
 LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
 WHERE ii.inventoryId = ?
@@ -790,8 +804,8 @@ WHERE ii.inventoryId = ?
       AND iis.inventoryItemReferenceType = 'item'
       AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
   ) AND ii.inventoryItemDeletedAt IS NULL
-  ORDER BY i.itemName
-  ;`;
+  `;
+  sql += ` ORDER BY i.itemName`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [from, notIn]);
   return rows[0].count;

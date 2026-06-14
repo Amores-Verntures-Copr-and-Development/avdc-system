@@ -541,14 +541,20 @@ export const getInventoryNotInProduct = async ({
 export const getInventoryNotInStoreController = async ({
   inventoryId,
   storeId,
+  limit,
+  skip,
 }: {
   inventoryId: number;
   storeId: number;
+  limit?: number;
+  skip?: number;
 }) => {
   try {
     const res = await findInventoryItemsNotInStore({
       inventoryId: inventoryId,
       storeId: storeId,
+      limit,
+      skip,
     });
     return {
       success: true,

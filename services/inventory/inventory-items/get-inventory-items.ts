@@ -165,9 +165,13 @@ export async function findInventoryNotInProduct({
 export async function findInventoryItemsNotInStore({
   storeId,
   inventoryId,
+  limit,
+  skip,
 }: {
   inventoryId: number;
   storeId: number;
+  limit?: number;
+  skip?: number;
 }) {
   try {
     const inventory = await findInventoryByFields({
@@ -180,17 +184,22 @@ export async function findInventoryItemsNotInStore({
     const data = await selectInventoryItemsNotInOther({
       from: storeInventory,
       notIn: inventoryId,
+      limit,
+      skip,
     });
 
     const count = await selectCountInventoryItemsNotInOther({
       from: storeInventory,
       notIn: inventoryId,
+      limit,
+      skip,
     });
     return {
       data: data,
       count: count,
     };
   } catch (e) {
+    console.log({ e });
     throw e;
   }
 }
