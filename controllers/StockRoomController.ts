@@ -1,6 +1,7 @@
 import {
   CreateStockPurchaser,
   CreateStockRoom,
+  CreateStockRoomUserDTO,
   CreateStockStore,
 } from "@/dtos/stockRoom.dto";
 import {
@@ -13,12 +14,28 @@ import {
   findUsersNotInStockPurchaser,
   selectStockPurchaserBySPKeyFields,
 } from "@/services/stock-room/stock-purchaser/get-stock-purchasers";
+import {
+  createStockRoomUser,
+  createStockRoomUserBulk,
+} from "@/services/stock-room/stock-room-user/create-stock-room-user";
+import { deleteStockRoomUserByFields } from "@/services/stock-room/stock-room-user/delete-stock-roomn-user";
+import {
+  selecteStockRoomByFields,
+  selectStockRoomUserNotInStockRomID,
+} from "@/services/stock-room/stock-room-user/get-stock-room-user";
+import { updateStockRoomUserByFields } from "@/services/stock-room/stock-room-user/update-stock-room-user";
 import { createStockStores } from "@/services/stock-room/stock-store/create-stock-store";
 import {
   findStockStoresBySSKeyFields,
   findStockStoresByStockRoomKeyFields,
 } from "@/services/stock-room/stock-store/get-stock-store";
-import { StockPurchasers, StockRoom, StockStores } from "@/types/stockRoom";
+import {
+  StockPurchasers,
+  StockRoom,
+  StockRoomUsers,
+  StockStores,
+} from "@/types/stockRoom";
+import { PoolConnection } from "mysql2/promise";
 
 export const createStockRooms = async (data: CreateStockRoom) => {
   try {
@@ -186,4 +203,119 @@ export const getPurchaserNotInStockPurchaser = async () => {
       message: "Failed fetched!",
     };
   }
+};
+
+export const StockRoomUserController = {
+  create: async ({ data }: { data: CreateStockRoomUserDTO }) => {
+    try {
+      const res = await createStockRoomUser({ data });
+      return {
+        success: true,
+        message: "New user added to stock room!",
+        data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to add user in stock room!",
+        error: e,
+      };
+    }
+  },
+  createBulk: async ({ data }: { data: CreateStockRoomUserDTO[] }) => {
+    try {
+      const res = await createStockRoomUserBulk({ data });
+      return {
+        success: true,
+        message: "New users added to stock room!",
+        data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to add user in stock room!",
+        error: e,
+      };
+    }
+  },
+
+  get: async ({
+    fields,
+    arrayFields,
+  }: {
+    fields?: Partial<StockRoomUsers>;
+    arrayFields?: Partial<Record<keyof StockRoomUsers, any[]>>;
+  }) => {
+    try {
+      const data = await selecteStockRoomByFields({ fields, arrayFields });
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  getUserNotInStockRoom: async (stockRoomId: number) => {
+    try {
+      const data = await selectStockRoomUserNotInStockRomID(stockRoomId);
+      return {
+        success: true,
+        data: data,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: e,
+      };
+    }
+  },
+  update: async ({
+    data,
+    keyFields = ["srUserId"],
+  }: {
+    data: Partial<StockRoomUsers>[];
+    keyFields: (keyof StockRoomUsers)[];
+  }) => {
+    try {
+      const res = await updateStockRoomUserByFields({ data, keyFields });
+      return {
+        success: true,
+        message: "Stock room user updated successfully!",
+        data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to update stock room user!",
+        error: e,
+      };
+    }
+  },
+  delete: async ({
+    data,
+    keyFields = ["srUserId"],
+  }: {
+    data: Partial<StockRoomUsers>[];
+    keyFields: (keyof StockRoomUsers)[];
+  }) => {
+    try {
+      const res = await deleteStockRoomUserByFields({ data, keyFields });
+      return {
+        success: true,
+        message: "Stock room user removed successfully!",
+        data: res,
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Failed to remove stock room user!",
+        error: e,
+      };
+    }
+  },
 };

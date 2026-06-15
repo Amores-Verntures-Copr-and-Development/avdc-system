@@ -1,7 +1,14 @@
 "use client";
 import Button from "@/components/shared/Button";
 import PageHeader from "@/components/shared/PageHeader";
-import { ArrowLeft, FileChartColumn, Package, Package2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Box,
+  FileChartColumn,
+  Package,
+  Package2,
+  Store,
+} from "lucide-react";
 import React, { useEffect, useState } from "react";
 
 import PageLayout from "@/components/shared/PageLayout";
@@ -69,8 +76,6 @@ const InventoryPage = () => {
     }
   }, [inventoryResponse, user?.empPosition]);
 
-  // Also add this to see when inventoryId changes
-
   return (
     <PageLayout className="gap-2 p-2 ">
       {user?.empPosition === "purchaser" ||
@@ -79,10 +84,20 @@ const InventoryPage = () => {
       user?.empPosition === "admin" ? (
         <>
           <div className="flex justify-between items-center">
-            <PageHeader
-              title={"Inventory"}
-              subtitle="Track and manage your stock levels"
-            />
+            <div className="flex flex-col gap-2">
+              <PageHeader
+                title={"Inventory"}
+                subtitle="Track and manage your stock levels"
+              />
+              {/* <div className="flex gap-2">
+                <div>
+                  <Button label="Store" size="sm" icon={Store} />
+                </div>
+                <div>
+                  <Button label="Stock Room" size="sm" icon={Box} />
+                </div>
+              </div> */}
+            </div>
             <div className="flex">
               <div className="flex  border-gray-300 gap-2">
                 <div>
@@ -217,6 +232,7 @@ const InventoryPage = () => {
                   </div>
                 </div>
               </div>
+
               <InventoryView
                 inventoryId={selectedInventory.inventoryId}
                 user={user}

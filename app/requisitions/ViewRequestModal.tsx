@@ -28,6 +28,7 @@ import {
   Pencil,
   Plus,
   Repeat,
+  Save,
   Trash,
   X,
 } from "lucide-react";
@@ -68,6 +69,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [selectedRow, setSelectedRow] = useState<DisplayRequestItems | null>(
     null,
   );
+  const [isEditableRow, setIsEditableRow] = useState<number | null>(null);
   const [showReceiveItemModal, setShowReceiveItemModal] = useState(false);
   const [selectedRowItem, setSelectedRowItem] =
     useState<DisplayRequestItems | null>(null);
@@ -223,6 +225,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
         ) : (
           row.reqItemQuantity
         ),
+      editable: (row) => isEditableRow === row.reqItemId,
     },
     {
       name: "Delivered Qty",
@@ -325,6 +328,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           {formatQuantityByUnit(row.reqItemQuantity, row.itemUnit)}
         </span>
       ),
+      editable: (row) => row.reqItemId === isEditableRow,
     },
     {
       name: "Delivered Qty",
@@ -888,6 +892,42 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setIsEditting(false);
     }
   };
+  const handleSaveEditItemByRow = async (
+    reqItemId: number,
+    quantity: number,
+  ) => {
+    setIsEditting(true);
+    const requestItems: Partial<RequestItems>[] = [
+      {
+        reqItemId: reqItemId,
+        reqItemQuantity: Number(quantity),
+      },
+    ];
+
+    try {
+      const result = await fetch(
+        `/api/requests/request-items/${selectedReq?.requestId}/`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestItems),
+        },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      toast.success(res.message);
+      mutate();
+      setIsEditableRow(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsEditting(false);
+    }
+  };
   const getTotalCost = (() => {
     if (!selectedReq) return 1;
     if (["rejected", "cancelled"].includes(selectedReq.requestStatus ?? "")) {
@@ -1225,42 +1265,75 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
               );
               return (
                 <div className="flex justify-center gap-2">
-                  {row.reqItemStatus === "pending" && (
-                    <IconButton
-                      onClick={() => {
-                        // handleEditRow(row);
-                        setShowReceiveItemModal(true);
-                        setSelectedRow(row);
-                      }}
-                      label={"Receive Item"}
-                      bg={"green"}
-                      icon={<PackageCheck className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
-                  )}
+                  {row.reqItemStatus === "pending" &&
+                    isEditableRow !== row.reqItemId && (
+                      <IconButton
+                        onClick={() => {
+                          // handleEditRow(row);
+                          setShowReceiveItemModal(true);
+                          setSelectedRow(row);
+                        }}
+                        label={"Receive Item"}
+                        bg={"green"}
+                        icon={<PackageCheck className="w-4 h-4" />}
+                      />
+                    )}
                   {selectedReq?.requestStatus === "pending" && (
-                    <IconButton
-                      onClick={() => {
-                        // handleEditRow(row);
-                        // setIsShowViewRequest(true);
-                        // setSelectedRow(row);
-                      }}
-                      label={"Edit"}
-                      bg={"gray"}
-                      icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
+                    <>
+                      {" "}
+                      {isEditableRow === row.reqItemId ? (
+                        <>
+                          <IconButton
+                            onClick={() => {
+                              setIsEditableRow(null);
+                            }}
+                            label={"X"}
+                            bg={"gray"}
+                            icon={<X className="w-4 h-4" />}
+                            disable={
+                              isEditableRow === row.reqItemId && isEditting
+                            }
+                          />
+                          <IconButton
+                            onClick={() => {
+                              handleSaveEditItemByRow(
+                                row.reqItemId,
+                                row.reqItemQuantity,
+                              );
+                            }}
+                            label={"Saved"}
+                            bg={"green"}
+                            icon={<Save className="w-4 h-4" />}
+                            loading={
+                              isEditableRow === row.reqItemId && isEditting
+                            }
+                          />
+                        </>
+                      ) : (
+                        <IconButton
+                          onClick={() => {
+                            setIsEditableRow(row.reqItemId);
+                          }}
+                          label={"Edit"}
+                          bg={"gray"}
+                          icon={<Pencil className="w-4 h-4" />}
+                        />
+                      )}
+                    </>
                   )}
-                  {selectedReq?.requestStatus === "pending" && (
-                    <IconButton
-                      onClick={() => {
-                        // handleEditRow(row);
-                        // setIsShowViewRequest(true);
-                        // setSelectedRow(row);
-                      }}
-                      label={"Remove from request"}
-                      bg={"red"}
-                      icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
-                  )}
+                  {selectedReq?.requestStatus === "pending" &&
+                    isEditableRow !== row.reqItemId && (
+                      <IconButton
+                        onClick={() => {
+                          // handleEditRow(row);
+                          // setIsShowViewRequest(true);
+                          // setSelectedRow(row);
+                        }}
+                        label={"Remove from request"}
+                        bg={"red"}
+                        icon={<Trash className="w-4 h-4" />}
+                      />
+                    )}
 
                   {(row.reqItemStatus === "delivered" ||
                     row.reqItemStatus === "partial") && (
@@ -1277,7 +1350,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         }}
                         label={"Receive Item"}
                         bg={"green"}
-                        icon={<Package className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={<Package className="w-4 h-4" />}
                       />
                       <IconButton
                         onClick={() => {
@@ -1290,7 +1363,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         }}
                         label={"Convert and Receive"}
                         bg={"primary"}
-                        icon={<Repeat className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={<Repeat className="w-4 h-4" />}
                       />
                     </>
                   )}
@@ -1303,7 +1376,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         }}
                         label={"Not Order Item"}
                         bg={"red"}
-                        icon={<X className="w-3 h-3 xl:w-4 xl:h-4" />}
+                        icon={<X className="w-4 h-4" />}
                       />
                     )}
                   {row.reqItemStatus === "received" && (
@@ -1314,7 +1387,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       }}
                       label={"Additional Receive"}
                       bg={"green"}
-                      icon={<Plus className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      icon={<Plus className="w-4 h-4" />}
                     />
                   )}
                 </div>

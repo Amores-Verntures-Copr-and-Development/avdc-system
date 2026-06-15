@@ -103,6 +103,7 @@ const ReceiveItemComponent = ({
             size="xs"
             color="secondary"
             disabled={isReceiving}
+            onClick={onClose}
           />
         </div>
         <div>

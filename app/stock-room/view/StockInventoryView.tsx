@@ -52,14 +52,6 @@ const StockInventoryView = ({ data }: StockInventoryViewProps) => {
   return (
     <Table
       rowSize="h-10"
-      renderTopActions={
-        <div>
-          <div>
-            {" "}
-            <Button icon={Plus} size="xs" label="Add Store" />
-          </div>
-        </div>
-      }
       isRounded={false}
       textSize="xs"
       columns={inventoryItemColumns}

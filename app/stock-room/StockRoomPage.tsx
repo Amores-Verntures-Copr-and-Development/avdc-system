@@ -22,7 +22,7 @@ import { StockRoom } from "@/types/stockRoom";
 import { fetcher } from "@/utils/fetcher";
 import StockInventoryView from "./view/StockInventoryView";
 import StockPurchaserView from "./view/StockPurchaserView";
-import StockStoresView from "./view/StockStoresView";
+import StockStoresView from "./view/StockUserView";
 import { useRouter } from "next/navigation";
 
 const StockRoomPage = () => {

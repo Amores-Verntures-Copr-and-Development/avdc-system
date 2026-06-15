@@ -13,12 +13,13 @@ import React, { useState } from "react";
 import useSWR from "swr";
 import StockInventoryView from "../view/StockInventoryView";
 import StockPurchaserView from "../view/StockPurchaserView";
-import StockStoresView from "../view/StockStoresView";
+import StockStoresView from "../view/StockUserView";
 import { useSession } from "@/hooks/useSession";
+import StockUsersView from "../view/StockUserView";
 
 const Page = () => {
   const [viewSelection, setViewSelection] = useState<
-    "inventory" | "purchaser" | "stores"
+    "inventory" | "purchaser" | "users"
   >("inventory");
   const router = useRouter();
   const params = useParams();
@@ -41,7 +42,7 @@ const Page = () => {
       </PageLayout>
     );
   return (
-    <PageLayout className="p-2">
+    <PageLayout className="p-2 flex flex-col gap-2">
       <div className="flex justify-between items-center">
         <PageHeader
           title={stockroom?.stockRoomName ?? ""}
@@ -91,13 +92,13 @@ const Page = () => {
           </div>
           <div>
             <Button
-              color={viewSelection === "stores" ? "primary" : "secondary"}
+              color={viewSelection === "users" ? "primary" : "secondary"}
               onClick={function (): void {
-                setViewSelection("stores");
+                setViewSelection("users");
               }}
               isRounded={false}
               size="sm"
-              label="Store"
+              label="Users"
               className="text-xs font-semibold"
               icon={FileChartColumn}
             />
@@ -110,7 +111,7 @@ const Page = () => {
         ) : viewSelection === "purchaser" ? (
           <StockPurchaserView data={stockroom} user={user} />
         ) : (
-          <StockStoresView data={stockroom} user={user} />
+          <StockUsersView data={stockroom} user={user} />
         )}
       </div>
     </PageLayout>

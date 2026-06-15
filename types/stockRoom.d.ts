@@ -28,3 +28,13 @@ export interface StockStores {
   stockRoomId: number;
   storeId?: number | null;
 }
+
+export interface StockRoomUsers {
+  srUserId: number;
+  userId: number;
+  stockRoomId: number;
+  srUserAddedBy: number;
+  srUserCreatedAt: string;
+  srUserUpdatedAt: string;
+  srUserDeletedAt: string;
+}

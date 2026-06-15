@@ -1,4 +1,9 @@
-import { StockPurchasers, StockRoom, StockStores } from "@/types/stockRoom";
+import {
+  StockPurchasers,
+  StockRoom,
+  StockRoomUsers,
+  StockStores,
+} from "@/types/stockRoom";
 
 export type CreateStockRoom = Pick<
   StockRoom,
@@ -17,3 +22,13 @@ export type CreateStockPurchaser = Pick<
   StockPurchasers,
   "userId" | "stockRoomId" | "stockPurchaserAddedBy"
 >;
+
+export type CreateStockRoomUserDTO = Pick<
+  StockRoomUsers,
+  "srUserAddedBy" | "stockRoomId" | "userId"
+>;
+
+export interface DisplayStockRoomUserDTO extends StockRoomUsers {
+  srUserName: string;
+  srAddedByName: string;
+}
