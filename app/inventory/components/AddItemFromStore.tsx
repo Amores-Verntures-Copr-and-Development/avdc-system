@@ -1,6 +1,11 @@
 import Button from "@/components/shared/Button";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
-import { Card, CardContent, CardTitle } from "@/components/shared/CustomCard";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardTitle,
+} from "@/components/shared/CustomCard";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import {
   CreateInventoryItemDto,
@@ -89,6 +94,40 @@ const AddItemFromStore = ({
       setIsAdding(false);
     }
   };
+  const handleSubmitAddAllItemsFromStore = async () => {
+    try {
+      if (!user) {
+        toast.error("No user found");
+        return;
+      }
+
+      if (!selectedStore) {
+        toast.error("Please select a store");
+        return;
+      }
+
+      const res = await fetch(
+        `/api/inventory/${inventoryId}/inventory-item/add-all-from-store/${selectedStore}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      toast.success(result.message);
+      mutate();
+    } catch (error) {
+      toast.error("Failed to add all items from store");
+    }
+  };
   const items = responseItems?.data ?? [];
   return (
     <div className="flex-1 h-full flex flex-col">
@@ -102,7 +141,6 @@ const AddItemFromStore = ({
           </CardTitle>
           <CardContent className="flex-1 min-h-0 p-0 pt-2">
             <div className="h-full overflow-y-auto pr-1">
-              {" "}
               {isLoading ? (
                 <LoaderComponent />
               ) : (
@@ -202,7 +240,16 @@ const AddItemFromStore = ({
             ) : items.length > 0 ? (
               <>
                 <div className="h-full overflow-y-auto pr-1">
-                  {" "}
+                  {items.length > 0 && (
+                    <div className="mb-3 sticky top-0 bg-white z-10 pb-2">
+                      <Button
+                        label={`Add all ${responseItems?.count ?? items.length} items from this store`}
+                        color="primary"
+                        size="sm"
+                        onClick={handleSubmitAddAllItemsFromStore}
+                      />
+                    </div>
+                  )}
                   <div className="space-y-1">
                     {items.map((i) => (
                       <div
