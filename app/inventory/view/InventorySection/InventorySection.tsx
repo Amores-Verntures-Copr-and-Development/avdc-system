@@ -160,6 +160,11 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         formatQuantityByUnit(row.inventoryItemMin, row.itemUnit),
     },
     { name: "Unit", key: "itemUnit" },
+    {
+      name: "Cost Price",
+      key: "itemPrice",
+      selector: (row) => formatPeso(row.itemPrice),
+    },
     { name: "Category", key: "categoryName" },
     { name: "In Stock", key: "inStock" },
     { name: "Out Stock", key: "outStock" },

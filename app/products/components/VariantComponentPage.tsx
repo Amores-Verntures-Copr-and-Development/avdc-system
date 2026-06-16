@@ -10,7 +10,7 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import React, { useState } from "react";
 import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
-import { Pencil, Plus, Save, Trash, X } from "lucide-react";
+import { Check, Pencil, Plus, Save, Trash, TrendingUp, X } from "lucide-react";
 import Input from "@/components/shared/Input";
 import { ProductVariants } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
@@ -20,6 +20,11 @@ import ViewVariantComponent from "./ViewVariantComponent";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import { useSession } from "@/hooks/useSession";
 import { formatPeso } from "@/utils/formatPeso";
+import useSWR from "swr";
+import { fetcher } from "@/utils/fetcher";
+import { ApiResponse } from "@/types/api";
+import { DisplayInventoryItems } from "@/dtos/inventory.dto";
+import { DropdownSearch } from "@/components/shared/DropDownSearch";
 
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
@@ -41,7 +46,28 @@ const VariantComponentPage = ({
   storeId,
 }: VariantComponentPageProps) => {
   const { user, hasStore } = useSession();
+  const [isChangeInventoryItemOpen, setIsChangeInventoryItemOpen] =
+    useState(false);
+  const { data: responseItem } = useSWR<ApiResponse<DisplayInventoryItems[]>>(
+    data?.inventoryItemId
+      ? `/api/inventory/inventory-item/${data.inventoryItemId}`
+      : null,
+    fetcher,
+  );
 
+  const linkedItem = responseItem?.data?.[0];
+  const searchItems = async (
+    query: string,
+  ): Promise<DisplayInventoryItems[]> => {
+    const res = await fetch(
+      `/api/inventory/item/${linkedItem?.inventoryId}?search=${encodeURIComponent(query)}`,
+    );
+
+    const json = await res.json();
+    console.log({ json });
+
+    return json.data || [];
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteVariant, setShowDeleteVariant] =
     useState<DisplayVariantComponents | null>(null);
@@ -73,6 +99,7 @@ const VariantComponentPage = ({
       prodVarPrice: Number(form.prodVarPrice),
       isDeductInv: form.isDeductInv,
       isAvailableOnline: form.isAvailableOnline,
+      inventoryItemId: form.inventoryItemId,
     };
     console.log({ variantForm });
     try {
@@ -95,6 +122,8 @@ const VariantComponentPage = ({
       }
       toast.success(res.message);
       setIsEdit(false);
+      setIsChangeInventoryItemOpen(false);
+      setShowComponent(false);
       mutate();
       onClose();
     } catch (e) {
@@ -136,7 +165,7 @@ const VariantComponentPage = ({
     }
   };
   return (
-    <div className="flex flex-col gap-5">
+    <div className="min-h-0 flex-1 flex flex-col gap-5 overflow-y-auto">
       <BigCard
         title="Variant Details"
         isRounded={false}
@@ -179,121 +208,199 @@ const VariantComponentPage = ({
           )
         }
       >
-        {!isEdit ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DetailCard label="ID" value={data?.prodVarId} icon="#" />
-            <DetailCard label="Name" value={data?.prodVarName} icon="▣" />
-            <DetailCard
-              label="Unit"
-              value={data?.prodVarUnit || "-"}
-              icon="□"
-            />
-            <DetailCard
-              label="Price"
-              value={`₱${Number(data?.prodVarPrice ?? 0).toLocaleString()}`}
-              icon="₱"
-            />
+        <div className="flex flex-col gap-4">
+          {" "}
+          {!isEdit ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DetailCard label="ID" value={data?.prodVarId} icon="#" />
+                <DetailCard label="Name" value={data?.prodVarName} icon="▣" />
+                <DetailCard
+                  label="Unit"
+                  value={data?.prodVarUnit || "-"}
+                  icon="□"
+                />
+                <DetailCard
+                  label="Price"
+                  value={`₱${Number(data?.prodVarPrice ?? 0).toLocaleString()}`}
+                  icon="₱"
+                />
 
-            <DetailCard
-              label="Is Deduct"
-              value={Boolean(data?.isDeductInv) ? "Yes" : "No"}
-              icon="✓"
-              badge={Boolean(data?.isDeductInv)}
-            />
+                <DetailCard
+                  label="Is Deduct"
+                  value={Boolean(data?.isDeductInv) ? "Yes" : "No"}
+                  icon="✓"
+                  badge={Boolean(data?.isDeductInv)}
+                />
 
-            <DetailCard
-              label="Is Available Online"
-              value={Boolean(data?.isAvailableOnline) ? "Yes" : "No"}
-              icon="🌐"
-              badge={Boolean(data?.isAvailableOnline)}
-            />
+                <DetailCard
+                  label="Is Available Online"
+                  value={Boolean(data?.isAvailableOnline) ? "Yes" : "No"}
+                  icon="🌐"
+                  badge={Boolean(data?.isAvailableOnline)}
+                />
 
-            <DetailCard
-              label="Updated At"
-              value={formatDateToWords(data?.prodVarUpdatedAt || "")}
-              icon="📅"
-            />
+                <DetailCard
+                  label="Updated At"
+                  value={formatDateToWords(data?.prodVarUpdatedAt || "")}
+                  icon="📅"
+                />
 
-            <DetailCard
-              label="Created At"
-              value={formatDateToWords(data?.prodVarCreatedAt || "")}
-              icon="📅"
-            />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {/* Top row: ID and Name */}
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                {/* <span className="text-xs text-gray-400 uppercase">ID</span>
+                <DetailCard
+                  label="Created At"
+                  value={formatDateToWords(data?.prodVarCreatedAt || "")}
+                  icon="📅"
+                />
+              </div>
+              {data?.inventoryItemId && (
+                <div className="rounded-xl border border-pink-300 bg-pink-50/60 p-4 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <TrendingUp className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-100 text-xl text-pink-600" />
+
+                    <div className="flex flex-col">
+                      <span className="text-sm text-gray-500">Profit</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl font-bold text-pink-600">
+                          ₱{Number(data?.profit ?? 0).toLocaleString()}
+                        </span>
+
+                        <span className="text-xs font-semibold text-gray-500">
+                          ({Number(data?.profitPercentage ?? 0).toFixed(2)}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ml-auto max-w-xs text-sm text-gray-500">
+                      Calculated as Selling Price minus Total Cost.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Top row: ID and Name */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  {/* <span className="text-xs text-gray-400 uppercase">ID</span>
                 <span className="text-sm font-semibold text-gray-800">
                   {data?.prodVarId}
                 </span> */}
-                <Input
-                  label={"Name"}
-                  sizes={"xs"}
-                  value={form.prodVarName}
-                  onChange={handleFormChange}
-                  name="prodVarName"
-                />
+                  <Input
+                    label={"Name"}
+                    sizes={"xs"}
+                    value={form.prodVarName}
+                    onChange={handleFormChange}
+                    name="prodVarName"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Input
+                    label={"Price"}
+                    sizes={"xs"}
+                    value={form.prodVarPrice}
+                    onChange={handleFormChange}
+                    name="prodVarPrice"
+                  />
+                </div>
               </div>
-              <div className="flex flex-col">
-                <Input
-                  label={"Price"}
-                  sizes={"xs"}
-                  value={form.prodVarPrice}
-                  onChange={handleFormChange}
-                  name="prodVarPrice"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="flex flex-col">
-                {/* <span className="text-xs text-gray-400 uppercase">ID</span>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="flex flex-col">
+                  {/* <span className="text-xs text-gray-400 uppercase">ID</span>
                 <span className="text-sm font-semibold text-gray-800">
                   {data?.prodVarId}
                 </span> */}
-                <Input
-                  label={"Unit"}
-                  sizes={"xs"}
-                  value={form.prodVarUnit ?? ""}
-                  onChange={handleFormChange}
-                  name="prodVarUnit"
-                />
+                  <Input
+                    label={"Unit"}
+                    sizes={"xs"}
+                    value={form.prodVarUnit ?? ""}
+                    onChange={handleFormChange}
+                    name="prodVarUnit"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-6">
-              <Toggle
-                sizes="xs"
-                label="Is Deduct?"
-                flexType="flex-col"
-                initial={form.isDeductInv === true}
-                onToggle={(state) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    isDeductInv: Boolean(state) === true ? true : false,
-                  }))
-                }
-              />
-              <div className="flex flex-col">
+              <div className="grid grid-cols-2 gap-6">
                 <Toggle
                   sizes="xs"
-                  label="Is Available Online?"
+                  label="Is Deduct?"
                   flexType="flex-col"
-                  initial={form.isAvailableOnline === true}
+                  initial={form.isDeductInv === true}
                   onToggle={(state) =>
                     setForm((prev) => ({
                       ...prev,
-                      isAvailableOnline: Boolean(state) === true ? true : false,
+                      isDeductInv: Boolean(state) === true ? true : false,
                     }))
                   }
                 />
+                <div className="flex flex-col">
+                  <Toggle
+                    sizes="xs"
+                    label="Is Available Online?"
+                    flexType="flex-col"
+                    initial={form.isAvailableOnline === true}
+                    onToggle={(state) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        isAvailableOnline:
+                          Boolean(state) === true ? true : false,
+                      }))
+                    }
+                  />
+                </div>
+              </div>
+
+              {/* Bottom row: Price and Created At */}
+            </div>
+          )}
+        </div>
+      </BigCard>
+      <BigCard title="Linked Inventory Item" isRounded={false}>
+        <div className="flex flex-col gap-3">
+          {linkedItem ? (
+            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-gray-800">
+                  {linkedItem.itemName}
+                </span>
+
+                <span className="text-xs text-gray-500">
+                  Unit: {linkedItem.itemUnit || "-"} • Price: ₱
+                  {Number(linkedItem.itemPrice ?? 0).toLocaleString()}
+                </span>
+
+                <span className="text-xs text-gray-400">
+                  Inventory Item ID: {linkedItem.inventoryItemId}
+                </span>
+              </div>
+
+              <div>
+                {" "}
+                <Button
+                  size="xs"
+                  onClick={() => {
+                    setIsChangeInventoryItemOpen(true);
+                    setShowComponent(true);
+                  }}
+                  label="Change"
+                ></Button>
               </div>
             </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-xl border border-dashed border-gray-300 p-4">
+              <span className="text-sm text-gray-500">
+                No inventory item linked.
+              </span>
 
-            {/* Bottom row: Price and Created At */}
-          </div>
-        )}
+              <Button
+                size="xs"
+                onClick={() => {
+                  setIsChangeInventoryItemOpen(true);
+                }}
+                label="Link Item"
+              ></Button>
+            </div>
+          )}
+        </div>
       </BigCard>
       <BigCard
         title={"Components"}
@@ -432,6 +539,96 @@ const VariantComponentPage = ({
         title="Delete Variant Component"
         isLoading={isDeleting}
       />
+      <Modal
+        isOpen={isChangeInventoryItemOpen}
+        onClose={() => {
+          setIsChangeInventoryItemOpen(false);
+          setShowComponent(false);
+        }}
+        title="Change Linked Inventory Item"
+      >
+        <div className="flex flex-col gap-5">
+          {/* Current Linked Item */}
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+            <p className="mb-3 text-xs font-semibold uppercase text-gray-400">
+              Current Linked Inventory
+            </p>
+
+            {linkedItem ? (
+              <div className="flex items-center justify-between rounded-lg bg-white p-3">
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-800">
+                    {linkedItem.itemName}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Unit: {linkedItem.itemUnit || "-"} • Price: ₱
+                    {Number(linkedItem.itemPrice ?? 0).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    Inventory Item ID: {linkedItem.inventoryItemId}
+                  </span>
+                </div>
+
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                  Current
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No linked inventory item.</p>
+            )}
+            <DropdownSearch<DisplayInventoryItems>
+              label="Select Unit"
+              sizes="xs"
+              searchFn={searchItems}
+              renderItem={(item) => (
+                <span>
+                  {item.itemName}{" "}
+                  <span className="font-semibold">({item.itemUnit})</span>
+                </span>
+              )}
+              displayValue={(s) => `${s.itemName}`}
+              canSelect={(item) => {
+                if (item.inventoryItemId === linkedItem?.inventoryItemId) {
+                  toast.error("Cannot select item to same item!");
+                  return false;
+                }
+
+                return true;
+              }}
+              onSelect={function (item: DisplayInventoryItems): void {
+                if (item) {
+                  setForm((prev) => ({
+                    ...prev,
+                    inventoryItemId: item.inventoryItemId,
+                  }));
+                }
+              }}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-border pt-4">
+            <Button
+              size="xs"
+              color="secondary"
+              onClick={() => {
+                setIsChangeInventoryItemOpen(false);
+                setShowComponent(false);
+              }}
+              label="Cancel"
+              disabled={isSaving}
+            ></Button>
+
+            <Button
+              size="xs"
+              onClick={() => {
+                handleSave();
+              }}
+              loading={isSaving}
+              label="Change Linked Item"
+            ></Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

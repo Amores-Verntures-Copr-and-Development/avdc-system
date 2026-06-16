@@ -33,10 +33,12 @@ export const insertInventory = async ({
 
 export const selectInventory = async ({
   keyFields = {},
+  connection,
 }: {
-  keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryInterface>;
+  connection?: PoolConnection; // dynamic filters like {inventoryId: 1, storeId: null}
 }): Promise<InventoryInterface[]> => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
 
   // ✅ Start base SQL
   let sql = `SELECT * FROM Inventories i
@@ -746,13 +748,15 @@ export const selectInventoryItemsNotInOther = async ({
   notIn,
   limit,
   skip,
+  connection,
 }: {
   from: number;
   notIn: number;
   limit?: number;
   skip?: number;
+  connection?: PoolConnection;
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
 
   let sql = `SELECT i.itemId,i.itemUnit,i.itemName,ii.inventoryItemId,ii.inventoryId,ii.inventoryItemReferenceType,ii.inventoryItemReferenceId
 FROM InventoryItems ii
@@ -784,13 +788,15 @@ export const selectCountInventoryItemsNotInOther = async ({
   notIn,
   limit,
   skip,
+  connection,
 }: {
   from: number;
   notIn: number;
   limit?: number;
   skip?: number;
+  connection?: PoolConnection;
 }) => {
-  const pool = await getDBConnection();
+  const pool = connection ? connection : await getDBConnection();
 
   let sql = `SELECT COUNT(ii.inventoryItemId) as count
 FROM InventoryItems ii
@@ -809,4 +815,42 @@ WHERE ii.inventoryId = ?
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [from, notIn]);
   return rows[0].count;
+};
+
+export const insertItemFromAnother = async ({
+  targetId,
+  sourceId,
+  connection,
+  userId,
+}: {
+  targetId: number;
+  sourceId: number;
+  connection?: PoolConnection;
+  userId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `INSERT INTO InventoryItems (
+  inventoryId,
+  inventoryItemReferenceType,
+  inventoryItemReferenceId,
+  inventoryItemMin,
+  inventoryItemQuantity,
+  inventoryItemCreatedBy
+)
+SELECT
+  ? AS inventoryId,
+  ii.inventoryItemReferenceType,
+  ii.inventoryItemReferenceId,
+  0 AS inventoryItemMin,
+  0 AS inventoryItemQuantity,
+  ? AS inventoryItemCreatedBy
+FROM InventoryItems ii
+WHERE ii.inventoryId = ?
+  AND ii.inventoryItemDeletedAt IS NULL
+ON DUPLICATE KEY UPDATE
+  inventoryItemDeletedAt = NULL;`;
+
+  const [results] = await pool.execute(sql, [targetId, userId, sourceId]);
+  return results;
 };

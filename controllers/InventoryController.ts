@@ -50,22 +50,8 @@ import { updateItems } from "@/models/itemModel";
 import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-items/update-inventory-items";
 import { deleteInventoryItems } from "@/services/inventory/inventory-items/delete-inventory-items";
 import { createInventoryItem } from "@/services/inventory/inventory-items/create-inventory-items";
+import { addAllItemsFromStoreToInventory } from "@/services/inventory/inventory-items/process-add-all-items-from-store";
 
-// export const createInventory = async (data: CreateInventoryDto) => {
-//   try {
-//     await insertInventory({ data });
-//     return {
-//       success: true,
-//       message: "Inventory created successfully!",
-//     };
-//   } catch (e) {
-//     return {
-//       success: false,
-//       message: "Failed to create inventory!",
-//       error: e,
-//     };
-//   }
-// };
 export const getInventory = async ({
   keyFields = {},
   controller,
@@ -156,6 +142,29 @@ export const getInventoryItems = async ({
       success: true,
       message: "Item fetched successfully!",
       data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetched Item!",
+      error: e,
+    };
+  }
+};
+
+export const getInventoryItemByFileds = async ({
+  keyFields,
+}: {
+  keyFields: Partial<InventoryItemInterface>;
+}) => {
+  try {
+    const data = await findInventoryItemsByField({
+      keyFields: keyFields,
+    });
+    return {
+      success: true,
+      message: "Item fetched successfully!",
+      data: data.data ?? null,
     };
   } catch (e) {
     return {
@@ -566,6 +575,35 @@ export const getInventoryNotInStoreController = async ({
     return {
       success: false,
       message: "Failed",
+      error: e,
+    };
+  }
+};
+
+export const addAllItemFromStoreToInventoryController = async ({
+  inventoryId,
+  storeId,
+  userId,
+}: {
+  inventoryId: number;
+  storeId: number;
+  userId: number;
+}) => {
+  try {
+    const res = await addAllItemsFromStoreToInventory({
+      inventoryId,
+      storeId,
+      userId,
+    });
+    return {
+      success: true,
+      message: "Items added to your inventory successfully!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to add items in your inventory!",
       error: e,
     };
   }

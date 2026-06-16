@@ -50,9 +50,20 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     selector: (row) => <span className="font-semibold">{row.barcode}</span>,
   },
   {
+    key: "totalCost",
+    name: "Cost Price",
+    selector: (row) => formatPeso(row.totalCost),
+  },
+  {
     key: "prodVarPrice",
-    name: "Price",
+    name: "Seling Price",
     selector: (row) => formatPeso(row.prodVarPrice),
+  },
+  {
+    key: "profit",
+    name: "Profit",
+    selector: (row) =>
+      `${formatPeso(row.profit)}(${Number(row.profitPercentage).toFixed(2)}%)`,
   },
   {
     key: "isDeductInv",

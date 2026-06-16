@@ -10,7 +10,6 @@ export async function GET(
   { params }: { params: Promise<{ inventoryId: string }> },
 ) {
   try {
-    console.log("Ahi here");
     const slug = (await params).inventoryId;
     const inventoryId = Number(slug);
     const { searchParams } = new URL(request.url);

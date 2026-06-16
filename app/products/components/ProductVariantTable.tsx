@@ -35,7 +35,6 @@ const prodVarcolumns: Column<DisplaProductVariantsDtos>[] = [
   {
     key: "prodVarUnit",
     name: "Unit",
-    selector: (row) => row.prodVarUnit,
   },
   {
     key: "barcode",
@@ -43,13 +42,21 @@ const prodVarcolumns: Column<DisplaProductVariantsDtos>[] = [
     selector: (row) => <span className="font-semibold">{row.barcode}</span>,
   },
   {
-    key: "prodVarPrice",
-    name: "Price",
-    selector: (row) => (
-      <span className="font-semibold">{formatPeso(row.prodVarPrice)}</span>
-    ),
+    key: "totalCost",
+    name: "Cost Price",
+    selector: (row) => formatPeso(row.totalCost),
   },
-
+  {
+    key: "prodVarPrice",
+    name: "Seling Price",
+    selector: (row) => formatPeso(row.prodVarPrice),
+  },
+  {
+    key: "profit",
+    name: "Profit",
+    selector: (row) =>
+      `${formatPeso(row.profit)}(${Number(row.profitPercentage).toFixed(2)}%)`,
+  },
   {
     key: "isDeductInv",
     name: "Deduct Inventory",
@@ -68,7 +75,24 @@ const prodVarcolumns: Column<DisplaProductVariantsDtos>[] = [
       );
     },
   },
-  { key: "sold", name: "Sold", selector: (row) => (row.sold ? row.sold : 0) },
+  {
+    key: "inventoryItemQuantity",
+    name: "Stocks",
+    selector: (row) => (
+      <span className="font-semibold text-green-600">
+        {row.inventoryItemQuantity ? row.inventoryItemQuantity : 0}
+      </span>
+    ),
+  },
+  {
+    key: "sold",
+    name: "Sold",
+    selector: (row) => (
+      <span className="font-semibold text-red-600">
+        {row.sold ? row.sold : 0}
+      </span>
+    ),
+  },
   {
     key: "totalSales",
     name: "Total Sales",

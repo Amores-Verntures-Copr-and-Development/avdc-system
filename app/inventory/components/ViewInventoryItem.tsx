@@ -522,7 +522,10 @@ const EditItemDetails: React.FC<
                   placeholder="Select category"
                 />
               </div>
-              {["owner", "superadmin"].includes(user?.userRole ?? "") && (
+              {Boolean(
+                ["owner", "superadmin"].includes(user?.userRole ?? "") ||
+                ["supervisor"].includes(user?.empPosition ?? ""),
+              ) && (
                 <div className="flex justify-between items-center py-2">
                   <span className="text-[10px] xl:text-sm text-gray-600">
                     Cost Price

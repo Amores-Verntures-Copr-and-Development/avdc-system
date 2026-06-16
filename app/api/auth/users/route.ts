@@ -3,17 +3,17 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 export async function GET() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("avdc_accessToken")?.value;
-
-  if (!token) {
-    // No token → treat as unauthorized
-    return NextResponse.json(
-      { user: null, message: "No token provided" },
-      { status: 200 }
-    );
-  }
 
   try {
+    const token = cookieStore.get("avdc_accessToken")?.value;
+
+    if (!token) {
+      // No token → treat as unauthorized
+      return NextResponse.json(
+        { user: null, message: "No token provided" },
+        { status: 200 },
+      );
+    }
     const decoded = jwt.verify(token, process.env.SECRET_KEY!) as {
       userId: number;
       userRole: string;
@@ -35,7 +35,7 @@ export async function GET() {
     // Invalid or expired token
     return NextResponse.json(
       { user: null, message: "Invalid or expired token" },
-      { status: 401 }
+      { status: 401 },
     );
   }
 }

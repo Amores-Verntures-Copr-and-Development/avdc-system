@@ -167,15 +167,18 @@ export async function findInventoryItemsNotInStore({
   inventoryId,
   limit,
   skip,
+  connection,
 }: {
   inventoryId: number;
   storeId: number;
   limit?: number;
   skip?: number;
+  connection?: PoolConnection;
 }) {
   try {
     const inventory = await findInventoryByFields({
       keyFields: { inventoryReferenceId: storeId, inventoryReference: "store" },
+      connection,
     });
     if (inventory.length === 0) {
       throw new Error("No inventory found!");
@@ -186,6 +189,7 @@ export async function findInventoryItemsNotInStore({
       notIn: inventoryId,
       limit,
       skip,
+      connection,
     });
 
     const count = await selectCountInventoryItemsNotInOther({
@@ -193,6 +197,7 @@ export async function findInventoryItemsNotInStore({
       notIn: inventoryId,
       limit,
       skip,
+      connection,
     });
     return {
       data: data,

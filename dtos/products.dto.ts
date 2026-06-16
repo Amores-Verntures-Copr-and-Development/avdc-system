@@ -52,6 +52,9 @@ export interface DisplaProductVariantsDtos extends ProductVariants, Products {
   inventoryItemQuantity: number | null;
   totalSales?: number;
   variantComponents: DisplayVariantComponents[];
+  profit: number;
+  profitPercentage?: string;
+  totalCost: number;
 }
 
 export interface DisplayVariantComponents

@@ -539,8 +539,7 @@ export const selectProductVariants = async ({
   offset?: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  let sql = `
-SELECT 
+  let sql = `SELECT 
     pv.*,
     p.prodName,
     u.userName,
@@ -575,11 +574,79 @@ SELECT
       LEFT JOIN Items i 
              ON i.itemId = ii.inventoryItemReferenceId
       WHERE vc.prodVarId = pv.prodVarId
-    ) AS variantComponents
+    ) AS variantComponents,
+        COALESCE(
+      CASE 
+        WHEN pv.inventoryItemId IS NOT NULL THEN i.itemPrice
+        ELSE (
+          SELECT SUM(COALESCE(ci.itemPrice, 0) * COALESCE(vc.quantityRequired, 0))
+          FROM VariantComponents vc
+          LEFT JOIN InventoryItems cii 
+                 ON cii.inventoryItemId = vc.inventoryItemId
+                 AND cii.inventoryItemReferenceType = 'item'
+          LEFT JOIN Items ci 
+                 ON ci.itemId = cii.inventoryItemReferenceId
+          WHERE vc.prodVarId = pv.prodVarId
+            AND vc.isDeductVar = 1
+        )
+      END,
+      0
+    ) AS totalCost,
+
+    (
+      COALESCE(pv.prodVarPrice, 0) -
+      COALESCE(
+        CASE 
+          WHEN pv.inventoryItemId IS NOT NULL THEN i.itemPrice
+          ELSE (
+            SELECT SUM(COALESCE(ci.itemPrice, 0) * COALESCE(vc.quantityRequired, 0))
+            FROM VariantComponents vc
+            LEFT JOIN InventoryItems cii 
+                   ON cii.inventoryItemId = vc.inventoryItemId
+                   AND cii.inventoryItemReferenceType = 'item'
+            LEFT JOIN Items ci 
+                   ON ci.itemId = cii.inventoryItemReferenceId
+            WHERE vc.prodVarId = pv.prodVarId
+              AND vc.isDeductVar = 1
+          )
+        END,
+        0
+      )
+    ) AS profit,
+
+    CASE
+      WHEN COALESCE(pv.prodVarPrice, 0) = 0 THEN 0
+      ELSE ROUND(
+        (
+          (
+            COALESCE(pv.prodVarPrice, 0) -
+            COALESCE(
+              CASE 
+                WHEN pv.inventoryItemId IS NOT NULL THEN i.itemPrice
+                ELSE (
+                  SELECT SUM(COALESCE(ci.itemPrice, 0) * COALESCE(vc.quantityRequired, 0))
+                  FROM VariantComponents vc
+                  LEFT JOIN InventoryItems cii 
+                         ON cii.inventoryItemId = vc.inventoryItemId
+                         AND cii.inventoryItemReferenceType = 'item'
+                  LEFT JOIN Items ci 
+                         ON ci.itemId = cii.inventoryItemReferenceId
+                  WHERE vc.prodVarId = pv.prodVarId
+                    AND vc.isDeductVar = 1
+                )
+              END,
+              0
+            )
+          ) / COALESCE(pv.prodVarPrice, 0)
+        ) * 100,
+        2
+      )
+    END AS profitPercentage
 FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
+LEFT JOIN Items i ON i.itemId = iis.inventoryItemReferenceId AND iis.inventoryItemReferenceType = 'item'
 LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];

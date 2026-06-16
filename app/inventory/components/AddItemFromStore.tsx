@@ -36,6 +36,7 @@ const AddItemFromStore = ({
   const [isAddItem, setIsAddingItem] = useState<DisplayInventoryItems | null>(
     null,
   );
+
   const limit = 100;
   const [productPage, setProductPage] = useState(1);
   console.log({ inventoryType, inventoryId });
@@ -95,6 +96,7 @@ const AddItemFromStore = ({
     }
   };
   const handleSubmitAddAllItemsFromStore = async () => {
+    setIsAdding(true);
     try {
       if (!user) {
         toast.error("No user found");
@@ -110,9 +112,7 @@ const AddItemFromStore = ({
         `/api/inventory/${inventoryId}/inventory-item/add-all-from-store/${selectedStore}`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          credentials: "include",
         },
       );
 
@@ -126,6 +126,8 @@ const AddItemFromStore = ({
       mutate();
     } catch (error) {
       toast.error("Failed to add all items from store");
+    } finally {
+      setIsAdding(false);
     }
   };
   const items = responseItems?.data ?? [];
@@ -247,6 +249,7 @@ const AddItemFromStore = ({
                         color="primary"
                         size="sm"
                         onClick={handleSubmitAddAllItemsFromStore}
+                        loading={isAdding}
                       />
                     </div>
                   )}

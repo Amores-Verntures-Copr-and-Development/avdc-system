@@ -12,11 +12,13 @@ import { Pool, PoolConnection } from "mysql2/promise";
 
 export async function findInventoryByFields({
   keyFields = {},
+  connection,
 }: {
-  keyFields?: Partial<InventoryInterface>; // dynamic filters like {inventoryId: 1, storeId: null}
+  keyFields?: Partial<InventoryInterface>;
+  connection?: PoolConnection; // dynamic filters like {inventoryId: 1, storeId: null}
 }) {
   try {
-    const data = await selectInventory({ keyFields });
+    const data = await selectInventory({ keyFields, connection });
     return data;
   } catch (e) {
     throw e;
