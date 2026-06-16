@@ -20,6 +20,7 @@ export async function GET(
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
     const movement = searchParams.get("movement") || "";
+    const supplier = searchParams.get("supplier") || "";
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const res = await getInventoryItems({
@@ -27,6 +28,7 @@ export async function GET(
       search,
       status,
       category,
+      supplier,
       unit,
       limit: limitNumber,
       offset: limitNumber * (pageNumber - 1),

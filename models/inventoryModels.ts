@@ -194,6 +194,7 @@ export const selectInventoryItems = async ({
   offset,
   connection,
   movement,
+  supplier,
 }: {
   keyFields?: Partial<InventoryInterface>;
   search?: string;
@@ -204,6 +205,7 @@ export const selectInventoryItems = async ({
   offset?: number;
   connection?: PoolConnection;
   movement?: string;
+  supplier?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
@@ -299,6 +301,37 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     }
   }
 
+  if (supplier) {
+    if (supplier === "null") {
+      sql += ` AND s.suppId IS NULL`;
+    } else {
+      sql += ` AND s.suppName = ?`;
+      params.push(supplier);
+    }
+  }
+  if (movement === "fast") {
+    sql += ` AND ii.inventoryItemId IN (
+    SELECT inventoryItemId
+    FROM InventoryItemMovement
+    WHERE itemMovementType = 'out'
+      AND itemMovementCreatedAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY inventoryItemId
+    HAVING SUM(itemMovementQuantity) >= ?
+  ) `;
+    params.push(Number(movement)); // e.g., fast = 20
+  }
+
+  if (movement === "slow") {
+    sql += ` AND ii.inventoryItemId IN (
+    SELECT inventoryItemId
+    FROM InventoryItemMovement
+    WHERE itemMovementType = 'out'
+      AND itemMovementCreatedAt >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+    GROUP BY inventoryItemId
+    HAVING SUM(itemMovementQuantity) <= ?
+  ) `;
+    params.push(Number(movement)); // e.g., slow = 5
+  }
   sql += ` GROUP BY  
   ii.inventoryItemId,
   ii.inventoryId,
@@ -335,6 +368,7 @@ export const selectInventoryItemsCount = async ({
   unit,
   connection,
   movement,
+  supplier,
 }: {
   keyFields?: Partial<InventoryInterface>;
   search?: string;
@@ -345,6 +379,7 @@ export const selectInventoryItemsCount = async ({
   offset?: number;
   connection?: PoolConnection;
   movement?: string;
+  supplier?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
@@ -411,6 +446,14 @@ WHERE 1=1 AND ii.inventoryItemDeletedAt IS NULL
     }
     if (status === "no") {
       sql += ` AND ii.inventoryItemQuantity = 0 `;
+    }
+  }
+  if (supplier) {
+    if (supplier === "null") {
+      sql += ` AND s.suppId IS NULL`;
+    } else {
+      sql += ` AND s.suppName = ?`;
+      params.push(supplier);
     }
   }
   if (movement === "fast") {

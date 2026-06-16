@@ -3,7 +3,10 @@ import {
   CreateSupplierItemDto,
   CreateSupplierItemPriceDto,
 } from "@/dtos/supplier.dto";
-import { getSupplierBySearch } from "@/services/supplier/get-supplier";
+import {
+  getSupplierByInventoryFields,
+  getSupplierBySearch,
+} from "@/services/supplier/get-supplier";
 import { createSupplierItems } from "@/services/supplier/suppplier-items/create-supplier-items";
 import { getSupplierItemPrice } from "@/services/supplier/suppplier-items/supplier-item-price/get-supplier-item-price";
 import {
@@ -61,6 +64,22 @@ export const getSupplier = async ({ search }: { search?: string }) => {
   }
 };
 
+export const getSupplierByInventory = async (inventoryId: number) => {
+  try {
+    const data = await getSupplierByInventoryFields({ inventoryId });
+    return {
+      success: true,
+      message: "Supplier fetched successfully",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetched Supplier",
+      error: e,
+    };
+  }
+};
 export const addItemSupplier = async (data: CreateSupplierItemDto) => {
   try {
     await addItemSupplierByID(data);

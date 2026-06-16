@@ -37,6 +37,24 @@ export const selectCountSupplier = async (connection: PoolConnection) => {
   return rows[0];
 };
 
+export const selectSupplierByInventoryFields = async ({
+  inventoryId,
+  connection,
+}: {
+  inventoryId: number;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `SELECT s.suppName,s.suppId FROM Suppliers s
+LEFT JOIN SupplierItems si ON si.suppId = s.suppId
+LEFT JOIN InventoryItems ii ON ii.inventoryItemReferenceId = si.itemId AND ii.inventoryItemReferenceType = 'item'
+WHERE ii.inventoryId = ?
+GROUP BY s.suppId,s.suppName
+ORDER BY s.suppName ASC`;
+  const [rows] = await pool.execute(sql, [inventoryId]);
+  return rows;
+};
+
 export const selectSupplier = async ({
   connection,
   keyFields = {},

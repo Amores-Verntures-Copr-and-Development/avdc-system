@@ -1,4 +1,8 @@
-import { selectSupplier } from "@/models/supplierModels";
+import {
+  selectSupplier,
+  selectSupplierByInventoryFields,
+} from "@/models/supplierModels";
+import { PoolConnection } from "mysql2/promise";
 
 export async function getSupplierBySearch(search: string) {
   try {
@@ -16,4 +20,14 @@ export async function findSupplierById(id: number) {
   } catch (e) {
     throw e;
   }
+}
+
+export async function getSupplierByInventoryFields({
+  inventoryId,
+  connection,
+}: {
+  inventoryId: number;
+  connection?: PoolConnection;
+}) {
+  return await selectSupplierByInventoryFields({ inventoryId, connection });
 }

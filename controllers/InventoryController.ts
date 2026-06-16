@@ -116,6 +116,7 @@ export const getInventoryItems = async ({
   limit,
   offset,
   movement,
+  supplier,
 }: {
   keyFields: Partial<InventoryInterface>;
   search?: string;
@@ -125,6 +126,7 @@ export const getInventoryItems = async ({
   limit?: number;
   offset?: number;
   movement?: string;
+  supplier?: string;
 }) => {
   try {
     const data = await findInventoryItemsByField({
@@ -136,6 +138,7 @@ export const getInventoryItems = async ({
       limit,
       offset,
       movement,
+      supplier,
     });
 
     return {

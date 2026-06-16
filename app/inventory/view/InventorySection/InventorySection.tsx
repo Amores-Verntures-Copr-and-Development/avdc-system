@@ -67,6 +67,9 @@ import InStockModal from "../../components/InStockModal";
 import OutStockModal from "../../components/OutStockModal";
 import BarcodeComponent from "../../components/BarcodeComponent";
 import AddItemFromStore from "../../components/AddItemFromStore";
+import { Supplier } from "@/types/supplier";
+import { Option } from "@/components/shared/DropdownSelect";
+import { id } from "date-fns/locale";
 
 export interface AddItemToStoreDto {
   storeId: number;
@@ -345,6 +348,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     },
   ];
   //
+  const { data: responseSupplier } = useSWR<ApiResponse<Supplier[]>>(
+    !hasStore ? `/api/inventory/${inventoryId}/supplier` : null,
+    fetcher,
+  );
+  console.log({ responseSupplier });
+  const supplierOptions: { label: string; value: string }[] = [
+    { label: "No Supplier", value: "null" },
+    ...(responseSupplier?.data.map((s) => ({
+      label: s.suppName,
+      value: s.suppName,
+    })) ?? []),
+  ];
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
   const [isAddingItem, setIsAddingItem] = useState(false);
@@ -354,6 +369,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     if (!inventoryId) return null;
 
     const search = searchParams.get("search") || "";
+    const supplier = searchParams.get("supplier") || "";
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
@@ -367,6 +383,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     if (unit) params.append("unit", unit);
     if (limit) params.append("limit", limit);
     if (movement) params.append("movement", movement);
+    if (supplier) params.append("supplier", supplier);
 
     params.append("page", page);
 
@@ -759,8 +776,18 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         type: "checkbox" as const,
         options: unitOptions ?? [],
       },
+      ...(!hasStore
+        ? [
+            {
+              id: "supplier",
+              label: "Supplier",
+              type: "checkbox" as const,
+              options: supplierOptions ?? [],
+            },
+          ]
+        : []),
     ],
-    [categoryOptions, unitOptions],
+    [categoryOptions, unitOptions, supplierOptions, hasStore],
   );
   const columns = useMemo(
     () => (hasStore ? inventoryItemColumns : adminInventoryItemColumns),

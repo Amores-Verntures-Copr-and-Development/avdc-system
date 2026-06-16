@@ -89,14 +89,6 @@ const InventoryPage = () => {
                 title={"Inventory"}
                 subtitle="Track and manage your stock levels"
               />
-              {/* <div className="flex gap-2">
-                <div>
-                  <Button label="Store" size="sm" icon={Store} />
-                </div>
-                <div>
-                  <Button label="Stock Room" size="sm" icon={Box} />
-                </div>
-              </div> */}
             </div>
             <div className="flex">
               <div className="flex  border-gray-300 gap-2">
