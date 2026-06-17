@@ -54,7 +54,6 @@ export const getStore = async ({
       data: data ?? null,
     };
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to create store!",

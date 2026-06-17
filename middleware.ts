@@ -26,7 +26,13 @@ export function middleware(request: NextRequest) {
       return withCors(new NextResponse(null, { status: 204 }));
     }
 
-    const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];
+    const publicApiRoutes = [
+      "/api/auth/login",
+      "/api/auth/users",
+      "/api/loyverse/connect",
+      "/api/loyverse/callback",
+      "/api/loyverse/webhook",
+    ];
 
     if (!publicApiRoutes.includes(pathname) && !token) {
       return withCors(

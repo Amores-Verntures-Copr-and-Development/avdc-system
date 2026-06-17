@@ -145,7 +145,7 @@ const FilterDropdown = ({
   const selectOption = (id: string, value: string) => {
     setFilters((prev) => ({
       ...prev,
-      [id]: [value],
+      [id]: prev[id]?.includes(value) ? [] : [value],
     }));
   };
 

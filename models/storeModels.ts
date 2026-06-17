@@ -94,7 +94,7 @@ WHERE 1=1`;
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  console.log({ sql, params });
+
   return rows;
 };
 
@@ -212,6 +212,5 @@ export const selectStoreEmployeeDetails = async ({
     }
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
-  console.log({ sql, params });
   return rows as StoreInterface[];
 };
