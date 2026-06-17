@@ -20,6 +20,8 @@ export async function processCreateNewLoyverseIntegration({
     console.log("Agi here!");
 
     //check first if there is already a integration
+    //if not exist, insert new integration and new loyverse integration
+    //if existing, upsert it
   } catch (e) {
     throw e;
   }
