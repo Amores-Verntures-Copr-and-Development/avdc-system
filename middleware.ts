@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const allowedOrigins = ["http://localhost:3060", "http://localhost:3100"];
+const allowedOrigins = [
+  "http://localhost:3060",
+  "http://localhost:3100",
+  "http://192.168.0.28:3100/",
+];
 
 function withCors(request: NextRequest, response: NextResponse) {
   const origin = request.headers.get("origin");
