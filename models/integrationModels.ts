@@ -27,8 +27,8 @@ export const selectIntegration = async ({
   connection,
   keyFields = {},
 }: {
-  connection: PoolConnection;
-  keyFields?: Partial<Record<keyof IntegrationInterface, any>>;
+  connection?: PoolConnection;
+  keyFields: Partial<Record<keyof IntegrationInterface, any>>;
 }) => {
   const pool = connection ? connection : await getDBConnection();
 

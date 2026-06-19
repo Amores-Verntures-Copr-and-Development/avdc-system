@@ -1,10 +1,13 @@
 import {
+  selectStores,
+  selectStoreSales,
   selectStoresByEmpKeyFields,
   selectStoresByInventoryKeyFields,
   selectStoresByPoId,
 } from "@/models/storeModels";
 import { EmployeeInterface } from "@/types/employees";
 import { InventoryInterface } from "@/types/inventory";
+import { StoreInterface } from "@/types/stores";
 
 export async function findStoreByPOID(poId: number) {
   try {
@@ -15,6 +18,19 @@ export async function findStoreByPOID(poId: number) {
   }
 }
 
+export async function getStoreBy({
+  search,
+  limit,
+  skip,
+  keyfields = {},
+}: {
+  search?: string;
+  limit?: number;
+  skip?: number;
+  keyfields?: Partial<StoreInterface>;
+}) {
+  return await selectStores({});
+}
 export async function findStoreByEmpFields({
   keyFields = {},
 }: {
@@ -27,6 +43,16 @@ export async function findStoreByEmpFields({
     console.log({ e });
     throw e;
   }
+}
+
+export async function getStoreSales({
+  from,
+  to,
+}: {
+  from?: string;
+  to?: string;
+}) {
+  return await selectStoreSales({ from, to });
 }
 
 export async function findStoreByInventoryFields({

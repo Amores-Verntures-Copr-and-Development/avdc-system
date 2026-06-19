@@ -1,6 +1,7 @@
 // app/api/loyverse/connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 export async function GET(
   req: NextRequest,
@@ -12,9 +13,12 @@ export async function GET(
 ) {
   let baseUrl: string = "";
   const { storeId } = await params;
+
+  const user = getCurrentUser(req);
   if (!storeId) {
+    throw new Error("No store ID found!");
   }
-  console.log("Origin:", req.headers.get("origin"));
+
   const referer = req.headers.get("referer");
 
   if (referer) {
@@ -27,6 +31,7 @@ export async function GET(
       storeId,
       nonce: crypto.randomBytes(16).toString("hex"),
       baseUrl: baseUrl,
+      userId: user.userId,
     }),
   ).toString("base64url");
 

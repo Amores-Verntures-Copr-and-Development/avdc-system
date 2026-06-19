@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const allowedOrigin = "http://localhost:3060";
+const allowedOrigins = ["http://localhost:3060", "http://localhost:3100"];
 
-function withCors(response: NextResponse) {
-  response.headers.set("Access-Control-Allow-Origin", allowedOrigin);
+function withCors(request: NextRequest, response: NextResponse) {
+  const origin = request.headers.get("origin");
+
+  if (origin && allowedOrigins.includes(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+  }
+
   response.headers.set("Access-Control-Allow-Credentials", "true");
   response.headers.set(
     "Access-Control-Allow-Methods",
@@ -14,6 +19,7 @@ function withCors(response: NextResponse) {
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization",
   );
+
   return response;
 }
 
@@ -23,7 +29,7 @@ export function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/api")) {
     if (request.method === "OPTIONS") {
-      return withCors(new NextResponse(null, { status: 204 }));
+      return withCors(request, new NextResponse(null, { status: 204 }));
     }
 
     const publicApiRoutes = [
@@ -32,18 +38,19 @@ export function middleware(request: NextRequest) {
       "/api/loyverse/connect",
       "/api/loyverse/callback",
       "/api/loyverse/webhook",
+      "/api/overview",
     ];
 
     if (!publicApiRoutes.includes(pathname) && !token) {
       return withCors(
+        request,
         NextResponse.json({ message: "Unauthorized" }, { status: 401 }),
       );
     }
 
-    return withCors(NextResponse.next());
+    return withCors(request, NextResponse.next());
   }
 
-  // your page redirects below...
   return NextResponse.next();
 }
 

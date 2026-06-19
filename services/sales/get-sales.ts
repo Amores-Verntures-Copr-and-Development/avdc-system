@@ -2,6 +2,7 @@ import {
   countSales,
   selectDailyStoreSales,
   selectSales,
+  selectSalesByTrend,
   selectSalesTotalDetails,
 } from "@/models/saleModel";
 import { Sales } from "@/types/sales";
@@ -152,5 +153,17 @@ export const getSalesServices = {
     } catch (e) {
       throw e;
     }
+  },
+
+  getSalesByTrend: async ({
+    trend,
+    from,
+    to,
+  }: {
+    trend?: "year" | "month" | "weeks" | "days";
+    from?: string;
+    to?: string;
+  }) => {
+    return await selectSalesByTrend({ trend, from, to });
   },
 };

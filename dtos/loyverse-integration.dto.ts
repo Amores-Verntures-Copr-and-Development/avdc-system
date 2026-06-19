@@ -8,4 +8,5 @@ export type CreateLoyverseIntegrationDTO = Pick<
   | "createdBy"
   | "scope"
   | "tokenType"
+  | "expiresAt"
 >;

@@ -998,3 +998,74 @@ export const insertSaleItemDiscounts = async ({
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
   return result;
 };
+
+export const selectSalesByTrend = async ({
+  trend,
+  from,
+  to,
+}: {
+  trend?: "year" | "month" | "weeks" | "days";
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+
+  let periodExpression = "";
+  const params: string[] = [];
+
+  switch (trend) {
+    case "year":
+      periodExpression = "YEAR(s.salesCreatedAt)";
+      break;
+
+    case "month":
+      periodExpression = "DATE_FORMAT(s.salesCreatedAt, '%Y-%m')";
+      break;
+
+    case "weeks":
+      periodExpression = "YEARWEEK(s.salesCreatedAt, 1)";
+      break;
+
+    case "days":
+      periodExpression = "DATE(s.salesCreatedAt)";
+      break;
+
+    default:
+      periodExpression = "DATE(s.salesCreatedAt)";
+  }
+
+  let sql = `
+    SELECT
+      ${periodExpression} AS period,
+      COALESCE(
+        SUM(s.salesTotalAmount) - COALESCE(SUM(sr.totalRefunds), 0),
+        0
+      ) AS totalSales
+    FROM Sales s
+    LEFT JOIN Stores st
+      ON s.storeId = st.storeId
+    LEFT JOIN (
+      SELECT
+        salesId,
+        SUM(salesRefAmount) AS totalRefunds
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) sr
+      ON sr.salesId = s.salesId
+    WHERE 1=1
+  `;
+
+  if (from && to) {
+    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  sql += `
+    GROUP BY ${periodExpression}
+    ORDER BY period ASC
+  `;
+
+  const [rows] = await pool.execute(sql, params);
+
+  return rows;
+};

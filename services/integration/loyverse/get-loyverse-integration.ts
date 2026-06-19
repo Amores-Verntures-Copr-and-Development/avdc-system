@@ -6,8 +6,8 @@ export async function getLoyverseIntegratioByFields({
   connection,
   keyFields = {},
 }: {
-  connection: PoolConnection;
-  keyFields?: Partial<Record<keyof LoyverseIntegrationInterface, any>>;
+  connection?: PoolConnection;
+  keyFields: Partial<Record<keyof LoyverseIntegrationInterface, any>>;
 }) {
   return await selectLoyverseIntegration({ connection, keyFields });
 }

@@ -14,7 +14,6 @@ export async function POST(
     }
     const data = (await _request.json()) as CreateCustomerDto[];
     const res = await createCustomer(data);
-    console.log("Data in route: ", data);
     if (!res.success) {
       console.log(res.message);
       throw new Error(`${res.error}`);

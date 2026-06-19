@@ -22,12 +22,14 @@ import {
   Puzzle,
   Store,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import DatePicker from "react-datepicker";
 import useSWR from "swr";
 import AddUserToStoreForm from "./components/AddUserToStoreForm";
 import { EmployeeInterface } from "@/types/employees";
+import { IntegrationInterface } from "@/types/integrations";
+import LoaderComponent from "@/components/shared/LoaderComponent";
 
 interface StoreEmployeeDetails extends StoreEmployee {
   name: string;
@@ -50,7 +52,7 @@ const integrations = [
   {
     key: "loyverse",
     name: "Loyverse",
-    image: "/public/loyverse.png",
+    image: "/loyverse.png",
     description:
       "Connect your Loyverse POS to sync products, inventory, customers, and sales.",
   },
@@ -76,11 +78,17 @@ const Page = () => {
     store ? `/api/stores/${store.storeId}/store-employee` : null,
     fetcher,
   );
-
+  const router = useRouter();
+  const { data: resposeInteg, isLoading: isLoadInteg } = useSWR<
+    ApiResponse<IntegrationInterface[]>
+  >(store ? `/api/integration/${store?.storeId}` : null, fetcher);
   return (
     <PageLayout className="p-2 flex flex-1 flex-col gap-2 min-h-screen">
       <div className="flex justify-between">
-        <button className="px-1 py-1 flex gap-2 items-center font-semibold text-xs hover:bg-gray-200 rounded-lg">
+        <button
+          onClick={() => router.push(`/stores`)}
+          className="px-1 py-1 flex gap-2 items-center font-semibold text-xs hover:bg-gray-200 rounded-lg"
+        >
           <ArrowLeft className="w-4 h-4" />
           <span>all stores</span>
         </button>
@@ -164,8 +172,8 @@ const Page = () => {
           </div>
         </CardContent>
       </Card>
-      <Card className="min-h-0 p-4">
-        <CardTitle>
+      <Card className="min-h-0  space-y-2">
+        <CardTitle className="p-2">
           <div className="flex justify-between">
             <div className="flex flex-col gap-1">
               <h1 className="font-medium text-sm">Integrations</h1>
@@ -184,6 +192,30 @@ const Page = () => {
             </div>
           </div>
         </CardTitle>
+        <CardContent className="">
+          <div className="grid grid-cols-5">
+            {isLoadInteg ? (
+              <LoaderComponent />
+            ) : (
+              resposeInteg?.data.map((i) => {
+                const image =
+                  i.integrationType === "loyverse" ? "/loyverse.png" : "";
+                const name = i.integrationType === "loyverse" ? "Loyverse" : "";
+                return (
+                  <div className="p-2 " key={i.integId}>
+                    <div className="p-2  border-border border flex h-30 w-30 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                      <img
+                        src={image}
+                        alt={name}
+                        className="h-20 w-20 object-contain"
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </CardContent>
       </Card>
       <Modal
         title="Add User to Store"

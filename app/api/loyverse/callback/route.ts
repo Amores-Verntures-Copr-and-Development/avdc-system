@@ -3,8 +3,6 @@ import { processCreateNewLoyverseIntegration } from "@/services/integration/loyv
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  console.log("Callback URL:", req.url);
-
   const code = req.nextUrl.searchParams.get("code");
   const error = req.nextUrl.searchParams.get("error");
   const state = req.nextUrl.searchParams.get("state");
@@ -14,11 +12,7 @@ export async function GET(req: NextRequest) {
   }
   const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
 
-  const { storeId, baseUrl } = decoded;
-
-  console.log("Store ID:", storeId);
-  console.log("OAuth code exists:", !!code);
-  console.log("OAuth error:", error);
+  const { storeId, baseUrl, userId } = decoded;
 
   if (!code) {
     return NextResponse.json({ error: "Missing code" }, { status: 400 });
@@ -39,21 +33,24 @@ export async function GET(req: NextRequest) {
     },
     body,
   });
-  console.log({ tokenRes });
+
   const tokenData = await tokenRes.json();
 
   if (!tokenRes.ok) {
     return NextResponse.json(tokenData, { status: 400 });
   }
 
-  console.log({ tokenData });
   // Save these encrypted in database
   // tokenData.access_token
   // tokenData.refresh_token
   // tokenData.expires_in
   // tokenData.scope
 
-  await processCreateNewLoyverseIntegration({ storeId, tokenData: tokenData });
+  await processCreateNewLoyverseIntegration({
+    storeId,
+    tokenData: tokenData,
+    userId,
+  });
   const storedData = await getStore({ keyfields: { storeId: storeId } });
   const stores = Array.isArray(storedData.data) ? storedData.data : [];
 

@@ -11,8 +11,8 @@ export const insertLoyverseIntegration = async ({
   connection: PoolConnection;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO LoyverseIntegrations(integId,accessToken,refreshToken,scope,tokenType,createdBy) VALUES(?,?,?,?,?,?)`;
-
+  const sql = `INSERT INTO LoyverseIntegrations(integId,accessToken,refreshToken,scope,tokenType,createdBy,expiresAt) VALUES(?,?,?,?,?,?,?)`;
+  console.log({ data });
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.integId,
     data.accessToken,
@@ -20,6 +20,7 @@ export const insertLoyverseIntegration = async ({
     data.scope,
     data.tokenType,
     data.createdBy,
+    data.expiresAt,
   ]);
 
   return results.insertId;
@@ -29,8 +30,8 @@ export const selectLoyverseIntegration = async ({
   connection,
   keyFields = {},
 }: {
-  connection: PoolConnection;
-  keyFields?: Partial<Record<keyof LoyverseIntegrationInterface, any>>;
+  connection?: PoolConnection;
+  keyFields: Partial<Record<keyof LoyverseIntegrationInterface, any>>;
 }) => {
   const pool = connection ? connection : await getDBConnection();
 

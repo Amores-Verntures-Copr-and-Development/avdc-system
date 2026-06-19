@@ -40,10 +40,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const res = await getUsers({ search });
-    console.log("GET /api/users result:", res);
+
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error("Failed to insert user");
     }
 

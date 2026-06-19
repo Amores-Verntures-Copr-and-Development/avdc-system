@@ -41,7 +41,6 @@ export const selectStores = async ({
   skip?: number;
   keyfields?: Partial<StoreInterface>;
 }) => {
-  console.log({ keyfields });
   const pool = await getDBConnection();
 
   const params: any[] = [];
@@ -71,7 +70,6 @@ export const selectStores = async ({
   }
 
   const [rows] = await pool.execute(sql, params);
-  console.log({ sql, params, rows });
   return rows;
 };
 
@@ -213,4 +211,45 @@ export const selectStoreEmployeeDetails = async ({
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as StoreInterface[];
+};
+
+export const selectStoreSales = async ({
+  from,
+  to,
+}: {
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+
+  const params: string[] = [];
+
+  let salesJoin = `LEFT JOIN Sales s ON s.storeId = st.storeId`;
+
+  if (from && to) {
+    salesJoin += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  const sql = `
+    SELECT 
+      st.storeId,
+      st.storeName,
+      COALESCE(
+        SUM(s.salesTotalAmount) - COALESCE(SUM(sr.totalRefunds), 0),
+        0
+      ) AS totalSales
+    FROM Stores st
+    ${salesJoin}
+    LEFT JOIN (
+      SELECT salesId, SUM(salesRefAmount) AS totalRefunds
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) sr ON sr.salesId = s.salesId
+    GROUP BY st.storeId, st.storeName
+  `;
+
+  const [rows] = await pool.execute(sql, params);
+
+  return rows;
 };

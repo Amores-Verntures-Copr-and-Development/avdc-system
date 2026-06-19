@@ -6,8 +6,8 @@ export async function getIntegrationByFields({
   connection,
   keyFields,
 }: {
-  connection: PoolConnection;
-  keyFields?: Partial<Record<keyof IntegrationInterface, any>>;
+  connection?: PoolConnection;
+  keyFields: Partial<Record<keyof IntegrationInterface, any>>;
 }) {
   return await selectIntegration({ connection, keyFields });
 }
