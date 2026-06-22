@@ -6,6 +6,7 @@ const allowedOrigins = [
   "http://localhost:3100",
   "http://192.168.0.28:3100",
   "http://100.106.185.109:3100",
+  "http://100.88.166.17:3100",
 ];
 
 function withCors(request: NextRequest, response: NextResponse) {
