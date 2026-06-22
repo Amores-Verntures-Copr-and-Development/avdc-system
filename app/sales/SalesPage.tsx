@@ -771,18 +771,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                       icon={<FileText className="w-3.5 h-3.5 font-semibold" />}
                       size="sm"
                     />
-                    <div>
-                      <Button
-                        size="sm"
-                        hasBorder={false}
-                        color="outline"
-                        label="Export"
-                        icon={Download}
-                        onClick={() => {
-                          setShowModal("export");
-                        }}
-                      />
-                    </div>
                   </div>
                 }
                 searchUrl="/sales"

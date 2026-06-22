@@ -14,6 +14,7 @@ import EditSalesPage from "./components/EditSalesPage";
 import { SalesStatus } from "@/types/sales";
 import { getSalesStatusOption } from "@/utils/salesUtils";
 import PrintSales from "./components/PrintSales";
+import { useSession } from "@/hooks/useSession";
 
 interface SelectedSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -25,6 +26,7 @@ const SelectedSalesPage = ({
   salesData,
   onBack,
 }: SelectedSalesPageProps) => {
+  const { user } = useSession();
   const [showViews, setShowViews] = useState<
     null | "refund" | "edit" | "print"
   >(null);
@@ -44,7 +46,15 @@ const SelectedSalesPage = ({
     mutateSales();
     await mutate();
   };
-
+  const canEditUser =
+    user?.userRole &&
+    Boolean(
+      ["owner", "superadmin"].includes(user?.userRole) ||
+      Boolean(
+        user?.empPosition &&
+        ["admin", "accounting"].includes(user?.empPosition),
+      ),
+    );
   const refundTotal =
     Array.isArray(salesData?.salesRefunds) && salesData.salesRefunds.length > 0
       ? salesData.salesRefunds.reduce(
@@ -110,17 +120,19 @@ const SelectedSalesPage = ({
                   <div>
                     <Button label="Download PDF" color="outline" size="sm" />
                   </div>
-                  <div>
-                    <Button
-                      label="Edit"
-                      size="sm"
-                      color="outline"
-                      hasBorder={false}
-                      onClick={() => {
-                        setShowViews("edit");
-                      }}
-                    />
-                  </div>
+                  {canEditUser && (
+                    <div>
+                      <Button
+                        label="Edit"
+                        size="sm"
+                        color="outline"
+                        hasBorder={false}
+                        onClick={() => {
+                          setShowViews("edit");
+                        }}
+                      />
+                    </div>
+                  )}
                   <div>
                     <Button
                       label={

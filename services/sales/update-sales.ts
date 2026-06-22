@@ -36,6 +36,7 @@ export async function updateSalesBySalesId({
       customerId: data.customerId,
       salesRemarks: data.salesRemarks,
       storeId: data.storeId,
+      salesCreatedAt: data.salesCreatedAt,
     };
     if (!salesData) {
       throw new Error("No sales data!");

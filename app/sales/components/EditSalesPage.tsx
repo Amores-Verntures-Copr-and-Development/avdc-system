@@ -16,6 +16,11 @@ import { PaymentMethods } from "@/types/payment-methods";
 import { DropdownOption } from "@/components/shared/DynamicDropdown";
 import { handleArrayItemChange } from "@/utils/handle-change";
 import toast from "react-hot-toast";
+import {
+  formatDateTimeLocal,
+  toMySQLDateTime,
+} from "@/utils/formatDateToWords";
+import { useSession } from "@/hooks/useSession";
 
 interface EditSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -45,6 +50,7 @@ const EditSalesPage = ({
   onBack,
   mutateSales,
 }: EditSalesPageProps) => {
+  const { user } = useSession();
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editablePaymentMethods, setEditablePaymentMethods] = useState<
@@ -66,6 +72,7 @@ const EditSalesPage = ({
   });
   const [salesStatus, setSalesStatus] = useState(salesData?.salesStatus ?? "");
   const [salesNote, setSalesNote] = useState(salesData?.salesRemarks ?? "");
+  const [salesDate, setSalesDate] = useState(salesData?.salesCreatedAt ?? "");
 
   // Editable items
   const [editableItems, setEditableItems] = useState<EditableItem[]>([]);
@@ -205,8 +212,8 @@ const EditSalesPage = ({
         salesRemarks: salesNote || "",
         storeId: salesData?.storeId,
         salePayments: salePayments,
+        salesCreatedAt: toMySQLDateTime(salesDate)!,
       };
-
       const res = await fetch(
         `/api/sales/${salesData?.storeId}/${salesData?.salesId}`,
         {
@@ -226,12 +233,22 @@ const EditSalesPage = ({
       toast.success("Changes saved successfully.");
       onBack();
     } catch (err: any) {
-      console.log({ err });
       setSaveError(err.message ?? "Something went wrong.");
     } finally {
       setIsSaving(false);
     }
   };
+
+  const canEditUser =
+    user?.userRole &&
+    Boolean(
+      ["owner", "superadmin"].includes(user?.userRole) ||
+      Boolean(
+        user?.empPosition &&
+        ["admin", "accounting"].includes(user?.empPosition),
+      ),
+    );
+
   const searchCustomers = async (query: string): Promise<Customer[]> => {
     const res = await fetch(
       `/api/customers/store/${salesData?.storeId}?search=${encodeURIComponent(query)}`,
@@ -289,7 +306,7 @@ const EditSalesPage = ({
           )}
 
           {/* Editable Fields */}
-          <div className="grid grid-cols-3 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-4 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
             <div>
               <DropdownSearch<Customer>
                 sizes="xs"
@@ -352,6 +369,18 @@ const EditSalesPage = ({
                 onChange={(e) => setSalesNote(e.target.value)}
               />
             </div>
+            {canEditUser && (
+              <div>
+                <Input
+                  sizes="xs"
+                  label="Date"
+                  value={formatDateTimeLocal(salesDate)}
+                  type="datetime-local"
+                  name="salesDate"
+                  onChange={(e) => setSalesDate(e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </div>
 

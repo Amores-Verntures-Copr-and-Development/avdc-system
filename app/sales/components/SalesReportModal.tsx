@@ -397,9 +397,18 @@ const SalesReportModal = ({
 
                         <br />
 
-                        <span className="text-xs font-normal text-gray-400">
-                          {sale.salesInvoice}
-                        </span>
+                        <div className="flex flex-col">
+                          {" "}
+                          <span className="text-xs font-normal text-gray-400">
+                            {sale.salesInvoice}
+                          </span>
+                          <span className="text-[11px] font-normal text-gray-400">
+                            {formatDateToWords(sale.salesCreatedAt, {
+                              showHour: true,
+                              showMinute: true,
+                            })}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="py-4 pr-4 align-top text-xs text-gray-700">
