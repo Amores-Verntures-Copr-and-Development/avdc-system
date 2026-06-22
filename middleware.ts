@@ -113,5 +113,27 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/api/:path*", "/"],
+  matcher: [
+    "/api/:path*",
+    "/",
+    "/login",
+    "/dashboard/:path*",
+    "/categories/:path*",
+    "/customers/:path*",
+    "/employees/:path*",
+    "/inventory/:path*",
+    "/procurement-history/:path*",
+    "/products/:path*",
+    "/purchase-orders/:path*",
+    "/requisitions/:path*",
+    "/sales/:path*",
+    "/stock-room/:path*",
+    "/stores/:path*",
+    "/suppliers/:path*",
+    "/users/:path*",
+    "/store-selection/:path*",
+    "/pos/:path*",
+    "/account/:path*",
+    "/isr/:path*",
+  ],
 };
