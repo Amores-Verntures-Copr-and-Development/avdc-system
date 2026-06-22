@@ -56,7 +56,59 @@ export function middleware(request: NextRequest) {
 
     return withCors(request, NextResponse.next());
   }
+  const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];
+  if (publicApiRoutes.includes(pathname)) {
+    return NextResponse.next();
+  }
 
+  const protectedPages = [
+    "/categories",
+    "/customers",
+    "/dashboard",
+    "/employees",
+    "/inventory",
+    "/procurement-history",
+    "/products",
+    "/purchase-orders",
+    "/requisitions",
+    "/sales",
+    "/stock-room",
+    "/stores",
+    "/suppliers",
+    "/users",
+    "/store-selection",
+    "/pos",
+    "/account",
+    "/isr",
+  ];
+  const isProtectedPage = protectedPages.some((route) =>
+    pathname.startsWith(route),
+  );
+  if (pathname === "/") {
+    if (token) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    } else {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      return NextResponse.redirect(url);
+    }
+  }
+
+  // ✅ Redirect to login if accessing protected page without token
+  if (isProtectedPage && !token) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  // ✅ Redirect to dashboard if accessing login page with token
+  if (pathname === "/login" && token) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
   return NextResponse.next();
 }
 
