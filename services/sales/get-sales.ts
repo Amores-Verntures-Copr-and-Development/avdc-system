@@ -139,6 +139,7 @@ export const getSalesServices = {
     from,
     to,
     store,
+    notZeroSales,
   }: {
     storeId?: number;
     search?: string;
@@ -146,6 +147,7 @@ export const getSalesServices = {
     from?: string;
     to?: string;
     store?: string;
+    notZeroSales?: boolean;
   }) => {
     try {
       const data = await selectSalesTotalDetails({ storeId, from, to, store });

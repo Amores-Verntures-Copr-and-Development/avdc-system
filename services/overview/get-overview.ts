@@ -5,10 +5,12 @@ export async function getOverview({
   trend,
   from,
   to,
+  notZeroSales,
 }: {
   trend: "year" | "month" | "month" | "weeks" | "days";
   from?: string;
   to?: string;
+  notZeroSales?: boolean;
 }) {
   try {
     //get stores
@@ -17,7 +19,7 @@ export async function getOverview({
       from,
       to,
     });
-    const stores = await getStoreSales({ from, to });
+    const stores = await getStoreSales({ from, to, notZeroSales });
     const salesByTrends = await getSalesServices.getSalesByTrend({
       trend,
       from,

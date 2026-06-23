@@ -216,9 +216,11 @@ export const selectStoreEmployeeDetails = async ({
 export const selectStoreSales = async ({
   from,
   to,
+  notZeroSales = false,
 }: {
   from?: string;
   to?: string;
+  notZeroSales?: boolean;
 }) => {
   const pool = await getDBConnection();
 
@@ -247,6 +249,7 @@ export const selectStoreSales = async ({
       GROUP BY salesId
     ) sr ON sr.salesId = s.salesId
     GROUP BY st.storeId, st.storeName
+     ${notZeroSales ? "HAVING totalSales <> 0" : ""}
   `;
 
   const [rows] = await pool.execute(sql, params);

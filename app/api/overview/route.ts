@@ -17,7 +17,12 @@ export async function GET(req: NextRequest) {
         ? trendParam
         : undefined;
     console.log({ trend });
-    const res = await OverviewController.get({ trend: trend, from, to });
+    const res = await OverviewController.get({
+      trend: trend,
+      from,
+      to,
+      notZeroSales: true,
+    });
 
     if (!res.success) {
       throw new Error("Failed to fetch!");

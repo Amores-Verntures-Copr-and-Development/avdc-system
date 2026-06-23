@@ -5,13 +5,15 @@ export const OverviewController = {
     trend = "days",
     from,
     to,
+    notZeroSales,
   }: {
     trend?: "year" | "month" | "weeks" | "days";
     from?: string;
     to?: string;
+    notZeroSales?: boolean;
   }) => {
     try {
-      const res = await getOverview({ trend, from, to });
+      const res = await getOverview({ trend, from, to, notZeroSales });
 
       return {
         success: true,
