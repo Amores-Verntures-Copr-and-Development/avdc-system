@@ -27,6 +27,7 @@ const AddUserToStoreForm = ({
   });
   const [isAdding, setIsAdding] = useState(false);
   const handleAddUserToStore = async () => {
+    console.log({ store });
     setIsAdding(true);
     if (!form.empId) {
       toast.error("Please select a user to add.");

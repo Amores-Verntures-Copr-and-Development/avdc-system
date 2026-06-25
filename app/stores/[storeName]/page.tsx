@@ -69,7 +69,7 @@ const Page = () => {
   );
 
   const store = data?.data[0];
-
+  console.log({ store });
   const {
     data: employeeData,
     isLoading: isEmpLoading,

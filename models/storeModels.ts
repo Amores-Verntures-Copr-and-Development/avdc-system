@@ -50,6 +50,9 @@ export const selectStores = async ({
 
     if (value === null) {
       sql += ` AND s.${key} IS NULL`;
+    } else if (key === "storeName") {
+      sql += ` AND TRIM(s.storeName) = TRIM(?)`;
+      params.push(value);
     } else {
       sql += ` AND s.${key} = ?`;
       params.push(value);
@@ -57,7 +60,7 @@ export const selectStores = async ({
   }
   if (search) {
     const wildcard = `%${search}%`;
-    sql += ` AND s.storeName LIKE ?`;
+    sql += ` AND TRIM(s.storeName) LIKE ?`;
     params.push(wildcard);
   }
 
@@ -91,6 +94,7 @@ WHERE 1=1`;
       params.push(value);
     }
   }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
 
   return rows;

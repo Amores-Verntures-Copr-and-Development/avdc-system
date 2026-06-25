@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       trendParam === "days"
         ? trendParam
         : undefined;
-    console.log({ trend });
+
     const res = await OverviewController.get({
       trend: trend,
       from,
