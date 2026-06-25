@@ -1,6 +1,7 @@
 import React from "react";
 import { OrderList } from "../../PosPage";
 import OrderProductCard from "../OrderProductCard";
+import { Discounts } from "@/types/discount";
 
 interface OrderDetailsProps {
   data: OrderList[] | null;
@@ -8,6 +9,7 @@ interface OrderDetailsProps {
   addQuantity: (data: OrderList) => void;
   removeProduct: (data: OrderList) => void;
   setEditOrderAmount: React.Dispatch<React.SetStateAction<OrderList | null>>;
+  discountLists?: Discounts[];
 }
 
 const OrderDetails = ({
@@ -16,6 +18,7 @@ const OrderDetails = ({
   addQuantity,
   removeProduct,
   setEditOrderAmount,
+  discountLists,
 }: OrderDetailsProps) => {
   return (
     <div className="flex flex-col gap-2 2xl:gap-4">
@@ -27,6 +30,7 @@ const OrderDetails = ({
           key={prod.prodVarId}
           addQuantity={addQuantity}
           removeProduct={removeProduct}
+          discountLists={discountLists}
         />
       ))}
     </div>

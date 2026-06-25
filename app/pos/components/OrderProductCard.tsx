@@ -2,6 +2,7 @@ import IconButton from "@/components/shared/IconButton";
 import { Edit, Minus, Plus, Trash } from "lucide-react";
 import { OrderList } from "../PosPage";
 import React from "react";
+import { Discounts } from "@/types/discount";
 
 interface OrderItemProps {
   data: OrderList;
@@ -9,6 +10,7 @@ interface OrderItemProps {
   addQuantity: (data: OrderList) => void;
   removeProduct: (data: OrderList) => void;
   setEditOrderAmount: React.Dispatch<React.SetStateAction<OrderList | null>>;
+  discountLists?: Discounts[];
 }
 
 const CompactOrderItem = ({
@@ -17,10 +19,27 @@ const CompactOrderItem = ({
   removeQuantityProductList,
   addQuantity,
   removeProduct,
+  discountLists,
 }: OrderItemProps) => {
   const unitPrice = Number(data.prodVarPrice);
   const totalPrice = data.prodVarTotal;
+  const hasDiscount = data.discounts && data.discounts.length > 0;
+  const totalDiscount = data.discounts?.reduce((sum, d) => {
+    const discountInfo = discountLists?.find(
+      (list) => list.discountId === d.discountId,
+    );
 
+    if (!discountInfo) return sum;
+
+    const originalTotal = unitPrice * data.quantity;
+
+    const discountAmount =
+      discountInfo.discountType === "percent"
+        ? originalTotal * (Number(discountInfo.discountValue) / 100)
+        : Number(discountInfo.discountValue) * data.quantity;
+
+    return sum + discountAmount;
+  }, 0);
   return (
     <div className="flex flex-col 2xl:flex-row 2xl:items-center justify-between 2xl:gap-2 rounded-lg shadow-sm p-2 2xl:p-3 bg-white hover:shadow-md border border-gray-200 hover:border-primary-1/50 transition-all group">
       {/* Product name - flex-1 to take available space */}
@@ -61,13 +80,42 @@ const CompactOrderItem = ({
         </div>
 
         {/* Total price - compact */}
-        <div className="flex-shrink-0 text-right">
+        <div className="flex flex-col items-end gap-0.5">
           <span className="text-xs 2xl:text-sm font-bold text-primary-1 whitespace-nowrap">
             {totalPrice?.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
             })}
           </span>
+
+          {hasDiscount && (
+            <div
+              title={data.discounts
+                ?.map((discount) => {
+                  const discountInfo = discountLists?.find(
+                    (d) => d.discountId === discount.discountId,
+                  );
+
+                  return `${discountInfo?.discountName ?? "Discount"} - ${Number(
+                    discount.discountAmount,
+                  ).toLocaleString("en-PH", {
+                    style: "currency",
+                    currency: "PHP",
+                  })}`;
+                })
+                .join("\n")}
+              className="inline-flex items-center gap-1 rounded-full bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold text-red-600 border border-red-100"
+            >
+              <span>%</span>
+              <span>
+                -
+                {Number(totalDiscount).toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-1">

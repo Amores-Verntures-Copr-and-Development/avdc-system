@@ -679,7 +679,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       ];
     });
   };
-
+  const cantDiscountAll = selectedOrder.some(
+    (i) => i.discounts && i.discounts?.length > 0,
+  );
   const removeDiscount = (newDisc: Discounts) => {
     const filter = selectedDiscount?.filter(
       (disc) => disc.discountId !== newDisc.discountId,
@@ -989,6 +991,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               removeQuantityProductList={removeQuantityProductList}
               addQuantity={addQuantity}
               removeProduct={removeProduct}
+              discountLists={discountResponse.data ?? []}
             />
           </div>
 
@@ -1013,6 +1016,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     setShowDiscountModal(true);
                   }}
                   color="secondary"
+                  disabled={cantDiscountAll}
                 />
               </div>
             </div>
