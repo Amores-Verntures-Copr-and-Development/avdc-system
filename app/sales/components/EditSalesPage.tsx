@@ -17,6 +17,7 @@ import { DropdownOption } from "@/components/shared/DynamicDropdown";
 import { handleArrayItemChange } from "@/utils/handle-change";
 import toast from "react-hot-toast";
 import {
+  formatDateForMySQL,
   formatDateTimeLocal,
   toMySQLDateTime,
 } from "@/utils/formatDateToWords";
@@ -212,8 +213,9 @@ const EditSalesPage = ({
         salesRemarks: salesNote || "",
         storeId: salesData?.storeId,
         salePayments: salePayments,
-        salesCreatedAt: toMySQLDateTime(salesDate)!,
+        salesCreatedAt: formatDateForMySQL(new Date(salesDate).toISOString()),
       };
+      console.log("salesData?.salesCreatedAt: ", salesData?.salesCreatedAt);
       const res = await fetch(
         `/api/sales/${salesData?.storeId}/${salesData?.salesId}`,
         {

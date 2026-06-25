@@ -48,7 +48,6 @@ export async function updateSalesBySalesId({
       connection: connection,
     });
     if (data.salePayments && data.salePayments.length > 0) {
-      console.log("salesData.salePayments: ", data.salePayments);
       const updateSalePaymentData: Partial<SalePayments>[] =
         data.salePayments.map((sp) => ({
           salesPaymentId: sp.salesPaymentId,

@@ -64,3 +64,7 @@ export const toMySQLDateTime = (dateTimeLocal: string) => {
     d.getMinutes(),
   ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
 };
+
+export const formatDateForMySQL = (date: string | Date) => {
+  return new Date(date).toISOString().slice(0, 19).replace("T", " ");
+};
