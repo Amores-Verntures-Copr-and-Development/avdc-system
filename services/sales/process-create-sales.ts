@@ -53,11 +53,6 @@ export async function processCreateSales(data: CreateSaleDto) {
     };
 
     const salesId = await createSale({ connection, data: salesData });
-    const salesInserted = await getSalesServices.findSalesBySaleId({
-      connection: connection,
-      salesId,
-    });
-    console.log({ salesInserted });
     const salesInvoice = await generateSalesInvoice({
       connection,
       id: salesId,

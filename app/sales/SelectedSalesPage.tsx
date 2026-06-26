@@ -248,7 +248,7 @@ const SelectedSalesPage = ({
                             {modifyName}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {item.prodName}
+                            {item.prodVarUnit}
                           </div>
                         </td>
                         <td className="py-2 text-right text-xs 2xl:text-sm text-gray-700">
