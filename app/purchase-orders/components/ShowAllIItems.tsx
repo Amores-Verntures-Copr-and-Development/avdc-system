@@ -314,7 +314,7 @@ const ShowAllIItems = ({
       (option, index, self) =>
         index === self.findIndex((o) => o?.value === option!.value),
     ) as SupplierOption[];
-  console.log({ supplierOptions });
+
   const handleApprovedPo = async () => {
     const newData: UpdatePurchaseOrdersDto = {
       ...data,

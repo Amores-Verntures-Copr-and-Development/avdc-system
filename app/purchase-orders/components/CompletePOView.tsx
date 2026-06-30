@@ -122,7 +122,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   const [isRequestExpanded, setIsRequestExpanded] = useState<string | null>(
     null,
   );
-  console.log({ data });
+
   const [isShowDeliverConfirm, setIsShowDeliverConfirm] = useState(false);
   const [deliverRequestData, setDeliverRequestData] =
     useState<DisplayRequisitionWithItems | null>(null);

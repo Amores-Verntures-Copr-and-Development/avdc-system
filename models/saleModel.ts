@@ -179,7 +179,7 @@ WHERE 1=1`;
   }
   if (storeId) {
     sql += ` AND s.storeId = ? `;
-    params.push(customerId);
+    params.push(storeId);
   }
   if (from && to) {
     sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
@@ -188,7 +188,7 @@ WHERE 1=1`;
   }
   if (search) {
     const wildcard = `%${search}%`;
-    sql += ` AND s.salesNo LIKE ? OR c.customerName LIKE ? `;
+    sql += ` AND (s.salesNo LIKE ? OR c.customerName LIKE ?) `;
     params.push(wildcard);
     params.push(wildcard);
   }
@@ -217,7 +217,6 @@ WHERE 1=1`;
   if (offset !== undefined) {
     sql += ` OFFSET ${offset}`;
   }
-
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows;
 };
@@ -272,7 +271,7 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   }
   if (search) {
     const wildcard = `%${search}%`;
-    sql += ` AND s.salesNo LIKE ? OR c.customerName LIKE ? `;
+    sql += ` AND (s.salesNo LIKE ? OR c.customerName LIKE ?) `;
     params.push(wildcard);
     params.push(wildcard);
   }

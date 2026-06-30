@@ -356,7 +356,6 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
 
   const handleFilterSave = useCallback(
     (newFilters: Record<string, string[]>) => {
-      console.log({ newFilters });
       setFilters(newFilters);
       const currentParams = new URLSearchParams(window.location.search);
       const filterKeys = [...productConfig.map((f) => f.id), "branch"];

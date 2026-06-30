@@ -101,7 +101,7 @@ const VariantComponentPage = ({
       isAvailableOnline: form.isAvailableOnline,
       inventoryItemId: form.inventoryItemId,
     };
-    console.log({ variantForm });
+
     try {
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${data?.prodId}/${data?.prodVarId}`,

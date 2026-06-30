@@ -869,7 +869,6 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                 size="sm"
                 label="Supplier PDF"
                 onClick={() => {
-                  console.log("Test");
                   setShowROPDF("suppliers");
                 }}
                 color="outline"
