@@ -22,17 +22,22 @@ const SalesReportModal = ({
   showReportType,
 }: SalesReportModalProps) => {
   const parsedUrl = new URL(apiUrl, window.location.origin);
+  parsedUrl.searchParams.delete("limit");
   const from = parsedUrl.searchParams.get("from") || "";
   const to = parsedUrl.searchParams.get("to") || "";
-
+  const apiWithoutLimit =
+    parsedUrl.pathname +
+    (parsedUrl.searchParams.toString()
+      ? `?${parsedUrl.searchParams.toString()}`
+      : "");
   const [includeSaleItems, setIncludeSaleItems] = useState(true);
 
   const debounceApi = useDebounce(
     includeSaleItems
-      ? `${apiUrl}&includeSaleItems=true${
+      ? `${apiWithoutLimit}&includeSaleItems=true${
           showReportType === "Customer" ? `&customer=true` : ""
         }`
-      : `${apiUrl}${showReportType === "Customer" ? `&customer=true` : ""}`,
+      : `${apiWithoutLimit}${showReportType === "Customer" ? `&customer=true` : ""}`,
     500,
   );
 
