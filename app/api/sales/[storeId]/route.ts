@@ -25,7 +25,8 @@ export async function GET(
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
     const method = searchParams.get("method") || "";
-    const noLimit = searchParams.get("noLimit") || "";
+    const noLimit = searchParams.get("nolimit") || "";
+
     const res = await getSalesByStoreId({
       storeId,
       search,

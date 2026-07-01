@@ -216,7 +216,7 @@ WHERE 1=1`;
   if (limit !== undefined && nolimit === false) {
     sql += ` LIMIT ${limit}`;
   }
-  if (offset !== undefined) {
+  if (offset !== undefined && nolimit === false) {
     sql += ` OFFSET ${offset}`;
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);

@@ -580,17 +580,26 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     }
   };
   const handleDateRangeChange = useCallback(
-    (rangeData: { from: string; to: string }) => {
+    (rangeData: { from?: string; to?: string }) => {
       const { from, to } = rangeData;
 
-      // Example: include them in the URL as query params
       const url = new URL(window.location.href);
-      url.searchParams.set("from", from);
-      url.searchParams.set("to", to);
+
+      if (from) {
+        url.searchParams.set("from", from);
+      } else {
+        url.searchParams.delete("from");
+      }
+
+      if (to) {
+        url.searchParams.set("to", to);
+      } else {
+        url.searchParams.delete("to");
+      }
 
       router.push(url.toString());
     },
-    [router], // include dependencies
+    [router],
   );
   const details = responseDetails?.data[0];
   const totalSales = details?.totalSales ?? 0;

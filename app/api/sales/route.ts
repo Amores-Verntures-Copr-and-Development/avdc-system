@@ -16,7 +16,7 @@ export async function GET(_request: Request) {
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
-    const noLimit = searchParams.get("noLimit") || "";
+    const noLimit = searchParams.get("nolimit") || "";
     const res = await getSales({
       search,
       keyFields: {},

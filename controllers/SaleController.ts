@@ -184,6 +184,7 @@ export const getSales = async ({
   nolimit?: boolean;
 }) => {
   try {
+    console.log({ nolimit });
     const data = await getSalesServices.getSales({
       keyFields,
       search,
