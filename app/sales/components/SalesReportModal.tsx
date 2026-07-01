@@ -23,6 +23,7 @@ const SalesReportModal = ({
 }: SalesReportModalProps) => {
   const parsedUrl = new URL(apiUrl, window.location.origin);
   parsedUrl.searchParams.delete("limit");
+  parsedUrl.searchParams.set("nolimit", "true");
   const from = parsedUrl.searchParams.get("from") || "";
   const to = parsedUrl.searchParams.get("to") || "";
   const apiWithoutLimit =

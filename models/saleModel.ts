@@ -29,6 +29,7 @@ export const selectSales = async ({
   customerId,
   storeId,
   method,
+  nolimit = false,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -43,6 +44,7 @@ export const selectSales = async ({
   customerId?: number;
   storeId?: number;
   method?: string;
+  nolimit?: boolean;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -211,7 +213,7 @@ WHERE 1=1`;
 
   sql += ` ORDER BY s.salesCreatedAt DESC `;
 
-  if (limit !== undefined) {
+  if (limit !== undefined && nolimit === false) {
     sql += ` LIMIT ${limit}`;
   }
   if (offset !== undefined) {

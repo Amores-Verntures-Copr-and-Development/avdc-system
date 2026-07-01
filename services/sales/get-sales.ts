@@ -32,6 +32,7 @@ export const getSalesServices = {
     customerId,
     storeId,
     method,
+    nolimit,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -46,6 +47,7 @@ export const getSalesServices = {
     customerId?: number;
     storeId?: number;
     method?: string;
+    nolimit?: boolean;
   }) => {
     try {
       const data = await selectSales({
@@ -62,6 +64,7 @@ export const getSalesServices = {
         customerId,
         storeId,
         method,
+        nolimit,
       });
       return data;
     } catch (e) {
