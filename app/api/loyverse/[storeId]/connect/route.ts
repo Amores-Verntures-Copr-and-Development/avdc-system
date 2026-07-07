@@ -43,7 +43,6 @@ export async function GET(
     "STORES_READ",
   ].join(" ");
 
-  console.log({ baseUrl });
   const url = new URL("https://api.loyverse.com/oauth/authorize");
 
   url.searchParams.set("client_id", process.env.LOYVERSE_CLIENT_ID!);

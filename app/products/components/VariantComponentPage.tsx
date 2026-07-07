@@ -395,6 +395,7 @@ const VariantComponentPage = ({
                 size="xs"
                 onClick={() => {
                   setIsChangeInventoryItemOpen(true);
+                  setShowComponent(true);
                 }}
                 label="Link Item"
               ></Button>
