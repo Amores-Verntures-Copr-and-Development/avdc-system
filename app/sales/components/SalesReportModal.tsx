@@ -6,7 +6,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { ApiResponse } from "@/types/api";
 import { exportToExcel } from "@/utils/exportExcel";
 import { fetcher } from "@/utils/fetcher";
-import { formatDateToWords } from "@/utils/formatDateToWords";
+import { formatDateToWords, formatShortDate } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import { Download, FileText, Printer } from "lucide-react";
 import React, { useState } from "react";
@@ -164,7 +164,7 @@ const SalesReportModal = ({
 
   const handleExportData = () => {
     const formatData = salesData.map((sales) => ({
-      Date: sales.salesCreatedAt,
+      Date: formatShortDate(sales.salesCreatedAt),
       SalesNo: sales.salesNo,
       Invoice: sales.salesInvoice,
       Store: sales.storeName,
@@ -201,14 +201,13 @@ const SalesReportModal = ({
       GrossTotal: Number(sales.salesTotalAmount),
       NetTotal: getSaleNetTotal(sales),
 
-      Payment:
+      PaymentTypes:
+        sales.paymentMethods?.map((payment) => payment.payMetName).join(", ") ??
+        "-",
+
+      PaymentAmounts:
         sales.paymentMethods
-          ?.map(
-            (payment) =>
-              `${payment.payMetName} (${formatPeso(
-                Number(payment.salesPaymentAmount),
-              )})`,
-          )
+          ?.map((payment) => Number(payment.salesPaymentAmount))
           .join(", ") ?? "-",
 
       Items:

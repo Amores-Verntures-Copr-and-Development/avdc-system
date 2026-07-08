@@ -5,7 +5,7 @@ export async function PUT(
   _request: Request,
   {
     params,
-  }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> }
+  }: { params: Promise<{ inventoryId: string; inventoryItemId: string }> },
 ) {
   try {
     const slug1 = (await params).inventoryId;
@@ -22,8 +22,6 @@ export async function PUT(
       inventoryItemId: [inventoryItemId],
     });
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message || "Failed to delete item");
     }
 
@@ -33,7 +31,7 @@ export async function PUT(
         message: res.message,
         data: res, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -42,7 +40,7 @@ export async function PUT(
         message: "Failed to update item",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

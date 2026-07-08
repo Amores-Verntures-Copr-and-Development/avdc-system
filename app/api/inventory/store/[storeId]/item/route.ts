@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ storeId: string }> }
+  { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
@@ -17,8 +17,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -28,17 +26,16 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -26,8 +26,6 @@ export async function PUT(
       itemData: [itemData],
     });
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message || "Failed to update item");
     }
 

@@ -51,7 +51,6 @@ export async function POST(
       },
     );
   } catch (e) {
-    console.log({ e });
     return NextResponse.json(
       {
         success: false,

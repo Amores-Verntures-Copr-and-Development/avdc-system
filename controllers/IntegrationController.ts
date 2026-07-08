@@ -1,5 +1,6 @@
 import { getIntegrationByFields } from "@/services/integration/get-integration";
 import { getLoyverseIntegratioByFields } from "@/services/integration/loyverse/get-loyverse-integration";
+import { updateLoyverseIntegrationByFields } from "@/services/integration/loyverse/update-loyverse-integration";
 import { IntegrationInterface } from "@/types/integrations";
 import { LoyverseIntegrationInterface } from "@/types/loyverse-integration";
 import { PoolConnection } from "mysql2/promise";
@@ -51,6 +52,31 @@ export const LoyverseIntegrationController = {
       return {
         success: false,
         message: "Loyverse Integration fetched failed!!",
+        error: e,
+      };
+    }
+  },
+  update: async ({
+    updates,
+    keyFields = ["integId"],
+  }: {
+    updates: Partial<LoyverseIntegrationInterface>[];
+    keyFields?: (keyof LoyverseIntegrationInterface)[];
+  }) => {
+    try {
+      console.log("UPDATES IN CONTROLLER: ", updates);
+      const res = await updateLoyverseIntegrationByFields({
+        updates,
+        keyFields,
+      });
+      return {
+        success: true,
+        message: "Loyverse Integration updated successfully!",
+      };
+    } catch (e) {
+      return {
+        success: false,
+        message: "Loyverse Integration updated failed!!",
         error: e,
       };
     }

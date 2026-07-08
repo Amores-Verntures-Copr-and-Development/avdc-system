@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ poNumber: string }> }
+  { params }: { params: Promise<{ poNumber: string }> },
 ) {
   try {
     const slug = (await params).poNumber;
@@ -15,7 +15,7 @@ export async function GET(
 
     if (!res.success) {
       // propagate the actual message if available
-      console.log(res.message);
+
       throw new Error(`${res.error}`);
     }
 
@@ -25,7 +25,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -35,7 +35,7 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -47,7 +47,6 @@ export async function PUT(_request: Request) {
     const res = await updateRequest(controller, request, userId);
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -56,7 +55,7 @@ export async function PUT(_request: Request) {
         success: true,
         message: " res.message",
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     console.log("Err: ", err);
@@ -66,7 +65,7 @@ export async function PUT(_request: Request) {
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

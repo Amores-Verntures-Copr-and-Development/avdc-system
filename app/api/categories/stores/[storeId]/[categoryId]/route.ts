@@ -16,8 +16,6 @@ export async function PATCH(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.message ?? "Failed to fetch category"}`);
     }
 
@@ -63,7 +61,6 @@ export async function DELETE(
     });
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.message ?? "Failed to delete category"}`);
     }
 

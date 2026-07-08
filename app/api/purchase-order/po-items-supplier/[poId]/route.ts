@@ -47,7 +47,6 @@ export async function PUT(_request: Request) {
     const res = await updatePurchaseOrder(controller, data);
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 

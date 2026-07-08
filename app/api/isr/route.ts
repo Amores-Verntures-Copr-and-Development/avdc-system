@@ -20,8 +20,6 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (error) {
-    console.error(error);
-
     return NextResponse.json(
       {
         message:
@@ -50,8 +48,6 @@ export async function GET() {
       { status: 200 },
     );
   } catch (error) {
-    console.error(error);
-
     return NextResponse.json(
       {
         message:

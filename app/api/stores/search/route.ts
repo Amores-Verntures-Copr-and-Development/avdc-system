@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const storeName = searchParams.get("storeName") || "";
-    console.log({ storeName });
     const res = await getStore({
       search,
       limit: 10,

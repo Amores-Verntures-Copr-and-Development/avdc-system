@@ -68,3 +68,13 @@ export const toMySQLDateTime = (dateTimeLocal: string) => {
 export const formatDateForMySQL = (date: string | Date) => {
   return new Date(date).toISOString().slice(0, 19).replace("T", " ");
 };
+
+export function formatShortDate(date: string | Date): string {
+  const d = new Date(date);
+
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const year = String(d.getFullYear()).slice(-2);
+
+  return `${month}/${day}/${year}`;
+}

@@ -34,7 +34,6 @@ export async function PUT(
     const res = await updateVariantComponentController([data]);
 
     if (!res.success) {
-      console.log(res.message, res.error);
       throw new Error(`${res.error}`);
     }
 
@@ -100,7 +99,6 @@ export async function DELETE(
     ]);
 
     if (!res.success) {
-      console.log(res.message, res.error);
       throw new Error(`${res.error}`);
     }
 

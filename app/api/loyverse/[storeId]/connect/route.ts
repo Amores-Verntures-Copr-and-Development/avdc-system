@@ -41,6 +41,7 @@ export async function GET(
     "INVENTORY_READ",
     "RECEIPTS_READ",
     "STORES_READ",
+    "MERCHANT_READ",
   ].join(" ");
 
   const url = new URL("https://api.loyverse.com/oauth/authorize");

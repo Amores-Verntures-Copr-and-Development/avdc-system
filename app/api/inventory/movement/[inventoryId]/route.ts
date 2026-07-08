@@ -32,8 +32,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -46,7 +44,6 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
@@ -73,8 +70,6 @@ export async function PUT(
     const res = await processStockBulkAdjustmetController(data);
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -87,7 +82,6 @@ export async function PUT(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,

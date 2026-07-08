@@ -22,8 +22,6 @@ export async function POST(
     const res = await createItemConversions({ data });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message);
     }
 
@@ -63,8 +61,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message);
     }
 
@@ -107,8 +103,6 @@ export async function PUT(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message);
     }
 

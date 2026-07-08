@@ -18,7 +18,6 @@ export async function GET(
       keyStoreFields: { storeId: storeId },
     });
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -31,7 +30,6 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,

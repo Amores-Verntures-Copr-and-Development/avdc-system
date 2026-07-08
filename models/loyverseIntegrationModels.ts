@@ -68,6 +68,7 @@ export const updateLoyverseIntegration = async ({
   keyFields?: (keyof LoyverseIntegrationInterface)[];
 }) => {
   console.log({ updates });
+  console.log({ keyFields });
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 

@@ -5,11 +5,9 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const storeId = searchParams.get("store") || "";
-    const res = await getOwnerDashboardStats({ storeId:Number(storeId) });
+    const res = await getOwnerDashboardStats({ storeId: Number(storeId) });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -22,7 +20,6 @@ export async function GET(req: NextRequest) {
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,

@@ -202,7 +202,15 @@ const Page = () => {
                   i.integrationType === "loyverse" ? "/loyverse.png" : "";
                 const name = i.integrationType === "loyverse" ? "Loyverse" : "";
                 return (
-                  <div className="p-2 " key={i.integId}>
+                  <div
+                    className="p-2 "
+                    key={i.integId}
+                    onClick={() =>
+                      router.push(
+                        `/stores/${encodeURIComponent(String(store?.storeName))}/integration/${i.integrationType}/${i.integId}`,
+                      )
+                    }
+                  >
                     <div className="p-2  border-border border flex h-30 w-30 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
                       <img
                         src={image}

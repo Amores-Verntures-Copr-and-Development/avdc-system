@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _Request: NextRequest,
-  { params }: { params: Promise<{ inventoryId: string }> }
+  { params }: { params: Promise<{ inventoryId: string }> },
 ) {
   try {
     const slug = (await params).inventoryId;
@@ -14,8 +14,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.message ?? "Failed to fetch category"}`);
     }
 
@@ -25,7 +23,7 @@ export async function GET(
         message: res.message,
         data: res.data, // could sanitize before returning
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -34,7 +32,7 @@ export async function GET(
         message: "User add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

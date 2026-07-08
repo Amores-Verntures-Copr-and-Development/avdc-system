@@ -36,8 +36,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -51,7 +49,6 @@ export async function GET(
       { status: 201 },
     );
   } catch (err: any) {
-    console.log("Err: ", err);
     return NextResponse.json(
       {
         success: false,
@@ -70,8 +67,6 @@ export async function POST(request: Request) {
     const res = await addItemToInventory(data);
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message || "Failed to create store");
     }
 
@@ -84,7 +79,6 @@ export async function POST(request: Request) {
       { status: 201 },
     );
   } catch (err: any) {
-    console.error("POST /api/auth/users error:", err);
     return NextResponse.json(
       {
         success: false,

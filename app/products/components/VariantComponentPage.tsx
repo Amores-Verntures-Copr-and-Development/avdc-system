@@ -25,6 +25,8 @@ import { fetcher } from "@/utils/fetcher";
 import { ApiResponse } from "@/types/api";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
+import { DisplayAllInventory } from "@/app/inventory/InventoryPage";
+import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
@@ -54,18 +56,22 @@ const VariantComponentPage = ({
       : null,
     fetcher,
   );
-
+  const { data: responseInventory } = useSWR<
+    ApiResponse<DisplayAllInventory[]>
+  >(storeId ? `/api/inventory/store/${storeId}` : null, fetcher);
   const linkedItem = responseItem?.data?.[0];
+
+  const inventory = responseInventory?.data.find(
+    (i) =>
+      i.inventoryReferenceId === storeId && i.inventoryReference === "store",
+  );
   const searchItems = async (
     query: string,
   ): Promise<DisplayInventoryItems[]> => {
     const res = await fetch(
-      `/api/inventory/item/${linkedItem?.inventoryId}?search=${encodeURIComponent(query)}`,
+      `/api/inventory/item/${inventory?.inventoryId}?search=${encodeURIComponent(query)}`,
     );
-
     const json = await res.json();
-    console.log({ json });
-
     return json.data || [];
   };
   const [isDeleting, setIsDeleting] = useState(false);
@@ -371,6 +377,13 @@ const VariantComponentPage = ({
                 <span className="text-xs text-gray-400">
                   Inventory Item ID: {linkedItem.inventoryItemId}
                 </span>
+                <span className="text-xs text-gray-400">
+                  Stock:{" "}
+                  {formatQuantityByUnit(
+                    linkedItem.inventoryItemQuantity,
+                    linkedItem.itemUnit,
+                  )}
+                </span>
               </div>
 
               <div>
@@ -601,6 +614,11 @@ const VariantComponentPage = ({
                   setForm((prev) => ({
                     ...prev,
                     inventoryItemId: item.inventoryItemId,
+                  }));
+                } else {
+                  setForm((prev) => ({
+                    ...prev,
+                    inventoryItemId: null,
                   }));
                 }
               }}

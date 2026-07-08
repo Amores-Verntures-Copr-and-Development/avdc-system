@@ -20,7 +20,6 @@ export async function GET(
     const res = await StoreDashboardController(storeId);
 
     if (!res.success) {
-      console.log(res.error);
       throw new Error(res.message);
     }
 

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ suppId: string; suppItemId: string }> }
+  { params }: { params: Promise<{ suppId: string; suppItemId: string }> },
 ) {
   try {
     const suppId = (await params).suppId;
@@ -21,7 +21,6 @@ export async function GET(
     });
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -31,7 +30,7 @@ export async function GET(
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -40,14 +39,14 @@ export async function GET(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ suppId: string; suppItemId: string }> }
+  { params }: { params: Promise<{ suppId: string; suppItemId: string }> },
 ) {
   const data = (await request.json()) as SupplierItem;
   try {
@@ -65,7 +64,6 @@ export async function PUT(
     });
 
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -75,7 +73,7 @@ export async function PUT(
         message: res.message,
         data: res.data,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err: any) {
     return NextResponse.json(
@@ -84,7 +82,7 @@ export async function PUT(
         message: "Failed to fetched inventory!",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

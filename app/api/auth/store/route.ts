@@ -10,7 +10,7 @@ export async function PUT(req: NextRequest) {
     if (!accessToken) {
       return NextResponse.json(
         { success: false, message: "No access token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest) {
     if (!decoded) {
       return NextResponse.json(
         { success: false, message: "Invalid token" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -37,7 +37,7 @@ export async function PUT(req: NextRequest) {
     if (!storeId || typeof storeId !== "number") {
       return NextResponse.json(
         { success: false, message: "Valid storeId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -49,7 +49,7 @@ export async function PUT(req: NextRequest) {
         decoded.userLname,
         decoded.userRole,
         decoded.empPosition,
-        storeId // Updated storeId!
+        storeId, // Updated storeId!
       );
 
     // 5. Update user in database with new storeId (optional)
@@ -87,10 +87,9 @@ export async function PUT(req: NextRequest) {
 
     return response;
   } catch (err: unknown) {
-    console.error("Token update error:", err);
     return NextResponse.json(
       { success: false, message: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

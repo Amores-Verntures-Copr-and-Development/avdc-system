@@ -6,6 +6,7 @@ export interface LoyverseIntegrationInterface {
   accessToken: string;
   refreshToken: string;
   tokenType: string;
+  merchantId: string | null;
   scope: string;
   expiresAt?: string | null;
   isActive: boolean;
@@ -13,4 +14,18 @@ export interface LoyverseIntegrationInterface {
   connectedAt: string;
   updatedAt: string;
   createdBy: strin;
+}
+
+export interface MerchantInteface {
+  id: string;
+  business_name: string;
+  email: string;
+  country: string;
+  currency: MerchantCurrency;
+  created_at: string;
+}
+
+export interface MerchantCurrency {
+  code: string;
+  decimal_phase: number;
 }

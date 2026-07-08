@@ -25,7 +25,6 @@ export async function POST(
       { status: 201 },
     );
   } catch (e: any) {
-    console.log({ e });
     return NextResponse.json(
       {
         success: false,

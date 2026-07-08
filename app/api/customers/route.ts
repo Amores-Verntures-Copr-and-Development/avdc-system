@@ -7,7 +7,6 @@ export async function POST(_request: Request) {
     const data = (await _request.json()) as CreateCustomerDto[];
     const res = await createCustomer(data);
     if (!res.success) {
-      console.log(res.message);
       throw new Error(`${res.error}`);
     }
 
@@ -52,8 +51,6 @@ export async function GET(_request: Request) {
     });
 
     if (!res.success) {
-      // propagate the actual message if available
-      console.log(res.error);
       throw new Error(res.message);
     }
 

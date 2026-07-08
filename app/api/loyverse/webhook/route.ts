@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     if (!receipt) {
       return NextResponse.json({ ok: true }, { status: 200 });
     }
-    console.log(receipt.payments);
+
     const createSales: CreateSaleDto = {
       storeId: 0, // map Loyverse store_id to your local storeId
       salesCreatedBy: 0, // map employee_id later
