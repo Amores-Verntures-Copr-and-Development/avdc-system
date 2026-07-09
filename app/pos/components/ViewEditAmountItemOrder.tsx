@@ -155,7 +155,15 @@ const ViewEditAmountItemOrder = ({
         <Input
           label="Final Amount"
           sizes="sm"
-          value={selectedDiscount ? finalTotal : form?.prodVarTotal}
+          type="number"
+          step="0.01"
+          value={
+            selectedDiscount
+              ? finalTotal
+              : form?.prodVarTotal !== 0
+                ? form?.prodVarTotal
+                : ""
+          }
           onChange={(e) => handleManualAmountChange(Number(e.target.value))}
         />
       </div>
