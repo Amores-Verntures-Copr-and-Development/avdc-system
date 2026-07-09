@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { OrderList } from "../PosPage";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import { Discounts } from "@/types/discount";
+import Toggle from "@/components/shared/Toggle";
 
 interface Props {
   data: OrderList | null;
@@ -87,12 +88,21 @@ const ViewEditAmountItemOrder = ({
 
   const handleSave = () => {
     if (!form) return;
+    const totalAmount = selectedDiscount
+      ? Number(finalTotal.toFixed(2))
+      : Number(form.prodVarTotal ?? 0);
 
+    const quantity = Number(form.quantity || 1);
     updateOrderList({
       ...form,
-      prodVarTotal: selectedDiscount
-        ? Number(finalTotal.toFixed(2))
-        : Number(form.prodVarTotal ?? 0),
+
+      prodVarTotal: totalAmount,
+
+      prodVarPrice:
+        Number(form.prodVarPrice) === 0 && !selectedDiscount
+          ? Number((totalAmount / quantity).toFixed(2))
+          : form.prodVarPrice,
+
       discounts: selectedDiscount
         ? [
             {
@@ -125,6 +135,7 @@ const ViewEditAmountItemOrder = ({
         : prev,
     );
   };
+
   return (
     <div className="flex h-full flex-col rounded-2xl bg-white p-5">
       {/* Header */}
@@ -152,6 +163,7 @@ const ViewEditAmountItemOrder = ({
           value={form?.quantity === 0 ? "" : form?.quantity}
           onChange={(e) => handleQuantityChange(Number(e.target.value))}
         />
+
         <Input
           label="Final Amount"
           sizes="sm"
@@ -219,8 +231,6 @@ const ViewEditAmountItemOrder = ({
           </>
         )}
       </div>
-
-      {/* Actions */}
       <div className="mt-auto flex justify-end gap-2 pt-6">
         <Button label="Cancel" size="sm" color="secondary" onClick={onClose} />
         <Button
