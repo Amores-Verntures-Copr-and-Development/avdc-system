@@ -5,8 +5,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    // const status = searchParams.get("status") || "";
-    // const category = searchParams.get("category") || "";
+    const sort = searchParams.get("sort") || "";
+    const rawOrder = searchParams.get("order");
     const from = searchParams.get("from") || "";
     const to = searchParams.get("to") || "";
     // const limit = searchParams.get("limit") || "";
@@ -14,8 +14,9 @@ export async function GET(request: NextRequest) {
     const store = searchParams.get("store") || "";
     // const limitNumber = Number(limit) || 100;
     // const pageNumber = Number(page) || 1;
-
-    const res = await getRequest({ from, to, search, store });
+    const order: "asc" | "desc" | undefined =
+      rawOrder === "asc" || rawOrder === "desc" ? rawOrder : undefined;
+    const res = await getRequest({ from, to, search, store, sort, order });
     if (!res.success) {
       throw new Error(res.message || "Failed to fetched request");
     }

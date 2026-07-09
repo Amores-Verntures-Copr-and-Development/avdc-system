@@ -98,10 +98,9 @@ const ViewEditAmountItemOrder = ({
 
       prodVarTotal: totalAmount,
 
-      prodVarPrice:
-        Number(form.prodVarPrice) === 0 && !selectedDiscount
-          ? Number((totalAmount / quantity).toFixed(2))
-          : form.prodVarPrice,
+      prodVarPrice: !selectedDiscount
+        ? Number((totalAmount / quantity).toFixed(2))
+        : form.prodVarPrice,
 
       discounts: selectedDiscount
         ? [

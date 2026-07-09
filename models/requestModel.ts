@@ -85,6 +85,8 @@ export const selectRequestOrders = async ({
   search,
   store,
   keyfields = {},
+  sort,
+  order,
 }: {
   storeId?: number;
   from?: string;
@@ -92,9 +94,20 @@ export const selectRequestOrders = async ({
   search?: string;
   store?: string;
   keyfields?: Partial<Request>;
+  sort?: string;
+  order?: null | "asc" | "desc";
 }) => {
+  const allowedSorts: Record<string, string> = {
+    requestNo: "ro.requestNo",
+    requestCreatedAt: "ro.requestCreatedAt",
+    requestStatus: "ro.requestStatus",
+    storeName: "s.storeName",
+    requestedByName: "requestedByName",
+    totalCost: "totalCost",
+  };
   const pool = await getDBConnection();
   const whereClauses: string[] = [];
+  const orderByClauses: string[] = [];
   const values: any[] = [];
   if (storeId !== null && storeId !== undefined) {
     whereClauses.push("ro.storeId = ?");
@@ -105,6 +118,11 @@ export const selectRequestOrders = async ({
     whereClauses.push("s.storeName LIKE ?");
     values.push(`%${store}%`);
   }
+
+  if (sort && order && allowedSorts[sort]) {
+    orderByClauses.push(`${allowedSorts[sort]} ${order.toUpperCase()}`);
+  }
+
   if (from && to) {
     whereClauses.push("DATE(ro.requestCreatedAt) BETWEEN ? AND ?");
     values.push(from);
@@ -124,6 +142,18 @@ export const selectRequestOrders = async ({
       values.push(value);
     }
   }
+  const orderBySQL =
+    orderByClauses.length > 0
+      ? `ORDER BY ${orderByClauses.join(", ")}`
+      : `ORDER BY
+        CASE ro.requestStatus
+          WHEN 'pending' THEN 1
+          WHEN 'in_progress' THEN 2
+          WHEN 'delivered' THEN 3
+          WHEN 'received' THEN 4
+          ELSE 5
+        END,
+        ro.requestCreatedAt DESC`;
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const sql = `SELECT 
@@ -150,15 +180,7 @@ LEFT JOIN RequestItems ri ON ri.requestId = ro.requestId
 LEFT JOIN Users u ON u.userId = ro.requestById
 LEFT JOIN Stores s ON s.storeId = ro.storeId  ${whereSQL}
 GROUP BY ro.requestId
-ORDER BY 
-    CASE ro.requestStatus
-        WHEN 'pending' THEN 1
-        WHEN 'in_progress' THEN 2
-        WHEN 'delivered' THEN 3
-        WHEN 'received' THEN 4
-        ELSE 5
-    END,
-    ro.requestCreatedAt DESC;`;
+${orderBySQL};`;
   const [rows] = await pool.execute(sql, values);
 
   return rows;

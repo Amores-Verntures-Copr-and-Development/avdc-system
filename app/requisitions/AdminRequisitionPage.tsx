@@ -79,6 +79,7 @@ const requisitionColumns: Column<DisplayRequestOrderDto>[] = [
     name: "Date Requested",
     key: "requestCreatedAt",
     selector: (row) => formatDateToWords(row.requestCreatedAt),
+    sortable: true,
   },
 ];
 
@@ -109,7 +110,8 @@ const AdminRequisitionPage = () => {
   //Display it
   const getApiUrl = useMemo(() => {
     if (!user) return null;
-
+    const sort = searchParams.get("sort") || "";
+    const order = searchParams.get("order") || "";
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
@@ -119,6 +121,8 @@ const AdminRequisitionPage = () => {
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "1";
     const params = new URLSearchParams();
+    if (sort) params.append("sort", sort);
+    if (order) params.append("order", order);
     if (search) params.append("search", search);
     if (from) params.append("from", from);
     if (to) params.append("to", to);

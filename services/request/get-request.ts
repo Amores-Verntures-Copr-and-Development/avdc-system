@@ -12,6 +12,8 @@ export async function getRequestOrders({
   search,
   store,
   keyfields = {},
+  order,
+  sort,
 }: {
   storeId?: number;
   from?: string;
@@ -19,6 +21,8 @@ export async function getRequestOrders({
   search?: string;
   store?: string;
   keyfields?: Partial<Request>;
+  sort?: string;
+  order?: null | "asc" | "desc";
 }) {
   try {
     const data = await selectRequestOrders({
@@ -28,6 +32,8 @@ export async function getRequestOrders({
       search,
       store,
       keyfields,
+      sort,
+      order,
     });
     return data;
   } catch (e) {

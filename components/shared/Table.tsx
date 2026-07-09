@@ -1,4 +1,11 @@
-import { Loader2, ChevronDown, Menu } from "lucide-react";
+import {
+  Loader2,
+  ChevronDown,
+  Menu,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import React, {
   useEffect,
   forwardRef,
@@ -14,7 +21,7 @@ import DateRange from "./DateRange";
 import { createPortal } from "react-dom";
 import Button, { ButtonProps } from "./Button";
 import IconButton from "./IconButton";
-
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 export interface SelectOption {
   label: string;
   value: any;
@@ -47,6 +54,7 @@ export interface Column<T = any> {
   selectOptionVariant?: SelectOptionVariant;
   bgCol?: string;
   bgHeader?: string;
+  sortable?: boolean;
 }
 
 type SelectOptionVariant = "native" | "custom";
@@ -164,6 +172,30 @@ const TableInner = <T extends Record<string, any>>(
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showMobileActions, setShowMobileActions] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const sortKey = searchParams.get("sort");
+  const sortOrder = searchParams.get("order");
+  const handleSort = (key: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    const currentSort = params.get("sort");
+    const currentOrder = params.get("order");
+
+    if (currentSort !== key) {
+      params.set("sort", key);
+      params.set("order", "asc");
+    } else if (currentOrder === "asc") {
+      params.set("order", "desc");
+    } else {
+      params.delete("sort");
+      params.delete("order");
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+  };
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
@@ -649,12 +681,27 @@ const TableInner = <T extends Record<string, any>>(
                 {columns.map((column) => (
                   <th
                     key={column.key}
+                    onClick={() => column.sortable && handleSort(column.key)}
                     className={`
-                      px-2 py-1.5 2xl:px-4 2xl:py-3 text-[8px] 2xl:text-[11px] font-medium uppercase tracking-wide text-gray-400
-                      ${column.bgHeader ?? "bg-white"}
-                    `}
+    px-2 py-1.5 2xl:px-4 2xl:py-3
+    text-[8px] 2xl:text-[11px]
+    font-medium uppercase tracking-wide
+    ${column.sortable ? "cursor-pointer" : ""}
+    ${column.bgHeader ?? "bg-white"}
+  `}
                   >
-                    {column.name}
+                    <div className="flex items-center gap-1">
+                      <span>{column.name}</span>
+
+                      {column.sortable &&
+                        (sortKey !== column.key ? (
+                          <ArrowUpDown className="h-3 w-3 text-gray-300" />
+                        ) : sortOrder === "asc" ? (
+                          <ArrowUp className="h-3 w-3 text-gray-600" />
+                        ) : (
+                          <ArrowDown className="h-3 w-3 text-gray-600" />
+                        ))}
+                    </div>
                   </th>
                 ))}
 

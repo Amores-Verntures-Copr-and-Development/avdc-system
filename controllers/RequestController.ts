@@ -49,6 +49,8 @@ export const getRequest = async ({
   to,
   search,
   store,
+  order,
+  sort,
 }: {
   storeId?: number;
   userId?: number;
@@ -58,10 +60,11 @@ export const getRequest = async ({
   search?: string;
   store?: string;
   keyfields?: Partial<Request>;
+  sort?: string;
+  order?: null | "asc" | "desc";
 }) => {
   let data;
   try {
-    console.log({ controller });
     if (controller === "stock-room" && userId) {
       data = await getRequestOrderFromStockRoomByPurchaserFields(userId);
     } else if (controller === "store") {
@@ -71,6 +74,8 @@ export const getRequest = async ({
       });
     } else {
       data = await getRequestOrders({
+        order,
+        sort,
         from,
         to,
         search,
