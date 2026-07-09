@@ -40,7 +40,7 @@ const BigCard = ({
               <h1 className="text-[9px] 2xl:text-sm font-semibold text-gray-900  flex items-center gap-2">
                 {title}
               </h1>
-              <span className="text-[8px] 2xl:text-xs text-gray-400">
+              <span className="text-[8px] 2xl:text-[11px] tracking-tight text-gray-400">
                 {subtitle}
               </span>
             </div>

@@ -64,7 +64,6 @@ export const LoyverseIntegrationController = {
     keyFields?: (keyof LoyverseIntegrationInterface)[];
   }) => {
     try {
-      console.log("UPDATES IN CONTROLLER: ", updates);
       const res = await updateLoyverseIntegrationByFields({
         updates,
         keyFields,

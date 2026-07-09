@@ -1,4 +1,5 @@
 import { LoyverseIntegrationController } from "@/controllers/IntegrationController";
+import { LoyverseItem } from "@/types/loyverse-integration";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -39,11 +40,19 @@ export async function GET(
 
     const items = await res.json();
 
+    const filteredItems = items.items.filter((item: LoyverseItem) =>
+      item.variants.some((variant: any) =>
+        variant.stores.some(
+          (store: any) => store.store_id === loyverse[0].storeId,
+        ),
+      ),
+    );
+
     return NextResponse.json(
       {
         success: true,
         message: "Items fetch successfully!",
-        data: items,
+        data: filteredItems,
       },
       { status: 200 },
     );

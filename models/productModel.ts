@@ -285,6 +285,7 @@ export const selectProducts = async ({
             'inventoryItemId', pv.inventoryItemId,
             'barcode', pb.barcode,
             'barcodeId', pb.barcodeId,
+            'prodVarImage', pv.prodVarImage,
             'sold', (
               SELECT COALESCE(SUM(si.salesItemQuantity), 0)
               FROM SalesItems si
@@ -312,7 +313,7 @@ export const selectProducts = async ({
         LEFT JOIN InventoryItems iis
           ON iis.inventoryItemId = pv.inventoryItemId
         LEFT JOIN Barcodes pb
-          ON pb.inventoryItemId = pv.inventoryItemId
+          ON pb.prodVarId = pv.prodVarId
         WHERE pv.prodId = p.prodId
           AND pv.prodVarDeletedAt IS NULL
       ) AS productVariants

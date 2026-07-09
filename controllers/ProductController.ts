@@ -439,6 +439,7 @@ export const updateProductVariantController = async (
       success: true,
     };
   } catch (e) {
+    console.log({ e });
     return {
       error: e,
       message: "Failed to update product variants!",

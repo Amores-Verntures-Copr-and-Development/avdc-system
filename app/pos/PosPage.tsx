@@ -935,17 +935,19 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           ) : (
             <div className="flex-1 bg-white border border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
               {productList.flatMap((p) =>
-                p.productVariants?.flatMap((pv) => (
-                  <ProductVariantCard
-                    key={pv.prodVarId}
-                    data={pv}
-                    product={p ?? null}
-                    onClick={function (data: ProductVariants): void {
-                      console.log(data);
-                    }}
-                    addProductOrder={addProductOrder}
-                  />
-                )),
+                p.productVariants?.flatMap((pv) => {
+                  return (
+                    <ProductVariantCard
+                      key={`${p.prodId}-${pv.prodVarId}`}
+                      data={pv}
+                      product={p ?? null}
+                      onClick={function (data: ProductVariants): void {
+                        console.log(data);
+                      }}
+                      addProductOrder={addProductOrder}
+                    />
+                  );
+                }),
               )}
             </div>
           )}

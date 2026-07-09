@@ -25,6 +25,7 @@ export interface ProductVariants {
   prodVarCreatedBy: number;
   prodId: number;
   variantComponents?: VariantComponents[];
+  prodVarImage?: string | null;
   sold?: number;
   stocks?: number;
   barcode?: string;

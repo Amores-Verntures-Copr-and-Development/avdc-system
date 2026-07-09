@@ -74,7 +74,9 @@ const ProductVariantCard = ({
     return true;
   })();
 
-  const imageUrl = product.productImage || "";
+  const imageUrl = data?.prodVarImage
+    ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${data?.prodVarImage}`
+    : "";
 
   const handleClick = () => {
     if (!hasStock) return;
@@ -161,40 +163,45 @@ const ProductVariantCard = ({
       />
 
       {showImage && (
-        <div className="relative flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-          <div
-            className={`
-              absolute right-2 top-2 z-10 rounded-xl px-2.5 py-1
-              text-xs font-bold text-white shadow-lg backdrop-blur-sm
-              ${
-                hasStock
-                  ? `bg-gradient-to-br from-primary-1 to-pink-500`
-                  : `bg-gray-400`
-              }
-            `}
-          >
+        <div className="relative h-36 overflow-hidden bg-white">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-pink-50" />
+
+          <div className="absolute right-2 top-2 z-20 rounded-full bg-primary-1 px-3 py-1 text-xs font-bold text-white shadow-md">
             {formatPeso(data.prodVarPrice)}
           </div>
 
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={data.prodVarName}
-              fill
-              className="object-contain p-3 transition-transform duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center text-gray-300">
-              <ImageIcon className="h-8 w-8" />
-              <span className="mt-1 text-[10px] font-medium">No Image</span>
+          <div className="relative flex h-full items-center justify-center p-3">
+            {imageUrl ? (
+              <div className="relative h-full w-full overflow-hidden rounded-xl bg-white shadow-sm">
+                <Image
+                  src={imageUrl}
+                  alt={data.prodVarName}
+                  fill
+                  unoptimized
+                  className="object-contain p-2 transition-transform duration-300 group-hover:scale-110"
+                />
+              </div>
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center rounded-xl border border-dashed border-pink-200 bg-pink-50/40 text-pink-400">
+                <ImageIcon className="h-8 w-8" />
+                <span className="mt-1 text-[11px] font-semibold">No Image</span>
+              </div>
+            )}
+          </div>
+
+          {hasStock && (
+            <div className="absolute inset-x-3 bottom-3 z-20 translate-y-2 opacity-0 transition-all duration-200 group-hover:translate-y-0 group-hover:opacity-100">
+              <div className="rounded-full bg-white/95 px-3 py-1.5 text-center text-xs font-semibold text-primary-1 shadow-lg backdrop-blur">
+                Click to add
+              </div>
             </div>
           )}
 
           {!hasStock && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
-              <div className="rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">
+            <div className="absolute inset-0 z-30 flex items-center justify-center bg-white/70 backdrop-blur-[1px]">
+              <span className="rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white shadow">
                 Out of Stock
-              </div>
+              </span>
             </div>
           )}
         </div>
@@ -257,14 +264,6 @@ const ProductVariantCard = ({
           </div>
         </div>
       </div>
-
-      {hasStock && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-          <div className="rounded-xl bg-white/90 px-4 py-2 text-xs font-semibold text-primary-1 shadow-xl backdrop-blur-sm">
-            Click to add
-          </div>
-        </div>
-      )}
     </div>
   );
 };

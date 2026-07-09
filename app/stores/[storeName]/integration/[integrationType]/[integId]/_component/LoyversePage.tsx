@@ -7,7 +7,7 @@ import { LoyverseIntegrationInterface } from "@/types/loyverse-integration";
 import { fetcher } from "@/utils/fetcher";
 import React from "react";
 import useSWR from "swr";
-import MerchantPage from "./MerchantPage";
+import MerchantPage from "./LoyverseStorePage";
 import LoyverseMainPage from "./LoyverseMainPage";
 
 interface LoyversePageProps {
@@ -27,9 +27,8 @@ const LoyversePage = ({ integId, storeId }: LoyversePageProps) => {
     fetcher,
   );
 
-  console.log(responseInteg);
   const loyverseInteg = responseInteg?.data[0];
-  const hasMerchantId = loyverseInteg?.merchantId;
+  const hasStoreId = loyverseInteg?.storeId;
 
   if (isLoadInteg) return <LoaderComponent />;
   if (!loyverseInteg)
@@ -39,15 +38,15 @@ const LoyversePage = ({ integId, storeId }: LoyversePageProps) => {
       <PageHeader
         title="Loyverse Integration"
         subtitle={
-          hasMerchantId
+          hasStoreId
             ? "Manage loyverse integration"
-            : "Select a loyverse merchant to connect"
+            : "Select a loyverse store to connect"
         }
       />
       <div className="flex flex-col flex-1">
         {isLoadInteg ? (
           <LoaderComponent />
-        ) : hasMerchantId ? (
+        ) : hasStoreId ? (
           <LoyverseMainPage data={loyverseInteg} storeId={storeId} />
         ) : (
           <MerchantPage

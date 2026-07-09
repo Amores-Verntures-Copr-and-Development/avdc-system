@@ -10,7 +10,18 @@ import { formatDateToWords } from "@/utils/formatDateToWords";
 import React, { useState } from "react";
 import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
-import { Check, Pencil, Plus, Save, Trash, TrendingUp, X } from "lucide-react";
+import {
+  Camera,
+  Check,
+  ImageIcon,
+  Pencil,
+  Plus,
+  Save,
+  Trash,
+  TrendingUp,
+  Upload,
+  X,
+} from "lucide-react";
 import Input from "@/components/shared/Input";
 import { ProductVariants } from "@/types/products";
 import Toggle from "@/components/shared/Toggle";
@@ -27,7 +38,8 @@ import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import { DisplayAllInventory } from "@/app/inventory/InventoryPage";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
-
+import Image from "next/image";
+import { removeBackground } from "@imgly/background-removal";
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
   showAddComponent: boolean;
@@ -48,6 +60,9 @@ const VariantComponentPage = ({
   storeId,
 }: VariantComponentPageProps) => {
   const { user, hasStore } = useSession();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isChangeInventoryItemOpen, setIsChangeInventoryItemOpen] =
     useState(false);
   const { data: responseItem } = useSWR<ApiResponse<DisplayInventoryItems[]>>(
@@ -65,6 +80,52 @@ const VariantComponentPage = ({
     (i) =>
       i.inventoryReferenceId === storeId && i.inventoryReference === "store",
   );
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleUploadImage = async () => {
+    if (!imageFile || !data?.prodVarId) {
+      toast.error("Please select an image first.");
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
+      const result = await fetch(
+        `/api/products/${storeId}/product-variants/${data.prodId}/${data.prodVarId}/image`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        },
+      );
+
+      const res = await result.json();
+
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+
+      toast.success("Image uploaded successfully");
+      setImageFile(null);
+      setImagePreview(null);
+      mutate();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
   const searchItems = async (
     query: string,
   ): Promise<DisplayInventoryItems[]> => {
@@ -170,6 +231,80 @@ const VariantComponentPage = ({
       setIsDeleting(false);
     }
   };
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false);
+  const [isApplyingWhiteBackground, setIsApplyingWhiteBackground] =
+    useState(false);
+  const handleRemoveBackground = async () => {
+    if (!imageFile) return;
+
+    try {
+      setIsRemovingBackground(true);
+
+      const blob = await removeBackground(imageFile);
+
+      const file = new File([blob], imageFile.name, {
+        type: "image/png",
+      });
+
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      toast.success("Background removed");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to remove background");
+    } finally {
+      setIsRemovingBackground(false);
+    }
+  };
+
+  const handleWhiteBackground = async () => {
+    if (!imageFile) return;
+
+    try {
+      setIsApplyingWhiteBackground(true);
+
+      const transparentBlob = await removeBackground(imageFile);
+
+      const img = new window.Image();
+      img.src = URL.createObjectURL(transparentBlob);
+
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      const ctx = canvas.getContext("2d")!;
+
+      // White background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw transparent product
+      ctx.drawImage(img, 0, 0);
+
+      const blob = await new Promise<Blob>((resolve) =>
+        canvas.toBlob((b) => resolve(b!), "image/png"),
+      );
+
+      const file = new File([blob], imageFile.name, {
+        type: "image/png",
+      });
+
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+
+      toast.success("White background applied");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to process image");
+    } finally {
+      setIsApplyingWhiteBackground(false);
+    }
+  };
   return (
     <div className="min-h-0 flex-1 flex flex-col gap-5 overflow-y-auto">
       <BigCard
@@ -261,12 +396,12 @@ const VariantComponentPage = ({
               {data?.inventoryItemId && (
                 <div className="rounded-xl border border-pink-300 bg-pink-50/60 p-4 shadow-sm">
                   <div className="flex items-center gap-4">
-                    <TrendingUp className="flex h-10 w-10 items-center justify-center rounded-xl bg-pink-100 text-xl text-pink-600" />
+                    <TrendingUp className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-100 text-xl text-pink-600" />
 
                     <div className="flex flex-col">
-                      <span className="text-sm text-gray-500">Profit</span>
+                      <span className="text-xs text-gray-500">Profit</span>
                       <div className="flex items-center gap-3">
-                        <span className="text-xl font-bold text-pink-600">
+                        <span className="text-sm font-bold text-pink-600">
                           ₱{Number(data?.profit ?? 0).toLocaleString()}
                         </span>
 
@@ -358,6 +493,115 @@ const VariantComponentPage = ({
               {/* Bottom row: Price and Created At */}
             </div>
           )}
+        </div>
+      </BigCard>
+
+      <BigCard
+        title="Product Image"
+        isRounded={false}
+        subtitle="Upload, capture, or enhance the product variant image."
+      >
+        <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-pink-50/30 p-4">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[220px_1fr]">
+            <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              {data?.prodVarImage || imagePreview ? (
+                <Image
+                  src={
+                    imagePreview ||
+                    `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${data?.prodVarImage}`
+                  }
+                  alt={data?.prodVarName ?? "Variant Image"}
+                  fill
+                  className="object-contain p-3"
+                  unoptimized
+                />
+              ) : (
+                <div className="flex flex-col items-center text-center text-gray-400">
+                  <ImageIcon className="h-12 w-12 text-pink-400" />
+                  <span className="mt-2 text-sm font-semibold text-gray-700">
+                    No image yet
+                  </span>
+                  <span className="text-xs">Upload or use camera</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-col justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">
+                  {data?.prodVarName}
+                </h3>
+                <p className="mt-1 text-xs text-gray-500">
+                  Recommended: square image, white background, JPG/PNG/WEBP.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-pink-200 bg-white px-4 py-3 text-sm font-semibold text-pink-600 hover:bg-pink-50">
+                  <Upload className="h-4 w-4" />
+                  Upload Image
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 py-3 text-sm font-semibold text-white hover:bg-pink-700">
+                  <Camera className="h-4 w-4" />
+                  Use Camera
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+
+                <Button
+                  size="xs"
+                  color="secondary"
+                  label="Remove Background"
+                  loading={isRemovingBackground}
+                  onClick={handleRemoveBackground}
+                  disabled={!imageFile}
+                />
+
+                <Button
+                  size="xs"
+                  color="secondary"
+                  label="White Background"
+                  loading={isApplyingWhiteBackground}
+                  onClick={handleWhiteBackground}
+                  disabled={!imageFile}
+                />
+              </div>
+
+              {imageFile && (
+                <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
+                  <Button
+                    size="xs"
+                    color="secondary"
+                    label="Cancel"
+                    disabled={isUploadingImage}
+                    onClick={() => {
+                      setImageFile(null);
+                      setImagePreview(null);
+                    }}
+                  />
+
+                  <Button
+                    size="xs"
+                    label="Save Image"
+                    loading={isUploadingImage}
+                    onClick={handleUploadImage}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </BigCard>
       <BigCard title="Linked Inventory Item" isRounded={false}>
@@ -665,7 +909,7 @@ const DetailCard = ({
   icon: React.ReactNode;
   badge?: boolean;
 }) => (
-  <div className="flex items-center gap-2 2xl:gap-4 rounded-xl border border-gray-200 bg-white p-2 2xl:p-4 shadow-sm">
+  <div className="flex items-center gap-2 2xl:gap-4 rounded-xl border border-gray-200 bg-white p-2 2xl:p-2 shadow-sm">
     <div className="flex 2xl:h-10 2xl:w-10 w-5 h-5 items-center justify-center rounded-xl bg-pink-50 text-pink-600 font-semibold">
       {icon}
     </div>
@@ -680,7 +924,7 @@ const DetailCard = ({
           {value}
         </span>
       ) : (
-        <span className="text-xs 2xl:text-sm font-semibold text-gray-900">
+        <span className="text-xs 2xl:text-xs font-semibold text-gray-900">
           {value}
         </span>
       )}

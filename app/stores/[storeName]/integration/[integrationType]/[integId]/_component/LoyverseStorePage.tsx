@@ -1,6 +1,6 @@
 import {
   LoyverseIntegrationInterface,
-  MerchantInteface,
+  LoyverseStore,
 } from "@/types/loyverse-integration";
 
 import { ApiResponse } from "@/types/api";
@@ -20,44 +20,49 @@ import useSWR from "swr";
 import Button from "@/components/shared/Button";
 import toast from "react-hot-toast";
 
-interface MerchantPageProps {
+interface LoyverseStorePageProps {
   data: LoyverseIntegrationInterface;
   storeId: number;
   mutate: () => void;
 }
 
-const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
-  const [selectedMerchantId, setSelectedMerchantId] = useState<string>("");
+const LoyverseStorePage = ({
+  data,
+  storeId,
+  mutate,
+}: LoyverseStorePageProps) => {
+  const [selectedStoreId, setSelectedStoreId] = useState<string>("");
   const [isConnecting, setIsConneting] = useState(false);
-  const { data: responseMerchant, isLoading: isLoadingMerchant } = useSWR<
-    ApiResponse<MerchantInteface[]>
-  >(`/api/integration/${storeId}/${data.integId}/loyverse/merchant`, fetcher);
+  const { data: responseStore, isLoading: isLoadingStore } = useSWR<
+    ApiResponse<LoyverseStore[]>
+  >(`/api/integration/${storeId}/${data.integId}/loyverse/stores`, fetcher);
 
-  const merchants = responseMerchant?.data ?? [];
+  const stores = responseStore?.data ?? [];
 
   const handleConnect = async () => {
     setIsConneting(true);
-    if (!selectedMerchantId) {
-      toast.error("No selected merchant to connet!");
+    if (!selectedStoreId) {
+      toast.error("No selected stores to connet!");
       return;
     }
 
-    console.log("Selected merchant:", selectedMerchantId);
     try {
       const res = await fetch(
-        `/api/integration/${storeId}/${data.integId}/loyverse/merchant`,
+        `/api/integration/${storeId}/${data.integId}/loyverse/stores`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ merchantId: selectedMerchantId }),
+          body: JSON.stringify({ storeId: selectedStoreId }),
         },
       );
       const json = await res.json();
       if (!json.success) {
-        throw new Error(json.message || "Failed to connect merchant to store!");
+        throw new Error(
+          json.message || "Failed to connect loyverse store to your store!",
+        );
       }
       mutate();
-      toast.success("Merchant linked successfully!");
+      toast.success("Loyverse Store linked successfully!");
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -70,24 +75,23 @@ const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
       <div className="bg-blue-300/10 border border-blue-400/50 rounded-sm flex-1 p-2 items-center flex gap-1">
         <Info className="text-blue-500 w-4 h-4" />
         <span className="text-blue-500 text-[11px] font-medium">
-          Choose the Loyverse merchant account you want to connect with your
-          store.
+          Choose the Loyverse store account you want to connect with your store.
         </span>
       </div>
 
       <div className="flex flex-col gap-3">
-        {isLoadingMerchant ? (
+        {isLoadingStore ? (
           <LoaderComponent />
-        ) : merchants.length === 0 ? (
-          <div className="text-sm text-muted-text">No merchant found.</div>
+        ) : stores.length === 0 ? (
+          <div className="text-sm text-muted-text">No store found.</div>
         ) : (
-          merchants.map((m, index) => {
-            const isSelected = selectedMerchantId === m.id;
+          stores.map((m, index) => {
+            const isSelected = selectedStoreId === m.id;
 
             return (
               <div
                 key={index}
-                onClick={() => setSelectedMerchantId(m.id)}
+                onClick={() => setSelectedStoreId(m.id)}
                 className={`flex items-center justify-between rounded-md border border-card bg-white p-4 cursor-pointer transition-all ${
                   isSelected
                     ? "border-primary bg-primary/5 shadow-sm"
@@ -98,7 +102,7 @@ const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
                   <input
                     type="radio"
                     checked={isSelected}
-                    onChange={() => setSelectedMerchantId(m.id)}
+                    onChange={() => setSelectedStoreId(m.id)}
                     className="accent-primary"
                   />
 
@@ -112,22 +116,17 @@ const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
 
                   <div className="flex flex-col">
                     <h3 className="text-sm font-semibold text-primary-text">
-                      {m.business_name}
+                      {m.name}
                     </h3>
 
                     <p className="text-xs text-secondary-text">
-                      Merchant ID: {m.id}
+                      Store ID: {m.id}
                     </p>
 
                     <div className="flex items-center gap-4 mt-1 text-xs text-secondary-text">
                       <span className="flex items-center gap-1">
                         <Building2 className="w-3 h-3" />
-                        {m.country}
-                      </span>
-
-                      <span className="flex items-center gap-1">
-                        <Globe2 className="w-3 h-3" />
-                        {m.currency?.code}
+                        {m.address}
                       </span>
                     </div>
                   </div>
@@ -145,11 +144,11 @@ const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
           })
         )}
       </div>
-      {selectedMerchantId && (
+      {selectedStoreId && (
         <div className="flex justify-end">
           <div>
             <Button
-              label="Connect Selected Merchant"
+              label="Connect Selected Store"
               size="sm"
               isRounded={false}
               icon={Link}
@@ -163,4 +162,4 @@ const MerchantPage = ({ data, storeId, mutate }: MerchantPageProps) => {
   );
 };
 
-export default MerchantPage;
+export default LoyverseStorePage;

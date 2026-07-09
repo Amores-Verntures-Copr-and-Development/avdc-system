@@ -30,23 +30,22 @@ export async function GET(
       throw new Error("No Loyverse integration found!");
     }
 
-    const merchantRes = await fetch("https://api.loyverse.com/v1.0/stores", {
+    const storeRes = await fetch("https://api.loyverse.com/v1.0/stores", {
       headers: {
         Authorization: `Bearer ${integration.accessToken}`,
         Accept: "application/json",
       },
     });
 
-    const merchantData = await merchantRes.json();
-    console.log(merchantData.stores);
-    if (!merchantRes.ok) {
+    const storeData = await storeRes.json();
+    if (!storeRes.ok) {
       return NextResponse.json(
         {
           success: false,
           message: "Failed to fetch Loyverse merchant",
-          error: merchantData,
+          error: storeData,
         },
-        { status: merchantRes.status },
+        { status: storeRes.status },
       );
     }
 
@@ -54,7 +53,7 @@ export async function GET(
       {
         success: true,
         message: "Fetched successfully!",
-        data: [merchantData],
+        data: storeData.stores,
       },
       { status: 200 },
     );
@@ -85,16 +84,16 @@ export async function PATCH(
       throw new Error("No integration ID found!");
     }
 
-    if (!body.merchantId) {
-      throw new Error("No merchant ID to be updated!");
+    if (!body.storeId) {
+      throw new Error("No store ID to be updated!");
     }
     const res = await LoyverseIntegrationController.update({
-      updates: [{ integId: Number(integId), merchantId: body.merchantId }],
+      updates: [{ integId: Number(integId), storeId: body.storeId }],
       keyFields: ["integId"],
     });
 
     if (!res.success) {
-      throw new Error("Failed to update merchant ID!");
+      throw new Error("Failed to update store ID!");
     }
 
     return NextResponse.json(

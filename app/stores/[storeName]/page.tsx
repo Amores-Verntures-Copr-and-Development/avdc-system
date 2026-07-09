@@ -17,17 +17,13 @@ import {
   IdCard,
   MapPin,
   Pencil,
-  PinIcon,
-  Plus,
   Puzzle,
   Store,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
-import DatePicker from "react-datepicker";
 import useSWR from "swr";
 import AddUserToStoreForm from "./components/AddUserToStoreForm";
-import { EmployeeInterface } from "@/types/employees";
 import { IntegrationInterface } from "@/types/integrations";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 
