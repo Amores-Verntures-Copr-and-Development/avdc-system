@@ -1,4 +1,7 @@
-import { CreateCustomerDto } from "@/dtos/customer.dto";
+import {
+  CreateCustomerDto,
+  RegisterCustomerAccountDto,
+} from "@/dtos/customer.dto";
 import { getDBConnection } from "@/lib/db";
 import {
   insertCustomer,
@@ -156,5 +159,42 @@ export const customerServices = {
       updates: updateData,
       connection,
     });
+  },
+
+  registerCustomerAccount: async ({
+    data,
+    storeId,
+  }: {
+    data: RegisterCustomerAccountDto;
+    storeId: number;
+  }) => {
+    try {
+      const pool = await getDBConnection();
+      const connection = await pool.getConnection();
+      await connection.beginTransaction();
+
+      const customerData: CreateCustomerDto[] = [
+        {
+          customerName: data.customerName,
+          customerEmail: data.customerEmail,
+          customerPhone: data.customerPhone,
+          customerType: data.customerType,
+          customerSource: "online",
+          customerCreatedBy: null,
+          storeId: storeId,
+          customerAddress: data.customerAddress,
+        },
+      ];
+
+      const insertedCustomerId = await insertCustomer({
+        data: customerData,
+        connection,
+      });
+
+      await connection.commit();
+      return insertedCustomerId;
+    } catch (e) {
+      throw e;
+    }
   },
 };

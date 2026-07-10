@@ -5,28 +5,51 @@ export interface Customer {
   customerAddress: string;
   customerPhone: string;
   customerType: string;
+  customerSource?: CustomerSource;
   customerCreatedAt: string;
   customerUpdatedAt: string;
   customerDeletedAt: string;
-  customerCreatedBy: number;
+  customerCreatedBy?: number | null;
   storeId: number;
 }
 
+export type CustomerSource = "online" | "system";
+
+export type CustomerAccountStatus = "active" | "inactive" | "deleted";
+
 export interface CustomerAccount {
-  customerAccountId: number;
+  cusAccId: number;
+  company: string | null;
+  email: string;
+  password: string;
+
+  emailVerified: boolean;
+  emailVerifiedAt: string | null;
+
+  phoneVerified: boolean;
+  phoneVerifiedAt: string | null;
+
+  cusAccStatus: CustomerAccountStatus;
+
+  cusAccCreatedAt: string;
+  cusAccUpdatedAt: string;
+  cusAccDeletedAt: string | null;
+
   customerId: number;
-  customerPassword: string;
-  customerVerified: boolean;
-  status: CustomerAccStatus;
-  approvedBy: number;
-  approvedAt: string;
-  rejectionReason: string;
-  rejectedAt: string;
-  createdAt: string;
 }
 
-export type CustomerAccStatus =
-  | "Pending_Verification"
-  | "Pending_Approval"
-  | "Approved"
-  | "Rejected";
+export interface CusEmailVerification {
+  cusEmailVerId: number;
+  cusAccId: number;
+
+  codeHash: string;
+
+  expiresAt: string;
+  verifiedAt: string | null;
+
+  attempts: number;
+  isUsed: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}

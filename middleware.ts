@@ -45,6 +45,7 @@ export function middleware(request: NextRequest) {
       "/api/loyverse/callback",
       "/api/loyverse/webhook",
       "/api/overview",
+      "/api/auth/customers/register/st-martins",
     ];
 
     if (!publicApiRoutes.includes(pathname) && !token) {
@@ -56,7 +57,11 @@ export function middleware(request: NextRequest) {
 
     return withCors(request, NextResponse.next());
   }
-  const publicApiRoutes = ["/api/auth/login", "/api/auth/users"];
+  const publicApiRoutes = [
+    "/api/auth/login",
+    "/api/auth/users",
+    "/api/auth/customers/register/st-martins",
+  ];
   if (publicApiRoutes.includes(pathname)) {
     return NextResponse.next();
   }

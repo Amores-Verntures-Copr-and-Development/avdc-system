@@ -9,6 +9,7 @@ export type CreateCustomerDto = Pick<
   | "customerCreatedBy"
   | "customerType"
   | "customerAddress"
+  | "customerSource"
 >;
 
 export interface DisplayCustomerDto extends Customer {
@@ -21,8 +22,8 @@ export interface DisplayCustomerDto extends Customer {
 
 export type CreateCustomerAccountDto = Pick<
   CustomerAccount,
-  "customerId" | "customerPassword" | "customerVerified"
+  "email" | "password" | "customerId" | "company"
 >;
 
-export interface CreateCustomerOnline
+export interface RegisterCustomerAccountDto
   extends CreateCustomerDto, CreateCustomerAccountDto {}

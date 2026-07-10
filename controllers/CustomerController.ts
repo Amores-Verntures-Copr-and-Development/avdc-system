@@ -1,4 +1,7 @@
-import { CreateCustomerDto } from "@/dtos/customer.dto";
+import {
+  CreateCustomerDto,
+  RegisterCustomerAccountDto,
+} from "@/dtos/customer.dto";
 import { customerServices } from "@/services/customer/customerServices";
 import { Customer } from "@/types/customer";
 import { StoreInterface } from "@/types/stores";
@@ -21,9 +24,21 @@ export const createCustomer = async (data: CreateCustomerDto[]) => {
   }
 };
 
-export const registerCustomerOnlineController = async () => {
+export const registerCustomerOnlineController = async (
+  data: RegisterCustomerAccountDto,
+) => {
   try {
-  } catch (e) {}
+    return {
+      success: true,
+      message: "Customer registered successfully!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to register customer!",
+      error: e,
+    };
+  }
 };
 
 export const createCustomerMultipleStore = async (
