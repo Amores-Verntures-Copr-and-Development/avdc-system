@@ -547,7 +547,7 @@ export const selectRequetItemsByPOId = async ({
 LEFT JOIN InventoryItems ii ON ii.inventoryItemId = ri.invItem
 LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
 LEFT JOIN PurchaseOrderItems poi ON poi.itemId = i.itemId
-WHERE poi.poItemId IN (${placeholders})`;
+WHERE poi.poItemId IN (${placeholders}) AND ri.reqItemStatus != 'removed'`;
 
   const [rows] = await connection.execute<RowDataPacket[]>(sql, poItemId);
   return rows;

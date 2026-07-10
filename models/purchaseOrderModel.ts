@@ -640,6 +640,5 @@ export const selectPurchaseOrderItemByRequesItemId = async ({
     WHERE ri.reqItemId = ? GROUP BY poid
 )`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [reqItemId]);
-
   return rows;
 };

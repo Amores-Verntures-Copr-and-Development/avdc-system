@@ -7,6 +7,9 @@ import { InventoryItemInterface } from "@/types/inventory";
 import { updateInventoryItem } from "@/services/inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { createInventoryMovement } from "@/services/inventory/inventory-movement/create-inventory-movement";
+import { findPurchaserOrderItemByReqItemId } from "@/services/purchase/purchase-items/get-purchase-tems";
+import { findRequestItemsByPoItemIdWithConverions } from "./get-request-items";
+import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 
 export async function processAdditionalReceiveRequestItem(
   data: AdditionalReceiveDto,
@@ -31,6 +34,35 @@ export async function processAdditionalReceiveRequestItem(
       updates: [requestItemUpdate],
       connection: connection,
     });
+
+    const poItems = await findPurchaserOrderItemByReqItemId({
+      connection,
+      reqItemId: requestItemUpdate.reqItemId!,
+    });
+
+    const checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
+      connection,
+      poItemId: poItems[0].poItemId,
+    });
+    const sumOfOrderReceived = checkRequestItems.reduce((sumItems, i) => {
+      return sumItems + Number(i.reqItemReceived);
+    }, 0);
+    const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
+      ["received", "complete"].includes(req.reqItemStatus),
+    );
+
+    if (requestItemsIsAllDelivered) {
+      await updatePurchaseOrderItems({
+        connection,
+        updates: [
+          {
+            poItemId: poItems[0].poItemId,
+            poItemOrderedQty: Number(sumOfOrderReceived),
+          },
+        ],
+        keyFields: ["poItemId"],
+      });
+    }
     const inventoryItem = await findInventoryItemsByField({
       connection: connection,
       keyFields: { inventoryItemId: requestItemUpdate.invItem },

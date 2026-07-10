@@ -434,7 +434,8 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   };
   const handleNotOrderedSupplier = async (data: DisplayPOItemsSupplier) => {
     const hasItemForUnordered = data.items.some(
-      (poi) => poi.poItemStatus === "sent",
+      (poi) =>
+        poi.poItemStatus === "sent" || poi.poItemStatus === "not_ordered",
     );
 
     if (!hasItemForUnordered) {
@@ -443,7 +444,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     }
     const newData: DisplayPOItemsSupplier = {
       ...data,
-      items: data.items.filter((poi) => poi.poItemStatus === "sent"),
+      items: data.items.filter(
+        (poi) =>
+          poi.poItemStatus === "sent" || poi.poItemStatus === "not_ordered",
+      ),
     };
     setIsSubmittingNotOrder(true);
     try {

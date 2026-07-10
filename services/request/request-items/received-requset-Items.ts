@@ -23,8 +23,6 @@ export const receiveRequestItems = async ({
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
-
-    //Update the Request Item Received
     const updateReceivedRequestItems: Partial<RequestItems>[] =
       requestItems.map((i) => ({
         reqItemId: i.reqItemId,
@@ -66,6 +64,12 @@ export const receiveRequestItems = async ({
           const updatePoItem: Partial<PurchaseOrderItems> = {
             poItemId: poItems[0].poItemId,
             poItemStatus: "received_store",
+            ...(poItems[0].poItemStatus === "sent" && {
+              poItemOrderedQty: checkRequestItems.reduce(
+                (total, r) => total + Number(r.reqItemReceived),
+                0,
+              ),
+            }),
           };
           updatePoItems.push(updatePoItem);
         }
@@ -111,7 +115,6 @@ export const receiveRequestItems = async ({
         keyFields: ["poItemId"],
       });
     }
-
     await connection.commit();
     return updatePoItems;
   } catch (e) {

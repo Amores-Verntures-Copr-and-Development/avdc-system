@@ -130,10 +130,11 @@ export async function processReceivedRequest(data: Request) {
       );
 
       if (updatePoItems && updatePoItems.length > 0) {
+        console.log({ updatePoItems });
         const updatePoItemsDeliveredToStore: Partial<PurchaseOrderItems>[] =
           updatePoItems.map((i) => ({
             poItemId: i.poItemId,
-            // poItemOrderedQty: i.poItemOrderedQty,
+            poItemOrderedQty: i.poItemOrderedQty,
             poItemStatus: "received_store",
           }));
         await updatePurchaseOrderItems({
