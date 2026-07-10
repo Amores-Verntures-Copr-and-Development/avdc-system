@@ -23,6 +23,7 @@ import {
   Clock,
   Download,
   FileText,
+  Minus,
   Package,
   PackageCheck,
   Pencil,
@@ -50,6 +51,8 @@ import ReceiveItemComponent from "./components/ReceiveItemComponent";
 import AdditionalReceiveModal from "./components/AdditionalReceiveModal";
 import Input from "@/components/shared/Input";
 import EditRequestDescription from "./components/EditRequestDescription";
+import EditReceiveModal from "./components/DeductReceiveModal";
+import DeductReceiveModal from "./components/DeductReceiveModal";
 
 interface ViewRequestModalProps {
   selectedReq: DisplayRequestOrderDto | null;
@@ -85,10 +88,10 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
     [],
   );
   const [showAdditionalReceive, setShowAdditionalReceive] = useState(false);
+  const [showDeductReceive, setShowDeductReceive] = useState(false);
   const [originalData, setOriginalData] = useState<DisplayRequestItems[]>([]);
   const [showReceivedConfirmation, setShowReceivedConfirmation] =
     useState(false);
-
   const [isAddOrEditDes, setIsAddOrEditDes] = useState(false);
   const [showNotOrderedConfirmation, setShowNotOrderedConfirmation] =
     useState(false);
@@ -1380,15 +1383,26 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                       />
                     )}
                   {row.reqItemStatus === "received" && (
-                    <IconButton
-                      onClick={function (): void {
-                        setSelectedRowItem(row);
-                        setShowAdditionalReceive(true);
-                      }}
-                      label={"Additional Receive"}
-                      bg={"green"}
-                      icon={<Plus className="w-4 h-4" />}
-                    />
+                    <div className="flex gap-1">
+                      <IconButton
+                        onClick={function (): void {
+                          setSelectedRowItem(row);
+                          setShowDeductReceive(true);
+                        }}
+                        label={"Deduct Receive Qty"}
+                        bg={"red"}
+                        icon={<Minus className="w-4 h-4" />}
+                      />
+                      <IconButton
+                        onClick={function (): void {
+                          setSelectedRowItem(row);
+                          setShowAdditionalReceive(true);
+                        }}
+                        label={"Additional Receive"}
+                        bg={"green"}
+                        icon={<Plus className="w-4 h-4" />}
+                      />
+                    </div>
                   )}
                 </div>
               );
@@ -1920,6 +1934,29 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           }}
           onClose={function (): void {
             setShowAdditionalReceive(false);
+
+            setSelectedRow(null);
+          }}
+        />
+      </Popup>
+      <Popup
+        title={`Deduct Receive ${selectedRowItem?.itemName}`}
+        isOpen={showDeductReceive}
+        onClose={function (): void {
+          setShowDeductReceive(false);
+
+          setSelectedRowItem(null);
+        }}
+        background="bg-white/20"
+      >
+        <DeductReceiveModal
+          data={selectedRowItem}
+          mutate={() => {
+            mutate();
+            mutateRequest();
+          }}
+          onClose={function (): void {
+            setShowDeductReceive(false);
 
             setSelectedRow(null);
           }}

@@ -1,5 +1,6 @@
 import { POAddToRequestItemForm } from "@/app/purchase-orders/components/_components/AddItemToRequestFromPOModal";
 import { AdditionalReceiveDto } from "@/app/requisitions/components/AdditionalReceiveModal";
+import { DeductReceiveDto } from "@/app/requisitions/components/DeductReceiveModal";
 import { CreateRequestFormDto, CreateRequestItemDto } from "@/dtos/request.dto";
 import { deleteRequestById } from "@/services/request/delete-request";
 import {
@@ -15,6 +16,7 @@ import { getRequestOrderItems } from "@/services/request/request-items/get-reque
 import { notOrderedRequestItems } from "@/services/request/request-items/not-ordered-requestItems";
 import { processAdditionalReceiveRequestItem } from "@/services/request/request-items/proccess-additional-receive-item";
 import { processAddItemFromPOtoRequest } from "@/services/request/request-items/process-add-po-to-request";
+import { processDeductReceiveItem } from "@/services/request/request-items/process-deduct-receive-item";
 import { receiveRequestItems } from "@/services/request/request-items/received-requset-Items";
 import { updateRequestItems } from "@/services/request/request-items/update-request-items";
 import { updateRequests } from "@/services/request/update-request";
@@ -319,6 +321,23 @@ export const AdditionalReceiveController = async (
     return {
       success: false,
       message: "Failed to process additional receive!",
+      error: e,
+    };
+  }
+};
+
+export const DeductionReceiveController = async (data: DeductReceiveDto) => {
+  try {
+    const res = await processDeductReceiveItem(data);
+    return {
+      success: true,
+      message: "Deduct items received successfully.",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to process deduct receive!",
       error: e,
     };
   }
