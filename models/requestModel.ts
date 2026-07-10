@@ -290,16 +290,24 @@ SELECT
   i.itemName,
   i.itemUnit,
   i.itemPrice,
-  COALESCE((
-	   SELECT DISTINCT 
-	  iis.inventoryItemQuantity 
-	FROM InventoryItems iis
-	LEFT JOIN Inventories its ON its.inventoryId = iis.inventoryId
-	LEFT JOIN StockRooms sr ON sr.stockRoomId = its.inventoryReferenceId AND its.inventoryReference = 'stock-room'
-	LEFT JOIN StockStores ss ON ss.stockRoomId = sr.stockRoomId
-	LEFT JOIN RequestOrders ro ON ro.storeId = ss.storeId
-	WHERE ro.requestId IN (${placeholders}) AND iis.inventoryItemReferenceId = i.itemId
-  ), 0) AS stockItem,
+COALESCE((
+  SELECT SUM(iis.inventoryItemQuantity)
+  FROM InventoryItems iis
+  INNER JOIN Inventories its
+    ON its.inventoryId = iis.inventoryId
+  INNER JOIN StockRooms sr
+    ON sr.stockRoomId = its.inventoryReferenceId
+    AND its.inventoryReference = 'stock-room'
+  INNER JOIN StockStores ss
+    ON ss.stockRoomId = sr.stockRoomId
+  WHERE iis.inventoryItemReferenceId = i.itemId
+    AND EXISTS (
+      SELECT 1
+      FROM RequestOrders selected_ro
+      WHERE selected_ro.requestId IN (?, ?)
+        AND selected_ro.storeId = ss.storeId
+    )
+), 0) AS stockItem,
    ${storeColumns},
   SUM(ri.reqItemQuantity) AS totalQuantity,
   SUM(ri.reqItemReceived) AS totalReceived
