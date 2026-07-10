@@ -719,6 +719,7 @@ pv.prodId,
 pv.prodVarName,
 pv.prodVarUnit,
 pv.prodVarPrice,
+pv.prodVarImage,
 pv.prodVarId,
     p.prodName,
     iis.inventoryItemQuantity

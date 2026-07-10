@@ -637,9 +637,9 @@ export const selectPurchaseOrderItemByRequesItemId = async ({
     LEFT JOIN Items i2 ON  i2.itemId = ic2.fromItemId
     LEFT JOIN PurchaseOrderItems poi3 ON poi3.itemId = ic2.fromItemId AND poi3.poId = por.poId
 
-    WHERE ri.reqItemId = ?
+    WHERE ri.reqItemId = ? GROUP BY poid
 )`;
-
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [reqItemId]);
+
   return rows;
 };
