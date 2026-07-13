@@ -70,6 +70,8 @@ export const getCustomer = async ({
   offset,
   type,
   store,
+  from,
+  to,
 }: {
   keyFields?: Partial<Customer>;
   search?: string;
@@ -77,6 +79,8 @@ export const getCustomer = async ({
   limit?: number;
   offset?: number;
   store?: string;
+  from?: string;
+  to?: string;
 }) => {
   try {
     const data = await customerServices.findCustomerByFields({
@@ -86,12 +90,16 @@ export const getCustomer = async ({
       limit,
       offset,
       store,
+      from,
+      to,
     });
     const count = await customerServices.countCustomerByStoreId({
       keyFields,
       type,
       search,
       store,
+      from,
+      to,
     });
     return {
       success: true,
@@ -126,7 +134,6 @@ export const updateCustomerController = async ({
       data: data,
     };
   } catch (e) {
-    console.log({ e });
     return {
       success: false,
       message: "Failed to update customer!",

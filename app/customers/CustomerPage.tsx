@@ -4,7 +4,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
 import { useSession } from "@/hooks/useSession";
 import { CreateCustomerDto, DisplayCustomerDto } from "@/dtos/customer.dto";
@@ -74,7 +74,9 @@ const adminColumns: Column<DisplayCustomerDto>[] = [
 const CustomerPage = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [selectCus, setSelectedCus] = useState<DisplayCustomerDto | null>(null);
+  const [selectedCustomers, setSelectedCustomers] = useState<
+    DisplayCustomerDto[]
+  >([]);
   const [selectedStore, setSelectedStore] = useState<number | null>(null);
   const [showAddCustomer, setShowAddCustomer] = useState(false);
   const { user, hasStore, isAdmin } = useSession();
@@ -108,7 +110,6 @@ const CustomerPage = () => {
       if (value) params.append(key, value);
     });
 
-    // Always include page, default to 1
     params.append("page", searchParams.get("page") || "1");
 
     return `${url}?${params.toString()}`;
@@ -163,6 +164,28 @@ const CustomerPage = () => {
       setIsSubmitting(false);
     }
   };
+  const handleDateRangeChange = useCallback(
+    (rangeData: { from: string; to: string }) => {
+      const { from, to } = rangeData;
+
+      const url = new URL(window.location.href);
+
+      if (from) {
+        url.searchParams.set("from", from);
+      } else {
+        url.searchParams.delete("from");
+      }
+
+      if (to) {
+        url.searchParams.set("to", to);
+      } else {
+        url.searchParams.delete("to");
+      }
+
+      router.push(url.toString());
+    },
+    [router],
+  );
   const handleSubmitAddCustomer = async (cusData: CreateCustomerDto[]) => {
     setIsSubmitting(true);
     try {
@@ -215,9 +238,25 @@ const CustomerPage = () => {
         id: s.storeId,
       }))
     : [];
+
+  const totalSpent = useMemo(() => {
+    if (selectedCustomers.length === 0) return 0;
+    return selectedCustomers.reduce(
+      (acc, customer) => acc + Number(customer.totalSpent),
+      0,
+    );
+  }, [selectedCustomers]);
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader title={"Customers"} subtitle="Manage store customers" />
+      <div className="flex justify-between items-center">
+        <PageHeader title={"Customers"} subtitle="Manage store customers" />
+        {selectedCustomers.length > 0 && (
+          <div className="flex gap-2 text-xs items-center ">
+            Total Spent:{" "}
+            <span className="font-bold text-lg">{formatPeso(totalSpent)}</span>
+          </div>
+        )}
+      </div>
       <div className="min-h-0 flex-1 flex flex-col">
         <Table
           searchUrl="/customers"
@@ -268,7 +307,10 @@ const CustomerPage = () => {
           columns={hasStore ? columns : adminColumns}
           data={response?.data ?? []}
           showCheckBox
+          onDateRangeChange={handleDateRangeChange}
+          onSelectionChange={(rows) => setSelectedCustomers(rows)}
           isRounded={false}
+          showDateRange
           showPagination
           totalCount={response?.count}
           maxHeight="h-full"

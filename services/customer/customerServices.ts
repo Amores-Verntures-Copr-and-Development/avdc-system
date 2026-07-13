@@ -101,6 +101,8 @@ export const customerServices = {
     limit,
     offset,
     store,
+    from,
+    to,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -109,6 +111,8 @@ export const customerServices = {
     limit?: number;
     offset?: number;
     store?: string;
+    from?: string;
+    to?: string;
   }) => {
     try {
       const data = await selectCustomers({
@@ -118,6 +122,8 @@ export const customerServices = {
         limit,
         offset,
         store,
+        from,
+        to,
       });
       return data;
     } catch (e) {
@@ -130,15 +136,26 @@ export const customerServices = {
     connection,
     store,
     search,
+    from,
+    to,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
     search?: string;
     type?: string;
     store?: string;
+    from?: string;
+    to?: string;
   }) => {
     try {
-      const count = await selectCountCustomers({ keyFields, connection });
+      const count = await selectCountCustomers({
+        keyFields,
+        connection,
+        from,
+        to,
+        search,
+        store,
+      });
       return count;
     } catch (e) {
       throw e;
@@ -172,7 +189,16 @@ export const customerServices = {
       const pool = await getDBConnection();
       const connection = await pool.getConnection();
       await connection.beginTransaction();
+      const isExistingCustomer = await selectCustomers({
+        keyFields: {
+          customerEmail: data.customerEmail,
+        },
+        connection,
+      });
 
+      if (isExistingCustomer.length > 0) {
+        throw new Error("Customer already exists");
+      }
       const customerData: CreateCustomerDto[] = [
         {
           customerName: data.customerName,

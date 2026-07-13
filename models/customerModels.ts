@@ -33,6 +33,8 @@ export const selectCustomers = async ({
   search,
   type,
   store,
+  from,
+  to,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -41,29 +43,63 @@ export const selectCustomers = async ({
   limit?: number;
   offset?: number;
   store?: string;
+  from?: string;
+  to?: string;
 }) => {
-  const pool = connection ? connection : await getDBConnection();
+  console.log({ from, to });
+  const pool = connection ?? (await getDBConnection());
+  const safeLimit =
+    limit !== undefined ? Math.max(1, Math.floor(Number(limit))) : undefined;
 
-  const params: any[] = [];
-  let sql = `SELECT 
-  c.customerId,
-  c.customerName,
-  c.customerEmail,
-  c.customerPhone,
-  c.customerType,
-  c.storeId,
-  st.storeName,
-  c.customerCreatedAt,
-  c.customerUpdatedAt,
-  c.customerAddress,
-  COALESCE(SUM(sa.salesTotalAmount), 0) AS totalSpent,
-  MAX(sa.salesCreatedAt) AS lastVisit,
-  MIN(sa.salesCreatedAt) AS firstVisit
-  FROM Customers c
-  LEFT JOIN Stores st ON st.storeId = c.storeId
-  LEFT JOIN Sales sa ON sa.customerId = c.customerId
-  WHERE 1=1`;
+  const safeOffset =
+    offset !== undefined ? Math.max(0, Math.floor(Number(offset))) : undefined;
+  const params: unknown[] = [];
+
+  let totalSpentExpression = `COALESCE(SUM(sa.salesTotalAmount), 0)`;
+
+  if (from && to) {
+    totalSpentExpression = `
+      COALESCE(
+        SUM(
+          CASE
+            WHEN sa.salesCreatedAt >= ?
+              AND sa.salesCreatedAt <= ?
+            THEN sa.salesTotalAmount
+            ELSE 0
+          END
+        ),
+        0
+      )
+    `;
+
+    params.push(from, to);
+  }
+  let sql = `
+    SELECT
+      c.customerId,
+      c.customerName,
+      c.customerEmail,
+      c.customerPhone,
+      c.customerType,
+      c.storeId,
+      st.storeName,
+      c.customerCreatedAt,
+      c.customerUpdatedAt,
+      c.customerAddress,
+      ${totalSpentExpression} AS totalSpent,
+      MAX(sa.salesCreatedAt) AS lastVisit,
+      MIN(sa.salesCreatedAt) AS firstVisit
+    FROM Customers c
+    LEFT JOIN Stores st
+      ON st.storeId = c.storeId
+    LEFT JOIN Sales sa
+      ON sa.customerId = c.customerId
+    WHERE 1 = 1
+  `;
+
   for (const [key, value] of Object.entries(keyFields)) {
+    if (value === undefined) continue;
+
     if (value === null) {
       sql += ` AND c.${key} IS NULL`;
     } else {
@@ -73,12 +109,22 @@ export const selectCustomers = async ({
   }
 
   if (search) {
-    sql += ` AND (
-    c.customerName LIKE ?
-    OR c.customerEmail LIKE ?
-    OR c.customerPhone LIKE ?
-  )`;
-    params.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    const searchValue = `%${search}%`;
+
+    sql += `
+      AND (
+        c.customerName LIKE ?
+        OR c.customerEmail LIKE ?
+        OR c.customerPhone LIKE ?
+      )
+    `;
+
+    params.push(searchValue, searchValue, searchValue);
+  }
+
+  if (type) {
+    sql += ` AND c.customerType = ?`;
+    params.push(type);
   }
 
   if (store) {
@@ -86,13 +132,28 @@ export const selectCustomers = async ({
     params.push(store);
   }
 
-  sql += ` GROUP BY c.customerId, c.customerName, c.customerEmail, c.customerPhone, c.customerType, c.storeId, st.storeName`;
-  if (limit !== undefined) {
-    sql += ` LIMIT ${limit}`;
+  sql += `
+    GROUP BY
+      c.customerId,
+      c.customerName,
+      c.customerEmail,
+      c.customerPhone,
+      c.customerType,
+      c.storeId,
+      st.storeName,
+      c.customerCreatedAt,
+      c.customerUpdatedAt,
+      c.customerAddress
+  `;
+
+  if (safeLimit !== undefined && Number.isFinite(safeLimit)) {
+    sql += ` LIMIT ${safeLimit}`;
   }
-  if (offset !== undefined) {
-    sql += ` OFFSET ${offset}`;
+
+  if (safeOffset !== undefined && Number.isFinite(safeOffset)) {
+    sql += ` OFFSET ${safeOffset}`;
   }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as Customer[];
 };
@@ -100,20 +161,31 @@ export const selectCustomers = async ({
 export const selectCountCustomers = async ({
   keyFields = {},
   connection,
+  search,
+  store,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
+  from?: string;
+  to?: string;
+  search?: string;
+  store?: string;
 }) => {
-  const pool = connection ? connection : await getDBConnection();
+  const pool = connection ?? (await getDBConnection());
 
-  const params: any[] = [];
-  let sql = `SELECT 
-  COUNT(*) as totalCustomer
-FROM Customers c
-LEFT JOIN Stores st ON st.storeId = c.storeId
-LEFT JOIN Sales sa ON sa.customerId = c.customerId
-WHERE 1=1`;
+  const params: unknown[] = [];
+
+  let sql = `
+    SELECT COUNT(DISTINCT c.customerId) AS totalCustomer
+    FROM Customers c
+    LEFT JOIN Stores st ON st.storeId = c.storeId
+    LEFT JOIN Sales sa ON sa.customerId = c.customerId
+    WHERE 1 = 1
+  `;
+
   for (const [key, value] of Object.entries(keyFields)) {
+    if (value === undefined) continue;
+
     if (value === null) {
       sql += ` AND c.${key} IS NULL`;
     } else {
@@ -121,10 +193,30 @@ WHERE 1=1`;
       params.push(value);
     }
   }
+
+  if (store) {
+    sql += ` AND st.storeName = ?`;
+    params.push(store);
+  }
+
+  if (search) {
+    const searchValue = `%${search}%`;
+
+    sql += `
+      AND (
+        c.customerName LIKE ?
+        OR c.customerEmail LIKE ?
+        OR c.customerPhone LIKE ?
+      )
+    `;
+
+    params.push(searchValue, searchValue, searchValue);
+  }
+
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+
   return rows[0];
 };
-
 export const updateCustomers = async ({
   connection,
   updates,

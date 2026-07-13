@@ -38,6 +38,8 @@ export async function GET(_request: Request) {
     const page = searchParams.get("page") || "";
     const type = searchParams.get("type") || "";
     const store = searchParams.get("store") || "";
+    const from = searchParams.get("from") || "";
+    const to = searchParams.get("to") || "";
 
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
@@ -48,6 +50,8 @@ export async function GET(_request: Request) {
       search,
       type,
       store,
+      from,
+      to,
     });
 
     if (!res.success) {
