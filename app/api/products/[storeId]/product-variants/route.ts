@@ -55,8 +55,11 @@ export async function GET(
     const search = searchParams.get("search") || "";
     const statusParam = searchParams.get("status");
     // const category = searchParams.get("category") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
     // const unit = searchParams.get("unit") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";

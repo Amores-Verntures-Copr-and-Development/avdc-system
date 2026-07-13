@@ -6,8 +6,11 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") || "";
     const trendParam = searchParams.get("trend") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
 
     const trend =
       trendParam === "year" ||

@@ -28,9 +28,14 @@ export const registerCustomerOnlineController = async (
   data: RegisterCustomerAccountDto,
 ) => {
   try {
+    const res = await customerServices.registerCustomerAccount({
+      data,
+      storeId: 1,
+    });
     return {
       success: true,
       message: "Customer registered successfully!",
+      data: res,
     };
   } catch (e) {
     return {

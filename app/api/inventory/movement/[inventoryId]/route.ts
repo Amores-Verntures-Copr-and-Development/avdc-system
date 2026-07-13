@@ -14,8 +14,11 @@ export async function GET(
     const inventoryId = Number(slug);
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
     const type = searchParams.get("type") || "";
     // const limit = searchParams.get("limit") || "";
     // const page = searchParams.get("page") || "";

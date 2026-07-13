@@ -185,20 +185,19 @@ export const customerServices = {
     data: RegisterCustomerAccountDto;
     storeId: number;
   }) => {
+    const pool = await getDBConnection();
+    const connection = await pool.getConnection();
     try {
-      const pool = await getDBConnection();
-      const connection = await pool.getConnection();
       await connection.beginTransaction();
-      const isExistingCustomer = await selectCustomers({
+      const existingCustomer = await selectCustomers({
         keyFields: {
           customerEmail: data.customerEmail,
         },
         connection,
       });
+      const isExistingCustomer = existingCustomer.length > 0;
+      console.log({ isExistingCustomer, existingCustomer });
 
-      if (isExistingCustomer.length > 0) {
-        throw new Error("Customer already exists");
-      }
       const customerData: CreateCustomerDto[] = [
         {
           customerName: data.customerName,
@@ -220,7 +219,14 @@ export const customerServices = {
       await connection.commit();
       return insertedCustomerId;
     } catch (e) {
+      await connection.rollback();
       throw e;
+    } finally {
+      connection.release();
     }
   },
+};
+
+export const CustomerAccountService = {
+  get: () => async () => {},
 };

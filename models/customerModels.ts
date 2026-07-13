@@ -46,7 +46,6 @@ export const selectCustomers = async ({
   from?: string;
   to?: string;
 }) => {
-  console.log({ from, to });
   const pool = connection ?? (await getDBConnection());
   const safeLimit =
     limit !== undefined ? Math.max(1, Math.floor(Number(limit))) : undefined;
@@ -93,7 +92,7 @@ export const selectCustomers = async ({
     LEFT JOIN Stores st
       ON st.storeId = c.storeId
     LEFT JOIN Sales sa
-      ON sa.customerId = c.customerId
+      ON sa.customerId = c.customerId AND sa.storeId = c.storeId
     WHERE 1 = 1
   `;
 
@@ -283,4 +282,26 @@ export const updateCustomers = async ({
 
   const [result] = await pool.execute(sql, params);
   return result;
+};
+
+export const insertCustomerAccount = async ({
+  data,
+  connection,
+}: {
+  data: CreateCustomerDto[];
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `INSERT INTO Customers(customerName,customerEmail,customerAddress,customerPhone,customerType,customerCreatedBy,storeId) VALUES ${data.map(() => "(?,?,?,?,?,?,?)")} `;
+  const values = data.flatMap((item) => [
+    item.customerName ?? "",
+    item.customerEmail ?? "",
+    item.customerAddress ?? "",
+    item.customerPhone ?? "",
+    item.customerType,
+    item.customerCreatedBy,
+    item.storeId,
+  ]);
+  const [result] = await pool.execute<ResultSetHeader>(sql, values);
+  return result.insertId;
 };

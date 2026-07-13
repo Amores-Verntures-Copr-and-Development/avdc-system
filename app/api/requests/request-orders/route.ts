@@ -7,8 +7,11 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get("search") || "";
     const sort = searchParams.get("sort") || "";
     const rawOrder = searchParams.get("order");
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
     // const limit = searchParams.get("limit") || "";
     // const page = searchParams.get("page") || "";
     const store = searchParams.get("store") || "";

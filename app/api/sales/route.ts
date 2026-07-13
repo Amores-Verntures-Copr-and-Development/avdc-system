@@ -8,8 +8,11 @@ export async function GET(_request: Request) {
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
     const store = searchParams.get("store") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
     const method = searchParams.get("method") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";

@@ -1,15 +1,15 @@
+import { registerCustomerOnlineController } from "@/controllers/CustomerController";
 import { RegisterCustomerAccountDto } from "@/dtos/customer.dto";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
     const data = (await request.json()) as RegisterCustomerAccountDto;
-    console.log({ data });
-    // const res = await RegisterCustomerController(data, storeId);
-    // if (!res.success) {
-    //   console.log(res.error);
-    //   throw new Error(res.message);
-    // }
+
+    const res = await registerCustomerOnlineController(data);
+    if (!res.success) {
+      throw new Error(res.message);
+    }
 
     return NextResponse.json({
       success: true,

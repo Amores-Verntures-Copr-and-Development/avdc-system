@@ -38,8 +38,11 @@ export async function GET(_request: Request) {
     const page = searchParams.get("page") || "";
     const type = searchParams.get("type") || "";
     const store = searchParams.get("store") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+
+    const from = fromParam ? `${fromParam} 00:00:00` : "";
+    const to = toParam ? `${toParam} 23:59:59` : "";
 
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
