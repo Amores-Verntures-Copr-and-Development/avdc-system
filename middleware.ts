@@ -46,6 +46,9 @@ export function middleware(request: NextRequest) {
       "/api/loyverse/webhook",
       "/api/overview",
       "/api/auth/customers/register/st-martins",
+      "/api/auth/customers/verify-email",
+      "/api/auth/customers/resend-verification",
+      "/api/auth/customers/login",
     ];
 
     if (!publicApiRoutes.includes(pathname) && !token) {

@@ -31,6 +31,20 @@ interface ProductVariantPageProps {
 const columns: Column<DisplaProductVariantsDtos>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
   {
+    key: "prodVarImage",
+    name: "Image",
+    selector: (row) =>
+      row.prodVarImage ? (
+        <img
+          src={`${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${row.prodVarImage}`}
+          alt={row.prodVarName}
+          className="w-10 h-10 rounded-md object-cover"
+        />
+      ) : (
+        <div className="w-10 h-10 rounded-md bg-gray-100" />
+      ),
+  },
+  {
     key: "prodVarName",
     name: "Variant Name",
     selector: (row) => (

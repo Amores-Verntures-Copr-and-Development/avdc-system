@@ -13,6 +13,7 @@ import {
   Layers2,
   Package,
   Receipt,
+  ShoppingCart,
   Tag,
   TicketPercent,
   UserRoundPlus,
@@ -84,6 +85,8 @@ interface PosPageProps {
 
 const PosPage = ({ storeId, user }: PosPageProps) => {
   const [clearSignal, setClearSignal] = useState(0);
+
+  const [mobileView, setMobileView] = useState<"products" | "cart">("products");
 
   const limit = 100;
   const [productPage, setProductPage] = useState(1);
@@ -692,9 +695,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
   return (
     <PageLayout>
-      <div className="flex flex-1 overflow-visible min-h-0 h-full">
-        <div className="flex flex-col flex-[0.75] min-w-0 h-full">
-          <div className="bg-white min-h-10 border border-gray-200 flex justify-between items-center px-2 2xl:px-4 py-1 2xl:py-2 overflow-visible">
+      <div className="flex flex-col lg:flex-row flex-1 overflow-visible min-h-0 h-full">
+        <div
+          className={`${
+            mobileView === "cart" ? "hidden" : "flex"
+          } lg:flex flex-col flex-1 lg:flex-[0.75] min-w-0 h-full min-h-0 pb-16 lg:pb-0`}
+        >
+          <div className="bg-white min-h-10 border border-gray-200 flex flex-wrap justify-between items-center gap-2 px-2 2xl:px-4 py-1 2xl:py-2 overflow-visible">
             {selectedProduct ? (
               <>
                 <div className="flex items-center gap-3">
@@ -725,8 +732,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               </>
             ) : (
               <>
-                <div className="flex items-center flex-1">
-                  <div className="flex gap-2 p-2 flex-1">
+                <div className="flex flex-col sm:flex-row sm:items-center flex-1 gap-2">
+                  <div className="flex flex-wrap gap-2 p-2 flex-1 items-center">
                     <div className="flex gap-2 items-center">
                       {showProductView === "product" ? (
                         <div>
@@ -759,13 +766,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                         </div>
                       )}
 
-                      <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900 mr-5">
+                      <h1 className="text-sm 2xl:text-lg font-semibold text-gray-900 sm:mr-5">
                         Products
                       </h1>
                     </div>
 
-                    <div className="flex gap-2">
-                      <div>
+                    <div className="flex gap-2 flex-1 min-w-[160px]">
+                      <div className="w-full">
                         <SearchBar
                           useUrl={false}
                           onSearch={(value) => {
@@ -777,8 +784,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 items-end justify-start h-full">
-                    <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 items-end justify-start">
+                    <div className="flex gap-2 flex-wrap justify-end">
                       <IconButton
                         onClick={() => {
                           setIsShowIcons("open-scanner");
@@ -933,7 +940,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               />
             )
           ) : (
-            <div className="flex-1 bg-white border border-gray-200 grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
+            <div className="flex-1 bg-white border border-gray-200 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 p-2 gap-4 no-scroll overflow-y-auto scroll-smooth auto-rows-max items-start">
               {productList.flatMap((p) =>
                 p.productVariants?.flatMap((pv) => {
                   return (
@@ -953,7 +960,21 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           )}
         </div>
 
-        <div className="flex-[.50] lg:flex-[0.30] 2xl:flex-[0.25] flex flex-col justify-between bg-white h-full border border-gray-200">
+        <div
+          className={`${
+            mobileView === "products" ? "hidden" : "flex"
+          } lg:flex flex-1 lg:flex-[0.30] 2xl:flex-[0.25] flex-col justify-between bg-white h-full border border-gray-200 min-h-0`}
+        >
+          <div className="lg:hidden border-b border-gray-200 p-2">
+            <Button
+              label="Back to Products"
+              icon={ArrowLeft}
+              size="sm"
+              color="secondary"
+              onClick={() => setMobileView("products")}
+            />
+          </div>
+
           <div className="flex-[0.05] border-b p-2 border-gray-200 flex justify-between items-center">
             <h1 className="font-semibold text-xs 2xl:text-sm">Order Details</h1>
 
@@ -1080,6 +1101,22 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
           </div>
         </div>
       </div>
+
+      {mobileView === "products" && (
+        <button
+          onClick={() => setMobileView("cart")}
+          className="lg:hidden fixed bottom-3 left-3 right-3 z-30 flex items-center justify-between gap-3 rounded-2xl bg-primary-1 px-4 py-3 text-white shadow-xl transition-transform active:scale-[0.99]"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold">
+            <ShoppingCart className="w-5 h-5" />
+            {selectedOrder.length} item{selectedOrder.length !== 1 ? "s" : ""}
+          </span>
+
+          <span className="text-sm font-bold">
+            {formatPeso(getTotalAmount())}
+          </span>
+        </button>
+      )}
 
       {isShowIcons !== null && (
         <Popup

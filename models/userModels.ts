@@ -1,4 +1,4 @@
-import { CreateUserDto } from "@/dtos/user.dto";
+import { CreateUserDto, UpdateUserInfoDto } from "@/dtos/user.dto";
 import { UserInterface } from "@/types/users";
 import { getDBConnection } from "../lib/db";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
@@ -87,7 +87,41 @@ export const selectUser = async ({ userName }: { userName?: string }) => {
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
   return rows;
 };
-export const updateUser = async () => {};
+export const updateUserInfo = async ({
+  userId,
+  data,
+}: {
+  userId: number;
+  data: UpdateUserInfoDto;
+}) => {
+  const pool = await getDBConnection();
+  const sql = `UPDATE Users SET userFname = ?, userMname = ?, userLname = ?, userEmail = ? WHERE userId = ?`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
+    data.userFname,
+    data.userMname,
+    data.userLname,
+    data.userEmail,
+    userId,
+  ]);
+  return result;
+};
+
+export const updateUserPassword = async ({
+  userId,
+  hashedPassword,
+}: {
+  userId: number;
+  hashedPassword: string;
+}) => {
+  const pool = await getDBConnection();
+  const sql = `UPDATE Users SET userPassword = ? WHERE userId = ?`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
+    hashedPassword,
+    userId,
+  ]);
+  return result;
+};
+
 export const deleteUser = async () => {};
 
 export const selectPurchaserNotInStockPurchaser = async () => {

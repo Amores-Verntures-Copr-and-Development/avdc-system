@@ -1,6 +1,10 @@
-import { CreateCustomerDto } from "@/dtos/customer.dto";
+import {
+  CreateCustomerAccountDto,
+  CreateCustomerDto,
+} from "@/dtos/customer.dto";
 import { getDBConnection } from "@/lib/db";
-import { Customer } from "@/types/customer";
+import { Barcodes } from "@/types/barcode";
+import { Customer, CustomerAccount } from "@/types/customer";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 export const insertCustomer = async ({
@@ -288,20 +292,71 @@ export const insertCustomerAccount = async ({
   data,
   connection,
 }: {
-  data: CreateCustomerDto[];
+  data: CreateCustomerAccountDto[];
   connection?: PoolConnection;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Customers(customerName,customerEmail,customerAddress,customerPhone,customerType,customerCreatedBy,storeId) VALUES ${data.map(() => "(?,?,?,?,?,?,?)")} `;
+  const sql = `INSERT INTO CustomerAccounts(firstName,middleName,lastName,company,email,password,customerId) VALUES ${data.map(() => "(?,?,?,?,?,?,?)")} `;
   const values = data.flatMap((item) => [
-    item.customerName ?? "",
-    item.customerEmail ?? "",
-    item.customerAddress ?? "",
-    item.customerPhone ?? "",
-    item.customerType,
-    item.customerCreatedBy,
-    item.storeId,
+    item.firstName,
+    item.middleName,
+    item.lastName,
+    item.company,
+    item.email,
+    item.password,
+    item.customerId,
   ]);
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
   return result.insertId;
+};
+
+export const selectCustomerAcconts = async ({
+  connection,
+  keyFields = {},
+}: {
+  connection?: PoolConnection;
+  keyFields?: Partial<Record<keyof CustomerAccount, any>>;
+}) => {
+  const params: any[] = [];
+  let sql = `SELECT ca.cusAccId,ca.firstName,ca.middleName,ca.lastName,ca.company,ca.email,ca.password,ca.emailVerified,ca.phoneVerified FROM CustomerAccounts ca WHERE 1 = 1`;
+  const pool = connection ? connection : await getDBConnection();
+  for (const [key, value] of Object.entries(keyFields)) {
+    if (value === null) {
+      sql += ` AND ca.${key} IS NULL`;
+    } else if (Array.isArray(value)) {
+      // multiple values
+      if (value.length > 0) {
+        sql += ` AND ca.${key} IN (${value.map(() => "?").join(", ")})`;
+        params.push(...value);
+      }
+    } else {
+      // single value
+      sql += ` AND ca.${key} = ?`;
+      params.push(value);
+    }
+  }
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as CustomerAccount[];
+};
+
+export const updateCustomerAccounts = async ({
+  cusAccId,
+  updateData,
+  connection,
+}: {
+  cusAccId: number;
+  updateData: Partial<CustomerAccount>;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const fields = Object.keys(updateData);
+  if (fields.length === 0) return;
+
+  const setClauses = fields.map((field) => `${field} = ?`);
+  const params = fields.map((field) => (updateData as any)[field]);
+  params.push(cusAccId);
+
+  const sql = `UPDATE CustomerAccounts SET ${setClauses.join(", ")} WHERE cusAccId = ?`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+  return result;
 };

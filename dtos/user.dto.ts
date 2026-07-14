@@ -38,6 +38,16 @@ export type DisplayUserDto = Pick<
     fullName: string;
   };
 
+export type UpdateUserInfoDto = Pick<
+  UserInterface,
+  "userFname" | "userMname" | "userLname" | "userEmail"
+>;
+
+export type ChangeUserPasswordDto = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export type DisplayUserInfoDto = Pick<
   UserInterface,
   | "userId"

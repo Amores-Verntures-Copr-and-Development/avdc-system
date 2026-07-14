@@ -1,5 +1,6 @@
 import {
   CreateCustomerDto,
+  CustomerLoginDto,
   RegisterCustomerAccountDto,
 } from "@/dtos/customer.dto";
 import { customerServices } from "@/services/customer/customerServices";
@@ -30,7 +31,6 @@ export const registerCustomerOnlineController = async (
   try {
     const res = await customerServices.registerCustomerAccount({
       data,
-      storeId: 1,
     });
     return {
       success: true,
@@ -38,9 +38,27 @@ export const registerCustomerOnlineController = async (
       data: res,
     };
   } catch (e) {
+    console.log({ e });
     return {
       success: false,
       message: "Failed to register customer!",
+      error: e,
+    };
+  }
+};
+
+export const loginCustomerController = async (data: CustomerLoginDto) => {
+  try {
+    const res = await customerServices.loginCustomerAccount(data);
+    return {
+      success: true,
+      message: "Login successful!",
+      data: res,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : "Failed to login!",
       error: e,
     };
   }

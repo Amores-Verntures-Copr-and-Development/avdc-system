@@ -197,11 +197,11 @@ const CheckOutModal = ({
         </div>
       </div>
       {!canComplete ? (
-        <div className="flex flex-row 2xl:flex-col flex-1 ">
+        <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-0">
           <div className="flex-1">
             <BigCard isRounded={false} title="Current Payments">
               {selectedPaymentMethod && selectedPaymentMethod.length > 0 && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {selectedPaymentMethod.map((payment, index) => {
                     const method = paymentMethods?.find(
                       (m) => m.payMetId === payment.payMetId,
@@ -253,7 +253,7 @@ const CheckOutModal = ({
           <div className="flex-1">
             <BigCard isRounded={false} title="Add Payments">
               <div className="flex flex-col divide-gray-200 overflow-auto p-1  2xl:p-3 gap-3 h-full">
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                   {paymentMethods?.map((payment) => {
                     const { icon, color } = getPaymentIcon(payment.payMetName);
                     const Icon = icon || Banknote;
@@ -360,7 +360,7 @@ const CheckOutModal = ({
             <label className="text-gray-600 font-semibold text-xs xl:text-sm">
               Applied Payments
             </label>
-            <div className="grid grid-cols-2 xl:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
               {selectedPaymentMethod &&
                 selectedPaymentMethod.length &&
                 selectedPaymentMethod.map((payment, index) => {

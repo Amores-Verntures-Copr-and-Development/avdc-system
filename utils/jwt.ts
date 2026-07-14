@@ -17,6 +17,17 @@ export type AccessTokenPayload = {
   storeId: number | null;
 };
 
+export type CustomerAccessTokenPayload = {
+  cusAccId: number;
+  customerId: number;
+  email: string;
+  storeId: number;
+};
+
+export type CustomerRefreshTokenPayload = {
+  cusAccId: number;
+};
+
 type SignOptionsAndSecret = SignOptions & {
   secret: string;
 };
@@ -34,8 +45,14 @@ const refreshTokenOptions: SignOptionsAndSecret = {
 /**
  * Sign any payload with the given options.
  */
-export const signToken = (
-  payload: AccessTokenPayload | RefreshTokenPayload,
+export const signToken = <
+  T extends
+    | AccessTokenPayload
+    | RefreshTokenPayload
+    | CustomerAccessTokenPayload
+    | CustomerRefreshTokenPayload,
+>(
+  payload: T,
   options: SignOptionsAndSecret = accessTokenOptions
 ): string => {
   const { secret, ...signOpts } = options;
@@ -80,5 +97,22 @@ export const generateTokens = (
     accessTokenOptions
   );
   const refreshToken = signToken({ userId, empPosition }, refreshTokenOptions);
+  return { accessToken, refreshToken };
+};
+
+/**
+ * Generate both an accessToken and refreshToken for a given customer account.
+ */
+export const generateCustomerTokens = (
+  cusAccId: number,
+  customerId: number,
+  email: string,
+  storeId: number
+) => {
+  const accessToken = signToken(
+    { cusAccId, customerId, email, storeId },
+    accessTokenOptions
+  );
+  const refreshToken = signToken({ cusAccId }, refreshTokenOptions);
   return { accessToken, refreshToken };
 };

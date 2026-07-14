@@ -1,12 +1,12 @@
-import { registerCustomerOnlineController } from "@/controllers/CustomerController";
-import { RegisterCustomerAccountDto } from "@/dtos/customer.dto";
+import { resendCustomerVerificationController } from "@/controllers/CustomerEmailVerificationController";
+import { ResendCustomerVerificationDto } from "@/dtos/customer.dto";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const data = (await request.json()) as RegisterCustomerAccountDto;
+    const data = (await request.json()) as ResendCustomerVerificationDto;
 
-    const res = await registerCustomerOnlineController(data);
+    const res = await resendCustomerVerificationController(data);
     if (!res.success) {
       throw new Error(res.message);
     }
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create request",
+        message: "Failed to resend verification code",
         error: err?.message || String(err),
       },
       { status: 500 },

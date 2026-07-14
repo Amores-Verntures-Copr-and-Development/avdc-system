@@ -1,32 +1,7 @@
-import { getUserInfo, updateUserInfoController } from "@/controllers/UserControllers";
-import { UpdateUserInfoDto } from "@/dtos/user.dto";
+import { changeUserPasswordController } from "@/controllers/UserControllers";
+import { ChangeUserPasswordDto } from "@/dtos/user.dto";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
-) {
-  try {
-    const slug = (await params).userId;
-    const res = await getUserInfo(Number(slug));
-    if (!res.success) {
-      throw new Error("Failed fetched user info!");
-    }
-    return NextResponse.json({
-      success: true,
-      message: res.message,
-      data: res.data,
-    });
-  } catch (e) {
-    console.log(e);
-    return NextResponse.json({
-      success: false,
-      message: "Failed fetched user info!",
-      error: e,
-    });
-  }
-}
 
 export async function PATCH(
   request: NextRequest,
@@ -54,33 +29,45 @@ export async function PATCH(
       );
     }
 
-    const data = (await request.json()) as UpdateUserInfoDto;
+    const data = (await request.json()) as ChangeUserPasswordDto;
 
-    if (!data.userFname?.trim() || !data.userLname?.trim()) {
+    if (!data.currentPassword || !data.newPassword) {
       return NextResponse.json(
         {
           success: false,
-          message: "First name and last name are required.",
+          message: "Current password and new password are required.",
         },
         { status: 400 },
       );
     }
 
-    const res = await updateUserInfoController({ userId, data });
+    if (data.newPassword.length < 8) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "New password must be at least 8 characters.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const res = await changeUserPasswordController({ userId, data });
     if (!res.success) {
-      throw new Error(res.message);
+      return NextResponse.json(
+        { success: false, message: res.message },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json({
       success: true,
       message: res.message,
-      data: res.data,
     });
   } catch (err: any) {
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update profile",
+        message: "Failed to change password",
         error: err?.message || String(err),
       },
       { status: 500 },

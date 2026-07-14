@@ -166,7 +166,7 @@ const ProductVariantCard = ({
         <div className="relative h-36 overflow-hidden bg-white">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-pink-50" />
 
-          <div className="absolute right-2 top-2 z-20 rounded-full bg-primary-1 px-3 py-1 text-xs font-bold text-white shadow-md">
+          <div className="absolute right-2 top-2 z-20 rounded-full bg-primary-1 px-3 py-1 text-[11px] sm:text-[12px] 2xl:text-xs font-bold text-white shadow-md">
             {formatPeso(data.prodVarPrice)}
           </div>
 
@@ -212,7 +212,7 @@ const ProductVariantCard = ({
           <div className="min-w-0 flex-1">
             <h2
               className={`
-                line-clamp-2 text-sm font-semibold leading-tight
+                line-clamp-2 text-[11px] sm:text-xs  2xl:text-sm font-semibold leading-tight
                 ${hasStock ? "text-gray-900" : "text-gray-500"}
               `}
             >
@@ -223,7 +223,7 @@ const ProductVariantCard = ({
               !product.prodName
                 .toLowerCase()
                 .includes(data.prodVarName.toLowerCase()) && (
-                <p className="mt-1 line-clamp-1 text-xs text-gray-400">
+                <p className="mt-1 line-clamp-1 text-[11px] sm:text-xs 2xl:text-xs text-gray-400">
                   {product.prodName}
                 </p>
               )}
@@ -248,7 +248,7 @@ const ProductVariantCard = ({
               <div className="flex items-center gap-1.5 rounded-lg bg-gray-50 px-2 py-1">
                 <Package className="h-3.5 w-3.5 text-emerald-600" />
 
-                <span className="text-xs font-semibold text-gray-700">
+                <span className="text-[10px] sm:text-[12px] 2xl:text-xs font-semibold text-gray-700">
                   {available === Infinity ? "Available" : `${available} left`}
                 </span>
               </div>
@@ -258,7 +258,7 @@ const ProductVariantCard = ({
           <div className="flex items-center gap-1.5 rounded-lg bg-orange-50 px-2 py-1">
             <TrendingUp className="h-3.5 w-3.5 text-orange-500" />
 
-            <span className="text-xs font-semibold text-orange-600">
+            <span className="text-[10px] sm:text-[12px] 2xl:text-xs font-semibold text-orange-600">
               {data.sold ?? 0} sold
             </span>
           </div>

@@ -19,7 +19,13 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const variantCount = data.productVariants?.length ?? 0;
 
-  const imageUrl = data.productImage;
+  const variantImage = data.productVariants?.find(
+    (v) => v.prodVarImage,
+  )?.prodVarImage;
+
+  const imageUrl = variantImage
+    ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${variantImage}`
+    : "";
 
   const handleSelect = () => {
     if (variantCount === 1 && data.productVariants) {
@@ -161,17 +167,15 @@ const ProductCard = ({
             </div>
           )}
           {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={data.prodName}
-              fill
-              className="
-                object-contain
-                p-2
-                transition-transform duration-300
-                group-hover:scale-105
-              "
-            />
+            <div className="relative h-full w-full overflow-hidden rounded-xl bg-white shadow-sm">
+              <Image
+                src={imageUrl}
+                alt={data.prodName}
+                fill
+                unoptimized
+                className="object-contain p-2 transition-transform duration-300 group-hover:scale-110"
+              />
+            </div>
           ) : (
             <div
               className="

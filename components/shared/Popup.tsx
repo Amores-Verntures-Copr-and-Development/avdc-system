@@ -76,16 +76,16 @@ const Popup: React.FC<PopupProps> = ({
   if (!show) return null;
 
   const positionClasses = {
-    left: `left-0 top-0 h-full w-90 xl:w-96 transform transition-transform duration-300 ease-in-out ${
+    left: `left-0 top-0 h-full w-full max-w-[22rem] sm:max-w-sm lg:max-w-md transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "-translate-x-full"
     }`,
-    right: `right-0 top-0 h-full sm:90 lg:110 xl:w-150 transform transition-transform duration-300 ease-in-out ${
+    right: `right-0 top-0 h-full w-full max-w-[22rem] sm:max-w-sm lg:max-w-md xl:max-w-lg transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-x-0" : "translate-x-full"
     }`,
-    top: `top-0 left-0 w-full h-72 transform transition-transform duration-300 ease-in-out ${
+    top: `top-0 left-0 w-full h-[70dvh] sm:h-72 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-y-0" : "-translate-y-full"
     }`,
-    bottom: `bottom-0 left-0 w-full h-72 transform transition-transform duration-300 ease-in-out ${
+    bottom: `bottom-0 left-0 w-full h-[70dvh] sm:h-72 transform transition-transform duration-300 ease-in-out ${
       isOpen ? "translate-y-0" : "translate-y-full"
     }`,
   };

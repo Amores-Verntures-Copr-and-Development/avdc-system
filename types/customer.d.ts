@@ -19,6 +19,9 @@ export type CustomerAccountStatus = "active" | "inactive" | "deleted";
 
 export interface CustomerAccount {
   cusAccId: number;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
   company: string | null;
   email: string;
   password: string;
