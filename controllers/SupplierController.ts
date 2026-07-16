@@ -26,10 +26,12 @@ import { error } from "console";
 
 export const addSupplier = async (data: CreateSupplierDto) => {
   try {
-    await createSupplier(data);
+    const { suppId, suppCode } = await createSupplier(data);
     return {
       success: true,
       message: "Supplier created successfully",
+      suppId,
+      suppCode,
     };
   } catch (e) {
     return {

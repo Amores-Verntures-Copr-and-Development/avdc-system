@@ -2,6 +2,7 @@ import {
   DisplayInventoryItems,
   CreateFirstItem,
   CreateInventoryMovementDto,
+  DuplicateInventoryItemGroup,
 } from "@/dtos/inventory.dto";
 import { CreateRequestFormDto } from "@/dtos/request.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
@@ -34,6 +35,7 @@ import {
   Trash2Icon,
   FileText,
   Barcode,
+  Copy,
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
@@ -43,6 +45,7 @@ import CreateInventoryReport from "../../components/CreateInventoryReport";
 import CreateRequestModal from "../../components/CreateRequestModal";
 import ViewInventoryItem from "../../components/ViewInventoryItem";
 import AddItemSupplierModal from "../../components/AddItemSupplierModal";
+import SupplierCell from "../../components/SupplierCell";
 import { CreateSupplierItemDto } from "@/dtos/supplier.dto";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { formatPeso } from "@/utils/formatPeso";
@@ -67,6 +70,7 @@ import InStockModal from "../../components/InStockModal";
 import OutStockModal from "../../components/OutStockModal";
 import BarcodeComponent from "../../components/BarcodeComponent";
 import AddItemFromStore from "../../components/AddItemFromStore";
+import ViewDuplicateItems from "../../components/ViewDuplicateItems";
 import { Supplier } from "@/types/supplier";
 import { Option } from "@/components/shared/DropdownSelect";
 import { id } from "date-fns/locale";
@@ -98,7 +102,16 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     inventoryId: inventoryId ?? 0,
     reference: "inventoryId",
   });
-  const [showModal, setShowModal] = useState<"add-from-store" | null>(null);
+  const [showModal, setShowModal] = useState<
+    "add-from-store" | "duplicates" | null
+  >(null);
+  const { data: duplicatesResponse } = useSWR<
+    ApiResponse<DuplicateInventoryItemGroup[]>
+  >(
+    inventoryId ? `/api/inventory/${inventoryId}/duplicates` : null,
+    fetcher,
+  );
+  const duplicateItemsCount = duplicatesResponse?.count ?? 0;
   const router = useRouter();
   const tableRef = useRef<TableHandle>(null);
   const [showAddModal, setShowAdddModal] = useState(false);
@@ -290,43 +303,9 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     {
       name: "Supplier",
       key: "itemSuppliers",
-      selector: (row) => {
-        const suppliers = row.itemSuppliers || [];
-        // Assuming your row has a suppliers array
-
-        return (
-          <div className="group relative">
-            <select
-              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-              disabled
-            >
-              <option value="">
-                {suppliers.filter((s) => s !== null).length > 0
-                  ? `Suppliers (${suppliers.filter((s) => s !== null).length})`
-                  : "No Supplier"}
-              </option>
-            </select>
-
-            {/* Show suppliers on hover */}
-            {suppliers.filter((s) => s !== null).length > 0 && (
-              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-                {suppliers
-                  .filter((supplier) => supplier !== null)
-                  .map((supplier, index) => (
-                    <div
-                      key={index}
-                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                    >
-                      {`${supplier.suppName} (${formatPeso(
-                        supplier.suppItemPrice,
-                      )})`}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        );
-      },
+      selector: (row) => (
+        <SupplierCell row={row} onAddSupplier={setSupplierAssignRow} />
+      ),
     },
     {
       name: "Status",
@@ -362,6 +341,8 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   ];
   const [showAddItemSupplierModal, setShowAddItemSupplierModal] =
     useState(false);
+  const [supplierAssignRow, setSupplierAssignRow] =
+    useState<DisplayInventoryItems | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   // get the stock inventory if purchaser
   const url = `/api/inventory/item/${inventoryId}`;
@@ -1087,6 +1068,19 @@ const InventorySection: React.FC<InventorySectionProps> = ({
             },
             isShow: inventoryType === "stock-room",
           },
+          {
+            props: {
+              label: `View Duplicates (${duplicateItemsCount})`,
+              icon: Copy,
+              onClick: () => {
+                setShowModal("duplicates");
+              },
+              size: "sm",
+              className: "font-semibold",
+              color: "danger",
+            },
+            isShow: duplicateItemsCount > 0 && !showRequestStockMode,
+          },
 
           {
             props: {
@@ -1249,8 +1243,30 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       >
         <AddItemSupplierModal
           data={selectedRows ?? []}
+          user={user}
           onCancel={() => {
             setShowAddItemSupplierModal(false);
+          }}
+          onSubmit={handleAddItemsToSupplier}
+        />
+      </Modal>
+
+      <Modal
+        title="Add to supplier item"
+        subtitle="Select supplier to assign this item to their item list"
+        isOpen={Boolean(supplierAssignRow)}
+        onClose={() => {
+          setSupplierAssignRow(null);
+        }}
+        hasPadding={false}
+        size="xl"
+        className="bg-white h-[80%]"
+      >
+        <AddItemSupplierModal
+          data={supplierAssignRow ? [supplierAssignRow] : []}
+          user={user}
+          onCancel={() => {
+            setSupplierAssignRow(null);
           }}
           onSubmit={handleAddItemsToSupplier}
         />
@@ -1461,6 +1477,17 @@ const InventorySection: React.FC<InventorySectionProps> = ({
           inventoryType={inventoryType}
           inventoryId={inventoryId!}
         />
+      </Popup>
+      <Popup
+        isOpen={showModal === "duplicates"}
+        background="bg-white/20"
+        onClose={function (): void {
+          setShowModal(null);
+        }}
+        title="Duplicate Items"
+        subtitle="Items added to this inventory more than once."
+      >
+        <ViewDuplicateItems inventoryId={inventoryId ?? 0} />
       </Popup>
     </>
   );

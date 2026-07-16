@@ -131,6 +131,7 @@ const AddItemFromStore = ({
     }
   };
   const items = responseItems?.data ?? [];
+  console.log({ items });
   return (
     <div className="flex-1 h-full flex flex-col">
       <div className="flex flex-1 h-full gap-2">

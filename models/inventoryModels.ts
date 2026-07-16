@@ -9,6 +9,7 @@ import {
   InventoryInterface,
   InventoryItemInterface,
   InventoryItemMovement,
+  InventoryReferenceType,
 } from "@/types/inventory";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
@@ -133,7 +134,15 @@ export const insertInventoryItem = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const sql = `INSERT INTO InventoryItems(inventoryId,inventoryItemReferenceType,inventoryItemReferenceId,inventoryItemQuantity,inventoryItemMin,inventoryItemCreatedBy)
-  VALUES(?,?,?,?,?,?)`;
+  SELECT ?,?,?,?,?,?
+  FROM DUAL
+  WHERE NOT EXISTS (
+    SELECT 1 FROM InventoryItems
+    WHERE inventoryId = ?
+      AND inventoryItemReferenceType = ?
+      AND inventoryItemReferenceId = ?
+      AND inventoryItemDeletedAt IS NULL
+  )`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.inventoryId,
     data.inventoryItemReferenceType,
@@ -141,8 +150,11 @@ export const insertInventoryItem = async ({
     data.inventoryItemQuantity,
     data.inventoryItemMin,
     data.inventoryItemCreatedBy,
+    data.inventoryId,
+    data.inventoryItemReferenceType,
+    data.inventoryItemReferenceId,
   ]);
-  return results.insertId;
+  return results;
 };
 
 export const insertInventoryItemsBulk = async ({
@@ -852,12 +864,134 @@ WHERE ii.inventoryId = ?
     WHERE iis.inventoryId = ?
       AND iis.inventoryItemReferenceType = 'item'
       AND iis.inventoryItemReferenceId = ii.inventoryItemReferenceId
+      AND iis.inventoryItemDeletedAt IS NULL
   ) AND ii.inventoryItemDeletedAt IS NULL
   `;
   sql += ` ORDER BY i.itemName`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [from, notIn]);
   return rows[0].count;
+};
+
+export const selectDuplicateInventoryItems = async ({
+  inventoryId,
+  search,
+  connection,
+}: {
+  inventoryId: number;
+  search?: string;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const searchClause = search ? "AND it.itemName LIKE ?" : "";
+  const searchParams = search ? [`%${search}%`] : [];
+
+  const sql = `SELECT
+  ii.inventoryItemId,
+  ii.inventoryId,
+  ii.inventoryItemReferenceType,
+  ii.inventoryItemReferenceId,
+  ii.inventoryItemQuantity,
+  ii.inventoryItemMin,
+  it.itemName,
+  it.itemUnit,
+  c.categoryName
+FROM InventoryItems ii
+LEFT JOIN Items it ON it.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = 'item'
+LEFT JOIN Categories c ON c.categoryId = it.categoryId
+WHERE ii.inventoryId = ?
+  AND ii.inventoryItemDeletedAt IS NULL
+  ${searchClause}
+  AND (ii.inventoryItemReferenceType, ii.inventoryItemReferenceId) IN (
+    SELECT inventoryItemReferenceType, inventoryItemReferenceId
+    FROM InventoryItems
+    WHERE inventoryId = ? AND inventoryItemDeletedAt IS NULL
+    GROUP BY inventoryItemReferenceType, inventoryItemReferenceId
+    HAVING COUNT(*) > 1
+  )
+ORDER BY ii.inventoryItemReferenceType, ii.inventoryItemReferenceId, ii.inventoryItemId`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [
+    inventoryId,
+    ...searchParams,
+    inventoryId,
+  ]);
+  return rows;
+};
+
+export const mergeDuplicateInventoryItems = async ({
+  inventoryId,
+  inventoryItemReferenceType,
+  inventoryItemReferenceId,
+  connection,
+}: {
+  inventoryId: number;
+  inventoryItemReferenceType?: InventoryReferenceType;
+  inventoryItemReferenceId?: number;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const hasScope = Boolean(
+    inventoryItemReferenceType && inventoryItemReferenceId,
+  );
+  const scopeClause = hasScope
+    ? "AND inventoryItemReferenceType = ? AND inventoryItemReferenceId = ?"
+    : "";
+  const scopeParams = hasScope
+    ? [inventoryItemReferenceType, inventoryItemReferenceId]
+    : [];
+
+  const duplicateGroupsSql = `
+    SELECT inventoryId, inventoryItemReferenceType, inventoryItemReferenceId, MIN(inventoryItemId) AS keepId
+    FROM InventoryItems
+    WHERE inventoryId = ? AND inventoryItemDeletedAt IS NULL ${scopeClause}
+    GROUP BY inventoryId, inventoryItemReferenceType, inventoryItemReferenceId
+    HAVING COUNT(*) > 1
+  `;
+
+  // 1. Re-point movement history from the duplicate rows onto the surviving row
+  await pool.execute(
+    `UPDATE InventoryItemMovements iim
+     JOIN InventoryItems ii ON ii.inventoryItemId = iim.inventoryItemId
+     JOIN (${duplicateGroupsSql}) g
+       ON ii.inventoryId = g.inventoryId
+      AND ii.inventoryItemReferenceType = g.inventoryItemReferenceType
+      AND ii.inventoryItemReferenceId = g.inventoryItemReferenceId
+      AND ii.inventoryItemId != g.keepId
+     SET iim.inventoryItemId = g.keepId`,
+    [inventoryId, ...scopeParams],
+  );
+
+  // 2. Merge quantities from every row in the group onto the surviving row
+  await pool.execute(
+    `UPDATE InventoryItems ii
+     JOIN (
+       SELECT inventoryId, inventoryItemReferenceType, inventoryItemReferenceId,
+              MIN(inventoryItemId) AS keepId, SUM(inventoryItemQuantity) AS totalQty
+       FROM InventoryItems
+       WHERE inventoryId = ? AND inventoryItemDeletedAt IS NULL ${scopeClause}
+       GROUP BY inventoryId, inventoryItemReferenceType, inventoryItemReferenceId
+       HAVING COUNT(*) > 1
+     ) g ON ii.inventoryItemId = g.keepId
+     SET ii.inventoryItemQuantity = g.totalQty`,
+    [inventoryId, ...scopeParams],
+  );
+
+  // 3. Soft-delete the extra rows, leaving only the surviving row active
+  const [deleteResult] = await pool.execute<ResultSetHeader>(
+    `UPDATE InventoryItems ii
+     JOIN (${duplicateGroupsSql}) g
+       ON ii.inventoryId = g.inventoryId
+      AND ii.inventoryItemReferenceType = g.inventoryItemReferenceType
+      AND ii.inventoryItemReferenceId = g.inventoryItemReferenceId
+      AND ii.inventoryItemId != g.keepId
+     SET ii.inventoryItemDeletedAt = NOW()`,
+    [inventoryId, ...scopeParams],
+  );
+
+  return { removedRows: deleteResult.affectedRows };
 };
 
 export const insertItemFromAnother = async ({
@@ -871,29 +1005,44 @@ export const insertItemFromAnother = async ({
   connection?: PoolConnection;
   userId: number;
 }) => {
-  const pool = connection ? connection : await getDBConnection();
+  const pool = connection ?? (await getDBConnection());
 
-  const sql = `INSERT INTO InventoryItems (
-  inventoryId,
-  inventoryItemReferenceType,
-  inventoryItemReferenceId,
-  inventoryItemMin,
-  inventoryItemQuantity,
-  inventoryItemCreatedBy
-)
-SELECT
-  ? AS inventoryId,
-  ii.inventoryItemReferenceType,
-  ii.inventoryItemReferenceId,
-  0 AS inventoryItemMin,
-  0 AS inventoryItemQuantity,
-  ? AS inventoryItemCreatedBy
-FROM InventoryItems ii
-WHERE ii.inventoryId = ?
-  AND ii.inventoryItemDeletedAt IS NULL
-ON DUPLICATE KEY UPDATE
-  inventoryItemDeletedAt = NULL;`;
+  const sql = `
+    INSERT INTO InventoryItems (
+      inventoryId,
+      inventoryItemReferenceType,
+      inventoryItemReferenceId,
+      inventoryItemMin,
+      inventoryItemQuantity,
+      inventoryItemCreatedBy
+    )
+    SELECT
+      ?,
+      source.inventoryItemReferenceType,
+      source.inventoryItemReferenceId,
+      0,
+      0,
+      ?
+    FROM InventoryItems source
+    WHERE source.inventoryId = ?
+      AND source.inventoryItemDeletedAt IS NULL
+      AND NOT EXISTS (
+        SELECT 1
+        FROM InventoryItems target
+        WHERE target.inventoryId = ?
+          AND target.inventoryItemReferenceType =
+              source.inventoryItemReferenceType
+          AND target.inventoryItemReferenceId =
+              source.inventoryItemReferenceId
+          AND target.inventoryItemDeletedAt IS NULL
+      )
+  `;
 
-  const [results] = await pool.execute(sql, [targetId, userId, sourceId]);
+  const [results] = await pool.execute(sql, [
+    targetId,
+    userId,
+    sourceId,
+    targetId,
+  ]);
   return results;
 };

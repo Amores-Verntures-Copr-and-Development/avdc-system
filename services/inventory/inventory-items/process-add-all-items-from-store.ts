@@ -32,7 +32,7 @@ export async function addAllItemsFromStoreToInventory({
       connection: connection,
     });
 
-    await connection.commit();
+    await connection.rollback();
     return result;
   } catch (e) {
     await connection.rollback();

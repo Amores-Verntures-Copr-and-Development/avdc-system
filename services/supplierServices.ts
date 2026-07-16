@@ -22,9 +22,9 @@ export async function createSupplier(data: CreateSupplierDto) {
       ...data,
       suppCode: generateSupplierNo,
     };
-    const supplierId = await insertSupplier({ connection, data: supplierData });
+    const result = await insertSupplier({ connection, data: supplierData });
     await connection.commit();
-    return supplierId;
+    return { suppId: result.insertId, suppCode: generateSupplierNo };
   } catch (e) {
     await connection.rollback();
     throw e;

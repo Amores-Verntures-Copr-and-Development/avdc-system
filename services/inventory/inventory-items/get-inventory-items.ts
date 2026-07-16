@@ -1,5 +1,6 @@
 import {
   selectCountInventoryItemsNotInOther,
+  selectDuplicateInventoryItems,
   selectInventoryItemReport,
   selectInventoryItems,
   selectInventoryItemsCount,
@@ -12,6 +13,10 @@ import {
 import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 import { PoolConnection } from "mysql2/promise";
 import { findInventoryByFields } from "../get-inventory";
+import {
+  DuplicateInventoryItemGroup,
+  DuplicateInventoryItemRow,
+} from "@/dtos/inventory.dto";
 
 export async function findInventoryItemsByField({
   keyFields = {},
@@ -211,4 +216,52 @@ export async function findInventoryItemsNotInStore({
     console.log({ e });
     throw e;
   }
+}
+
+export async function findDuplicateInventoryItems({
+  inventoryId,
+  search,
+  limit = 50,
+  skip = 0,
+  connection,
+}: {
+  inventoryId: number;
+  search?: string;
+  limit?: number;
+  skip?: number;
+  connection?: PoolConnection;
+}): Promise<{ data: DuplicateInventoryItemGroup[]; count: number }> {
+  const rows = (await selectDuplicateInventoryItems({
+    inventoryId,
+    search,
+    connection,
+  })) as DuplicateInventoryItemRow[];
+
+  const groups = new Map<string, DuplicateInventoryItemGroup>();
+
+  for (const row of rows) {
+    const key = `${row.inventoryItemReferenceType}-${row.inventoryItemReferenceId}`;
+    const existing = groups.get(key);
+
+    if (existing) {
+      existing.items.push(row);
+      existing.duplicateCount += 1;
+    } else {
+      groups.set(key, {
+        inventoryItemReferenceType: row.inventoryItemReferenceType,
+        inventoryItemReferenceId: row.inventoryItemReferenceId,
+        itemName: row.itemName,
+        itemUnit: row.itemUnit,
+        duplicateCount: 1,
+        items: [row],
+      });
+    }
+  }
+
+  const allGroups = Array.from(groups.values());
+
+  return {
+    data: allGroups.slice(skip, skip + limit),
+    count: allGroups.length,
+  };
 }

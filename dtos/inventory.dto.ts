@@ -52,6 +52,27 @@ export interface DisplayInventoryItems {
 
 export interface SupplierItemsData extends Supplier, SupplierItem {}
 
+export interface DuplicateInventoryItemRow {
+  inventoryItemId: number;
+  inventoryId: number;
+  inventoryItemReferenceType: InventoryReferenceType;
+  inventoryItemReferenceId: number;
+  inventoryItemQuantity: number;
+  inventoryItemMin: number;
+  itemName: string;
+  itemUnit: string;
+  categoryName: string;
+}
+
+export interface DuplicateInventoryItemGroup {
+  inventoryItemReferenceType: InventoryReferenceType;
+  inventoryItemReferenceId: number;
+  itemName: string;
+  itemUnit: string;
+  duplicateCount: number;
+  items: DuplicateInventoryItemRow[];
+}
+
 export type CreateInventoryMovementDto = Pick<
   InventoryItemMovement,
   | "inventoryId"

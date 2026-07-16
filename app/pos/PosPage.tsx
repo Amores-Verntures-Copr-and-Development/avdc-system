@@ -695,11 +695,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
 
   return (
     <PageLayout>
-      <div className="flex flex-col lg:flex-row flex-1 overflow-visible min-h-0 h-full">
+      <div className="flex flex-col md:flex-row flex-1 overflow-visible min-h-0 h-full">
         <div
           className={`${
             mobileView === "cart" ? "hidden" : "flex"
-          } lg:flex flex-col flex-1 lg:flex-[0.75] min-w-0 h-full min-h-0 pb-16 lg:pb-0`}
+          } md:flex flex-col flex-1 md:flex-[0.75] min-w-0 h-full min-h-0 pb-16 md:pb-0`}
         >
           <div className="bg-white min-h-10 border border-gray-200 flex flex-wrap justify-between items-center gap-2 px-2 2xl:px-4 py-1 2xl:py-2 overflow-visible">
             {selectedProduct ? (
@@ -963,9 +963,9 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         <div
           className={`${
             mobileView === "products" ? "hidden" : "flex"
-          } lg:flex flex-1 lg:flex-[0.30] 2xl:flex-[0.25] flex-col justify-between bg-white h-full border border-gray-200 min-h-0`}
+          } md:flex flex-1 md:flex-[0.30] 2xl:flex-[0.25] flex-col justify-between bg-white h-full border border-gray-200 min-h-0`}
         >
-          <div className="lg:hidden border-b border-gray-200 p-2">
+          <div className="md:hidden border-b border-gray-200 p-2">
             <Button
               label="Back to Products"
               icon={ArrowLeft}
@@ -1105,7 +1105,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       {mobileView === "products" && (
         <button
           onClick={() => setMobileView("cart")}
-          className="lg:hidden fixed bottom-3 left-3 right-3 z-30 flex items-center justify-between gap-3 rounded-2xl bg-primary-1 px-4 py-3 text-white shadow-xl transition-transform active:scale-[0.99]"
+          className="md:hidden fixed bottom-3 left-3 right-3 z-30 flex items-center justify-between gap-3 rounded-2xl bg-primary-1 px-4 py-3 text-white shadow-xl transition-transform active:scale-[0.99]"
         >
           <span className="flex items-center gap-2 text-sm font-semibold">
             <ShoppingCart className="w-5 h-5" />

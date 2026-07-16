@@ -5,7 +5,11 @@ import {
 } from "@/dtos/supplier.dto";
 import { getDBConnection } from "@/lib/db";
 import { Supplier, SupplierItem, SupplierItemPrices } from "@/types/supplier";
-import { PoolConnection, RowDataPacket } from "mysql2/promise";
+import {
+  PoolConnection,
+  ResultSetHeader,
+  RowDataPacket,
+} from "mysql2/promise";
 
 export const insertSupplier = async ({
   connection,
@@ -16,9 +20,9 @@ export const insertSupplier = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
 
-  const sql = `INSERT INTO Suppliers(suppCode,suppName,suppContactPerson,suppEmail,suppAddress,suppPhone,suppCreatedBy) 
+  const sql = `INSERT INTO Suppliers(suppCode,suppName,suppContactPerson,suppEmail,suppAddress,suppPhone,suppCreatedBy)
   VALUES(?,?,?,?,?,?,?)`;
-  const [results] = await pool.execute(sql, [
+  const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.suppCode,
     data.suppName,
     data.suppContactPerson,

@@ -4,7 +4,6 @@ import {
   insertInventoryItemsBulk,
 } from "@/models/inventoryModels";
 import { PoolConnection } from "mysql2/promise";
-import { findInventoryItemsByField } from "./get-inventory-items";
 
 export async function createInventoryItems({
   connection,
@@ -29,20 +28,12 @@ export async function createInventoryItem({
   connection?: PoolConnection;
 }) {
   try {
-    const isExisting = await findInventoryItemsByField({
-      connection,
-      keyFields: {
-        inventoryId: data.inventoryId,
-        inventoryItemReferenceId: data.inventoryItemReferenceId,
-        inventoryItemReferenceType: data.inventoryItemReferenceType,
-      },
-    });
+    const result = await insertInventoryItem({ connection, data });
 
-    if (isExisting.data.length > 0) {
+    if (result.affectedRows === 0) {
       throw new Error("Item is already in your inventory!");
     }
-    const id = await insertInventoryItem({ connection, data: data });
-    return id;
+    return result.insertId;
   } catch (e) {
     throw e;
   }

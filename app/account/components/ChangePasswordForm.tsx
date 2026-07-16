@@ -114,7 +114,6 @@ const ChangePasswordForm = ({ userId }: ChangePasswordFormProps) => {
             onChange={handlePasswordChange}
             error={errors.newPassword}
           />
-
           <Input
             label="Confirm New Password"
             type="password"
@@ -127,14 +126,16 @@ const ChangePasswordForm = ({ userId }: ChangePasswordFormProps) => {
         </div>
 
         <div className="mt-auto flex justify-end border-t border-gray-100 pt-4">
-          <Button
-            label="Update Password"
-            size="sm"
-            onClick={handleSave}
-            color="primary"
-            icon={KeyRound}
-            loading={isSaving}
-          />
+          <div>
+            <Button
+              label="Update Password"
+              size="sm"
+              onClick={handleSave}
+              color="primary"
+              icon={KeyRound}
+              loading={isSaving}
+            />
+          </div>
         </div>
       </div>
     </BigCard>

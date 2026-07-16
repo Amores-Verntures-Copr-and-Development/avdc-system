@@ -30,6 +30,7 @@ import {
   findInventoryByStoreFields,
 } from "@/services/inventory/get-inventory";
 import {
+  findDuplicateInventoryItems,
   findInventoryForReport,
   findInventoryItemsByField,
   findInventoryItemsNotInStore,
@@ -51,6 +52,8 @@ import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-item
 import { deleteInventoryItems } from "@/services/inventory/inventory-items/delete-inventory-items";
 import { createInventoryItem } from "@/services/inventory/inventory-items/create-inventory-items";
 import { addAllItemsFromStoreToInventory } from "@/services/inventory/inventory-items/process-add-all-items-from-store";
+import { resolveDuplicateInventoryItems } from "@/services/inventory/inventory-items/resolve-duplicate-inventory-items";
+import { InventoryReferenceType } from "@/types/inventory";
 
 export const getInventory = async ({
   keyFields = {},
@@ -578,6 +581,71 @@ export const getInventoryNotInStoreController = async ({
     return {
       success: false,
       message: "Failed",
+      error: e,
+    };
+  }
+};
+
+export const getInventoryDuplicatesController = async ({
+  inventoryId,
+  search,
+  limit,
+  skip,
+}: {
+  inventoryId: number;
+  search?: string;
+  limit?: number;
+  skip?: number;
+}) => {
+  try {
+    const res = await findDuplicateInventoryItems({
+      inventoryId,
+      search,
+      limit,
+      skip,
+    });
+    return {
+      success: true,
+      data: res.data,
+      count: res.count,
+      message: "Good",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed",
+      error: e,
+    };
+  }
+};
+
+export const resolveInventoryDuplicatesController = async ({
+  inventoryId,
+  inventoryItemReferenceType,
+  inventoryItemReferenceId,
+}: {
+  inventoryId: number;
+  inventoryItemReferenceType?: InventoryReferenceType;
+  inventoryItemReferenceId?: number;
+}) => {
+  try {
+    const result = await resolveDuplicateInventoryItems({
+      inventoryId,
+      inventoryItemReferenceType,
+      inventoryItemReferenceId,
+    });
+    return {
+      success: true,
+      data: result,
+      message:
+        result.removedRows > 0
+          ? `Removed ${result.removedRows} duplicate row${result.removedRows === 1 ? "" : "s"}!`
+          : "No duplicate rows found to remove!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to remove duplicate items!",
       error: e,
     };
   }
