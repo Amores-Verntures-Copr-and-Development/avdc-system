@@ -107,10 +107,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
   >(null);
   const { data: duplicatesResponse } = useSWR<
     ApiResponse<DuplicateInventoryItemGroup[]>
-  >(
-    inventoryId ? `/api/inventory/${inventoryId}/duplicates` : null,
-    fetcher,
-  );
+  >(inventoryId ? `/api/inventory/${inventoryId}/duplicates` : null, fetcher);
   const duplicateItemsCount = duplicatesResponse?.count ?? 0;
   const router = useRouter();
   const tableRef = useRef<TableHandle>(null);
