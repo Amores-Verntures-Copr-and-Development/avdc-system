@@ -2,6 +2,7 @@ import {
   CusEmailVerification,
   Customer,
   CustomerAccount,
+  CustomerAccountStatus,
 } from "@/types/customer";
 
 export type CreateCustomerDto = Pick<
@@ -22,6 +23,11 @@ export interface DisplayCustomerDto extends Customer {
   totalSpent: number;
   firstVisit: string;
   lastVisit: string;
+  cusAccId: number | null;
+  accountEmail: string | null;
+  cusAccStatus: CustomerAccountStatus | null;
+  emailVerified: number | null;
+  accountCreatedAt: string | null;
 }
 
 export type CreateCustomerAccountDto = Pick<

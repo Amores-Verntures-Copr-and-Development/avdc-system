@@ -38,7 +38,7 @@ export async function GET(
     });
 
     const merchantData = await merchantRes.json();
-    console.log(merchantData.stores);
+
     if (!merchantRes.ok) {
       return NextResponse.json(
         {

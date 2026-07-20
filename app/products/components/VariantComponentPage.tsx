@@ -164,6 +164,7 @@ const VariantComponentPage = ({
       prodVarId: Number(form.prodVarId),
       prodVarName: form.prodVarName,
       prodVarPrice: Number(form.prodVarPrice),
+      prodVarUnit: form.prodVarUnit,
       isDeductInv: form.isDeductInv,
       isAvailableOnline: form.isAvailableOnline,
       inventoryItemId: form.inventoryItemId,

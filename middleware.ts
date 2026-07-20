@@ -7,6 +7,7 @@ const allowedOrigins = [
   "http://192.168.0.28:3100",
   "http://100.106.185.109:3100",
   "http://100.88.166.17:3100",
+  "http://192.168.0.240:3010",
 ];
 
 function withCors(request: NextRequest, response: NextResponse) {
@@ -32,12 +33,11 @@ function withCors(request: NextRequest, response: NextResponse) {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("avdc_accessToken")?.value;
-
+  const customerToken = request.cookies.get("avdc_customerAccessToken")?.value;
   if (pathname.startsWith("/api")) {
     if (request.method === "OPTIONS") {
       return withCors(request, new NextResponse(null, { status: 204 }));
     }
-
     const publicApiRoutes = [
       "/api/auth/login",
       "/api/auth/users",
@@ -49,9 +49,9 @@ export function middleware(request: NextRequest) {
       "/api/auth/customers/verify-email",
       "/api/auth/customers/resend-verification",
       "/api/auth/customers/login",
+      "/api/products/st-martins-cafe",
     ];
-
-    if (!publicApiRoutes.includes(pathname) && !token) {
+    if (!publicApiRoutes.includes(pathname) && !token && !customerToken) {
       return withCors(
         request,
         NextResponse.json({ message: "Unauthorized" }, { status: 401 }),

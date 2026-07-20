@@ -6,6 +6,7 @@ import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
 import React, { useCallback, useMemo, useState } from "react";
 import AddCustomerModal from "./components/AddCustomerModal";
+import CustomerAccountCell from "./components/CustomerAccountCell";
 import { useSession } from "@/hooks/useSession";
 import { CreateCustomerDto, DisplayCustomerDto } from "@/dtos/customer.dto";
 import toast from "react-hot-toast";
@@ -28,6 +29,11 @@ const columns: Column<DisplayCustomerDto>[] = [
   { key: "customerEmail", name: "Email" },
   { key: "customerPhone", name: "Phone" },
   { key: "customerType", name: "Type" },
+  {
+    key: "cusAccId",
+    name: "Online Access",
+    selector: (row) => <CustomerAccountCell row={row} />,
+  },
   {
     key: "totalSpent",
     name: "Total Spent",
@@ -53,6 +59,11 @@ const adminColumns: Column<DisplayCustomerDto>[] = [
   { key: "customerPhone", name: "Phone" },
   { key: "storeName", name: "Store" },
   { key: "customerType", name: "Type" },
+  {
+    key: "cusAccId",
+    name: "Online Access",
+    selector: (row) => <CustomerAccountCell row={row} />,
+  },
   {
     key: "totalSpent",
     name: "Total Spent",

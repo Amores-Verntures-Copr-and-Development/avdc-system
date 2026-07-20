@@ -7,7 +7,14 @@ import PageLayout from "@/components/shared/PageLayout";
 import { DisplayCustomerDto } from "@/dtos/customer.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
-import { CalendarDays, Mail, MapPin, Pencil, Phone } from "lucide-react";
+import {
+  CalendarDays,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  ShieldCheck,
+} from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import useSWR from "swr";
@@ -148,6 +155,40 @@ const Page = () => {
                 </span>
               </div>
             </div>
+
+            <div className="flex gap-2 items-center">
+              <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                <ShieldCheck size={14} className="text-primary-1" />
+              </div>
+              <div className="flex flex-col justify-center">
+                <label className="text-gray-600 text-xs font-medium">
+                  Online Access
+                </label>
+                <span className="text-xs font-medium">
+                  {customer.cusAccId
+                    ? customer.emailVerified
+                      ? "Verified"
+                      : "Not Verified"
+                    : "No Access"}
+                </span>
+              </div>
+            </div>
+
+            {customer.cusAccId && (
+              <div className="flex gap-2 items-center">
+                <div className="h-7 w-7 rounded bg-primary-1/10 flex items-center justify-center">
+                  <CalendarDays size={14} className="text-primary-1" />
+                </div>
+                <div className="flex flex-col justify-center">
+                  <label className="text-gray-600 text-xs font-medium">
+                    Access Created
+                  </label>
+                  <span className="text-xs font-medium">
+                    {formatDateToWords(customer.accountCreatedAt ?? "")}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
           <div className="mt-auto border-t border-border p-4">
             <div className="grid grid-cols-3 gap-3">

@@ -25,6 +25,7 @@ export default function SearchBar({
 }: SearchBarProps) {
   const router = useRouter();
   const onSearchRef = useRef(onSearch);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const searchParams = useSearchParams();
   const [localSearch, setLocalSearch] = useState(
     searchParams.get("search") || "",
@@ -78,6 +79,76 @@ export default function SearchBar({
     };
   }, [localSearch, debounce]);
 
+  // Detect a hardware barcode scanner (keyboard-wedge) firing anywhere on the
+  // page and route the scanned code straight into the search box, even if
+  // the user hasn't clicked into it yet.
+  useEffect(() => {
+    const FAST_KEY_THRESHOLD_MS = 40;
+    const MIN_BURST_LENGTH_TO_ACTIVATE = 3;
+    const MIN_BARCODE_LENGTH = 6;
+
+    let buffer = "";
+    let lastKeyTime = 0;
+    let burstActive = false;
+
+    const resetBuffer = () => {
+      buffer = "";
+      burstActive = false;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+
+      // Already focused on our own input — its native typing + onKeyDown
+      // Enter-flush handles this case, no need to intercept.
+      if (target === inputRef.current) return;
+
+      const isOtherEditable =
+        target?.tagName === "INPUT" ||
+        target?.tagName === "TEXTAREA" ||
+        target?.isContentEditable;
+      if (isOtherEditable) {
+        resetBuffer();
+        return;
+      }
+
+      const now = Date.now();
+      const gap = now - lastKeyTime;
+      lastKeyTime = now;
+
+      if (gap > FAST_KEY_THRESHOLD_MS) {
+        resetBuffer();
+      }
+
+      if (e.key === "Enter") {
+        if (burstActive && buffer.length >= MIN_BARCODE_LENGTH) {
+          e.preventDefault();
+          if (timer.current) clearTimeout(timer.current);
+          setLocalSearch(buffer);
+          setDebouncedSearch(buffer);
+          inputRef.current?.focus();
+        }
+        resetBuffer();
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+
+      buffer += e.key;
+
+      if (buffer.length >= MIN_BURST_LENGTH_TO_ACTIVATE) {
+        burstActive = true;
+      }
+
+      if (burstActive) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, []);
+
   const clearSearch = () => {
     setLocalSearch("");
     setDebouncedSearch("");
@@ -104,6 +175,7 @@ export default function SearchBar({
       <div className="relative w-full min-w-0">
         <Search className="absolute left-1 xl:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-3 h-3 xl:w-4 xl:h-4" />
         <input
+          ref={inputRef}
           type="text"
           placeholder={placeholder}
           value={localSearch}

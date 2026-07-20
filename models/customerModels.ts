@@ -91,12 +91,29 @@ export const selectCustomers = async ({
       c.customerAddress,
       ${totalSpentExpression} AS totalSpent,
       MAX(sa.salesCreatedAt) AS lastVisit,
-      MIN(sa.salesCreatedAt) AS firstVisit
+      MIN(sa.salesCreatedAt) AS firstVisit,
+      ca.cusAccId,
+      ca.accountEmail,
+      ca.cusAccStatus,
+      ca.emailVerified,
+      ca.accountCreatedAt
     FROM Customers c
     LEFT JOIN Stores st
       ON st.storeId = c.storeId
     LEFT JOIN Sales sa
       ON sa.customerId = c.customerId AND sa.storeId = c.storeId
+    LEFT JOIN (
+      SELECT
+        customerId,
+        MAX(cusAccId) AS cusAccId,
+        MAX(email) AS accountEmail,
+        MAX(cusAccStatus) AS cusAccStatus,
+        MAX(emailVerified) AS emailVerified,
+        MAX(cusAccCreatedAt) AS accountCreatedAt
+      FROM CustomerAccounts
+      WHERE cusAccDeletedAt IS NULL
+      GROUP BY customerId
+    ) ca ON ca.customerId = c.customerId
     WHERE 1 = 1
   `;
 
@@ -146,7 +163,12 @@ export const selectCustomers = async ({
       st.storeName,
       c.customerCreatedAt,
       c.customerUpdatedAt,
-      c.customerAddress
+      c.customerAddress,
+      ca.cusAccId,
+      ca.accountEmail,
+      ca.cusAccStatus,
+      ca.emailVerified,
+      ca.accountCreatedAt
   `;
 
   if (safeLimit !== undefined && Number.isFinite(safeLimit)) {

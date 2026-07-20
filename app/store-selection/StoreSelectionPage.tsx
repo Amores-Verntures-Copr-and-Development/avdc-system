@@ -77,15 +77,15 @@ const StoreSelectionPage = () => {
           {/* Results Count */}
           <div className="mb-6 text-center">
             <span className="inline-block px-3 py-1 bg-pink-100 text-primary-1 rounded-full text-sm font-medium">
-              {response.data.length}{" "}
-              {response.data.length === 1 ? "store" : "stores"} available
+              {response.data?.length}{" "}
+              {response.data?.length === 1 ? "store" : "stores"} available
             </span>
           </div>
 
           {/* Store Cards Grid */}
-          {response.data.length > 0 ? (
+          {response.data?.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-              {response.data.map((store) => (
+              {response.data?.map((store) => (
                 <StoreCard
                   data={store}
                   key={store.storeId}
@@ -124,7 +124,7 @@ const StoreSelectionPage = () => {
       )}
 
       {/* Help/Support Link */}
-      {!fetchLoading && response.data.length > 0 && (
+      {!fetchLoading && response.data?.length > 0 && (
         <footer className="mt-10 text-center">
           <p className="text-sm text-gray-500">
             Need help?{" "}

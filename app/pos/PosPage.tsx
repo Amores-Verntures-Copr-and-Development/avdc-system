@@ -1,7 +1,7 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -148,7 +148,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     fetcher,
   );
 
-  const { data: itemResponse = { data: [] }, mutate: mutateProducts } = useSWR<{
+  const {
+    data: itemResponse = { data: [] },
+    mutate: mutateProducts,
+    error,
+  } = useSWR<{
     data: DisplayProductsDtos[];
   }>(
     storeId
@@ -520,6 +524,66 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     }
   };
 
+  const addProductBarcodeRef = useRef(addProductBarcode);
+  addProductBarcodeRef.current = addProductBarcode;
+  useEffect(() => {
+    const scannerModalOpen =
+      isShowIcons === "open-scanner" ||
+      isCheckOut ||
+      editOrderAmount !== null ||
+      showDiscountModal;
+
+    if (scannerModalOpen) return;
+
+    const FAST_KEY_THRESHOLD_MS = 40;
+    const MIN_BURST_LENGTH_TO_ACTIVATE = 3;
+    const MIN_BARCODE_LENGTH = 6;
+
+    let buffer = "";
+    let lastKeyTime = 0;
+    let burstActive = false;
+
+    const resetBuffer = () => {
+      buffer = "";
+      burstActive = false;
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      const gap = now - lastKeyTime;
+      lastKeyTime = now;
+
+      if (gap > FAST_KEY_THRESHOLD_MS) {
+        resetBuffer();
+      }
+
+      if (e.key === "Enter") {
+        if (burstActive && buffer.length >= MIN_BARCODE_LENGTH) {
+          e.preventDefault();
+          addProductBarcodeRef.current(buffer);
+        }
+        resetBuffer();
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+
+      buffer += e.key;
+
+      if (buffer.length >= MIN_BURST_LENGTH_TO_ACTIVATE) {
+        burstActive = true;
+      }
+
+      if (burstActive) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown, true);
+
+    return () => window.removeEventListener("keydown", handleKeyDown, true);
+  }, [isShowIcons, isCheckOut, editOrderAmount, showDiscountModal]);
+
   const handleConfirmOrder = async (remarks?: string) => {
     const totalAmount = getTotalAmount();
     let remaining = totalAmount;
@@ -865,7 +929,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     />
                   </div>
 
-                  {prodCat?.data.map((pc, index) => (
+                  {prodCat?.data?.map((pc, index) => (
                     <div key={index} className="flex-shrink-0">
                       <Button
                         size="sm"
