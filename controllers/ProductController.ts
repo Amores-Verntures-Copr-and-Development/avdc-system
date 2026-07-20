@@ -20,6 +20,7 @@ import {
   createProductVariant,
   createProductVariants,
 } from "@/services/products/product-variant/create-product-variants";
+import { deleteBarcodeByFields } from "@/controllers/BarcodeController";
 import { deleteProductVariants } from "@/services/products/product-variant/delete-product-variants";
 import {
   getProductVariantForOnline,
@@ -236,6 +237,18 @@ export const deleteProductVariantController = async (
       keyFields: ["prodVarId"],
       updates: [productVariants],
     });
+
+    if (productVariants.prodVarId) {
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+      await deleteBarcodeByFields({
+        keyFields: ["prodVarId"],
+        updates: [
+          { prodVarId: productVariants.prodVarId, deletedAt: now },
+        ],
+      });
+    }
+
     return {
       data: res,
       message: "Product Variant deleted successfully!",

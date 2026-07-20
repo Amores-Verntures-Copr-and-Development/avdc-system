@@ -50,6 +50,7 @@ import { ItemInterface } from "@/types/items";
 import { updateItems } from "@/models/itemModel";
 import { handleUpdateItemOrInventory } from "@/services/inventory/inventory-items/update-inventory-items";
 import { deleteInventoryItems } from "@/services/inventory/inventory-items/delete-inventory-items";
+import { deleteBarcodeByFields } from "@/controllers/BarcodeController";
 import { createInventoryItem } from "@/services/inventory/inventory-items/create-inventory-items";
 import { addAllItemsFromStoreToInventory } from "@/services/inventory/inventory-items/process-add-all-items-from-store";
 import { resolveDuplicateInventoryItems } from "@/services/inventory/inventory-items/resolve-duplicate-inventory-items";
@@ -496,6 +497,18 @@ export const deleteInventoryItemById = async ({
       (id) => ({ inventoryItemId: id }),
     );
     const result = await deleteInventoryItems({ updates: data });
+
+    if (inventoryItemId.length) {
+      const now = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+      await deleteBarcodeByFields({
+        keyFields: ["inventoryItemId"],
+        updates: inventoryItemId.map((id) => ({
+          inventoryItemId: id,
+          deletedAt: now,
+        })),
+      });
+    }
 
     return {
       success: true,
