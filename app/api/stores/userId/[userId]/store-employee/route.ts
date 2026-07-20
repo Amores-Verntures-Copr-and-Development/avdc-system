@@ -15,7 +15,6 @@ export async function GET(
     if (!res.success) {
       throw new Error("Failed fetched stock rooms!");
     }
-    console.log(res.data);
     return NextResponse.json({
       success: true,
       message: res.message,

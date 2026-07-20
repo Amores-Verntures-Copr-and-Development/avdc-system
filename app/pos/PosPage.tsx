@@ -843,6 +843,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                             setSearchProd(value);
                           }}
                           placeholder="Search Products"
+                          captureScanner={false}
                         />
                       </div>
                     </div>

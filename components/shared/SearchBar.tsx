@@ -12,6 +12,7 @@ interface SearchBarProps {
   useUrl?: boolean;
   onSearch?: (value: string) => void;
   height?: string; // NEW
+  captureScanner?: boolean;
 }
 
 export default function SearchBar({
@@ -22,6 +23,7 @@ export default function SearchBar({
   useUrl = true,
   onSearch,
   height = "h-8", // DEFAULT
+  captureScanner = true,
 }: SearchBarProps) {
   const router = useRouter();
   const onSearchRef = useRef(onSearch);
@@ -83,6 +85,8 @@ export default function SearchBar({
   // page and route the scanned code straight into the search box, even if
   // the user hasn't clicked into it yet.
   useEffect(() => {
+    if (!captureScanner) return;
+
     const FAST_KEY_THRESHOLD_MS = 40;
     const MIN_BURST_LENGTH_TO_ACTIVATE = 3;
     const MIN_BARCODE_LENGTH = 6;
@@ -147,7 +151,7 @@ export default function SearchBar({
 
     window.addEventListener("keydown", handleKeyDown, true);
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, []);
+  }, [captureScanner]);
 
   const clearSearch = () => {
     setLocalSearch("");
