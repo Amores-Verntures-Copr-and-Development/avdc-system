@@ -41,6 +41,8 @@ const StoreSelectionPage = () => {
         // Update localStorage with new user data
 
         localStorage.setItem("storeData", JSON.stringify(store));
+        // Clear the previous store's POS cart so it doesn't leak into the new store
+        localStorage.removeItem("selectedOrder");
         await refreshSession();
         toast.success("Store selected successfully!");
         router.push("/dashboard");

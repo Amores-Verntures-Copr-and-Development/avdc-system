@@ -303,6 +303,21 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           <SalesStatusBadge status={row.salesStatus as SalesStatus} />
         ),
       },
+      {
+        key: "salesSource",
+        name: "Source",
+        selector: (row) => (
+          <span
+            className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-[10px] font-semibold whitespace-nowrap ${
+              row.salesSource === "order"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {row.salesSource === "order" ? "Order" : "POS"}
+          </span>
+        ),
+      },
     ];
   }, [response?.data]);
   const adminColumns = useMemo<Column<DisplaySalesDto>[]>(
@@ -499,6 +514,21 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         key: "salesStatus",
         name: "Status",
         selector: (row) => <SalesStatusBadge status={row.salesStatus} />,
+      },
+      {
+        key: "salesSource",
+        name: "Source",
+        selector: (row) => (
+          <span
+            className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-[10px] font-semibold whitespace-nowrap ${
+              row.salesSource === "order"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {row.salesSource === "order" ? "Order" : "POS"}
+          </span>
+        ),
       },
     ],
     [response?.data],

@@ -83,7 +83,7 @@ const StockUsersView = ({ data, user }: StockStoresViewProps) => {
       }
 
       const res = await fetch(
-        `/api/stock-room/[${selectedRow.stockRoomId}]/user/${selectedRow.srUserId}`,
+        `/api/stock-room/${selectedRow.stockRoomId}/user/${selectedRow.srUserId}`,
         {
           method: "DELETE",
           headers: {
@@ -145,7 +145,7 @@ const StockUsersView = ({ data, user }: StockStoresViewProps) => {
         )}
       />
       <Modal
-        title="Add Store"
+        title="Add User"
         size="xl"
         className=""
         isOpen={showAdd}

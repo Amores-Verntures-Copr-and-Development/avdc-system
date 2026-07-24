@@ -590,6 +590,8 @@ export const insertInventoryMovement = async ({
   connection: PoolConnection;
   data: CreateInventoryMovementDto[];
 }) => {
+  if (!data || data.length === 0) return;
+
   const pool = connection ? connection : await getDBConnection();
   const sql = `
     INSERT INTO InventoryItemMovements (

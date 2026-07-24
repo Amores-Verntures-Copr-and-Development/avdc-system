@@ -1,7 +1,7 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -27,7 +27,7 @@ import useSWR from "swr";
 import ProductContent from "./components/layout/ProductContent";
 
 import ProductVariant from "./components/layout/ProductVariant";
-import { ProductCategories, ProductVariants } from "@/types/products";
+import { ProductCategories } from "@/types/products";
 import OrderDetails from "./components/layout/OrderDetails";
 import { formatPeso } from "@/utils/formatPeso";
 import Popup from "@/components/shared/Popup";
@@ -238,126 +238,134 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const change = Math.max(0, (totalPaid || 0) - getTotalAmount());
   const canComplete = (totalPaid || 0) >= getTotalAmount();
 
-  const hasSufficientInventory = (
-    prodVarId: number,
-    quantityToAdd = 1,
-  ): boolean => {
-    for (const product of productList) {
-      const variant = product.productVariants?.find(
-        (v) => v.prodVarId === prodVarId,
-      );
-
-      if (!variant) continue;
-
-      if (
-        variant.inventoryItemId &&
-        Number(variant.stocks || 0) < quantityToAdd
-      ) {
-        return false;
-      }
-
-      for (const vc of variant.variantComponents ?? []) {
-        if (!vc.isDeductVar) continue;
-
-        const required = vc.quantityRequired * quantityToAdd;
-
-        if ((vc.left ?? 0) < required) {
-          return false;
-        }
-      }
-    }
-
-    return true;
-  };
-
-  const calculateItemDiscount = (
-    price: number,
-    quantity: number,
-    discounts: CreateSaleItemDisc[] = [],
-  ) => {
-    const subtotal = price * quantity;
-    let discountTotal = 0;
-
-    for (const d of discounts) {
-      const discountDef = discountResponse.data.find(
-        (dis) => dis.discountId === d.discountId,
-      );
-
-      if (!discountDef) continue;
-
-      const value = Number(discountDef.discountValue);
-
-      if (d.discountType === "percent") {
-        discountTotal += subtotal * (value / 100);
-      }
-
-      if (d.discountType === "fixed") {
-        discountTotal += value * quantity;
-      }
-    }
-
-    return Math.min(discountTotal, subtotal);
-  };
-
-  const addProductOrder = (newProduct: OrderList) => {
-    if (!hasSufficientInventory(newProduct.prodVarId)) {
-      toast.error("Insufficient inventory");
-      return;
-    }
-
-    setSelectedOrder((prev) => {
-      const existing = prev.find((p) => p.prodVarId === newProduct.prodVarId);
-
-      if (!existing) {
-        const quantity = 1;
-        const subtotal = newProduct.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          newProduct.prodVarPrice,
-          quantity,
-          newProduct.discounts,
+  const hasSufficientInventory = useCallback(
+    (prodVarId: number, quantityToAdd = 1): boolean => {
+      for (const product of productList) {
+        const variant = product.productVariants?.find(
+          (v) => v.prodVarId === prodVarId,
         );
 
-        return [
-          ...prev,
-          {
-            ...newProduct,
+        if (!variant) continue;
+
+        if (
+          variant.inventoryItemId &&
+          Number(variant.stocks || 0) < quantityToAdd
+        ) {
+          return false;
+        }
+
+        for (const vc of variant.variantComponents ?? []) {
+          if (!vc.isDeductVar) continue;
+
+          const required = vc.quantityRequired * quantityToAdd;
+
+          if ((vc.left ?? 0) < required) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    },
+    [productList],
+  );
+
+  const calculateItemDiscount = useCallback(
+    (
+      price: number,
+      quantity: number,
+      discounts: CreateSaleItemDisc[] = [],
+    ) => {
+      const subtotal = price * quantity;
+      let discountTotal = 0;
+
+      for (const d of discounts) {
+        const discountDef = discountResponse.data.find(
+          (dis) => dis.discountId === d.discountId,
+        );
+
+        if (!discountDef) continue;
+
+        const value = Number(discountDef.discountValue);
+
+        if (d.discountType === "percent") {
+          discountTotal += subtotal * (value / 100);
+        }
+
+        if (d.discountType === "fixed") {
+          discountTotal += value * quantity;
+        }
+      }
+
+      return Math.min(discountTotal, subtotal);
+    },
+    [discountResponse.data],
+  );
+
+  const addProductOrder = useCallback(
+    (newProduct: OrderList) => {
+      if (!hasSufficientInventory(newProduct.prodVarId)) {
+        toast.error("Insufficient inventory");
+        return;
+      }
+
+      setSelectedOrder((prev) => {
+        const existing = prev.find(
+          (p) => p.prodVarId === newProduct.prodVarId,
+        );
+
+        if (!existing) {
+          const quantity = 1;
+          const subtotal = newProduct.prodVarPrice * quantity;
+          const discount = calculateItemDiscount(
+            newProduct.prodVarPrice,
+            quantity,
+            newProduct.discounts,
+          );
+
+          return [
+            ...prev,
+            {
+              ...newProduct,
+              quantity,
+              prodVarSubtotal: subtotal,
+              prodVarTotal: subtotal - discount,
+              discounts: newProduct.discounts
+                ? newProduct.discounts.map((d) => ({
+                    ...d,
+                    discountAmount: calculateItemDiscount(
+                      newProduct.prodVarPrice,
+                      1,
+                      [d],
+                    ),
+                  }))
+                : [],
+            },
+          ];
+        }
+
+        return prev.map((item) => {
+          if (item.prodVarId !== newProduct.prodVarId) return item;
+
+          const quantity = item.quantity + 1;
+          const subtotal = item.prodVarPrice * quantity;
+          const discount = calculateItemDiscount(
+            item.prodVarPrice,
+            quantity,
+            item.discounts,
+          );
+
+          return {
+            ...item,
             quantity,
             prodVarSubtotal: subtotal,
             prodVarTotal: subtotal - discount,
-            discounts: newProduct.discounts
-              ? newProduct.discounts.map((d) => ({
-                  ...d,
-                  discountAmount: calculateItemDiscount(
-                    newProduct.prodVarPrice,
-                    1,
-                    [d],
-                  ),
-                }))
-              : [],
-          },
-        ];
-      }
-
-      return prev.map((item) => {
-        if (item.prodVarId !== newProduct.prodVarId) return item;
-
-        const quantity = item.quantity + 1;
-        const subtotal = item.prodVarPrice * quantity;
-        const discount = calculateItemDiscount(
-          item.prodVarPrice,
-          quantity,
-          item.discounts,
-        );
-
-        return {
-          ...item,
-          quantity,
-          prodVarSubtotal: subtotal,
-          prodVarTotal: subtotal - discount,
-        };
+          };
+        });
       });
-    });
-  };
+    },
+    [hasSufficientInventory, calculateItemDiscount, setSelectedOrder],
+  );
 
   const addQuantity = (product: OrderList) => {
     if (!hasSufficientInventory(product.prodVarId)) {
@@ -652,6 +660,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesItems: saleItems,
       salesPayments: paymentMethodData,
       salesRemarks: remarks ?? "",
+      salesSource: "pos",
     };
 
     try {
@@ -704,6 +713,15 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   };
 
   const addPayment = (payment: CreateSalePaymentDto) => {
+    const method = paymentMethodResponse.data?.find(
+      (pm) => pm.payMetId === payment.payMetId,
+    );
+
+    if (method?.payMetIsCustomer && !customer) {
+      toast.error(`${method.payMetName} requires a customer to be selected!`);
+      return;
+    }
+
     setPaymentMethod((prev) => [
       ...(prev ?? []),
       {
@@ -987,9 +1005,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               <ProductVariant
                 addQuantity={addQuantity}
                 data={selectedProduct}
-                onClick={function (data: ProductVariants): void {
-                  console.log({ data });
-                }}
                 onBack={() => {
                   setSelectedProduct(null);
                 }}
@@ -998,9 +1013,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
             ) : (
               <ProductContent
                 data={productList ?? []}
-                selectProduct={(data) => {
-                  setSelectedProduct(data);
-                }}
+                selectProduct={setSelectedProduct}
                 addProductOrder={addProductOrder}
               />
             )
@@ -1013,9 +1026,6 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                       key={`${p.prodId}-${pv.prodVarId}`}
                       data={pv}
                       product={p ?? null}
-                      onClick={function (data: ProductVariants): void {
-                        console.log(data);
-                      }}
                       addProductOrder={addProductOrder}
                     />
                   );
@@ -1278,6 +1288,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               addPayment={addPayment}
               order={selectedOrder}
               discounts={selectedDiscount}
+              customer={customer}
               paymentMethods={paymentMethodResponse.data ?? []}
               selectedPaymentMethod={paymentMethod}
               setSelectedPaymentMethod={setPaymentMethod}

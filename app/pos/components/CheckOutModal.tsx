@@ -19,6 +19,8 @@ import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
 import Textarea from "@/components/shared/TextArea";
 import { SalesPaymentStatus } from "@/types/sales";
+import { Customer } from "@/types/customer";
+import toast from "react-hot-toast";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;
@@ -36,6 +38,7 @@ interface CheckOutModalProps {
   change: number;
   canComplete: boolean;
   isConfirming: boolean;
+  customer?: Customer | null;
 }
 
 const CheckOutModal = ({
@@ -51,6 +54,7 @@ const CheckOutModal = ({
   change,
   canComplete,
   isConfirming,
+  customer,
 }: CheckOutModalProps) => {
   const [remarks, setRemarks] = useState<string>("");
   const handleRemarkChange = handleChange(remarks, setRemarks);
@@ -260,7 +264,14 @@ const CheckOutModal = ({
                     return (
                       <button
                         key={payment.payMetId}
-                        onClick={() =>
+                        onClick={() => {
+                          if (payment.payMetIsCustomer && !customer) {
+                            toast.error(
+                              `${payment.payMetName} requires a customer to be selected!`,
+                            );
+                            return;
+                          }
+
                           setSelectedMethod((prev) => {
                             if (!prev) {
                               return {
@@ -276,8 +287,8 @@ const CheckOutModal = ({
                               ...prev,
                               payMetId: payment.payMetId,
                             };
-                          })
-                        }
+                          });
+                        }}
                         className={`flex flex-col items-center justify-center p-1 2xl:p-4 rounded-xl border-2 transition-all ${
                           selectedMethod?.payMetId === payment.payMetId
                             ? "border-emerald-500 bg-emerald-50"

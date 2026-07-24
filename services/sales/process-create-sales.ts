@@ -50,6 +50,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesTotalPaid: data.salesTotalPaid,
       salesCreatedBy: data.salesCreatedBy,
       salesRemarks: data.salesRemarks,
+      salesSource: data.salesSource ?? "pos",
     };
 
     const salesId = await createSale({ connection, data: salesData });
@@ -131,6 +132,7 @@ export async function processCreateSales(data: CreateSaleDto) {
         updates: componentVar,
         keyFields: ["inventoryItemId"],
       });
+      console.log({ inventoryMovement });
       await createInventoryMovement({ connection, data: inventoryMovement });
     }
 
@@ -144,7 +146,7 @@ export async function processCreateSales(data: CreateSaleDto) {
     }
 
     const needDeductVariantComponentInventory = saleItemData.filter(
-      (i) => i.components?.length !== 0,
+      (i) => (i.components?.length ?? 0) > 0,
     );
     if (needDeductVariantComponentInventory.length > 0) {
       const inventory = await findInventoryByStoreFields({

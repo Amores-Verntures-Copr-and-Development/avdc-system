@@ -151,7 +151,7 @@ const SelectedSalesPage = ({
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-4 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-5 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
               <div>
                 <div className="text-[10px] 2xl:text-xs text-gray-500 mb-1">
                   Customer
@@ -177,6 +177,20 @@ const SelectedSalesPage = ({
                     showHour: true,
                     showMinute: true,
                   })}
+                </div>
+              </div>
+              <div>
+                <div className="text-[10px] 2xl:text-xs text-gray-500 mb-1">
+                  Source
+                </div>
+                <div
+                  className={`inline-flex px-2 py-1 text-center font-semibold text-[11px] 2xl:text-xs rounded-2xl ${
+                    salesData?.salesSource === "order"
+                      ? "bg-purple-100 text-purple-700"
+                      : "bg-blue-100 text-blue-700"
+                  }`}
+                >
+                  {salesData?.salesSource === "order" ? "Order" : "POS"}
                 </div>
               </div>
               <div>

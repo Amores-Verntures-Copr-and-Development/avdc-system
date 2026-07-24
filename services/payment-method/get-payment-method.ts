@@ -6,10 +6,19 @@ import { PaymentMethods } from "@/types/payment-methods";
 import { PoolConnection } from "mysql2/promise";
 
 export const getPaymentMethodServices = {
-  findPaymentMethodByStoreId: async ({ number }: { number: number }) => {
+  findPaymentMethodByStoreId: async ({
+    number,
+    isOnline,
+  }: {
+    number: number;
+    isOnline?: boolean;
+  }) => {
     try {
       const data = await selectPaymentMethods({
-        keyFields: { storeId: number },
+        keyFields: {
+          storeId: number,
+          ...(isOnline !== undefined ? { payMetIsOnline: isOnline } : {}),
+        },
       });
       return data;
     } catch (e) {

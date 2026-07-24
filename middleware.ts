@@ -88,6 +88,7 @@ export function middleware(request: NextRequest) {
     "/pos",
     "/account",
     "/isr",
+    "/orders",
   ];
   const isProtectedPage = protectedPages.some((route) =>
     pathname.startsWith(route),
@@ -143,5 +144,6 @@ export const config = {
     "/pos/:path*",
     "/account/:path*",
     "/isr/:path*",
+    "/orders/:path*",
   ],
 };

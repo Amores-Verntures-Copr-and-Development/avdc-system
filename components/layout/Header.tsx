@@ -73,6 +73,8 @@ const Header = () => {
 
       if (response.ok && data.success) {
         localStorage.setItem("storeData", JSON.stringify(store));
+        // Clear the previous store's POS cart so it doesn't leak into the new store
+        localStorage.removeItem("selectedOrder");
         await refreshSession();
         toast.success("Store selected successfully!");
         window.location.reload();

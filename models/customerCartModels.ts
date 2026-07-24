@@ -114,3 +114,16 @@ export const deleteCustomerCartItem = async ({
   ]);
   return result;
 };
+
+export const deleteCustomerCartByCustomerId = async ({
+  customerId,
+  connection,
+}: {
+  customerId: number;
+  connection?: PoolConnection;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `DELETE FROM CustomerCart WHERE customerId = ?`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, [customerId]);
+  return result;
+};

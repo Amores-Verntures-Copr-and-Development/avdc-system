@@ -4,7 +4,10 @@ import Input from "@/components/shared/Input";
 import Table, { Column } from "@/components/shared/Table";
 import Textarea from "@/components/shared/TextArea";
 import Toggle from "@/components/shared/Toggle";
-import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
+import {
+  CreatePaymentMethodDto,
+  UpdatePaymentMethodDto,
+} from "@/dtos/paymentMethods.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { PaymentMethods } from "@/types/payment-methods";
 import { fetcher } from "@/utils/fetcher";
@@ -28,6 +31,10 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
   const [selectedPaymentMethod, setSelectedPaymentMethhod] =
     useState<PaymentMethods | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState<UpdatePaymentMethodDto | null>(
+    null,
+  );
   const [paymentMethodForm, setPaymentMethodForm] =
     useState<CreatePaymentMethodDto>({
       payMetCreatedBy: 0,
@@ -36,6 +43,8 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
       payMetHasRef: 0,
       payMetDesc: "",
       payMetIsEmail: false,
+      payMetIsOnline: false,
+      payMetIsCustomer: false,
     });
   const handlePaymentMethodChange = handleChange(
     paymentMethodForm,
@@ -56,6 +65,8 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
       payMetHasRef: 0,
       payMetDesc: "",
       payMetIsEmail: false,
+      payMetIsOnline: false,
+      payMetIsCustomer: false,
     });
 
   const handleCreatePaymentMethod = async () => {
@@ -102,6 +113,46 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
       return false;
     } finally {
       setIsAdding(false);
+    }
+  };
+
+  const handleSelectPaymentMethod = (row: PaymentMethods) => {
+    setSelectedPaymentMethhod(row);
+    setEditForm({
+      payMetId: row.payMetId,
+      payMetName: row.payMetName,
+      payMetDesc: row.payMetDesc,
+      payMetHasRef: row.payMetHasRef,
+      payMetIsEmail: row.payMetIsEmail,
+      payMetIsOnline: row.payMetIsOnline,
+      payMetIsCustomer: row.payMetIsCustomer,
+    });
+  };
+
+  const handleSavePaymentMethod = async () => {
+    if (!editForm) return;
+
+    setIsSaving(true);
+    try {
+      const result = await fetch(`/api/payment-method/${editForm.payMetId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(editForm),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      toast.success(res.message);
+      mutate();
+      setSelectedPaymentMethhod(null);
+      setEditForm(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -165,6 +216,42 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
                     used.
                   </p>
                 </div>
+
+                <div className="rounded-md border border-gray-200 p-3">
+                  <Toggle
+                    label="Show in Online Store"
+                    sizes="xs"
+                    initial={paymentMethodForm.payMetIsOnline ?? false}
+                    onToggle={(state) => {
+                      setPaymentMethodForm((prev) => ({
+                        ...prev,
+                        payMetIsOnline: state,
+                      }));
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Make this payment method selectable by customers on the
+                    online store.
+                  </p>
+                </div>
+
+                <div className="rounded-md border border-gray-200 p-3">
+                  <Toggle
+                    label="Requires Customer"
+                    sizes="xs"
+                    initial={paymentMethodForm.payMetIsCustomer ?? false}
+                    onToggle={(state) => {
+                      setPaymentMethodForm((prev) => ({
+                        ...prev,
+                        payMetIsCustomer: state,
+                      }));
+                    }}
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Require a customer to be selected in POS before this
+                    payment method can be used.
+                  </p>
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 border-t pt-4">
@@ -193,31 +280,110 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
               columns={paymentMethodColumns}
               data={itemResponse.data}
               loading={loading}
-              onRowSelection={(row) => setSelectedPaymentMethhod(row)}
+              onRowSelection={handleSelectPaymentMethod}
             />
           </BigCard>
         </>
       ) : (
         <BigCard title="Payment Method Details" isRounded={false}>
           <div className="flex flex-col gap-5">
-            <div>
-              <h3 className="text-base font-semibold">
-                {selectedPaymentMethod.payMetName}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {selectedPaymentMethod.payMetDesc || "No description provided."}
-              </p>
+            <div className="grid grid-cols-1 gap-4">
+              <Input
+                label="Payment Method Name"
+                sizes="xs"
+                value={editForm?.payMetName ?? ""}
+                name="payMetName"
+                onChange={(e) =>
+                  setEditForm((prev) =>
+                    prev ? { ...prev, payMetName: e.target.value } : prev,
+                  )
+                }
+                disabled={isSaving}
+              />
+
+              <Textarea
+                label="Description"
+                sizes="xs"
+                value={editForm?.payMetDesc ?? ""}
+                name="payMetDesc"
+                onChange={(e) =>
+                  setEditForm((prev) =>
+                    prev ? { ...prev, payMetDesc: e.target.value } : prev,
+                  )
+                }
+                disabled={isSaving}
+              />
+
+              <div className="rounded-md border border-gray-200 p-3">
+                <Toggle
+                  label="Require Reference Number"
+                  sizes="xs"
+                  initial={editForm?.payMetHasRef === 1}
+                  onToggle={(state) => {
+                    setEditForm((prev) =>
+                      prev ? { ...prev, payMetHasRef: state ? 1 : 0 } : prev,
+                    );
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Turn this on if this payment method needs a reference
+                  number.
+                </p>
+              </div>
+
+              <div className="rounded-md border border-gray-200 p-3">
+                <Toggle
+                  label="Send Email Notification"
+                  sizes="xs"
+                  initial={editForm?.payMetIsEmail ?? false}
+                  onToggle={(state) => {
+                    setEditForm((prev) =>
+                      prev ? { ...prev, payMetIsEmail: state } : prev,
+                    );
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Automatically send an email when this payment method is
+                  used.
+                </p>
+              </div>
+
+              <div className="rounded-md border border-gray-200 p-3">
+                <Toggle
+                  label="Show in Online Store"
+                  sizes="xs"
+                  initial={editForm?.payMetIsOnline ?? false}
+                  onToggle={(state) => {
+                    setEditForm((prev) =>
+                      prev ? { ...prev, payMetIsOnline: state } : prev,
+                    );
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Make this payment method selectable by customers on the
+                  online store.
+                </p>
+              </div>
+
+              <div className="rounded-md border border-gray-200 p-3">
+                <Toggle
+                  label="Requires Customer"
+                  sizes="xs"
+                  initial={editForm?.payMetIsCustomer ?? false}
+                  onToggle={(state) => {
+                    setEditForm((prev) =>
+                      prev ? { ...prev, payMetIsCustomer: state } : prev,
+                    );
+                  }}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Require a customer to be selected in POS before this
+                  payment method can be used.
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <DetailItem label="Reference Required">
-                {selectedPaymentMethod.payMetHasRef === 1 ? "Yes" : "No"}
-              </DetailItem>
-
-              <DetailItem label="Email Notification">
-                {selectedPaymentMethod.payMetIsEmail ? "Enabled" : "Disabled"}
-              </DetailItem>
-
               <DetailItem label="Created At">
                 {formatDateToWords(selectedPaymentMethod.payMetCreatedAt)}
               </DetailItem>
@@ -232,9 +398,19 @@ const PaymentMethodList = ({ user, storeId }: PaymentMethodListProps) => {
                 label="Back"
                 color="secondary"
                 size="xs"
-                onClick={() => setSelectedPaymentMethhod(null)}
+                disabled={isSaving}
+                onClick={() => {
+                  setSelectedPaymentMethhod(null);
+                  setEditForm(null);
+                }}
               />
-              <Button label="Save Changes" color="primary" size="xs" />
+              <Button
+                label="Save Changes"
+                color="primary"
+                size="xs"
+                loading={isSaving}
+                onClick={handleSavePaymentMethod}
+              />
             </div>
           </div>
         </BigCard>

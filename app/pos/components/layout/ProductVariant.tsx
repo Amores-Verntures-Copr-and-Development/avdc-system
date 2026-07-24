@@ -1,12 +1,10 @@
 import React from "react";
 import ProductVariantCard from "../ProductVariantCard";
-import { ProductVariants } from "@/types/products";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { OrderList } from "../../PosPage";
 
 interface ProductVariantProps {
   data?: DisplayProductsDtos | null | undefined;
-  onClick: (data: ProductVariants) => void;
   onBack: () => void;
   addProductOrder: (data: OrderList) => void;
   addQuantity: (data: OrderList) => void;
@@ -39,9 +37,6 @@ const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
             <ProductVariantCard
               key={prod.prodVarId}
               data={prod}
-              onClick={function (data: ProductVariants): void {
-                console.log(data);
-              }}
               product={data ?? null}
               addProductOrder={addProductOrder}
             />
@@ -51,4 +46,4 @@ const ProductVariant = ({ data, addProductOrder }: ProductVariantProps) => {
   );
 };
 
-export default ProductVariant;
+export default React.memo(ProductVariant);

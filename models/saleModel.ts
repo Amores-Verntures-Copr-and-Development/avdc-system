@@ -315,7 +315,7 @@ export const insertSales = async ({
   data: CreateSaleDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus,salesRemarks) VALUES(?,?,?,?,?,?,?,?,?,?)`;
+  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus,salesRemarks,salesSource) VALUES(?,?,?,?,?,?,?,?,?,?,?)`;
   const [results] = await pool.execute<ResultSetHeader>(sql, [
     data.salesNo,
     data.salesInvoice,
@@ -327,6 +327,7 @@ export const insertSales = async ({
     data.customerId || null,
     data.salesStatus,
     data.salesRemarks || "",
+    data.salesSource ?? "pos",
   ]);
   return results.insertId;
 };

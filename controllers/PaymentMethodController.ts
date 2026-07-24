@@ -1,6 +1,10 @@
-import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
+import {
+  CreatePaymentMethodDto,
+  UpdatePaymentMethodDto,
+} from "@/dtos/paymentMethods.dto";
 import { createPaymentMethodSevices } from "@/services/payment-method/create-payment-method";
 import { getPaymentMethodServices } from "@/services/payment-method/get-payment-method";
+import { updatePaymentMethodServices } from "@/services/payment-method/update-payment-method";
 
 export const createPaymentMethod = async (data: CreatePaymentMethodDto) => {
   try {
@@ -19,10 +23,14 @@ export const createPaymentMethod = async (data: CreatePaymentMethodDto) => {
   }
 };
 
-export const getPaymentMethodByStore = async (id: number) => {
+export const getPaymentMethodByStore = async (
+  id: number,
+  isOnline?: boolean,
+) => {
   try {
     const data = await getPaymentMethodServices.findPaymentMethodByStoreId({
       number: id,
+      isOnline,
     });
     return {
       data: data,
@@ -33,6 +41,25 @@ export const getPaymentMethodByStore = async (id: number) => {
     return {
       success: false,
       message: "Failed to fetch payment method!",
+      error: e,
+    };
+  }
+};
+
+export const updatePaymentMethod = async (data: UpdatePaymentMethodDto) => {
+  try {
+    const res = await updatePaymentMethodServices.updatePaymentMethod({
+      data,
+    });
+    return {
+      data: res,
+      success: true,
+      message: "Payment Method updated successfully!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to update payment method!",
       error: e,
     };
   }

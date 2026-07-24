@@ -4,6 +4,8 @@ export interface PaymentMethods {
   payMetDesc: string;
   payMetHasRef: number;
   payMetIsEmail: boolean;
+  payMetIsOnline: boolean;
+  payMetIsCustomer: boolean;
   storeId: number;
   payMetCreatedBy: number;
   payMetCreatedAt: string;

@@ -299,19 +299,32 @@ const TableInner = <T extends Record<string, any>>(
     [uniqueIdKey],
   );
 
-  const getRowById = (row: T) =>
-    editableData.find((r) => getUniqueId(r) === getUniqueId(row));
+  // O(1) lookup instead of `.find()` - this used to run once per cell,
+  // per row, per render (O(rows^2 * columns) blowup on large tables).
+  const editableDataById = React.useMemo(() => {
+    const map = new Map<string | number, T>();
+    editableData.forEach((r) => map.set(getUniqueId(r), r));
+    return map;
+  }, [editableData, getUniqueId]);
 
-  const toggleRow = (row: T) => {
-    setSelectedRows((prev) => {
-      const uniqueId = getUniqueId(row);
-      const isSelected = prev.some((item) => getUniqueId(item) === uniqueId);
+  const getRowById = React.useCallback(
+    (row: T) => editableDataById.get(getUniqueId(row)),
+    [editableDataById, getUniqueId],
+  );
 
-      return isSelected
-        ? prev.filter((item) => getUniqueId(item) !== uniqueId)
-        : [...prev, row];
-    });
-  };
+  const toggleRow = React.useCallback(
+    (row: T) => {
+      setSelectedRows((prev) => {
+        const uniqueId = getUniqueId(row);
+        const isSelected = prev.some((item) => getUniqueId(item) === uniqueId);
+
+        return isSelected
+          ? prev.filter((item) => getUniqueId(item) !== uniqueId)
+          : [...prev, row];
+      });
+    },
+    [getUniqueId],
+  );
 
   const toggleAll = () => {
     setSelectedRows((prev) =>
@@ -336,33 +349,34 @@ const TableInner = <T extends Record<string, any>>(
     onSelectionChange?.(selectedRows);
   }, [selectedRows, onSelectionChange]);
 
-  const isRowSelected = (row: T) =>
-    selectedRows.some((item) => getUniqueId(item) === getUniqueId(row));
+  const isRowSelected = React.useCallback(
+    (row: T) => selectedRows.some((item) => getUniqueId(item) === getUniqueId(row)),
+    [selectedRows, getUniqueId],
+  );
 
-  const handleInputChange = (row: T, columnKey: string, value: any) => {
+  const handleInputChange = React.useCallback((row: T, columnKey: string, value: any) => {
     const rowId = getUniqueId(row);
+    const rowIndex = editableData.findIndex((r) => getUniqueId(r) === rowId);
+    if (rowIndex === -1) return;
 
-    const newData = editableData.map((r) =>
-      getUniqueId(r) === rowId ? { ...r, [columnKey]: value } : r,
-    );
+    // Only the edited row's compute columns need recalculating - every
+    // `compute` in this codebase only reads fields off its own row, so
+    // re-running it for every other row on each keystroke was pure waste.
+    let updatedRow: T = { ...editableData[rowIndex], [columnKey]: value };
 
     columns.forEach((col) => {
       if (!col.compute) return;
 
-      newData.forEach((r, idx) => {
-        if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
-          newData[idx] = {
-            ...newData[idx],
-            [col.key]: col.compute!(r),
-          };
-        }
-      });
+      if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
+        updatedRow = { ...updatedRow, [col.key]: col.compute!(updatedRow) };
+      }
     });
 
-    setEditableData(newData);
+    const newData = editableData.map((r, idx) =>
+      idx === rowIndex ? updatedRow : r,
+    );
 
-    const rowIndex = editableData.findIndex((r) => getUniqueId(r) === rowId);
-    const updatedRow = newData.find((r) => getUniqueId(r) === rowId)!;
+    setEditableData(newData);
 
     onCellChange?.(rowIndex, columnKey, value, updatedRow);
 
@@ -388,21 +402,20 @@ const TableInner = <T extends Record<string, any>>(
         updateData(newData);
       }, debounceTime);
     }
-  };
+  }, [editableData, columns, getUniqueId, onCellChange, updateData, debounceTime]);
 
-  const isFieldEditable = (
-    column: Column<T>,
-    row: T,
-    rowIndex: number,
-  ): boolean => {
-    if (typeof column.editable === "function") {
-      return column.editable(row, rowIndex);
-    }
+  const isFieldEditable = React.useCallback(
+    (column: Column<T>, row: T, rowIndex: number): boolean => {
+      if (typeof column.editable === "function") {
+        return column.editable(row, rowIndex);
+      }
 
-    return column.editable === true;
-  };
+      return column.editable === true;
+    },
+    [],
+  );
 
-  const renderCell = (column: Column<T>, row: T, rowIndex: number) => {
+  const renderCell = React.useCallback((column: Column<T>, row: T, rowIndex: number) => {
     const editable = isFieldEditable(column, row, rowIndex);
     const errorKey = `${rowIndex}-${column.key}`;
     const hasError = errors.has(errorKey);
@@ -501,7 +514,7 @@ const TableInner = <T extends Record<string, any>>(
         {column.format ? column.format(value) : value}
       </div>
     );
-  };
+  }, [errors, getRowById, editMode, handleInputChange, isFieldEditable]);
 
   const colSpanCount = React.useMemo(
     () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),
@@ -733,53 +746,20 @@ const TableInner = <T extends Record<string, any>>(
                 </tr>
               ) : (
                 filteredData.map((row, rowIndex) => (
-                  <tr
+                  <TableRow
                     key={getUniqueId(row) ?? rowIndex}
-                    className={`
-                      cursor-pointer text-[11px] text-gray-700 transition-colors
-                      hover:bg-gray-50/80 xl:text-${textSize}
-                    `}
-                    onClick={() => onRowSelection?.(row)}
-                  >
-                    {showCheckBox && (
-                      <td
-                        onClick={(e) => e.stopPropagation()}
-                        className="px-4 py-3 text-center"
-                      >
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 rounded-md border-gray-300 text-gray-900 focus:ring-0"
-                          checked={isRowSelected(row)}
-                          onChange={() => toggleRow(row)}
-                        />
-                      </td>
-                    )}
-
-                    {columns.map((column) => {
-                      const cellBg = column.bgCol ?? "";
-
-                      return (
-                        <td
-                          key={column.key}
-                          className={`
-                            px-4 py-3 align-middle text-xs transition-colors xl:text-${textSize}
-                            ${cellBg}
-                          `}
-                        >
-                          {renderCell(column, row, rowIndex)}
-                        </td>
-                      );
-                    })}
-
-                    {showActions && renderActions && (
-                      <td
-                        className={`px-4 py-3 text-center text-xs xl:text-${textSize}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {renderActions(row, rowIndex)}
-                      </td>
-                    )}
-                  </tr>
+                    row={row}
+                    rowIndex={rowIndex}
+                    columns={columns}
+                    showCheckBox={showCheckBox}
+                    showActions={showActions}
+                    isSelected={isRowSelected(row)}
+                    textSize={textSize}
+                    onToggleRow={toggleRow}
+                    onRowSelection={onRowSelection}
+                    renderActions={renderActions}
+                    renderCell={renderCell}
+                  />
                 ))
               )}
             </tbody>
@@ -799,6 +779,88 @@ const TableInner = <T extends Record<string, any>>(
 export default forwardRef(TableInner) as <T extends Record<string, any>>(
   props: TableProps<T> & { ref?: React.Ref<TableHandle> },
 ) => React.ReactElement;
+
+interface TableRowProps<T> {
+  row: T;
+  rowIndex: number;
+  columns: Column<T>[];
+  showCheckBox?: boolean;
+  showActions?: boolean;
+  isSelected: boolean;
+  textSize: string;
+  onToggleRow: (row: T) => void;
+  onRowSelection?: (row: T) => void;
+  renderActions?: (row: T, rowIndex: number) => React.ReactNode;
+  renderCell: (column: Column<T>, row: T, rowIndex: number) => React.ReactNode;
+}
+
+// Memoized so editing/selecting one row doesn't force every other row in the
+// table to re-render - only effective when callers pass stable
+// renderActions/columns (e.g. via useMemo/useCallback).
+function TableRowBase<T extends Record<string, any>>({
+  row,
+  rowIndex,
+  columns,
+  showCheckBox,
+  showActions,
+  isSelected,
+  textSize,
+  onToggleRow,
+  onRowSelection,
+  renderActions,
+  renderCell,
+}: TableRowProps<T>) {
+  return (
+    <tr
+      className={`
+        cursor-pointer text-[11px] text-gray-700 transition-colors
+        hover:bg-gray-50/80 xl:text-${textSize}
+      `}
+      onClick={() => onRowSelection?.(row)}
+    >
+      {showCheckBox && (
+        <td
+          onClick={(e) => e.stopPropagation()}
+          className="px-4 py-3 text-center"
+        >
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded-md border-gray-300 text-gray-900 focus:ring-0"
+            checked={isSelected}
+            onChange={() => onToggleRow(row)}
+          />
+        </td>
+      )}
+
+      {columns.map((column) => {
+        const cellBg = column.bgCol ?? "";
+
+        return (
+          <td
+            key={column.key}
+            className={`
+              px-4 py-3 align-middle text-xs transition-colors xl:text-${textSize}
+              ${cellBg}
+            `}
+          >
+            {renderCell(column, row, rowIndex)}
+          </td>
+        );
+      })}
+
+      {showActions && renderActions && (
+        <td
+          className={`px-4 py-3 text-center text-xs xl:text-${textSize}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {renderActions(row, rowIndex)}
+        </td>
+      )}
+    </tr>
+  );
+}
+
+const TableRow = React.memo(TableRowBase) as typeof TableRowBase;
 
 const CustomSelect = ({
   value,

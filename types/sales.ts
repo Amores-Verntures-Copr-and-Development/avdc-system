@@ -27,6 +27,8 @@ export enum SalesItemDiscStatus {
   REMOVED = "removed",
 }
 
+export type SalesSource = "pos" | "order";
+
 export interface Sales {
   salesId: number;
   salesNo: string;
@@ -36,6 +38,7 @@ export interface Sales {
   salesSubTotal: number;
   salesStatus: SalesStatus;
   salesRemarks: string;
+  salesSource: SalesSource;
   salesCreatedAt: string;
   salesUpdatedAt: string;
   salesDeletedAt: string;

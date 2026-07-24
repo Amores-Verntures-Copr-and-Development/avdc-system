@@ -41,6 +41,23 @@ export interface CustomerAccount {
   customerId: number;
 }
 
+export interface CustomerAddress {
+  addressId: number;
+  customerId: number;
+
+  label: string;
+  isDefault: boolean;
+
+  street: string;
+  barangay: string;
+  city: string;
+  province: string;
+
+  addressCreatedAt: string;
+  addressUpdatedAt: string;
+  addressDeletedAt: string | null;
+}
+
 export interface CusEmailVerification {
   cusEmailVerId: number;
   cusAccId: number;

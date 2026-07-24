@@ -76,7 +76,7 @@ const CategoryPage = () => {
       });
       const res = await result.json();
       if (!res.success) {
-        console.log("Res: ", res);
+  
         throw new Error(res.err);
       }
       toast.success("User added successfully!");

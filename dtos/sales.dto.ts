@@ -32,11 +32,12 @@ export type CreateSaleDto = Pick<
   | "storeId"
   | "salesStatus"
   | "salesRemarks"
-> & {
-  salesItems?: CreateSaleItemDto[];
-  salesPayments?: CreateSalePaymentDto[];
-  saleDiscounts?: CreateSalesDiscount[];
-};
+> &
+  Partial<Pick<Sales, "salesSource">> & {
+    salesItems?: CreateSaleItemDto[];
+    salesPayments?: CreateSalePaymentDto[];
+    saleDiscounts?: CreateSalesDiscount[];
+  };
 
 export interface DisplaySalesDto extends Sales {
   customerName: string;

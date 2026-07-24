@@ -8,4 +8,18 @@ export type CreatePaymentMethodDto = Pick<
   | "payMetHasRef"
   | "payMetDesc"
   | "payMetIsEmail"
->;
+> &
+  Partial<Pick<PaymentMethods, "payMetIsOnline" | "payMetIsCustomer">>;
+
+export type UpdatePaymentMethodDto = Pick<PaymentMethods, "payMetId"> &
+  Partial<
+    Pick<
+      PaymentMethods,
+      | "payMetName"
+      | "payMetDesc"
+      | "payMetHasRef"
+      | "payMetIsEmail"
+      | "payMetIsOnline"
+      | "payMetIsCustomer"
+    >
+  >;

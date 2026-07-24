@@ -28,4 +28,4 @@ const ProductContent = ({
   );
 };
 
-export default ProductContent;
+export default React.memo(ProductContent);

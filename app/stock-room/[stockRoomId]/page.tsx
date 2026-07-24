@@ -23,7 +23,7 @@ const Page = () => {
   >("inventory");
   const router = useRouter();
   const params = useParams();
-  const { user } = useSession();
+  const { user, hasStore } = useSession();
   const { stockRoomId } = params;
   const {
     data: response,
@@ -34,6 +34,10 @@ const Page = () => {
     fetcher,
   );
   const stockroom = response?.data[0];
+  // purchasers have no home store, so the "restricted, no tabs" inventory
+  // view below only applies to staff/supervisor
+  const isRestrictedEmployee = hasStore;
+
   if (isLoading) return <LoaderComponent />;
   if (!stockroom)
     return (
@@ -41,6 +45,34 @@ const Page = () => {
         <></>
       </PageLayout>
     );
+
+  if (isRestrictedEmployee) {
+    return (
+      <PageLayout className="p-2 flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+          <PageHeader
+            title={stockroom?.stockRoomName ?? ""}
+            subtitle="Track and manage your stock levels"
+          />
+          <div>
+            <Button
+              color="secondary"
+              size="sm"
+              icon={ArrowLeft}
+              label="Back"
+              onClick={() => {
+                router.back();
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 flex flex-col bg-white">
+          <StockInventoryView data={stockroom} />
+        </div>
+      </PageLayout>
+    );
+  }
+
   return (
     <PageLayout className="p-2 flex flex-col gap-2">
       <div className="flex justify-between items-center">

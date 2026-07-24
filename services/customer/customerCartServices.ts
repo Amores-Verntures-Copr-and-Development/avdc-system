@@ -1,5 +1,6 @@
 import { CreateCustomerCartDto, UpdateCustomerCartDto } from "@/dtos/customerCart.dto";
 import {
+  deleteCustomerCartByCustomerId,
   deleteCustomerCartItem,
   insertCustomerCartItem,
   selectCustomerCart,
@@ -69,6 +70,15 @@ export const customerCartServices = {
         throw new Error("Cart item not found for this customer");
       }
       await deleteCustomerCartItem({ cartId, customerId });
+      return await selectCustomerCart({ customerId });
+    } catch (e) {
+      throw e;
+    }
+  },
+
+  clearCart: async ({ customerId }: { customerId: number }) => {
+    try {
+      await deleteCustomerCartByCustomerId({ customerId });
       return await selectCustomerCart({ customerId });
     } catch (e) {
       throw e;

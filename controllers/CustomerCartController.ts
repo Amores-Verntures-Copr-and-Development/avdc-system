@@ -68,6 +68,27 @@ export const updateCustomerCartItem = async ({
   }
 };
 
+export const clearCustomerCart = async ({
+  customerId,
+}: {
+  customerId: number;
+}) => {
+  try {
+    const result = await customerCartServices.clearCart({ customerId });
+    return {
+      success: true,
+      message: "Cart cleared!",
+      data: result,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to clear cart!",
+      error: e,
+    };
+  }
+};
+
 export const deleteCustomerCartItem = async ({
   customerId,
   cartId,

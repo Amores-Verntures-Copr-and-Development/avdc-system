@@ -11,7 +11,6 @@ import { OrderList } from "../PosPage";
 interface ProductVariantCardProps {
   data: ProductVariants | null;
   product: DisplayProductsDtos | null;
-  onClick: (data: ProductVariants) => void;
   addProductOrder: (data: OrderList) => void;
   showImage?: boolean;
 }
@@ -268,4 +267,4 @@ const ProductVariantCard = ({
   );
 };
 
-export default ProductVariantCard;
+export default React.memo(ProductVariantCard);

@@ -27,14 +27,32 @@ import {
   Weight,
   ShieldUser,
   Factory,
+  LucideIcon,
+  ListOrdered,
+  ChefHat,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useSession } from "@/hooks/useSession";
+import useSWR from "swr";
+import { fetcher } from "@/utils/fetcher";
 
-const sideMenu = [
+interface SideMenuSection {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  roles?: (string | undefined)[];
+  alsoShowIf?: "hasStockRoom" | "hasStore";
+}
+
+interface SideMenuGroup {
+  key: string;
+  sections: SideMenuSection[];
+}
+
+const sideMenu: SideMenuGroup[] = [
   {
     key: "Main",
     sections: [
@@ -69,6 +87,7 @@ const sideMenu = [
         href: "/stock-room",
         icon: Warehouse,
         roles: ["superadmin", "owner", "admin", "accounting", "hr"],
+        alsoShowIf: "hasStockRoom",
       },
       {
         name: "Products",
@@ -114,6 +133,7 @@ const sideMenu = [
           "staff",
           "owner",
         ],
+        alsoShowIf: "hasStore",
       },
     ],
   },
@@ -144,6 +164,35 @@ const sideMenu = [
           "admin",
           "supervisor",
           "accounting",
+          "staff",
+          "owner",
+          "purchaser",
+        ],
+      },
+      {
+        name: "Orders",
+        href: "/orders",
+        icon: ListOrdered,
+        roles: [
+          "superadmin",
+          "admin",
+          "supervisor",
+          "accounting",
+          "staff",
+          "owner",
+          "purchaser",
+        ],
+      },
+      {
+        name: "Prepare Orders",
+        href: "/orders/prepare",
+        icon: ChefHat,
+        roles: [
+          "superadmin",
+          "admin",
+          "supervisor",
+          "accounting",
+          "hr",
           "staff",
           "owner",
           "purchaser",
@@ -276,6 +325,20 @@ const Sidebar = () => {
   const pathname = usePathname();
   const { user } = useSession();
 
+  const { data: stockRoomRes } = useSWR<{ data: { srUserId: number }[] }>(
+    user?.userId ? `/api/stock-room/userId/${user.userId}/user` : null,
+    fetcher,
+  );
+  const { data: storeEmployeeRes } = useSWR<{ data: { storeId: number }[] }>(
+    user?.userId
+      ? `/api/stores/userId/${user.userId}/store-employee`
+      : null,
+    fetcher,
+  );
+
+  const hasStockRoom = (stockRoomRes?.data?.length ?? 0) > 0;
+  const hasStore = (storeEmployeeRes?.data?.length ?? 0) > 0;
+
   const [isLoading, setIsLoading] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isShowLogout, setShowLogout] = useState(false);
@@ -320,14 +383,27 @@ const Sidebar = () => {
   const role = user?.userRole ?? "";
   const position = user?.empPosition ?? "";
 
+  const assignmentFlags: Record<string, boolean> = {
+    hasStockRoom,
+    hasStore,
+  };
+
   const sections = sideMenu
     .map((group) => ({
       ...group,
-      sections: group.sections.filter((s) =>
-        !s.roles
+      sections: group.sections.filter((s) => {
+        const roleMatch = !s.roles
           ? true
-          : s.roles.includes(user?.userRole !== "employee" ? role : position),
-      ),
+          : s.roles.includes(
+              user?.userRole !== "employee" ? role : position,
+            );
+
+        const assignmentMatch = s.alsoShowIf
+          ? assignmentFlags[s.alsoShowIf]
+          : false;
+
+        return roleMatch || assignmentMatch;
+      }),
     }))
     .filter((group) => group.sections.length > 0);
 

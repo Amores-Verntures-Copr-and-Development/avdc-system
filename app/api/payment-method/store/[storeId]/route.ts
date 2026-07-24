@@ -42,14 +42,19 @@ export async function POST(
   }
 }
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
 
-    const res = await getPaymentMethodByStore(storeId);
+    const { searchParams } = new URL(request.url);
+    const isOnlineParam = searchParams.get("isOnline");
+    const isOnline =
+      isOnlineParam === null ? undefined : isOnlineParam === "true";
+
+    const res = await getPaymentMethodByStore(storeId, isOnline);
 
     if (!res.success) {
       console.log(res.message);

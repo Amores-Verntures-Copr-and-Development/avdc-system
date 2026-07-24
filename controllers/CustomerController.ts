@@ -3,7 +3,10 @@ import {
   CustomerLoginDto,
   RegisterCustomerAccountDto,
 } from "@/dtos/customer.dto";
-import { customerServices } from "@/services/customer/customerServices";
+import {
+  CustomerAccountService,
+  customerServices,
+} from "@/services/customer/customerServices";
 import { Customer } from "@/types/customer";
 import { StoreInterface } from "@/types/stores";
 import { error } from "console";
@@ -134,6 +137,46 @@ export const getCustomer = async ({
     return {
       success: false,
       message: "Failed to fetched customer!",
+      error: e,
+    };
+  }
+};
+
+export const getCustomerMeController = async ({
+  cusAccId,
+  customerId,
+}: {
+  cusAccId: number;
+  customerId: number;
+}) => {
+  try {
+    const accounts = await CustomerAccountService.get({
+      keyFields: { cusAccId },
+    });
+    const account = accounts[0];
+
+    if (!account) {
+      throw new Error("Customer account not found.");
+    }
+
+    const customers = await customerServices.findCustomerByFields({
+      keyFields: { customerId },
+    });
+
+    const { password, ...safeAccount } = account;
+
+    return {
+      success: true,
+      message: "Customer fetched successfully!",
+      data: {
+        ...safeAccount,
+        customer: customers[0] ?? null,
+      },
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : "Failed to fetch customer!",
       error: e,
     };
   }

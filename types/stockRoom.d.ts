@@ -36,5 +36,5 @@ export interface StockRoomUsers {
   srUserAddedBy: number;
   srUserCreatedAt: string;
   srUserUpdatedAt: string;
-  srUserDeletedAt: string;
+  srUserDeletedAt: string | null;
 }
