@@ -16,6 +16,7 @@ export async function processAdditionalReceiveRequestItem(
 ) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
+  let checkRequestItems: any = [];
   await connection.beginTransaction();
   try {
     await connection.beginTransaction();
@@ -40,17 +41,24 @@ export async function processAdditionalReceiveRequestItem(
       reqItemId: requestItemUpdate.reqItemId!,
     });
 
-    const checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
-      connection,
-      poItemId: poItems[0].poItemId,
-    });
-    const sumOfOrderReceived = checkRequestItems.reduce((sumItems, i) => {
-      return sumItems + Number(i.reqItemReceived);
-    }, 0);
-    const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
-      ["received", "complete"].includes(req.reqItemStatus),
+    if (poItems.length > 0) {
+      checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
+        connection,
+        poItemId: poItems[0].poItemId,
+      });
+    }
+    const sumOfOrderReceived = checkRequestItems.reduce(
+      (sumItems: number, i: any) => {
+        return sumItems + Number(i.reqItemReceived);
+      },
+      0,
     );
-
+    const requestItemsIsAllDelivered = Boolean(
+      checkRequestItems.length &&
+      checkRequestItems.every((req: any) =>
+        ["received", "complete"].includes(req.reqItemStatus),
+      ),
+    );
     if (requestItemsIsAllDelivered) {
       await updatePurchaseOrderItems({
         connection,
@@ -99,6 +107,7 @@ export async function processAdditionalReceiveRequestItem(
 
     await connection.commit();
   } catch (e) {
+    console.log(e);
     await connection.rollback();
   } finally {
     connection.release();
