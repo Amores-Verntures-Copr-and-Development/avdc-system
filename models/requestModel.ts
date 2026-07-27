@@ -304,7 +304,7 @@ COALESCE((
     AND EXISTS (
       SELECT 1
       FROM RequestOrders selected_ro
-      WHERE selected_ro.requestId IN (?, ?)
+      WHERE selected_ro.requestId IN (${placeholders})
         AND selected_ro.storeId = ss.storeId
     )
 ), 0) AS stockItem,
