@@ -5,6 +5,7 @@ import {
   DisplayPurchaseOrderItemsDto,
   DisplayRequisitionWithItems,
 } from "@/dtos/purchase.dto";
+import { useSession } from "@/hooks/useSession";
 import { PurchaseOrders } from "@/types/purchaseOrders";
 import { fetcher } from "@/utils/fetcher";
 import { Plus, Trash } from "lucide-react";
@@ -40,6 +41,7 @@ const AddItemToRequestFromPOModal = ({
   onClose,
   mutate: mutateRequest,
 }: AddItemToRequestFromPOModaProps) => {
+  const { user } = useSession();
   const { data: itemResponse = { data: [] } } = useSWR<{
     data: DisplayPurchaseOrderItemsDto[];
   }>(`/api/purchase-order/po-items/${poData?.poId}`, fetcher);
@@ -165,7 +167,7 @@ const AddItemToRequestFromPOModal = ({
       poItems: selectedPoItems,
       poId: poData.poId,
       requestId: reqData.requestId,
-      addedBy: 1, // TODO: replace with actual user id
+      addedBy: user?.userId ?? 0,
     };
 
     const success = await onAddItem(formData);

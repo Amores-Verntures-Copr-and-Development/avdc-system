@@ -122,6 +122,7 @@ export const processAdjustReceivedPOItem = async (
     await connection.commit();
   } catch (e) {
     await connection.rollback();
+    throw e;
   } finally {
     connection.release();
   }
