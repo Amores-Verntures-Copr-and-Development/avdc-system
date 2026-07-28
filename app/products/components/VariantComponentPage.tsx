@@ -12,10 +12,11 @@ import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
 import {
   Camera,
-  Check,
   ImageIcon,
+  Link2,
   Pencil,
   Plus,
+  RefreshCw,
   Save,
   Trash,
   TrendingUp,
@@ -151,6 +152,7 @@ const VariantComponentPage = ({
     prodVarId: data?.prodVarId ?? 0,
     prodVarName: data?.prodVarName ?? "",
     prodVarPrice: data?.prodVarPrice ?? 0,
+    prodVarPriceOnline: data?.prodVarPriceOnline ?? 0,
     prodVarUpdatedAt: data?.prodVarUpdatedAt ?? "",
     prodVarUnit: data?.prodVarUnit,
     isDeductInv: Boolean(data?.isDeductInv),
@@ -159,11 +161,19 @@ const VariantComponentPage = ({
   });
   const handleFormChange = handleChange(form, setForm);
   const handleSave = async () => {
+    if (form.isAvailableOnline && !(Number(form.prodVarPriceOnline) > 0)) {
+      toast.error(
+        "Set an Online Price greater than 0 before making this variant available online.",
+      );
+      return;
+    }
+
     setIsSaving(true);
     const variantForm: Partial<ProductVariants> = {
       prodVarId: Number(form.prodVarId),
       prodVarName: form.prodVarName,
       prodVarPrice: Number(form.prodVarPrice),
+      prodVarPriceOnline: Number(form.prodVarPriceOnline),
       prodVarUnit: form.prodVarUnit,
       isDeductInv: form.isDeductInv,
       isAvailableOnline: form.isAvailableOnline,
@@ -186,7 +196,7 @@ const VariantComponentPage = ({
       const res = await result.json();
 
       if (!res.success) {
-        throw new Error(res.err);
+        throw new Error(res.error || res.message);
       }
       toast.success(res.message);
       setIsEdit(false);
@@ -194,8 +204,8 @@ const VariantComponentPage = ({
       setShowComponent(false);
       mutate();
       onClose();
-    } catch (e) {
-      console.log(e);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save variant");
     } finally {
       setIsSaving(false);
     }
@@ -307,54 +317,52 @@ const VariantComponentPage = ({
     }
   };
   return (
-    <div className="min-h-0 flex-1 flex flex-col gap-5 overflow-y-auto">
+    <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-2 items-start content-start auto-rows-min gap-3 overflow-y-auto">
       <BigCard
         title="Variant Details"
         isRounded={false}
         leftTitle={
           !isEdit ? (
             <div>
-              <IconButton
-                onClick={function (): void {
-                  setIsEdit(true);
-                }}
-                label={"Edit Variant"}
-                bg={"red"}
-                icon={<Pencil className="w-4 h-4" />}
+              <Button
+                size="xs"
+                color="secondary"
+                icon={Pencil}
+                label="Edit"
+                onClick={() => setIsEdit(true)}
               />
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <div>
-                <IconButton
-                  onClick={function (): void {
-                    setIsEdit(false);
-                  }}
-                  label={"Cancel"}
-                  bg={"gray"}
-                  icon={<X className="w-4 h-4" />}
-                  disable={isSaving}
+                <Button
+                  size="xs"
+                  color="secondary"
+                  icon={X}
+                  label="Cancel"
+                  disabled={isSaving}
+                  onClick={() => setIsEdit(false)}
                 />
               </div>
               <div>
-                {/* <Button label="" icon={Save} color="success" size="xs"/> */}
-                <IconButton
-                  onClick={handleSave}
-                  label={"Save"}
-                  bg={"green"}
+                <Button
+                  size="xs"
+                  color="primary"
+                  icon={Save}
+                  label="Save"
                   loading={isSaving}
-                  icon={<Save className="w-4 h-4" />}
+                  onClick={handleSave}
                 />
               </div>
             </div>
           )
         }
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
           {" "}
           {!isEdit ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 <DetailCard label="ID" value={data?.prodVarId} icon="#" />
                 <DetailCard label="Name" value={data?.prodVarName} icon="▣" />
                 <DetailCard
@@ -366,6 +374,16 @@ const VariantComponentPage = ({
                   label="Price"
                   value={`₱${Number(data?.prodVarPrice ?? 0).toLocaleString()}`}
                   icon="₱"
+                />
+
+                <DetailCard
+                  label="Online Price"
+                  value={
+                    data?.prodVarPriceOnline
+                      ? `₱${Number(data.prodVarPriceOnline).toLocaleString()}`
+                      : "-"
+                  }
+                  icon="🌐"
                 />
 
                 <DetailCard
@@ -395,34 +413,34 @@ const VariantComponentPage = ({
                 />
               </div>
               {data?.inventoryItemId && (
-                <div className="rounded-xl border border-pink-300 bg-pink-50/60 p-4 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <TrendingUp className="flex h-8 w-8 items-center justify-center rounded-xl bg-pink-100 text-xl text-pink-600" />
+                <div className="rounded-lg border border-pink-200 bg-pink-50/60 p-2">
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-pink-100 text-pink-600" />
 
                     <div className="flex flex-col">
-                      <span className="text-xs text-gray-500">Profit</span>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-bold text-pink-600">
+                      <span className="text-[11px] text-gray-500">Profit</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-pink-600">
                           ₱{Number(data?.profit ?? 0).toLocaleString()}
                         </span>
 
-                        <span className="text-xs font-semibold text-gray-500">
+                        <span className="text-[11px] font-semibold text-gray-500">
                           ({Number(data?.profitPercentage ?? 0).toFixed(2)}%)
                         </span>
                       </div>
                     </div>
 
-                    <div className="ml-auto max-w-xs text-sm text-gray-500">
-                      Calculated as Selling Price minus Total Cost.
+                    <div className="ml-auto max-w-[10rem] text-[11px] text-gray-400">
+                      Selling Price minus Total Cost.
                     </div>
                   </div>
                 </div>
               )}
             </>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
               {/* Top row: ID and Name */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
                   {/* <span className="text-xs text-gray-400 uppercase">ID</span>
                 <span className="text-sm font-semibold text-gray-800">
@@ -446,7 +464,7 @@ const VariantComponentPage = ({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col">
                   {/* <span className="text-xs text-gray-400 uppercase">ID</span>
                 <span className="text-sm font-semibold text-gray-800">
@@ -461,7 +479,7 @@ const VariantComponentPage = ({
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-2 gap-2">
                 <Toggle
                   sizes="xs"
                   label="Is Deduct?"
@@ -491,6 +509,20 @@ const VariantComponentPage = ({
                 </div>
               </div>
 
+              {form.isAvailableOnline && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col">
+                    <Input
+                      label={"Online Price"}
+                      sizes={"xs"}
+                      value={form.prodVarPriceOnline ?? ""}
+                      onChange={handleFormChange}
+                      name="prodVarPriceOnline"
+                    />
+                  </div>
+                </div>
+              )}
+
               {/* Bottom row: Price and Created At */}
             </div>
           )}
@@ -502,9 +534,9 @@ const VariantComponentPage = ({
         isRounded={false}
         subtitle="Upload, capture, or enhance the product variant image."
       >
-        <div className="rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-pink-50/30 p-4">
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-[220px_1fr]">
-            <div className="relative flex h-56 items-center justify-center overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-pink-50/30 p-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-[140px_1fr]">
+            <div className="relative flex h-32 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-white">
               {data?.prodVarImage || imagePreview ? (
                 <Image
                   src={
@@ -513,34 +545,28 @@ const VariantComponentPage = ({
                   }
                   alt={data?.prodVarName ?? "Variant Image"}
                   fill
-                  className="object-contain p-3"
+                  className="object-contain p-2"
                   unoptimized
                 />
               ) : (
                 <div className="flex flex-col items-center text-center text-gray-400">
-                  <ImageIcon className="h-12 w-12 text-pink-400" />
-                  <span className="mt-2 text-sm font-semibold text-gray-700">
+                  <ImageIcon className="h-8 w-8 text-pink-400" />
+                  <span className="mt-1 text-[11px] font-semibold text-gray-700">
                     No image yet
                   </span>
-                  <span className="text-xs">Upload or use camera</span>
                 </div>
               )}
             </div>
 
-            <div className="flex flex-col justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">
-                  {data?.prodVarName}
-                </h3>
-                <p className="mt-1 text-xs text-gray-500">
-                  Recommended: square image, white background, JPG/PNG/WEBP.
-                </p>
-              </div>
+            <div className="flex flex-col justify-between gap-2">
+              <p className="text-[11px] text-gray-500">
+                Square image, white background, JPG/PNG/WEBP.
+              </p>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-pink-200 bg-white px-4 py-3 text-sm font-semibold text-pink-600 hover:bg-pink-50">
-                  <Upload className="h-4 w-4" />
-                  Upload Image
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-pink-200 bg-white px-2 py-1.5 text-xs font-semibold text-pink-600 transition-colors hover:bg-pink-50 active:scale-[0.98]">
+                  <Upload className="h-3.5 w-3.5" />
+                  Upload
                   <input
                     type="file"
                     accept="image/*"
@@ -549,9 +575,9 @@ const VariantComponentPage = ({
                   />
                 </label>
 
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-pink-600 px-4 py-3 text-sm font-semibold text-white hover:bg-pink-700">
-                  <Camera className="h-4 w-4" />
-                  Use Camera
+                <label className="flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-pink-600 px-2 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-pink-700 active:scale-[0.98]">
+                  <Camera className="h-3.5 w-3.5" />
+                  Camera
                   <input
                     type="file"
                     accept="image/*"
@@ -560,70 +586,65 @@ const VariantComponentPage = ({
                     className="hidden"
                   />
                 </label>
-
-                <Button
-                  size="xs"
-                  color="secondary"
-                  label="Remove Background"
-                  loading={isRemovingBackground}
-                  onClick={handleRemoveBackground}
-                  disabled={!imageFile}
-                />
-
-                <Button
-                  size="xs"
-                  color="secondary"
-                  label="White Background"
-                  loading={isApplyingWhiteBackground}
-                  onClick={handleWhiteBackground}
-                  disabled={!imageFile}
-                />
               </div>
 
               {imageFile && (
-                <div className="flex justify-end gap-2 border-t border-gray-100 pt-4">
-                  <Button
-                    size="xs"
-                    color="secondary"
-                    label="Cancel"
-                    disabled={isUploadingImage}
-                    onClick={() => {
-                      setImageFile(null);
-                      setImagePreview(null);
-                    }}
-                  />
+                <>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      size="xs"
+                      color="secondary"
+                      label="Remove BG"
+                      loading={isRemovingBackground}
+                      onClick={handleRemoveBackground}
+                    />
 
-                  <Button
-                    size="xs"
-                    label="Save Image"
-                    loading={isUploadingImage}
-                    onClick={handleUploadImage}
-                  />
-                </div>
+                    <Button
+                      size="xs"
+                      color="secondary"
+                      label="White BG"
+                      loading={isApplyingWhiteBackground}
+                      onClick={handleWhiteBackground}
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 border-t border-gray-100 pt-2">
+                    <Button
+                      size="xs"
+                      color="secondary"
+                      label="Cancel"
+                      disabled={isUploadingImage}
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                    />
+
+                    <Button
+                      size="xs"
+                      label="Save Image"
+                      loading={isUploadingImage}
+                      onClick={handleUploadImage}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
         </div>
       </BigCard>
       <BigCard title="Linked Inventory Item" isRounded={false}>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {linkedItem ? (
-            <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-2">
               <div className="flex flex-col">
-                <span className="text-sm font-semibold text-gray-800">
+                <span className="text-xs font-semibold text-gray-800">
                   {linkedItem.itemName}
                 </span>
 
-                <span className="text-xs text-gray-500">
+                <span className="text-[11px] text-gray-500">
                   Unit: {linkedItem.itemUnit || "-"} • Price: ₱
-                  {Number(linkedItem.itemPrice ?? 0).toLocaleString()}
-                </span>
-
-                <span className="text-xs text-gray-400">
-                  Inventory Item ID: {linkedItem.inventoryItemId}
-                </span>
-                <span className="text-xs text-gray-400">
-                  Stock:{" "}
+                  {Number(linkedItem.itemPrice ?? 0).toLocaleString()} • Stock:{" "}
                   {formatQuantityByUnit(
                     linkedItem.inventoryItemQuantity,
                     linkedItem.itemUnit,
@@ -632,9 +653,10 @@ const VariantComponentPage = ({
               </div>
 
               <div>
-                {" "}
                 <Button
                   size="xs"
+                  color="secondary"
+                  icon={RefreshCw}
                   onClick={() => {
                     setIsChangeInventoryItemOpen(true);
                     setShowComponent(true);
@@ -644,13 +666,14 @@ const VariantComponentPage = ({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between rounded-xl border border-dashed border-gray-300 p-4">
-              <span className="text-sm text-gray-500">
+            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 p-2">
+              <span className="text-xs text-gray-500">
                 No inventory item linked.
               </span>
 
               <Button
                 size="xs"
+                icon={Link2}
                 onClick={() => {
                   setIsChangeInventoryItemOpen(true);
                   setShowComponent(true);
@@ -661,6 +684,7 @@ const VariantComponentPage = ({
           )}
         </div>
       </BigCard>
+
       <BigCard
         title={"Components"}
         subtitle="Manage the ingredients or items that make up this product"
@@ -668,8 +692,8 @@ const VariantComponentPage = ({
         leftTitle={
           <div className="h-full">
             <Button
-              label="Assign "
-              size="sm"
+              label="Assign"
+              size="xs"
               icon={Plus}
               onClick={() => {
                 setShowAddComponent(true);
@@ -680,18 +704,18 @@ const VariantComponentPage = ({
         }
       >
         {data?.variantComponents && data?.variantComponents.length > 0 ? (
-          <div className="mt-4">
+          <div className="mt-2">
             <div className="flex justify-between">
               {" "}
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                 Components
               </span>
-              <span className="text-xs 2xl:text-sm font-semibold">
+              <span className="text-xs font-semibold">
                 {formatPeso(totalCosting)}{" "}
                 <span className="font-normal">cost price</span>
               </span>
             </div>
-            <ul className="mt-2 divide-y divide-gray-200 rounded-md border border-gray-100 overflow-hidden">
+            <ul className="mt-1.5 divide-y divide-gray-200 rounded-md border border-gray-100 overflow-hidden">
               {data.variantComponents.map((comp) => (
                 <li
                   key={comp.varComId}
@@ -699,19 +723,19 @@ const VariantComponentPage = ({
                     setSelectedVariant(comp);
                     setShowComponent(true);
                   }}
-                  className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-white hover:bg-gray-50 transition"
+                  className="flex items-center justify-between gap-2 p-2 bg-white hover:bg-gray-50 transition"
                 >
-                  <div className="flex flex-col sm:flex-col sm:items-start gap-2">
-                    <span className="text-[10px] 2xl:text-xs font-medium text-gray-800">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-medium text-gray-800">
                       {comp.itemName}
                     </span>
-                    <span className="text-gray-500 text-[9px]  2xl:text-xs">
+                    <span className="text-gray-500 text-[10px]">
                       {comp.quantityRequired} qty (
                       {formatPeso(comp.quantityRequired * comp.itemPrice)})
                     </span>
                   </div>
 
-                  <div className="mt-2 sm:mt-0 text-[9px] 2xl:text-xs font-medium">
+                  <div className="text-[10px] font-medium">
                     Deduct:{" "}
                     <span
                       className={`${
@@ -737,11 +761,12 @@ const VariantComponentPage = ({
             </ul>
           </div>
         ) : (
-          <div className="mt-4 text-center text-gray-400">
+          <div className="mt-2 text-center text-xs text-gray-400">
             No components available!
           </div>
         )}
       </BigCard>
+
       <Modal
         size="lg"
         className="min-h-[50%]"
@@ -910,22 +935,20 @@ const DetailCard = ({
   icon: React.ReactNode;
   badge?: boolean;
 }) => (
-  <div className="flex items-center gap-2 2xl:gap-4 rounded-xl border border-gray-200 bg-white p-2 2xl:p-2 shadow-sm">
-    <div className="flex 2xl:h-10 2xl:w-10 w-5 h-5 items-center justify-center rounded-xl bg-pink-50 text-pink-600 font-semibold">
+  <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1.5">
+    <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-lg bg-pink-50 text-xs text-pink-600 font-semibold">
       {icon}
     </div>
 
-    <div className="flex flex-col">
-      <span className="text-[11px] 2xl:text-xs font-medium text-gray-500">
-        {label}
-      </span>
+    <div className="flex flex-col min-w-0">
+      <span className="text-[10px] font-medium text-gray-500">{label}</span>
 
       {badge ? (
-        <span className="mt-1 w-fit rounded-full border border-green-200 bg-green-50 px-3 py-0.5 text-[11px]  2xl:text-xs font-medium text-green-700">
+        <span className="mt-0.5 w-fit rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-[10px] font-medium text-green-700">
           {value}
         </span>
       ) : (
-        <span className="text-xs 2xl:text-xs font-semibold text-gray-900">
+        <span className="truncate text-xs font-semibold text-gray-900">
           {value}
         </span>
       )}

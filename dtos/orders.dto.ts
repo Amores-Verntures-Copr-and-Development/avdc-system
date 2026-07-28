@@ -1,4 +1,4 @@
-import { OrderItems, Orders } from "@/types/orders";
+import { OrderItems, Orders, OrderStatusHistory } from "@/types/orders";
 
 export type CreateOrderItemDto = Pick<
   OrderItems,
@@ -14,6 +14,7 @@ export type UpdateOrderItemDto = Pick<OrderItems, "orderItemId"> &
 export interface DisplayOrderItemDto extends OrderItems {
   prodVarName: string;
   prodVarUnit?: string | null;
+  prodVarImage?: string | null;
 }
 
 export interface DisplayOrderDto extends Orders {
@@ -22,6 +23,16 @@ export interface DisplayOrderDto extends Orders {
   customerPhone?: string | null;
   payMetName?: string | null;
   storeName?: string | null;
+}
+
+export type CreateOrderStatusHistoryDto = Pick<
+  OrderStatusHistory,
+  "orderId" | "orderStatus"
+> &
+  Partial<Pick<OrderStatusHistory, "note" | "changedBy">>;
+
+export interface DisplayOrderStatusHistoryDto extends OrderStatusHistory {
+  changedByName?: string | null;
 }
 
 export type CreateOrderDto = Pick<

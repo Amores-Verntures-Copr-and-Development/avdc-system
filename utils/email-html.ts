@@ -52,7 +52,14 @@ export const generateVerificationEmailHTML = ({
 </html>`;
 };
 
-export const generateSalesEmailHTML = (data: DisplaySalesDto) => {
+export const generateSalesEmailHTML = (
+  data: DisplaySalesDto,
+  orderNumber?: string,
+) => {
+  const isFromOrder = data.salesSource === "order";
+  const referenceLabel = isFromOrder ? "Order No" : "Sales No";
+  const referenceValue = isFromOrder && orderNumber ? orderNumber : data.salesNo;
+
   const itemsHTML =
     data.saleItems
       ?.map((item) => {
@@ -155,8 +162,8 @@ export const generateSalesEmailHTML = (data: DisplaySalesDto) => {
 
                 <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf2f8; border-radius:12px; padding:16px; margin-bottom:20px;">
                   <tr>
-                    <td style="color:#6b7280; font-size:13px; padding-top:8px;">Order </td>
-                    <td align="right" style="color:#1f2937; font-size:13px; font-weight:bold; padding-top:8px;">${data.salesNo}</td>
+                    <td style="color:#6b7280; font-size:13px; padding-top:8px;">${referenceLabel}</td>
+                    <td align="right" style="color:#1f2937; font-size:13px; font-weight:bold; padding-top:8px;">${referenceValue}</td>
                   </tr>
                   <tr>
                     <td style="color:#6b7280; font-size:13px; padding-top:8px;">Purchased on</td>

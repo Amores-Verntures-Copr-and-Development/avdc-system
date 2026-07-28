@@ -17,10 +17,9 @@ import { UserAuth } from "@/hooks/useSession";
 import toast from "react-hot-toast";
 import { formatPeso } from "@/utils/formatPeso";
 import IconButton from "@/components/shared/IconButton";
-import Popup from "@/components/shared/Popup";
-import VariantComponentPage from "./components/VariantComponentPage";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import BarcodeProductComponent from "./components/BarcodeProductComponent";
+import { useRouter } from "next/navigation";
 
 interface ProductVariantPageProps {
   data: DisplayProductsDtos | null;
@@ -98,6 +97,26 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     },
   },
   {
+    key: "isAvailableOnline",
+    name: "Online",
+    selector: (row) => {
+      const label = Number(row.isAvailableOnline) === 1 ? "Yes" : "No";
+      const textColor =
+        Number(row.isAvailableOnline) === 1
+          ? "text-green-600"
+          : "text-red-600";
+      return (
+        <div className="">
+          <span
+            className={`px-1.5 py-1.5 ${textColor} font-semibold rounded-lg`}
+          >
+            {label}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
     key: "inventoryItemQuantity",
     name: "Stocks",
     selector: (row) => (
@@ -128,18 +147,13 @@ const ProductVariantPage = ({
   onBack,
   user,
 }: ProductVariantPageProps) => {
+  const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBarcode, setShowBarcode] =
     useState<DisplaProductVariantsDtos | null>(null);
   const [showDeleteConfirmation, setShowDeleteComfirmation] =
     useState<DisplaProductVariantsDtos | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showAddComponent, setShowAddComponent] = useState(false);
-  const [selectedRow, setSelectedRow] =
-    useState<DisplaProductVariantsDtos | null>(null);
-  const [isShowModal, setIsShowModal] = useState<"variant" | "delete" | null>(
-    null,
-  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     data: itemResponse = { data: [] },
@@ -153,15 +167,6 @@ const ProductVariantPage = ({
       : null,
     fetcher,
   );
-  const updateData = async () => {
-    const data = await mutate();
-    const findSelectedRowToData = data?.data.find(
-      (i) => i.prodVarId === selectedRow?.prodVarId,
-    );
-    if (findSelectedRowToData) {
-      setSelectedRow(findSelectedRowToData);
-    }
-  };
   const handleAddVariant = async (prodVariant: CreateProductVariantDto) => {
     console.log({ data });
     setIsSubmitting(true);
@@ -253,17 +258,15 @@ const ProductVariantPage = ({
           data={itemResponse.data}
           loading={isLoading}
           showActions
-          onRowSelection={(row) => {
-            setSelectedRow(row);
-            console.log({ row });
-            setIsShowModal("variant");
-          }}
+          onRowSelection={(row) =>
+            router.push(`/products/${row.prodId}/${row.prodVarId}`)
+          }
           renderActions={(row) => (
             <div className="flex gap-1 xl:gap-2 px-1 justify-center">
               <IconButton
-                onClick={function (): void {
-                  console.log(row);
-                }}
+                onClick={() =>
+                  router.push(`/products/${row.prodId}/${row.prodVarId}`)
+                }
                 label={"View"}
                 bg={"nobg"}
                 icon={<Eye className="w-5 h-5 xl:w-5 xl:h-5" />}
@@ -333,33 +336,6 @@ const ProductVariantPage = ({
           }}
         />
       </Modal>
-      <Popup
-        title={`${
-          data?.prodName
-        } (${selectedRow?.prodVarName?.toLocaleLowerCase()})`}
-        background="bg-white/10 backdrop-blur-xs"
-        isOpen={isShowModal === "variant"}
-        onClose={function (): void {
-          setIsShowModal(null);
-        }}
-        closeOnClickOutside={!showAddComponent}
-      >
-        {isShowModal === "variant" ? (
-          <VariantComponentPage
-            data={selectedRow}
-            showAddComponent={showAddComponent}
-            setShowAddComponent={setShowAddComponent}
-            prod={data}
-            storeId={data?.storeId ?? 0}
-            mutate={updateData}
-            onClose={function (): void {
-              setIsShowModal(null);
-            }}
-          />
-        ) : (
-          <></>
-        )}
-      </Popup>
       <ConfirmationModal
         title={`Delete ${showDeleteConfirmation?.prodVarName}`}
         onConfirm={() => {

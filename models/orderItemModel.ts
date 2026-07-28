@@ -63,7 +63,8 @@ export const selectOrderItemsByOrderId = async ({
     SELECT
       oi.*,
       pv.prodVarName,
-      pv.prodVarUnit
+      pv.prodVarUnit,
+      pv.prodVarImage
     FROM OrderItems oi
     LEFT JOIN ProductVariants pv ON pv.prodVarId = oi.prodVarId
     WHERE oi.orderId = ?

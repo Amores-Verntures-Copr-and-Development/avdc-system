@@ -311,6 +311,8 @@ export const getProductVariantController = async ({
 export const getProductVariantForOnlineController = async ({
   keyFields = {},
   search,
+  category,
+  unit,
   statusSold,
   from,
   to,
@@ -320,6 +322,8 @@ export const getProductVariantForOnlineController = async ({
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
+  category?: string;
+  unit?: string;
   statusSold?: "fast" | "slow";
   from?: string;
   to?: string;
@@ -331,6 +335,8 @@ export const getProductVariantForOnlineController = async ({
     const data = await getProductVariantForOnline({
       keyFields,
       search,
+      category,
+      unit,
       statusSold,
       from,
       to,
@@ -443,6 +449,16 @@ export const updateProductVariantController = async (
   data: Partial<ProductVariants>,
 ) => {
   try {
+    if (data.isAvailableOnline && !(Number(data.prodVarPriceOnline) > 0)) {
+      const message =
+        "Set an Online Price greater than 0 before making this variant available online.";
+      return {
+        error: message,
+        message,
+        success: false,
+      };
+    }
+
     const result = await updateProductVariantServices.updateProductVariants({
       updates: [data],
     });

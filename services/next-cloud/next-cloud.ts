@@ -19,7 +19,6 @@ export const NextCloudServices = {
           "Content-Type": image.type || "application/octet-stream",
         },
       });
-      console.log({ uploadResponse });
       if (!uploadResponse.ok) {
         throw new Error(
           `Nextcloud upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`,

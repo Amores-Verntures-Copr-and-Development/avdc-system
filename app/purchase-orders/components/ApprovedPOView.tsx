@@ -41,6 +41,7 @@ import IconButton from "@/components/shared/IconButton";
 import Popup from "@/components/shared/Popup";
 import UpdateSupplierPrice from "./_components/UpdateSupplierPrice";
 import { formatDateToWords } from "@/utils/formatDateToWords";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface ApprovedPOViewProps {
   poData: PurchaseOrders | null;
@@ -177,6 +178,13 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
     "po" | "supplier" | "store" | "suppliers" | null
   >(null);
   const [sendingSupplier, setSendingSupplier] = useState<number | null>(null);
+  const [sendConfirmTarget, setSendConfirmTarget] = useState<{
+    poItems: PurchaseOrderItems[];
+    suppId: number;
+    index: number;
+  } | null>(null);
+  const [isShowUpdateStatusConfirm, setIsShowUpdateStatusConfirm] =
+    useState(false);
   const [isView, setIsView] = useState<"all" | "store">("all");
   const [receivedSupplierItem, setReceivedSupplierItem] =
     useState<DisplayPOItemsSupplier | null>(null);
@@ -610,11 +618,11 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     isRounded={false}
                                     size="xs"
                                     onClick={() =>
-                                      handleSendBySupplier(
-                                        data.items,
-                                        data.suppId,
+                                      setSendConfirmTarget({
+                                        poItems: data.items,
+                                        suppId: data.suppId,
                                         index,
-                                      )
+                                      })
                                     }
                                     color="secondary"
                                     label="Send"
@@ -896,7 +904,7 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                   icon={RefreshCw}
                   className="font-semibold text-gray-700 text-xs px-2 py-2"
                   onClick={() => {
-                    handleUpdatePOStatus();
+                    setIsShowUpdateStatusConfirm(true);
                   }}
                 />
               </div>
@@ -943,6 +951,42 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
           </div>
         )}
       </Modal>
+      <ConfirmationModal
+        title="Confirm Send"
+        onConfirm={async () => {
+          if (!sendConfirmTarget) return;
+          await handleSendBySupplier(
+            sendConfirmTarget.poItems,
+            sendConfirmTarget.suppId,
+            sendConfirmTarget.index,
+          );
+          setSendConfirmTarget(null);
+        }}
+        confirmationInfo={`Are you sure you want to send ${sendConfirmTarget?.poItems.length ?? 0} item(s) to ${
+          data.find((req) => req.suppId === sendConfirmTarget?.suppId)
+            ?.suppName ?? "this supplier"
+        }?`}
+        onClose={() => {
+          setSendConfirmTarget(null);
+        }}
+        isShow={sendConfirmTarget !== null}
+        isLoading={sendingSupplier !== null}
+        confirmLabel="Send"
+      />
+      <ConfirmationModal
+        title="Confirm Update Status"
+        onConfirm={async () => {
+          await handleUpdatePOStatus();
+          setIsShowUpdateStatusConfirm(false);
+        }}
+        confirmationInfo={`Are you sure you want to update the status for ${poData?.poNumber}?`}
+        onClose={() => {
+          setIsShowUpdateStatusConfirm(false);
+        }}
+        isShow={isShowUpdateStatusConfirm}
+        isLoading={isUpdating}
+        confirmLabel="Update"
+      />
       {receivedSupplierItem && (
         <Modal
           className="h-[95%]"

@@ -9,6 +9,7 @@ import {
 import { processCreateSales } from "@/services/sales/process-create-sales";
 import { getSalesItemServices } from "@/services/sales/sale-items/get-sale-items";
 import { updateSalesBySalesId } from "@/services/sales/update-sales";
+import { sendEmailSalesBasePaymentMethods } from "@/services/sales/send-email-sales";
 import { Sales } from "@/types/sales";
 
 export const createSale = async (data: CreateSaleDto) => {
@@ -50,6 +51,37 @@ export const updateSalesController = async ({
     return {
       success: false,
       message: "Failed to update sales!",
+      error: e,
+    };
+  }
+};
+
+export const sendSalesReceiptEmailController = async ({
+  salesId,
+}: {
+  salesId: number;
+}) => {
+  try {
+    const result = await sendEmailSalesBasePaymentMethods({
+      salesId,
+      force: true,
+    });
+
+    if (!result.sent) {
+      return {
+        success: false,
+        message: result.reason ?? "Failed to send receipt email!",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Receipt email sent!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to send receipt email!",
       error: e,
     };
   }

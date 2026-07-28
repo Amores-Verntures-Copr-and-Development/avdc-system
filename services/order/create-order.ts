@@ -2,9 +2,13 @@ import { CreateOrderDto } from "@/dtos/orders.dto";
 import { getDBConnection } from "@/lib/db";
 import { insertOrder } from "@/models/orderModel";
 import { insertOrderItems } from "@/models/orderItemModel";
+import { insertOrderStatusHistory } from "@/models/orderStatusHistoryModel";
 import { generateOrderNumber } from "./generate-order-number";
 
-export async function processCreateOrder(data: CreateOrderDto) {
+export async function processCreateOrder(
+  data: CreateOrderDto,
+  createdBy?: number | null,
+) {
   if (!data.items || data.items.length === 0) {
     throw new Error("Order must have at least one item");
   }
@@ -23,6 +27,16 @@ export async function processCreateOrder(data: CreateOrderDto) {
     const orderId = await insertOrder({ connection, data, orderNumber });
 
     await insertOrderItems({ connection, orderId, data: data.items });
+
+    await insertOrderStatusHistory({
+      connection,
+      data: {
+        orderId,
+        orderStatus: data.orderStatus ?? "PENDING",
+        note: "Order placed",
+        changedBy: createdBy ?? null,
+      },
+    });
 
     await connection.commit();
 

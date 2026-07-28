@@ -699,12 +699,16 @@ export const selectProductVariantForOnline = async ({
   to,
   storeId,
   search,
+  category,
+  unit,
   limit,
   offset,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ProductVariants>;
   search?: string;
+  category?: string;
+  unit?: string;
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
@@ -718,7 +722,7 @@ SELECT
 pv.prodId,
 pv.prodVarName,
 pv.prodVarUnit,
-pv.prodVarPrice,
+pv.prodVarPriceOnline,
 pv.prodVarImage,
 pv.prodVarId,
     p.prodName,
@@ -726,6 +730,7 @@ pv.prodVarId,
 FROM ProductVariants pv
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
+LEFT JOIN ProductCategories pc ON pc.prodCatId = p.prodCatId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -747,11 +752,22 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
     AND (
       p.prodName LIKE ?
       OR pv.prodVarName LIKE ?
-      OR b.barcode LIKE ?
     )
   `;
 
-    params.push(keyword, keyword, keyword);
+    params.push(keyword, keyword);
+  }
+  if (category?.trim() && category !== "all") {
+    if (category === "null") {
+      sql += ` AND pc.prodCatName IS NULL`;
+    } else {
+      sql += ` AND TRIM(pc.prodCatName) = TRIM(?)`;
+      params.push(category.trim());
+    }
+  }
+  if (unit?.trim()) {
+    sql += ` AND pv.prodVarUnit = ?`;
+    params.push(unit.trim());
   }
   if (statusSold) {
   }
@@ -776,10 +792,14 @@ export const selectProductCountVariantForOnline = async ({
   to,
   storeId,
   search,
+  category,
+  unit,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<ProductVariants>;
   search?: string;
+  category?: string;
+  unit?: string;
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
@@ -787,13 +807,13 @@ export const selectProductCountVariantForOnline = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   let sql = `
-SELECT 
+SELECT
     COUNT(pv.prodVarId) as totalItems
 FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
-LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
+LEFT JOIN ProductCategories pc ON pc.prodCatId = p.prodCatId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -815,11 +835,22 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
     AND (
       p.prodName LIKE ?
       OR pv.prodVarName LIKE ?
-      OR b.barcode LIKE ?
     )
   `;
 
-    params.push(keyword, keyword, keyword);
+    params.push(keyword, keyword);
+  }
+  if (category?.trim() && category !== "all") {
+    if (category === "null") {
+      sql += ` AND pc.prodCatName IS NULL`;
+    } else {
+      sql += ` AND TRIM(pc.prodCatName) = TRIM(?)`;
+      params.push(category.trim());
+    }
+  }
+  if (unit?.trim()) {
+    sql += ` AND pv.prodVarUnit = ?`;
+    params.push(unit.trim());
   }
   if (statusSold) {
   }

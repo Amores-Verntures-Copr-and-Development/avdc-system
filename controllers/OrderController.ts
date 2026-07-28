@@ -13,11 +13,15 @@ import { createOrderItems } from "@/services/order/order-items/create-order-item
 import { deleteOrderItemById } from "@/services/order/order-items/delete-order-items";
 import { getOrderItemsByOrderId } from "@/services/order/order-items/get-order-items";
 import { updateOrderItemByFields } from "@/services/order/order-items/update-order-items";
+import { getOrderStatusHistoryByOrderId } from "@/services/order/order-status-history/get-order-status-history";
 import { Orders } from "@/types/orders";
 
-export const createOrderController = async (data: CreateOrderDto) => {
+export const createOrderController = async (
+  data: CreateOrderDto,
+  createdBy?: number | null,
+) => {
   try {
-    const res = await processCreateOrder(data);
+    const res = await processCreateOrder(data, createdBy);
     return {
       success: true,
       message: "Order created successfully!",
@@ -27,6 +31,27 @@ export const createOrderController = async (data: CreateOrderDto) => {
     return {
       success: false,
       message: "Failed to create order!",
+      error: e,
+    };
+  }
+};
+
+export const getOrderStatusHistory = async ({
+  orderId,
+}: {
+  orderId: number;
+}) => {
+  try {
+    const data = await getOrderStatusHistoryByOrderId({ orderId });
+    return {
+      success: true,
+      message: "Order status history fetched successfully!",
+      data,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch order status history!",
       error: e,
     };
   }
@@ -60,9 +85,12 @@ export const getOrderController = async ({
   }
 };
 
-export const updateOrderController = async (data: UpdateOrderDto) => {
+export const updateOrderController = async (
+  data: UpdateOrderDto,
+  changedBy?: number | null,
+) => {
   try {
-    const res = await updateOrderByFields({ data });
+    const res = await updateOrderByFields({ data, changedBy });
     return {
       success: true,
       message: "Order updated successfully!",

@@ -31,6 +31,8 @@ import {
   Eye,
   Menu,
   File,
+  Send,
+  FileText,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -122,6 +124,7 @@ interface ReceivedPOViewProps {
     poId: number,
   ) => Promise<boolean>;
   onMaskAsDeliverdSupplier: (data: DisplayPOItemsSupplier) => Promise<boolean>;
+  onSendPOItem: (data: PurchaseOrderItems[]) => Promise<boolean>;
 }
 
 export interface StoreInSupplierDetails {
@@ -138,7 +141,17 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
   mutateInventory,
   setShowAllItems,
   onMaskAsDeliverdSupplier,
+  onSendPOItem,
 }) => {
+  const [sendingSupplierId, setSendingSupplierId] = useState<number | null>(
+    null,
+  );
+  const [sendConfirmTarget, setSendConfirmTarget] = useState<{
+    supplier: DisplayPOItemsSupplier;
+    selected?: PurchaseOrderItems[];
+  } | null>(null);
+  const [isShowUpdateStatusConfirm, setIsShowUpdateStatusConfirm] =
+    useState(false);
   const [addPoItem, setAddPOItem] = useState<{
     poItem: CreatePurchaseOrderItemDto;
     item: ItemInterface;
@@ -432,6 +445,33 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
     // 👉 Here you can trigger bulk delete, bulk approve, etc.
     setSelectedPOItemRows(selected);
   };
+  const handleSendBySupplier = async (
+    supplier: DisplayPOItemsSupplier,
+    selected?: PurchaseOrderItems[],
+  ) => {
+    if (sendingSupplierId !== null) return;
+
+    const pendingItems =
+      selected && selected.length > 0
+        ? selected
+        : supplier.items.filter((item) => item.poItemStatus === "pending");
+
+    if (pendingItems.length === 0) {
+      toast.error("No pending items to send!");
+      return;
+    }
+
+    setSendingSupplierId(supplier.suppId);
+    try {
+      const success = await onSendPOItem(pendingItems);
+      if (success) {
+        toast.success(`Pending items for ${supplier.suppName} sent!`);
+        mutateInventory();
+      }
+    } finally {
+      setSendingSupplierId(null);
+    }
+  };
   const handleNotOrderedSupplier = async (data: DisplayPOItemsSupplier) => {
     const hasItemForUnordered = data.items.some(
       (poi) =>
@@ -695,6 +735,10 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                     (item) => item.poItemStatus === "delivered",
                   );
 
+                  const hasPendingItems = supplier.items.some(
+                    (item) => item.poItemStatus === "pending",
+                  );
+
                   const isExpanded =
                     expandedSupplier === supplier.suppId &&
                     expandedSupplier !== null;
@@ -777,6 +821,25 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                 }}
                               />
                             </div>
+                            {hasPendingItems && (
+                              <div>
+                                <Button
+                                  size="xs"
+                                  color="secondary"
+                                  label="Send"
+                                  icon={Send}
+                                  loading={sendingSupplierId === supplier.suppId}
+                                  disabled={
+                                    sendingSupplierId !== null &&
+                                    sendingSupplierId !== supplier.suppId
+                                  }
+                                  className="font-semibold text-gray-700 text-xs"
+                                  onClick={() =>
+                                    setSendConfirmTarget({ supplier })
+                                  }
+                                />
+                              </div>
+                            )}
                             {validForReceived ? (
                               <>
                                 <div>
@@ -954,6 +1017,52 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   loading={isLoading}
                                   renderTopActions={
                                     <div className="flex gap-2">
+                                      {hasPendingItems &&
+                                        (() => {
+                                          const selectedPending = (
+                                            selectedPOItemRows ?? []
+                                          ).filter(
+                                            (row) =>
+                                              row.poItemStatus === "pending" &&
+                                              supplier.items.some(
+                                                (item) =>
+                                                  item.poItemId ===
+                                                  row.poItemId,
+                                              ),
+                                          );
+
+                                          return (
+                                            <div>
+                                              <Button
+                                                hasBorder
+                                                color="secondary"
+                                                size="xs"
+                                                loading={
+                                                  sendingSupplierId ===
+                                                  supplier.suppId
+                                                }
+                                                disabled={
+                                                  sendingSupplierId !== null &&
+                                                  sendingSupplierId !==
+                                                    supplier.suppId
+                                                }
+                                                onClick={() =>
+                                                  setSendConfirmTarget({
+                                                    supplier,
+                                                    selected: selectedPending,
+                                                  })
+                                                }
+                                                label={
+                                                  selectedPending.length > 0
+                                                    ? `Send Selected (${selectedPending.length})`
+                                                    : "Send Pending"
+                                                }
+                                                icon={Send}
+                                                className="font-semibold text-xs"
+                                              />
+                                            </div>
+                                          );
+                                        })()}
                                       {!isAllNotOrdered && (
                                         <div>
                                           <Button
@@ -1214,12 +1323,26 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
+            <div>
+              <Button
+                size="sm"
+                label="Supplier PDF"
+                onClick={() => {
+                  setShowROPDF("suppliers");
+                }}
+                color="outline"
+                icon={FileText}
+              />
+            </div>
             <div className="">
               <Button
                 color="secondary"
                 size="sm"
-                label={"Download PDF"}
-                icon={Edit}
+                onClick={function (): void {
+                  setShowROPDF("po");
+                }}
+                label="PDF"
+                icon={FileText}
                 className="font-semibold text-gray-700 text-xs px-2 py-2"
               />
             </div>
@@ -1232,7 +1355,7 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                   icon={RefreshCw}
                   className="font-semibold text-gray-700 text-xs px-2 py-2"
                   onClick={() => {
-                    handleUpdatePOStatus();
+                    setIsShowUpdateStatusConfirm(true);
                   }}
                 />
               </div>
@@ -1353,6 +1476,42 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
         }}
         isShow={selectSupplierNotOrder !== null}
         isLoading={isSubmittingNotOrder}
+      />
+      <ConfirmationModal
+        title="Confirm Send"
+        onConfirm={async () => {
+          if (!sendConfirmTarget) return;
+          await handleSendBySupplier(
+            sendConfirmTarget.supplier,
+            sendConfirmTarget.selected,
+          );
+          setSendConfirmTarget(null);
+        }}
+        confirmationInfo={
+          sendConfirmTarget?.selected && sendConfirmTarget.selected.length > 0
+            ? `Are you sure you want to send ${sendConfirmTarget.selected.length} selected item(s) to ${sendConfirmTarget.supplier.suppName}?`
+            : `Are you sure you want to send all pending items to ${sendConfirmTarget?.supplier.suppName}?`
+        }
+        onClose={() => {
+          setSendConfirmTarget(null);
+        }}
+        isShow={sendConfirmTarget !== null}
+        isLoading={sendingSupplierId !== null}
+        confirmLabel="Send"
+      />
+      <ConfirmationModal
+        title="Confirm Update Status"
+        onConfirm={async () => {
+          await handleUpdatePOStatus();
+          setIsShowUpdateStatusConfirm(false);
+        }}
+        confirmationInfo={`Are you sure you want to update the status for ${poData?.poNumber}?`}
+        onClose={() => {
+          setIsShowUpdateStatusConfirm(false);
+        }}
+        isShow={isShowUpdateStatusConfirm}
+        isLoading={isUpdating}
+        confirmLabel="Update"
       />
       <Popup
         title="Composite Items"

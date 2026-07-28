@@ -205,6 +205,17 @@ const SelectedSalesPage = ({
               </div>
             </div>
           </div>
+          {salesData?.salesRemarks && (
+            <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4">
+              {" "}
+              <h2 className="text-sm 2xl:text-base font-semibold text-gray-900 mb-4">
+                Notes
+              </h2>
+              <span className="text-xs 2xl:text-sm">
+                {salesData?.salesRemarks}
+              </span>
+            </div>
+          )}
           <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4">
             <h2 className="text-sm 2xl:text-base font-semibold text-gray-900 mb-2 2xl:mb-4">
               Items ({salesData?.totalItem})

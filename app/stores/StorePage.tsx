@@ -14,7 +14,6 @@ import toast from "react-hot-toast";
 import { fetcher } from "@/utils/fetcher";
 import useSWR from "swr";
 import { StoreInterface } from "@/types/stores";
-import ViewStoreModal from "./components/ViewStoreModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
 import { useRouter } from "next/navigation";
@@ -33,9 +32,6 @@ const StorePage = () => {
   const { user, isAdmin, hasStore } = useSession();
   const router = useRouter();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
-  const [selectedStore, setSelectedStore] = useState<StoreInterface | null>(
-    null,
-  );
   const isSupervisor = user?.empPosition === "supervisor";
   const url =
     isAdmin || !hasStore
@@ -105,7 +101,7 @@ const StorePage = () => {
             <div className="flex justify-center gap-2">
               <IconButton
                 onClick={function (): void {
-                  setSelectedStore(row);
+                  router.push(`/stores/${row.storeName}`);
                 }}
                 label={"View"}
                 bg={"green"}
@@ -139,17 +135,6 @@ const StorePage = () => {
           }}
           onSubmit={handleSubmit}
         />
-      </Modal>
-      <Modal
-        size="xl"
-        className="h-[95%]"
-        title={`${selectedStore?.storeName}`}
-        isOpen={selectedStore !== null}
-        onClose={function (): void {
-          setSelectedStore(null);
-        }}
-      >
-        <ViewStoreModal data={selectedStore ?? null} />
       </Modal>
     </PageLayout>
   );

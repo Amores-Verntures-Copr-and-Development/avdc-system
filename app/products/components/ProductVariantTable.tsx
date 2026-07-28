@@ -10,8 +10,6 @@ import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import BarcodeProductComponent from "./BarcodeProductComponent";
-import Popup from "@/components/shared/Popup";
-import VariantComponentPage from "./VariantComponentPage";
 interface ProductVariantTableProps {
   data: DisplaProductVariantsDtos[];
   storeId: number;
@@ -90,6 +88,26 @@ const prodVarcolumns: Column<DisplaProductVariantsDtos>[] = [
     },
   },
   {
+    key: "isAvailableOnline",
+    name: "Online",
+    selector: (row) => {
+      const label = Number(row.isAvailableOnline) === 1 ? "Yes" : "No";
+      const textColor =
+        Number(row.isAvailableOnline) === 1
+          ? "text-green-600"
+          : "text-red-600";
+      return (
+        <div className="">
+          <span
+            className={`px-1.5 py-1.5 ${textColor} font-semibold rounded-lg`}
+          >
+            {label}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
     key: "inventoryItemQuantity",
     name: "Stocks",
     selector: (row) => (
@@ -139,12 +157,18 @@ const ProductVariantTable = ({
           { label: "Slow Moving", value: "slow" },
         ],
       },
+      {
+        id: "isAvailableOnline",
+        label: "Is Online?",
+        type: "checkbox" as const,
+        options: [
+          { label: "Yes", value: "1" },
+          { label: "No", value: "0" },
+        ],
+      },
     ],
     [],
   );
-  const [showAddComponent, setShowAddComponent] = useState(false);
-  const [selectedRow, setSelectedRow] =
-    useState<DisplaProductVariantsDtos | null>(null);
   const handleDeleteProductVariant = async (
     deleteData: DisplaProductVariantsDtos,
   ) => {
@@ -226,16 +250,18 @@ const ProductVariantTable = ({
         data={data}
         loading={isLoading}
         showActions
-        onRowSelection={(row) => setSelectedRow(row)}
+        onRowSelection={(row) =>
+          router.push(`/products/${row.prodId}/${row.prodVarId}`)
+        }
         totalCount={totalCount}
         showPagination
         searchUrl="/products"
         renderActions={(row) => (
           <div className="flex gap-1 xl:gap-2 px-1 justify-center">
             <IconButton
-              onClick={function (): void {
-                console.log(row);
-              }}
+              onClick={() =>
+                router.push(`/products/${row.prodId}/${row.prodVarId}`)
+              }
               label={"View"}
               bg={"nobg"}
               icon={<Eye className="w-5 h-5 xl:w-5 xl:h-5" />}
@@ -306,26 +332,6 @@ const ProductVariantTable = ({
           }}
         />
       </Modal>
-      <Popup
-        title={`${selectedRow?.prodVarName} ${selectedRow?.barcode}`}
-        background="bg-white/10 backdrop-blur-xs"
-        isOpen={selectedRow !== null}
-        onClose={function (): void {
-          setSelectedRow(null);
-        }}
-      >
-        <VariantComponentPage
-          data={selectedRow}
-          prod={null}
-          storeId={storeId}
-          mutate={mutate}
-          onClose={function (): void {
-            setSelectedRow(null);
-          }}
-          showAddComponent={false}
-          setShowAddComponent={setShowAddComponent}
-        />
-      </Popup>
     </>
   );
 };

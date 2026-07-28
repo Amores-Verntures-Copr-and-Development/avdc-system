@@ -56,7 +56,7 @@ export async function GET(
 }
 
 export async function PUT(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
   try {
@@ -72,10 +72,21 @@ export async function PUT(
       throw new Error("No orderId found");
     }
 
-    const body = (await _request.json()) as Omit<UpdateOrderDto, "orderId">;
+    const body = (await request.json()) as Omit<UpdateOrderDto, "orderId">;
     const data: UpdateOrderDto = { ...body, orderId };
 
-    const res = await updateOrderController(data);
+    let changedBy: number | null = null;
+    const token = request.cookies.get("avdc_accessToken")?.value;
+    if (token) {
+      try {
+        const decoded = verifyToken<AccessTokenPayload>(token);
+        changedBy = decoded.userId;
+      } catch {
+        // invalid/expired token - update can still proceed without attribution
+      }
+    }
+
+    const res = await updateOrderController(data, changedBy);
 
     if (!res.success) {
       throw new Error(`${res.error}`);

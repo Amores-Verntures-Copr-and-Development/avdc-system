@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
       cusAccId: decoded.cusAccId,
       customerId: decoded.customerId,
     });
-
     if (!res.success) {
       return NextResponse.json(
         { success: false, message: res.message },

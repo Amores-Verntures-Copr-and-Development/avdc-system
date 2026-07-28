@@ -202,7 +202,10 @@ export async function processCreateSales(data: CreateSaleDto) {
 
     await connection.commit();
 
-    void sendEmailSalesBasePaymentMethods({ salesId });
+    void sendEmailSalesBasePaymentMethods({
+      salesId,
+      orderNumber: data.orderNumber,
+    });
 
     return sales;
   } catch (e) {

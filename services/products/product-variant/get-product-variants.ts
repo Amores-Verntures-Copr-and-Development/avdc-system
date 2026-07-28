@@ -62,6 +62,8 @@ export async function getProductVariants({
 export async function getProductVariantForOnline({
   keyFields = {},
   search,
+  category,
+  unit,
   statusSold,
   from,
   to,
@@ -72,6 +74,8 @@ export async function getProductVariantForOnline({
 }: {
   keyFields?: Partial<ProductVariants>;
   search?: string;
+  category?: string;
+  unit?: string;
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
@@ -84,6 +88,8 @@ export async function getProductVariantForOnline({
     const data = await selectProductVariantForOnline({
       keyFields,
       search,
+      category,
+      unit,
       statusSold,
       from,
       to,
@@ -96,6 +102,8 @@ export async function getProductVariantForOnline({
     const total = await selectProductCountVariantForOnline({
       keyFields,
       search,
+      category,
+      unit,
       statusSold,
       from,
       to,

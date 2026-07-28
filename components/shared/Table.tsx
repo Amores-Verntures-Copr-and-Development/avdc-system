@@ -169,6 +169,18 @@ const TableInner = <T extends Record<string, any>>(
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // Mirrored into refs (updated during render, not via useEffect) so that
+  // `handleInputChange`/`renderCell` below can read the latest values
+  // without listing `editableData`/`errors` as useCallback deps - those two
+  // change on every keystroke, and having them as deps recreated `renderCell`
+  // every keystroke, which is passed as a prop to every `TableRow`, silently
+  // defeating the row-level React.memo and re-rendering the whole table per
+  // character typed instead of just the row being edited.
+  const editableDataRef = useRef(editableData);
+  editableDataRef.current = editableData;
+  const errorsRef = useRef(errors);
+  errorsRef.current = errors;
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [showMobileActions, setShowMobileActions] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0 });
@@ -307,9 +319,12 @@ const TableInner = <T extends Record<string, any>>(
     return map;
   }, [editableData, getUniqueId]);
 
+  const editableDataByIdRef = React.useRef(editableDataById);
+  editableDataByIdRef.current = editableDataById;
+
   const getRowById = React.useCallback(
-    (row: T) => editableDataById.get(getUniqueId(row)),
-    [editableDataById, getUniqueId],
+    (row: T) => editableDataByIdRef.current.get(getUniqueId(row)),
+    [getUniqueId],
   );
 
   const toggleRow = React.useCallback(
@@ -355,14 +370,15 @@ const TableInner = <T extends Record<string, any>>(
   );
 
   const handleInputChange = React.useCallback((row: T, columnKey: string, value: any) => {
+    const currentData = editableDataRef.current;
     const rowId = getUniqueId(row);
-    const rowIndex = editableData.findIndex((r) => getUniqueId(r) === rowId);
+    const rowIndex = currentData.findIndex((r) => getUniqueId(r) === rowId);
     if (rowIndex === -1) return;
 
     // Only the edited row's compute columns need recalculating - every
     // `compute` in this codebase only reads fields off its own row, so
     // re-running it for every other row on each keystroke was pure waste.
-    let updatedRow: T = { ...editableData[rowIndex], [columnKey]: value };
+    let updatedRow: T = { ...currentData[rowIndex], [columnKey]: value };
 
     columns.forEach((col) => {
       if (!col.compute) return;
@@ -372,7 +388,7 @@ const TableInner = <T extends Record<string, any>>(
       }
     });
 
-    const newData = editableData.map((r, idx) =>
+    const newData = currentData.map((r, idx) =>
       idx === rowIndex ? updatedRow : r,
     );
 
@@ -402,7 +418,7 @@ const TableInner = <T extends Record<string, any>>(
         updateData(newData);
       }, debounceTime);
     }
-  }, [editableData, columns, getUniqueId, onCellChange, updateData, debounceTime]);
+  }, [columns, getUniqueId, onCellChange, updateData, debounceTime]);
 
   const isFieldEditable = React.useCallback(
     (column: Column<T>, row: T, rowIndex: number): boolean => {
@@ -418,7 +434,7 @@ const TableInner = <T extends Record<string, any>>(
   const renderCell = React.useCallback((column: Column<T>, row: T, rowIndex: number) => {
     const editable = isFieldEditable(column, row, rowIndex);
     const errorKey = `${rowIndex}-${column.key}`;
-    const hasError = errors.has(errorKey);
+    const hasError = errorsRef.current.has(errorKey);
     const cellBg = column.bgCol ?? "";
     const realRow = getRowById(row);
 
@@ -514,7 +530,7 @@ const TableInner = <T extends Record<string, any>>(
         {column.format ? column.format(value) : value}
       </div>
     );
-  }, [errors, getRowById, editMode, handleInputChange, isFieldEditable]);
+  }, [getRowById, editMode, handleInputChange, isFieldEditable]);
 
   const colSpanCount = React.useMemo(
     () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),

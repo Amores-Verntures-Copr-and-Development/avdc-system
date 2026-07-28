@@ -1,9 +1,63 @@
 import {
   deleteProductVariantController,
+  getProductVariantController,
   updateProductVariantController,
 } from "@/controllers/ProductController";
 import { ProductVariants } from "@/types/products";
 import { NextResponse } from "next/server";
+
+export async function GET(
+  _request: Request,
+  {
+    params,
+  }: {
+    params: Promise<{ storeId: string; prodId: string; prodVarId: string }>;
+  },
+) {
+  try {
+    const slug = (await params).prodVarId;
+    const prodVarId = Number(slug);
+
+    if (!prodVarId) {
+      throw new Error("No prodVarId found");
+    }
+
+    const res = await getProductVariantController({
+      keyFields: { prodVarId },
+    });
+
+    if (!res.success) {
+      throw new Error(`${res.error}`);
+    }
+
+    const data = res.data?.[0] ?? null;
+
+    if (!data) {
+      return NextResponse.json(
+        { success: false, message: "Product variant not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: res.message,
+        data,
+      },
+      { status: 200 },
+    );
+  } catch (err: any) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to fetch product variant!",
+        error: err?.message || String(err),
+      },
+      { status: 500 },
+    );
+  }
+}
 
 export async function PUT(
   _request: Request,

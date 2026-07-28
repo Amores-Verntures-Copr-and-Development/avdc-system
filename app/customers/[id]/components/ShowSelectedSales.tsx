@@ -1,11 +1,14 @@
 import { formatDiscountValue } from "@/app/pos/components/sidebar/DiscountList";
+import Button from "@/components/shared/Button";
 import { DisplaySalesDto, DisplaySalesItems } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import { getSalesStatusOption } from "@/utils/salesUtils";
-import React from "react";
+import { Mail } from "lucide-react";
+import React, { useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 
 interface ShowSelectedSalesProps {
@@ -13,12 +16,35 @@ interface ShowSelectedSalesProps {
 }
 
 const ShowSelectedSales = ({ salesData }: ShowSelectedSalesProps) => {
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+
   const { data: response } = useSWR<ApiResponse<DisplaySalesItems[]>>(
     salesData?.salesId
       ? `/api/sales/${salesData.storeId}/${salesData.salesId}/sales-items`
       : null,
     fetcher,
   );
+
+  const handleSendEmailReceipt = async () => {
+    if (!salesData?.salesId || !salesData?.storeId) return;
+
+    setIsSendingEmail(true);
+    try {
+      const result = await fetch(
+        `/api/sales/${salesData.storeId}/${salesData.salesId}/send-email`,
+        { method: "POST" },
+      );
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      toast.success(res.message);
+    } catch (e: any) {
+      toast.error(e.message || "Failed to send receipt email");
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   const refundTotal =
     Array.isArray(salesData?.salesRefunds) && salesData.salesRefunds.length > 0
@@ -75,9 +101,23 @@ const ShowSelectedSales = ({ salesData }: ShowSelectedSalesProps) => {
       <div className="rounded-xl border border-gray-200 bg-white p-4">
         <div className="grid gap-5 md:grid-cols-[1.2fr_1fr]">
           <div>
-            <p className="text-sm font-semibold text-gray-900">
-              Order #{salesData?.salesNo}
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-gray-900">
+                Order #{salesData?.salesNo}
+              </p>
+
+              <div>
+                {" "}
+                <Button
+                  size="xs"
+                  color="secondary"
+                  icon={Mail}
+                  label="Send Email Receipt"
+                  loading={isSendingEmail}
+                  onClick={handleSendEmailReceipt}
+                />
+              </div>
+            </div>
 
             <div className="mt-4">
               <p className="text-xs text-gray-500">Total Amount</p>
@@ -197,7 +237,9 @@ const ShowSelectedSales = ({ salesData }: ShowSelectedSalesProps) => {
                     <p className="text-xs font-semibold text-gray-900">
                       {getItemName(item)}
                     </p>
-                    <p className="text-xs text-gray-500">{item.prodName}</p>
+                    <p className="text-xs text-gray-500">
+                      {item.prodVarUnit ?? "pc"}
+                    </p>
                   </td>
                   <TableCell>{formatPeso(item.salesItemPrice)}</TableCell>
                   <TableCell align="center">

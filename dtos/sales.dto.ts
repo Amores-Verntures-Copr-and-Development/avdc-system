@@ -37,6 +37,8 @@ export type CreateSaleDto = Pick<
     salesItems?: CreateSaleItemDto[];
     salesPayments?: CreateSalePaymentDto[];
     saleDiscounts?: CreateSalesDiscount[];
+    // human-readable Order number, only set when salesSource === "order" - not persisted, just carried through for the receipt email
+    orderNumber?: string;
   };
 
 export interface DisplaySalesDto extends Sales {
