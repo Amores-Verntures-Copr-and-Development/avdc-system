@@ -5,6 +5,7 @@ import { sendEmail } from "@/utils/send-email";
 import { generateSalesEmailHTML } from "@/utils/email-html";
 import { DisplaySalesDto } from "@/dtos/sales.dto";
 import { customerServices } from "../customer/customerServices";
+import { formatDateToWords } from "@/utils/formatDateToWords";
 
 export interface SendSalesEmailResult {
   sent: boolean;
@@ -81,7 +82,6 @@ export async function sendEmailSalesBasePaymentMethods({
     }
     const isFromOrder = sales.salesSource === "order";
     const displayNo = isFromOrder && orderNumber ? orderNumber : sales.salesNo;
-
     await sendEmail({
       from: '"Amores Ventures Receipts" <noreply@amoresventures.com>',
       to: customer.customerEmail,

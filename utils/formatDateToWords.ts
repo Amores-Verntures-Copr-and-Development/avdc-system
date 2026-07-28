@@ -22,6 +22,7 @@ export function formatDateToWords(
     month: "long",
     day: "numeric",
     hour12: true,
+    timeZone: "Asia/Manila",
   };
 
   if (showMinute) {
@@ -35,6 +36,7 @@ export function formatDateToWords(
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
+      timeZone: "Asia/Manila",
     });
   }
 
