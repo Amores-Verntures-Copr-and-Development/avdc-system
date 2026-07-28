@@ -67,3 +67,12 @@ export interface OrderItems {
   orderItemCreatedAt: string;
   orderItemUpdatedAt: string;
 }
+
+export interface OrderStatusHistory {
+  historyId: number;
+  orderId: number;
+  orderStatus: OrderStatus;
+  note: string | null;
+  changedBy: number | null;
+  historyCreatedAt: string;
+}

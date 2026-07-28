@@ -3,7 +3,8 @@ import {
   getOrderController,
 } from "@/controllers/OrderController";
 import { CreateOrderDto } from "@/dtos/orders.dto";
-import { NextResponse } from "next/server";
+import { AccessTokenPayload, verifyToken } from "@/utils/jwt";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
@@ -57,7 +58,7 @@ export async function GET(
 }
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -68,10 +69,21 @@ export async function POST(
       throw new Error("No store found");
     }
 
-    const body = (await _request.json()) as CreateOrderDto;
+    const body = (await request.json()) as CreateOrderDto;
     const data: CreateOrderDto = { ...body, storeId };
 
-    const res = await createOrderController(data);
+    let createdBy: number | null = null;
+    const token = request.cookies.get("avdc_accessToken")?.value;
+    if (token) {
+      try {
+        const decoded = verifyToken<AccessTokenPayload>(token);
+        createdBy = decoded.userId;
+      } catch {
+        // invalid/expired token - order can still be created without attribution
+      }
+    }
+
+    const res = await createOrderController(data, createdBy);
 
     if (!res.success) {
       throw new Error(`${res.error}`);

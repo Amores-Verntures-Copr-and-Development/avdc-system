@@ -10,12 +10,13 @@ import { CreateOrderDto, DisplayOrderDto } from "@/dtos/orders.dto";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
-import { Plus } from "lucide-react";
+import { LayoutGrid, TableIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import CreateOrderModal from "./component/CreateOrderModal";
+import OrderKanbanView from "./component/OrderKanbanView";
 
 interface OrderStorePageProps {
   storeId: number | null;
@@ -106,9 +107,10 @@ const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showAdd, setShowAdd] = useState(false);
+  const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
   const apiUrl = useMemo(() => {
-    if (!storeId) return null;
+    if (!storeId || viewMode !== "table") return null;
 
     const search = searchParams.get("search") || "";
     const limit = searchParams.get("limit") || "";
@@ -120,7 +122,7 @@ const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
     params.append("page", page);
 
     return `/api/order/${storeId}?${params.toString()}`;
-  }, [storeId, searchParams]);
+  }, [storeId, searchParams, viewMode]);
 
   const {
     data: response = { success: true, message: "", data: [], count: 0 },
@@ -160,18 +162,40 @@ const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
     <>
       <div className="flex justify-between items-center">
         <PageHeader title="Orders" subtitle="View and manage store orders" />
+        <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+          <Button
+            size="sm"
+            isRounded={false}
+            icon={TableIcon}
+            label="Table"
+            color={viewMode === "table" ? "primary" : "secondary"}
+            onClick={() => setViewMode("table")}
+          />
+          <Button
+            size="sm"
+            isRounded={false}
+            icon={LayoutGrid}
+            label="Kanban"
+            color={viewMode === "kanban" ? "primary" : "secondary"}
+            onClick={() => setViewMode("kanban")}
+          />
+        </div>
       </div>
 
-      <Table
-        columns={orderColumns}
-        data={response.data ?? []}
-        loading={isLoading}
-        totalCount={response.count}
-        showPagination
-        searchUrl="/orders"
-        maxHeight="h-full"
-        onRowSelection={(row) => router.push(`/orders/${row.orderId}`)}
-      />
+      {viewMode === "table" ? (
+        <Table
+          columns={orderColumns}
+          data={response.data ?? []}
+          loading={isLoading}
+          totalCount={response.count}
+          showPagination
+          searchUrl="/orders"
+          maxHeight="h-full"
+          onRowSelection={(row) => router.push(`/orders/${row.orderId}`)}
+        />
+      ) : (
+        <OrderKanbanView storeId={storeId} />
+      )}
 
       <Modal
         title="Create Order"

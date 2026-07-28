@@ -181,13 +181,13 @@ const DynamicDropdown = ({
                   No options available
                 </div>
               ) : (
-                options.map((opt) => {
+                options.map((opt, index) => {
                   const isSelected =
                     String(opt.value) === String(selectedOption?.value);
 
                   return (
                     <button
-                      key={opt.value}
+                      key={index}
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();

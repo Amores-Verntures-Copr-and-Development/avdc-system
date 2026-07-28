@@ -1,5 +1,6 @@
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import Modal from "@/components/shared/Modal";
 import { PortalDropdown } from "@/components/shared/PortalDropDown";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplayPOItemsSupplier } from "@/dtos/purchase.dto";
@@ -9,9 +10,11 @@ import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
-import { ChevronDown, ChevronUp, Package } from "lucide-react";
-import React, { useState } from "react";
+import { ChevronDown, ChevronUp, Download, Package } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import useSWR from "swr";
+import { PDFViewer } from "@react-pdf/renderer";
+import POSupplierItemsPDF from "@/components/pdf/POSupplierItemsPDF";
 interface SupplierViewProps {
   data: PurchaseOrders | null;
   setShowAllItems: React.Dispatch<
@@ -22,6 +25,21 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
   const [isExpandedSupplier, setIsExpandedSupplier] = useState<number | null>(
     null,
   );
+  const [showPDFSupplier, setShowPDFSupplier] =
+    useState<DisplayPOItemsSupplier | null>(null);
+  const [renderPDF, setRenderPDF] = useState(false);
+
+  useEffect(() => {
+    if (showPDFSupplier !== null) {
+      setRenderPDF(false);
+
+      const timer = setTimeout(() => {
+        setRenderPDF(true);
+      }, 100); // allow modal to open first
+
+      return () => clearTimeout(timer);
+    }
+  }, [showPDFSupplier]);
   const columns: Column<PurchaseOrderItems>[] = [
     { name: "Item Name", key: "itemName" },
     { name: "Unit", key: "itemUnit" },
@@ -318,7 +336,19 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
                     </div>
                   </div>
                   <div className="border-t border-gray-300"></div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    <div>
+                      <Button
+                        size="xs"
+                        color="secondary"
+                        label="PDF"
+                        icon={Download}
+                        className="font-semibold text-gray-700 text-xs"
+                        onClick={() => {
+                          setShowPDFSupplier(s);
+                        }}
+                      />
+                    </div>
                     <button
                       onClick={() => {
                         console.log(s);
@@ -508,6 +538,25 @@ const SupplierView = ({ data, setShowAllItems }: SupplierViewProps) => {
         )}
       </div>
       <div className="p-2 shadow"></div>
+      <Modal
+        className="h-[95%]"
+        isOpen={showPDFSupplier !== null}
+        size="xl"
+        onClose={function (): void {
+          setShowPDFSupplier(null);
+        }}
+        title="Supplier PDF"
+      >
+        {renderPDF && showPDFSupplier ? (
+          <PDFViewer width="100%" height="100%">
+            <POSupplierItemsPDF data={showPDFSupplier} poData={data} />
+          </PDFViewer>
+        ) : (
+          <div className="flex items-center justify-center h-full">
+            Generating PDF...
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

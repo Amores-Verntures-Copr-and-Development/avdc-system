@@ -16,6 +16,9 @@ export async function GET(req: NextRequest) {
     const pageNumber = Number(page) || 0;
     const data = await getProductVariantForOnlineController({
       storeId: 11,
+      search,
+      category,
+      unit,
       limit: limitNumber,
       offset: pageNumber,
       keyFields: {

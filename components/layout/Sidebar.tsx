@@ -29,7 +29,6 @@ import {
   Factory,
   LucideIcon,
   ListOrdered,
-  ChefHat,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
@@ -96,7 +95,6 @@ const sideMenu: SideMenuGroup[] = [
         roles: [
           "superadmin",
           "admin",
-          "purchaser",
           "supervisor",
           "accounting",
           "hr",
@@ -146,13 +144,11 @@ const sideMenu: SideMenuGroup[] = [
         icon: Weight,
         roles: [
           "superadmin",
-          ,
           "admin",
           "supervisor",
           "accounting",
           "staff",
           "owner",
-          "purchaser",
         ],
       },
       {
@@ -166,7 +162,6 @@ const sideMenu: SideMenuGroup[] = [
           "accounting",
           "staff",
           "owner",
-          "purchaser",
         ],
       },
       {
@@ -180,22 +175,6 @@ const sideMenu: SideMenuGroup[] = [
           "accounting",
           "staff",
           "owner",
-          "purchaser",
-        ],
-      },
-      {
-        name: "Prepare Orders",
-        href: "/orders/prepare",
-        icon: ChefHat,
-        roles: [
-          "superadmin",
-          "admin",
-          "supervisor",
-          "accounting",
-          "hr",
-          "staff",
-          "owner",
-          "purchaser",
         ],
       },
     ],
@@ -275,7 +254,6 @@ const sideMenu: SideMenuGroup[] = [
         roles: [
           "superadmin",
           "admin",
-          "purchaser",
           "supervisor",
           "accounting",
           "hr",

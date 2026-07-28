@@ -90,6 +90,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     const status = searchParams.get("status") || "";
     const category = searchParams.get("category") || "";
     const unit = searchParams.get("unit") || "";
+    const isAvailableOnline = searchParams.get("isAvailableOnline") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "1";
     const store = searchParams.get("store");
@@ -101,6 +102,8 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     if (status) params.append("status", status);
     if (category) params.append("category", category);
     if (unit) params.append("unit", unit);
+    if (isAvailableOnline)
+      params.append("isAvailableOnline", isAvailableOnline);
     if (limit) params.append("limit", limit);
     if (store) params.append("store", store);
     if (to) params.append("to", to);

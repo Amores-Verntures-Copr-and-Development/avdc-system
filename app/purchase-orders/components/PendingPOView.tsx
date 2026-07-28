@@ -11,6 +11,7 @@ import { PurchaseOrders } from "@/types/purchaseOrders";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { Check, Clock } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
 interface PendingPOViewProps {
   data: DisplayPurchaseOrderItemsDto[];
@@ -122,25 +123,33 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
     },
   ];
   const [selectedSupplier, setSelectedSupplier] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isShowApproveConfirm, setIsShowApproveConfirm] = useState(false);
   useEffect(() => {
     if (data && data.length > 0) {
       setPoItems(data);
     }
   }, [data]);
   const handleApprovedPo = async () => {
-    const modifyPoItems = poItems.map((item) => ({
-      ...item,
-      suppId: Number(item.suppId) || null,
-    }));
-    const newData: UpdatePurchaseOrdersDto = {
-      ...poData,
-      poItems: modifyPoItems,
-      updatedBy: user?.userId ?? 0,
-    };
+    setIsSubmitting(true);
+    try {
+      const modifyPoItems = poItems.map((item) => ({
+        ...item,
+        suppId: Number(item.suppId) || null,
+      }));
+      const newData: UpdatePurchaseOrdersDto = {
+        ...poData,
+        poItems: modifyPoItems,
+        updatedBy: user?.userId ?? 0,
+      };
 
-    const success = await onSubmit(newData);
-    if (success) {
-      onClose();
+      const success = await onSubmit(newData);
+      if (success) {
+        setIsShowApproveConfirm(false);
+        onClose();
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
   const seen = new Set<number>();
@@ -279,13 +288,22 @@ const PendingPOView: React.FC<PendingPOViewProps> = ({
         <div>
           <Button
             icon={Check}
-            onClick={handleApprovedPo}
+            onClick={() => setIsShowApproveConfirm(true)}
             size="sm"
             label="Approved"
             className="text-xs font-semibold"
           />
         </div>
       </div>
+      <ConfirmationModal
+        title="Confirm Approval"
+        onConfirm={handleApprovedPo}
+        confirmationInfo={`Are you sure you want to approve ${poData?.poNumber}?`}
+        onClose={() => setIsShowApproveConfirm(false)}
+        isShow={isShowApproveConfirm}
+        isLoading={isSubmitting}
+        confirmLabel="Approve"
+      />
     </div>
   );
 };

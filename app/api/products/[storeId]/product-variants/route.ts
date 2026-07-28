@@ -61,6 +61,7 @@ export async function GET(
     const from = fromParam ? `${fromParam} 00:00:00` : "";
     const to = toParam ? `${toParam} 23:59:59` : "";
     // const unit = searchParams.get("unit") || "";
+    const isAvailableOnlineParam = searchParams.get("isAvailableOnline");
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
     const limitNumber = Number(limit) || 100;
@@ -74,6 +75,10 @@ export async function GET(
     const res = await getProductVariantController(
       storeId
         ? {
+            keyFields:
+              isAvailableOnlineParam === "1" || isAvailableOnlineParam === "0"
+                ? { isAvailableOnline: isAvailableOnlineParam === "1" }
+                : {},
             search,
             statusSold: status,
             from,

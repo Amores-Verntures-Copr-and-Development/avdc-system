@@ -22,6 +22,7 @@ import {
   toMySQLDateTime,
 } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
+import Textarea from "@/components/shared/TextArea";
 
 interface EditSalesPageProps {
   salesData: DisplaySalesDto | null;
@@ -308,7 +309,7 @@ const EditSalesPage = ({
           )}
 
           {/* Editable Fields */}
-          <div className="grid grid-cols-4 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-3 gap-3 2xl:gap-6 pt-2 2xl:pt-4 border-t border-gray-200">
             <div>
               <DropdownSearch<Customer>
                 sizes="xs"
@@ -362,15 +363,7 @@ const EditSalesPage = ({
                 onChange={(e) => setSalesStatus(e.target.value)}
               />
             </div>
-            <div>
-              <Input
-                sizes="xs"
-                label="Note"
-                value={salesNote}
-                name="salesNote"
-                onChange={(e) => setSalesNote(e.target.value)}
-              />
-            </div>
+
             {canEditUser && (
               <div>
                 <Input
@@ -385,7 +378,20 @@ const EditSalesPage = ({
             )}
           </div>
         </div>
-
+        <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4">
+          <h2 className="text-sm 2xl:text-2xl font-semibold text-gray-900 mb-2 2xl:mb-4">
+            Notes
+          </h2>
+          <div>
+            <Textarea
+              sizes="xs"
+              label=""
+              value={salesNote}
+              name="salesNote"
+              onChange={(e) => setSalesNote(e.target.value)}
+            />
+          </div>
+        </div>
         {/* Items Card */}
         <div className="bg-white rounded-lg border border-gray-200 p-3 2xl:p-6 mb-2 2xl:mb-4">
           <h2 className="text-sm 2xl:text-2xl font-semibold text-gray-900 mb-2 2xl:mb-4">

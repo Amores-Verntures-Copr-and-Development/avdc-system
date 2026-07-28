@@ -15,6 +15,7 @@ export interface ProductVariants {
   prodVarId: number;
   prodVarName: string;
   prodVarPrice: number;
+  prodVarPriceOnline?: number | null;
   prodVarUnit?: string | null;
   isDeductInv: boolean;
   isAvailableOnline: boolean;

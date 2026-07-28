@@ -186,6 +186,7 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
           setSelectedRow(null);
         }}
         title={`${selectedRow?.salesNo}`}
+        size="xl"
       >
         <ShowSelectedSales salesData={selectedRow} />
       </Modal>

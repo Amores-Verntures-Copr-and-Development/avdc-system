@@ -50,6 +50,7 @@ export function middleware(request: NextRequest) {
       "/api/auth/customers/resend-verification",
       "/api/auth/customers/login",
       "/api/products/st-martins-cafe",
+      "api/auth/customers/me",
     ];
     if (!publicApiRoutes.includes(pathname) && !token && !customerToken) {
       return withCors(

@@ -527,6 +527,7 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
               isLoading={isLoading}
               poId={data.poId}
               onAddItemPOSupplier={handleAddItemPoSupplier}
+              onSendPOItem={handleSendPOItem}
             />
           ) : data?.poStatus === "received" ? (
             <CompletePOView

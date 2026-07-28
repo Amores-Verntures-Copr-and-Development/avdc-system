@@ -2,11 +2,7 @@
 
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
-import LoaderComponent from "@/components/shared/LoaderComponent";
 import Modal from "@/components/shared/Modal";
-import PageHeader from "@/components/shared/PageHeader";
-import PageLayout from "@/components/shared/PageLayout";
-import { useSession } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
 import { DisplayOrderItemDto } from "@/dtos/orders.dto";
 import { OrderItemStatus, OrderStatus, Orders } from "@/types/orders";
@@ -14,7 +10,7 @@ import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import { ArrowRight, Ban, Package, Truck } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -53,16 +49,12 @@ const itemStatusOptions: { label: string; value: OrderItemStatus }[] = [
   { label: "Substituted", value: "SUBSTITUTED" },
 ];
 
-const OrderPreparePage = () => {
-  const { user, hasStore, loading } = useSession();
-  const [storeId, setStoreId] = useState<number | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Orders | null>(null);
+interface OrderKanbanViewProps {
+  storeId: number | null;
+}
 
-  useEffect(() => {
-    if (hasStore || user?.storeId) {
-      setStoreId(user?.storeId ?? 0);
-    }
-  }, [user]);
+const OrderKanbanView = ({ storeId }: OrderKanbanViewProps) => {
+  const [selectedOrder, setSelectedOrder] = useState<Orders | null>(null);
 
   const {
     data: response = { success: true, message: "", data: [] },
@@ -152,15 +144,8 @@ const OrderPreparePage = () => {
     }
   };
 
-  if (loading) return <LoaderComponent />;
-
   return (
-    <PageLayout className="p-2 gap-4">
-      <PageHeader
-        title="Prepare Orders"
-        subtitle="Move orders through preparation and fulfillment"
-      />
-
+    <div className="flex-1 min-h-0 flex flex-col">
       <div className="flex-1 min-h-0 overflow-x-auto">
         <div className="flex gap-3 h-full min-w-max pb-2">
           {COLUMNS.map((column) => {
@@ -342,8 +327,8 @@ const OrderPreparePage = () => {
           </div>
         )}
       </Modal>
-    </PageLayout>
+    </div>
   );
 };
 
-export default OrderPreparePage;
+export default OrderKanbanView;

@@ -73,6 +73,7 @@ export async function processCompleteOrder({
     salesStatus: SalesStatus.COMPLETED,
     salesRemarks: `Converted from Order ${order.orderNumber}`,
     salesSource: "order",
+    orderNumber: order.orderNumber,
     salesItems,
     salesPayments,
   };
@@ -85,6 +86,8 @@ export async function processCompleteOrder({
       orderStatus: "COMPLETED",
       paymentStatus: "PAID",
     },
+    changedBy: completedBy,
+    note: "Order completed and converted to a sale",
   });
 
   return sales;

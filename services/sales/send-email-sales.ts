@@ -6,13 +6,25 @@ import { generateSalesEmailHTML } from "@/utils/email-html";
 import { DisplaySalesDto } from "@/dtos/sales.dto";
 import { customerServices } from "../customer/customerServices";
 
+export interface SendSalesEmailResult {
+  sent: boolean;
+  reason?: string;
+}
+
 export async function sendEmailSalesBasePaymentMethods({
   connection,
   salesId,
+  orderNumber,
+  force = false,
 }: {
   connection?: PoolConnection;
   salesId: number;
-}) {
+  orderNumber?: string;
+  // bypasses the payment method's `payMetIsEmail` gate - used for an
+  // explicit "resend receipt" action, as opposed to the automatic
+  // fire-and-forget send right after a sale is created.
+  force?: boolean;
+}): Promise<SendSalesEmailResult> {
   try {
     let isEmail: boolean = false;
 
@@ -22,13 +34,13 @@ export async function sendEmailSalesBasePaymentMethods({
     });
 
     if (salesData.length === 0) {
-      return;
+      return { sent: false, reason: "Sale not found" };
     }
 
     const sales = salesData[0];
 
     if (!sales.paymentMethods?.length) {
-      return;
+      return { sent: false, reason: "Sale has no payment method on file" };
     }
     for (const pm of sales.paymentMethods) {
       //check sales payments if one has isEmail
@@ -47,8 +59,11 @@ export async function sendEmailSalesBasePaymentMethods({
       }
     }
 
-    if (!isEmail) {
-      return;
+    if (!isEmail && !force) {
+      return {
+        sent: false,
+        reason: "Payment method used isn't set up to send email receipts",
+      };
     }
 
     const customers = await customerServices.findCustomerByFields({
@@ -56,20 +71,25 @@ export async function sendEmailSalesBasePaymentMethods({
     });
 
     if (customers && customers.length === 0) {
-      return;
+      return { sent: false, reason: "Customer not found" };
     }
 
     const customer = customers[0];
 
     if (!customer.customerEmail || customer.customerEmail === "") {
-      return;
+      return { sent: false, reason: "Customer has no email on file" };
     }
+    const isFromOrder = sales.salesSource === "order";
+    const displayNo = isFromOrder && orderNumber ? orderNumber : sales.salesNo;
+
     await sendEmail({
       from: '"Amores Ventures Receipts" <noreply@amoresventures.com>',
       to: customer.customerEmail,
-      subject: `Receipt - ${sales.salesNo}`,
-      html: generateSalesEmailHTML(sales as DisplaySalesDto),
+      subject: `Receipt - ${displayNo}`,
+      html: generateSalesEmailHTML(sales as DisplaySalesDto, orderNumber),
     });
+
+    return { sent: true };
   } catch (e) {
     throw e;
   }

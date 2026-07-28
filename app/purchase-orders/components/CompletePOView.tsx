@@ -124,6 +124,8 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
   );
 
   const [isShowDeliverConfirm, setIsShowDeliverConfirm] = useState(false);
+  const [isShowCompleteConfirm, setIsShowCompleteConfirm] = useState(false);
+  const [isCompletingPO, setIsCompletingPO] = useState(false);
   const [deliverRequestData, setDeliverRequestData] =
     useState<DisplayRequisitionWithItems | null>(null);
   const [requestItems, setRequestItems] =
@@ -656,9 +658,15 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
     if (!poData) {
       return;
     }
-    const success = await onCompleteRequest(poData);
-    if (success) {
-      onClose();
+    setIsCompletingPO(true);
+    try {
+      const success = await onCompleteRequest(poData);
+      if (success) {
+        setIsShowCompleteConfirm(false);
+        onClose();
+      }
+    } finally {
+      setIsCompletingPO(false);
     }
   };
 
@@ -1108,7 +1116,7 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
               <Button
                 size="sm"
                 onClick={function (): void {
-                  handleCompletePO();
+                  setIsShowCompleteConfirm(true);
                 }}
                 label="Complete PO"
                 disabled={!validForCompletePO}
@@ -1175,6 +1183,17 @@ const CompletePOView: React.FC<CompletePOViewProps> = ({
         isShow={isShowDeliverConfirm}
         confirmLabel="Confirm"
         isLoading={isProcessing !== null}
+      />
+      <ConfirmationModal
+        title="Confirm Complete PO"
+        onConfirm={handleCompletePO}
+        confirmationInfo={`Are you sure you want to complete ${poData?.poNumber}? This action cannot be undone.`}
+        onClose={() => {
+          setIsShowCompleteConfirm(false);
+        }}
+        isShow={isShowCompleteConfirm}
+        isLoading={isCompletingPO}
+        confirmLabel="Complete"
       />
     </div>
   );
