@@ -4,6 +4,8 @@ import { insertOrder } from "@/models/orderModel";
 import { insertOrderItems } from "@/models/orderItemModel";
 import { insertOrderStatusHistory } from "@/models/orderStatusHistoryModel";
 import { generateOrderNumber } from "./generate-order-number";
+import { customerServices } from "../customer/customerServices";
+import crypto from "crypto";
 
 export async function processCreateOrder(
   data: CreateOrderDto,
@@ -11,6 +13,16 @@ export async function processCreateOrder(
 ) {
   if (!data.items || data.items.length === 0) {
     throw new Error("Order must have at least one item");
+  }
+
+  if (data.customerId) {
+    const customers = await customerServices.findCustomerByFields({
+      keyFields: { customerId: data.customerId },
+    });
+
+    if (!customers || customers.length === 0) {
+      throw new Error("Customer not found");
+    }
   }
 
   const pool = await getDBConnection();
@@ -23,8 +35,14 @@ export async function processCreateOrder(
       connection,
       storeId: data.storeId,
     });
+    const orderPublicId = crypto.randomUUID();
 
-    const orderId = await insertOrder({ connection, data, orderNumber });
+    const orderId = await insertOrder({
+      connection,
+      data,
+      orderNumber,
+      orderPublicId,
+    });
 
     await insertOrderItems({ connection, orderId, data: data.items });
 

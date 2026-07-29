@@ -1,6 +1,5 @@
 import { DisplayOrderDto, DisplayOrderItemDto } from "@/dtos/orders.dto";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import { formatPeso } from "@/utils/formatPeso";
 import {
   Page,
   Text,
@@ -14,6 +13,18 @@ interface OrderReceiptPDFProps {
   order: DisplayOrderDto;
   items: DisplayOrderItemDto[];
 }
+
+// The ₱ glyph isn't in react-pdf's default font, so it renders as a
+// garbled "±" - format as a plain number instead, matching the other PDFs.
+const formatPesoPdf = (value: number | string | null | undefined) => {
+  const num = Number(value);
+  if (isNaN(num)) return "0.00";
+
+  return num.toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 const styles = StyleSheet.create({
   page: {
@@ -187,8 +198,8 @@ export const OrderReceiptPDF = ({ order, items }: OrderReceiptPDFProps) => {
             <Text style={styles.colIndex}>{i + 1}</Text>
             <Text style={styles.colDesc}>{item.prodVarName}</Text>
             <Text style={styles.colQty}>{item.quantity}</Text>
-            <Text style={styles.colPrice}>{formatPeso(item.unitPrice)}</Text>
-            <Text style={styles.colTotal}>{formatPeso(item.lineTotal)}</Text>
+            <Text style={styles.colPrice}>{formatPesoPdf(item.unitPrice)}</Text>
+            <Text style={styles.colTotal}>{formatPesoPdf(item.lineTotal)}</Text>
           </View>
         ))}
 
@@ -203,20 +214,20 @@ export const OrderReceiptPDF = ({ order, items }: OrderReceiptPDFProps) => {
         <View style={styles.summarySection}>
           <View style={styles.totalRow}>
             <Text>Subtotal</Text>
-            <Text>{formatPeso(order.subtotal)}</Text>
+            <Text>{formatPesoPdf(order.subtotal)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text>Discount</Text>
-            <Text>{formatPeso(order.discountAmount)}</Text>
+            <Text>{formatPesoPdf(order.discountAmount)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text>Delivery Fee</Text>
-            <Text>{formatPeso(order.deliveryFee)}</Text>
+            <Text>{formatPesoPdf(order.deliveryFee)}</Text>
           </View>
           <View style={styles.grandTotalRow}>
             <Text style={{ fontWeight: "bold" }}>Total</Text>
             <Text style={{ fontWeight: "bold" }}>
-              {formatPeso(order.totalAmount)}
+              P {formatPesoPdf(order.totalAmount)}
             </Text>
           </View>
         </View>
@@ -228,9 +239,7 @@ export const OrderReceiptPDF = ({ order, items }: OrderReceiptPDFProps) => {
           </View>
         )}
 
-        <Text style={styles.footerNote}>
-          Thank you! Please come again.
-        </Text>
+        <Text style={styles.footerNote}>Thank you! Please come again.</Text>
       </Page>
     </Document>
   );

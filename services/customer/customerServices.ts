@@ -11,6 +11,7 @@ import {
   selectCountCustomers,
   selectCustomerAcconts,
   selectCustomers,
+  updateCustomerAccounts,
   updateCustomers,
 } from "@/models/customerModels";
 import { Customer, CustomerAccount } from "@/types/customer";
@@ -364,6 +365,22 @@ export const CustomerAccountService = {
   }) => {
     return await insertCustomerAccount({
       data,
+      connection,
+    });
+  },
+
+  update: async ({
+    cusAccId,
+    updateData,
+    connection,
+  }: {
+    cusAccId: number;
+    updateData: Partial<CustomerAccount>;
+    connection?: PoolConnection;
+  }) => {
+    return await updateCustomerAccounts({
+      cusAccId,
+      updateData,
       connection,
     });
   },

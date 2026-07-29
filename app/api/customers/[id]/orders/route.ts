@@ -10,7 +10,13 @@ export async function GET(
     const customerId = Number(id);
 
     if (!customerId) {
-      throw new Error("No customer found");
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No customer found",
+        },
+        { status: 400 },
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -26,7 +32,7 @@ export async function GET(
       limit: limitNumber,
       offset: limitNumber * (pageNumber - 1),
     });
-    console.log({ res });
+
     if (!res.success) {
       throw new Error(`${res.error}`);
     }
@@ -41,7 +47,6 @@ export async function GET(
       { status: 200 },
     );
   } catch (err: any) {
-    console.log({ err });
     return NextResponse.json(
       {
         success: false,

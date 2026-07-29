@@ -52,13 +52,74 @@ export const generateVerificationEmailHTML = ({
 </html>`;
 };
 
+export const generatePasswordResetEmailHTML = ({
+  name,
+  code,
+}: {
+  name?: string | null;
+  code: string;
+}) => {
+  return `
+<!DOCTYPE html>
+<html>
+  <body style="margin:0; padding:0; background:#f8fafc; font-family:Arial, sans-serif;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:24px;">
+      <tr>
+        <td align="center">
+          <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:16px; overflow:hidden; border:1px solid #e5e7eb;">
+            <tr>
+              <td style="padding:24px; text-align:center; border-bottom:1px solid #f1f5f9;">
+                <h1 style="margin:0; color:#cc1478; font-size:22px;">Amores Ventures</h1>
+                <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">Reset your password</p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px; text-align:center;">
+                <p style="margin:0 0 20px; color:#374151; font-size:14px;">
+                  Hi ${name ?? "there"}, use the code below to reset your password.
+                </p>
+
+                <div style="display:inline-block; background:#fdf2f8; border-radius:12px; padding:16px 32px; margin-bottom:20px;">
+                  <span style="font-size:32px; font-weight:bold; letter-spacing:8px; color:#cc1478;">${code}</span>
+                </div>
+
+                <p style="margin:0; color:#9ca3af; font-size:12px;">
+                  This code is valid for 15 minutes. If you didn't request this, you can safely ignore this email — your password will not be changed.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:18px 24px; background:#f9fafb; text-align:center; color:#9ca3af; font-size:12px;">
+                This is an automated message from Amores Ventures.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+};
+
 export const generateSalesEmailHTML = (
   data: DisplaySalesDto,
   orderNumber?: string,
+  deliveryFee?: number,
 ) => {
   const isFromOrder = data.salesSource === "order";
   const referenceLabel = isFromOrder ? "Order No" : "Sales No";
   const referenceValue = isFromOrder && orderNumber ? orderNumber : data.salesNo;
+  const deliveryFeeHTML =
+    isFromOrder && Number(deliveryFee) > 0
+      ? `
+        <tr>
+          <td style="font-size:14px;color:#6b7280;">Delivery Fee</td>
+          <td align="right" style="font-size:14px;color:#374151;">₱${Number(deliveryFee).toFixed(2)}</td>
+        </tr>
+      `
+      : "";
 
   const itemsHTML =
     data.saleItems
@@ -192,6 +253,7 @@ export const generateSalesEmailHTML = (
                     <td align="right" style="font-size:14px; color:#374151;">₱${Number(data.salesSubTotal).toFixed(2)}</td>
                   </tr>
                   ${salesDiscountsHTML}
+                  ${deliveryFeeHTML}
 
                   <tr>
                     <td style="font-size:16px; font-weight:bold; padding-top:12px;">

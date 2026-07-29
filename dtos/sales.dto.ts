@@ -39,6 +39,8 @@ export type CreateSaleDto = Pick<
     saleDiscounts?: CreateSalesDiscount[];
     // human-readable Order number, only set when salesSource === "order" - not persisted, just carried through for the receipt email
     orderNumber?: string;
+    // Order's delivery fee, only set when salesSource === "order" - not persisted, just carried through for the receipt email
+    deliveryFee?: number;
   };
 
 export interface DisplaySalesDto extends Sales {

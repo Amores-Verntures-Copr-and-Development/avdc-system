@@ -1,5 +1,6 @@
 import {
   CusEmailVerification,
+  CusPasswordReset,
   Customer,
   CustomerAccount,
   CustomerAccountStatus,
@@ -63,3 +64,28 @@ export type CustomerLoginDto = {
   password: string;
   storeId: number;
 };
+
+export type CreateCusPasswordResetDto = Pick<
+  CusPasswordReset,
+  "cusAccId" | "codeHash" | "expiresAt"
+>;
+
+export type RequestPasswordResetDto = {
+  email: string;
+};
+
+export type VerifyPasswordResetDto = {
+  email: string;
+  code: string;
+};
+
+export type ResetPasswordDto = {
+  email: string;
+  code: string;
+  newPassword: string;
+};
+
+export type UpdateCustomerProfileDto = Partial<
+  Pick<CustomerAccount, "firstName" | "middleName" | "lastName" | "company">
+> &
+  Partial<Pick<Customer, "customerPhone" | "customerAddress">>;

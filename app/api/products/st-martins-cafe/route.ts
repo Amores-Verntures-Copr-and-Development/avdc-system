@@ -10,6 +10,8 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") || "";
     const search = searchParams.get("search") || "";
     const unit = searchParams.get("unit") || "";
+    const sortBy = searchParams.get("sortBy") || "";
+    const order = searchParams.get("order") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
     const limitNumber = Number(limit) || 100;
@@ -19,6 +21,8 @@ export async function GET(req: NextRequest) {
       search,
       category,
       unit,
+      sortBy,
+      order,
       limit: limitNumber,
       offset: pageNumber,
       keyFields: {

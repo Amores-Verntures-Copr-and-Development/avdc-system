@@ -2,12 +2,14 @@
 
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
+import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import Input from "@/components/shared/Input";
 import Table, { Column } from "@/components/shared/Table";
 import Textarea from "@/components/shared/TextArea";
 import { CreateOrderDto, CreateOrderItemDto } from "@/dtos/orders.dto";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { Customer } from "@/types/customer";
 import { PaymentMethods } from "@/types/payment-methods";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
@@ -50,7 +52,7 @@ const CreateOrderModal = ({
   onSubmit,
 }: CreateOrderModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [customerId, setCustomerId] = useState<string>("");
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [fulfillmentType, setFulfillmentType] = useState<"PICKUP" | "DELIVERY">(
     "PICKUP",
   );
@@ -90,6 +92,16 @@ const CreateOrderModal = ({
     (sum, item) => sum + item.quantity * item.unitPrice,
     0,
   );
+
+  const searchCustomers = async (query: string): Promise<Customer[]> => {
+    const res = await fetch(
+      `/api/customers/store/${storeId}?search=${encodeURIComponent(query)}`,
+    );
+
+    const json = await res.json();
+
+    return json.data || [];
+  };
 
   const handleSelectVariant = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -155,7 +167,7 @@ const CreateOrderModal = ({
     setIsSubmitting(true);
     try {
       const data: Omit<CreateOrderDto, "storeId"> = {
-        customerId: customerId ? Number(customerId) : null,
+        customerId: customer?.customerId ?? null,
         fulfillmentType,
         deliveryAddress: fulfillmentType === "DELIVERY" ? deliveryAddress : null,
         payMetId: Number(payMetId),
@@ -181,13 +193,14 @@ const CreateOrderModal = ({
   return (
     <div className="flex flex-col gap-5">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Customer ID (optional)"
+        <DropdownSearch<Customer>
+          label="Customer (optional)"
           sizes="xs"
-          type="number"
-          value={customerId}
-          onChange={(e) => setCustomerId(e.target.value)}
-          disabled={isSubmitting}
+          placeholder="Search customer"
+          searchFn={searchCustomers}
+          onSelect={(row: Customer) => setCustomer(row ?? null)}
+          renderItem={(c: Customer) => <span>{c.customerName}</span>}
+          displayValue={(c: Customer) => c.customerName}
         />
 
         <DropdownSelect

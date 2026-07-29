@@ -74,6 +74,7 @@ export async function processCompleteOrder({
     salesRemarks: `Converted from Order ${order.orderNumber}`,
     salesSource: "order",
     orderNumber: order.orderNumber,
+    deliveryFee: order.deliveryFee,
     salesItems,
     salesPayments,
   };

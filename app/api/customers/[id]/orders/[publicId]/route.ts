@@ -13,10 +13,16 @@ export async function GET(
     const customerId = Number(id);
 
     if (!customerId) {
-      throw new Error("No customer found");
+      return NextResponse.json(
+        { success: false, message: "No customer found" },
+        { status: 400 },
+      );
     }
     if (!publicId) {
-      throw new Error("No order found");
+      return NextResponse.json(
+        { success: false, message: "No order found" },
+        { status: 400 },
+      );
     }
 
     const res = await getOrderController({

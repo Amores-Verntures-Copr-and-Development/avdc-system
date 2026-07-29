@@ -2,6 +2,7 @@ import {
   CreateCustomerDto,
   CustomerLoginDto,
   RegisterCustomerAccountDto,
+  UpdateCustomerProfileDto,
 } from "@/dtos/customer.dto";
 import {
   CustomerAccountService,
@@ -177,6 +178,91 @@ export const getCustomerMeController = async ({
     return {
       success: false,
       message: e instanceof Error ? e.message : "Failed to fetch customer!",
+      error: e,
+    };
+  }
+};
+
+export const updateCustomerProfileController = async ({
+  cusAccId,
+  customerId,
+  updateData,
+}: {
+  cusAccId: number;
+  customerId: number;
+  updateData: UpdateCustomerProfileDto;
+}) => {
+  try {
+    const { firstName, middleName, lastName, company, customerPhone, customerAddress } =
+      updateData;
+
+    const accountFields: Partial<{
+      firstName: string;
+      middleName: string | null;
+      lastName: string;
+      company: string | null;
+    }> = {};
+    if (firstName !== undefined) accountFields.firstName = firstName;
+    if (middleName !== undefined) accountFields.middleName = middleName;
+    if (lastName !== undefined) accountFields.lastName = lastName;
+    if (company !== undefined) accountFields.company = company;
+
+    if (Object.keys(accountFields).length > 0) {
+      await CustomerAccountService.update({
+        cusAccId,
+        updateData: accountFields,
+      });
+    }
+
+    const customerFields: Partial<Customer> = {};
+    if (customerPhone !== undefined) customerFields.customerPhone = customerPhone;
+    if (customerAddress !== undefined)
+      customerFields.customerAddress = customerAddress;
+    // Keep the derived display name in sync, same convention used at
+    // registration (customerName = first + last).
+    if (firstName !== undefined || lastName !== undefined) {
+      const accounts = await CustomerAccountService.get({
+        keyFields: { cusAccId },
+      });
+      const current = accounts[0];
+      const nextFirst = firstName ?? current?.firstName ?? "";
+      const nextLast = lastName ?? current?.lastName ?? "";
+      customerFields.customerName = `${nextFirst} ${nextLast}`.trim();
+    }
+
+    if (Object.keys(customerFields).length > 0) {
+      await customerServices.updateCustomerByFields({
+        keyFields: ["customerId"],
+        updateData: [{ customerId, ...customerFields }],
+      });
+    }
+
+    const accounts = await CustomerAccountService.get({
+      keyFields: { cusAccId },
+    });
+    const account = accounts[0];
+    if (!account) {
+      throw new Error("Customer account not found.");
+    }
+
+    const customers = await customerServices.findCustomerByFields({
+      keyFields: { customerId },
+    });
+
+    const { password, ...safeAccount } = account;
+
+    return {
+      success: true,
+      message: "Profile updated successfully!",
+      data: {
+        ...safeAccount,
+        customer: customers[0] ?? null,
+      },
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : "Failed to update profile!",
       error: e,
     };
   }

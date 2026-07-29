@@ -7,10 +7,12 @@ export const insertOrder = async ({
   connection,
   data,
   orderNumber,
+  orderPublicId,
 }: {
   connection?: PoolConnection;
   data: CreateOrderDto;
   orderNumber: string;
+  orderPublicId: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
 
@@ -19,6 +21,7 @@ export const insertOrder = async ({
       storeId,
       customerId,
       orderNumber,
+      orderPublicId,
       fulfillmentType,
       deliveryAddress,
       payMetId,
@@ -31,13 +34,14 @@ export const insertOrder = async ({
       discountAmount,
       deliveryFee,
       totalAmount
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
   `;
 
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.storeId,
     data.customerId ?? null,
     orderNumber,
+    orderPublicId,
     data.fulfillmentType,
     data.deliveryAddress ?? null,
     data.payMetId,

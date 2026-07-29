@@ -205,6 +205,7 @@ export async function processCreateSales(data: CreateSaleDto) {
     void sendEmailSalesBasePaymentMethods({
       salesId,
       orderNumber: data.orderNumber,
+      deliveryFee: data.deliveryFee,
     });
 
     return sales;

@@ -313,6 +313,8 @@ export const getProductVariantForOnlineController = async ({
   search,
   category,
   unit,
+  sortBy,
+  order,
   statusSold,
   from,
   to,
@@ -324,6 +326,8 @@ export const getProductVariantForOnlineController = async ({
   search?: string;
   category?: string;
   unit?: string;
+  sortBy?: string;
+  order?: string;
   statusSold?: "fast" | "slow";
   from?: string;
   to?: string;
@@ -337,6 +341,8 @@ export const getProductVariantForOnlineController = async ({
       search,
       category,
       unit,
+      sortBy,
+      order,
       statusSold,
       from,
       to,

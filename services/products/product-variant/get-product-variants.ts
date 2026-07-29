@@ -64,6 +64,8 @@ export async function getProductVariantForOnline({
   search,
   category,
   unit,
+  sortBy,
+  order,
   statusSold,
   from,
   to,
@@ -76,6 +78,8 @@ export async function getProductVariantForOnline({
   search?: string;
   category?: string;
   unit?: string;
+  sortBy?: string;
+  order?: string;
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
@@ -90,6 +94,8 @@ export async function getProductVariantForOnline({
       search,
       category,
       unit,
+      sortBy,
+      order,
       statusSold,
       from,
       to,

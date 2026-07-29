@@ -701,6 +701,8 @@ export const selectProductVariantForOnline = async ({
   search,
   category,
   unit,
+  sortBy,
+  order,
   limit,
   offset,
 }: {
@@ -709,6 +711,8 @@ export const selectProductVariantForOnline = async ({
   search?: string;
   category?: string;
   unit?: string;
+  sortBy?: string;
+  order?: string;
   statusSold?: "fast" | "slow" | null;
   from?: string;
   to?: string;
@@ -772,6 +776,18 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   if (statusSold) {
   }
   if (from && to) {
+  }
+
+  // Whitelisted to prevent SQL injection since sortBy/order come from query params.
+  const sortColumns: Record<string, string> = {
+    price: "pv.prodVarPriceOnline",
+  };
+  const sortColumn = sortColumns[sortBy?.trim().toLowerCase() ?? ""];
+  const sortOrder = order?.trim().toLowerCase() === "desc" ? "DESC" : "ASC";
+  // In-stock items always come first, regardless of the requested sort.
+  sql += ` ORDER BY (COALESCE(iis.inventoryItemQuantity, 0) > 0) DESC`;
+  if (sortColumn) {
+    sql += `, ${sortColumn} ${sortOrder}`;
   }
 
   if (limit) {

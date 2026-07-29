@@ -73,3 +73,19 @@ export interface CusEmailVerification {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface CusPasswordReset {
+  cusPassResetId: number;
+  cusAccId: number;
+
+  codeHash: string;
+
+  expiresAt: string;
+  verifiedAt: string | null;
+
+  attempts: number;
+  isUsed: boolean;
+
+  createdAt: string;
+  updatedAt: string;
+}
