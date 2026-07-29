@@ -75,6 +75,8 @@ export async function processCompleteOrder({
     salesSource: "order",
     orderNumber: order.orderNumber,
     deliveryFee: order.deliveryFee,
+    deliveryAddress: order.deliveryAddress,
+    customerPhone: order.customerPhone,
     salesItems,
     salesPayments,
   };

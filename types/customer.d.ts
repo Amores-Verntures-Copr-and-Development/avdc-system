@@ -46,6 +46,7 @@ export interface CustomerAddress {
   customerId: number;
 
   label: string;
+  phone: string | null;
   isDefault: boolean;
 
   street: string;

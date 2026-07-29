@@ -17,12 +17,16 @@ export async function sendEmailSalesBasePaymentMethods({
   salesId,
   orderNumber,
   deliveryFee,
+  deliveryAddress,
+  customerPhone,
   force = false,
 }: {
   connection?: PoolConnection;
   salesId: number;
   orderNumber?: string;
   deliveryFee?: number;
+  deliveryAddress?: string | null;
+  customerPhone?: string | null;
   // bypasses the payment method's `payMetIsEmail` gate - used for an
   // explicit "resend receipt" action, as opposed to the automatic
   // fire-and-forget send right after a sale is created.
@@ -92,6 +96,8 @@ export async function sendEmailSalesBasePaymentMethods({
         sales as DisplaySalesDto,
         orderNumber,
         deliveryFee,
+        deliveryAddress,
+        customerPhone,
       ),
     });
 

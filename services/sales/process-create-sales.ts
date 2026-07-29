@@ -206,6 +206,8 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesId,
       orderNumber: data.orderNumber,
       deliveryFee: data.deliveryFee,
+      deliveryAddress: data.deliveryAddress,
+      customerPhone: data.customerPhone,
     });
 
     return sales;

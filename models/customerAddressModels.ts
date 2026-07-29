@@ -9,6 +9,7 @@ import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 // default address per customer" true regardless of caller input
 const ALLOWED_UPDATE_FIELDS = [
   "label",
+  "phone",
   "isDefault",
   "street",
   "barangay",
@@ -33,12 +34,13 @@ export const insertCustomerAddress = async ({
   }
 
   const sql = `
-    INSERT INTO CustomerAddresses (customerId, label, isDefault, street, barangay, city, province)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO CustomerAddresses (customerId, label, phone, isDefault, street, barangay, city, province)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.customerId,
     data.label,
+    data.phone ?? null,
     data.isDefault ? 1 : 0,
     data.street,
     data.barangay,

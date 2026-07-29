@@ -41,6 +41,9 @@ export type CreateSaleDto = Pick<
     orderNumber?: string;
     // Order's delivery fee, only set when salesSource === "order" - not persisted, just carried through for the receipt email
     deliveryFee?: number;
+    // Order's delivery address/customer phone, only set when salesSource === "order" - not persisted, just carried through for the receipt email
+    deliveryAddress?: string | null;
+    customerPhone?: string | null;
   };
 
 export interface DisplaySalesDto extends Sales {

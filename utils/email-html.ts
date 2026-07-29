@@ -107,6 +107,8 @@ export const generateSalesEmailHTML = (
   data: DisplaySalesDto,
   orderNumber?: string,
   deliveryFee?: number,
+  deliveryAddress?: string | null,
+  customerPhone?: string | null,
 ) => {
   const isFromOrder = data.salesSource === "order";
   const referenceLabel = isFromOrder ? "Order No" : "Sales No";
@@ -118,6 +120,24 @@ export const generateSalesEmailHTML = (
           <td style="font-size:14px;color:#6b7280;">Delivery Fee</td>
           <td align="right" style="font-size:14px;color:#374151;">₱${Number(deliveryFee).toFixed(2)}</td>
         </tr>
+      `
+      : "";
+  const phoneRowHTML =
+    isFromOrder && customerPhone
+      ? `
+                  <tr>
+                    <td style="color:#6b7280; font-size:13px; padding-top:8px;">Phone</td>
+                    <td align="right" style="color:#1f2937; font-size:13px; font-weight:bold; padding-top:8px;">${customerPhone}</td>
+                  </tr>
+      `
+      : "";
+  const addressRowHTML =
+    isFromOrder && deliveryAddress
+      ? `
+                  <tr>
+                    <td style="color:#6b7280; font-size:13px; padding-top:8px;">Address</td>
+                    <td align="right" style="color:#1f2937; font-size:13px; font-weight:bold; padding-top:8px;">${deliveryAddress}</td>
+                  </tr>
       `
       : "";
 
@@ -232,6 +252,8 @@ export const generateSalesEmailHTML = (
                       ${formatDateToWords(data.salesCreatedAt, { showHour: true, showMinute: true })}
                     </td>
                   </tr>
+                  ${phoneRowHTML}
+                  ${addressRowHTML}
                 </table>
 
                 <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
