@@ -31,6 +31,10 @@ export async function POST(
       Number(prodVarId),
       file[0],
     );
+    console.log({ imageUpload });
+    if (!imageUpload.success) {
+      throw new Error(imageUpload.message || "Failed to upload image!");
+    }
 
     const res = await updateProductVariantController({
       prodVarId: Number(prodVarId),

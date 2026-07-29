@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
     const limitNumber = Number(limit) || 100;
-    const pageNumber = Number(page) || 0;
+    const pageNumber = Number(page) || 1;
     const data = await getProductVariantForOnlineController({
       storeId: 11,
       search,
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
       sortBy,
       order,
       limit: limitNumber,
-      offset: pageNumber,
+      offset: limitNumber * (pageNumber - 1),
       keyFields: {
         isAvailableOnline: true,
       },

@@ -26,12 +26,13 @@ export const NextCloudServices = {
       }
 
       return {
+        success: true as const,
         fileName: safeFileName,
         url: nextCloudUrl,
       };
     } catch (e) {
       return {
-        success: false,
+        success: false as const,
         message: "Failed to upload files",
         error: e,
       };
