@@ -32,6 +32,7 @@ import { useStores } from "@/hooks/userStore";
 import { useDebounce } from "@/hooks/useDebounce";
 
 import SalesReportModal from "./components/SalesReportModal";
+import SalesByProductVariantTab from "./components/SalesByProductVariantTab";
 import { FilterConfig, FilterOption } from "@/components/shared/FilterDropDown";
 import { PaymentMethods } from "@/types/payment-methods";
 import SalesStatusBadge from "./components/SalesStatusBadge";
@@ -47,6 +48,7 @@ interface SalesPageProps {
 }
 
 const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
+  const [salesView, setSalesView] = useState<"sales" | "by-variant">("sales");
   const [showSalesBreakdown, setShowSalesBreakdown] = useState<
     "totalSales" | "todaysSales" | null
   >(null);
@@ -690,65 +692,86 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     <PageLayout className="p-2 gap-1 2xl:gap-2">
       <>
         <div className="flex justify-between">
-            {" "}
-            <PageHeader title={"Sales"} subtitle="Manage sales" />{" "}
-            <div className="">
-              <Button
-                label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
-                size="sm"
-                icon={Eye}
-                onClick={() => setShowBreakdown((prev) => !prev)}
-              />
-            </div>
+          {" "}
+          <PageHeader title={"Sales"} subtitle="Manage sales" />{" "}
+          <div className="">
+            <Button
+              label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
+              size="sm"
+              icon={Eye}
+              onClick={() => setShowBreakdown((prev) => !prev)}
+            />
           </div>
+        </div>
 
-          <div className="flex flex-1 flex-col min-h-0 gap-2">
-            {showBreakdown && (
-              <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
-                <SalesCard
-                  icon={PhilippinePeso}
-                  title="Total Sales"
-                  value={formatPeso(totalSales)}
-                >
-                  <PaymentBreakdown
-                    data={totalSalesPaymentMethods}
-                    total={totalSales}
-                  />
-                </SalesCard>
-
-                <SalesCard
-                  icon={CalendarCheck}
-                  title="Total Orders"
-                  value={totalCountSales}
-                  bgColor="bg-emerald-50"
-                  textColor="text-emerald-600"
-                  subtitle="All time orders"
+        <div className="flex flex-1 flex-col min-h-0 gap-2">
+          {showBreakdown && (
+            <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
+              <SalesCard
+                icon={PhilippinePeso}
+                title="Total Sales"
+                value={formatPeso(totalSales)}
+              >
+                <PaymentBreakdown
+                  data={totalSalesPaymentMethods}
+                  total={totalSales}
                 />
+              </SalesCard>
 
-                <SalesCard
-                  icon={Users}
-                  title="Total Customer"
-                  value={totalCustomer}
-                  bgColor="bg-amber-50"
-                  textColor="text-amber-600"
-                  subtitle="Unique customers"
+              <SalesCard
+                icon={CalendarCheck}
+                title="Total Orders"
+                value={totalCountSales}
+                bgColor="bg-emerald-50"
+                textColor="text-emerald-600"
+                subtitle="All time orders"
+              />
+
+              <SalesCard
+                icon={Users}
+                title="Total Customer"
+                value={totalCustomer}
+                bgColor="bg-amber-50"
+                textColor="text-amber-600"
+                subtitle="Unique customers"
+              />
+
+              <SalesCard
+                icon={Calendar}
+                title="Today's Sales"
+                value={formatPeso(todaySales)}
+                bgColor="bg-blue-50"
+                textColor="text-blue-600"
+              >
+                <PaymentBreakdown
+                  data={todaysSalesPaymentMethods}
+                  total={todaySales}
                 />
-
-                <SalesCard
-                  icon={Calendar}
-                  title="Today's Sales"
-                  value={formatPeso(todaySales)}
-                  bgColor="bg-blue-50"
-                  textColor="text-blue-600"
-                >
-                  <PaymentBreakdown
-                    data={todaysSalesPaymentMethods}
-                    total={todaySales}
-                  />
-                </SalesCard>
-              </div>
-            )}
-            <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+              </SalesCard>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <Button
+              label="Sales"
+              size="sm"
+              isRounded={false}
+              color={salesView === "sales" ? "primary" : "neutral"}
+              hasBorder
+              onClick={() => setSalesView("sales")}
+            />
+            <Button
+              label="By Product Variant"
+              size="sm"
+              isRounded={false}
+              color={salesView === "by-variant" ? "primary" : "neutral"}
+              hasBorder
+              onClick={() => setSalesView("by-variant")}
+            />
+          </div>
+          <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+            {salesView === "by-variant" ? (
+              <SalesByProductVariantTab storeId={storeId} user={user} />
+            ) : (
               <Table
                 onDateRangeChange={handleDateRangeChange}
                 loading={isLoading}
@@ -838,9 +861,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   )
                 }
               />
-            </div>
+            )}
           </div>
-        </>
+        </div>
+      </>
       <Modal
         title={
           showModal === "report"

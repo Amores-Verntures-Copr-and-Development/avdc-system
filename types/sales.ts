@@ -146,3 +146,13 @@ export interface SalesV2 {
 }
 
 export type SalesResponseV2 = SalesV2[];
+
+export interface SalesByProductVariant {
+  prodVarId: number;
+  prodVarName: string;
+  prodId: number;
+  prodName: string;
+  totalQtySold: number;
+  totalSales: number;
+  totalTransactions: number;
+}

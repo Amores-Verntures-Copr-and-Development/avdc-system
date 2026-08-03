@@ -1083,3 +1083,128 @@ export const selectSalesByTrend = async ({
 
   return rows;
 };
+
+export const selectSalesByProductVariant = async ({
+  storeId,
+  storeName,
+  search,
+  from,
+  to,
+  limit,
+  offset,
+}: {
+  storeId?: number;
+  storeName?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [];
+
+  let sql = `
+    SELECT
+      pv.prodVarId,
+      pv.prodVarName,
+      p.prodId,
+      p.prodName,
+      SUM(si.salesItemQuantity) AS totalQtySold,
+      SUM(si.salesItemSubtotal) AS totalSales,
+      COUNT(DISTINCT si.salesId) AS totalTransactions
+    FROM SalesItems si
+    INNER JOIN Sales s ON s.salesId = si.salesId
+    LEFT JOIN Stores st ON st.storeId = s.storeId
+    LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+    LEFT JOIN Products p ON p.prodId = pv.prodId
+    WHERE 1=1
+  `;
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (search) {
+    sql += ` AND (p.prodName LIKE ? OR pv.prodVarName LIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  sql += ` GROUP BY pv.prodVarId, pv.prodVarName, p.prodId, p.prodName`;
+  sql += ` ORDER BY totalQtySold DESC`;
+
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const countSalesByProductVariant = async ({
+  storeId,
+  storeName,
+  search,
+  from,
+  to,
+}: {
+  storeId?: number;
+  storeName?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [];
+
+  let sql = `
+    SELECT COUNT(*) AS count FROM (
+      SELECT pv.prodVarId
+      FROM SalesItems si
+      INNER JOIN Sales s ON s.salesId = si.salesId
+      LEFT JOIN Stores st ON st.storeId = s.storeId
+      LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+      LEFT JOIN Products p ON p.prodId = pv.prodId
+      WHERE 1=1
+  `;
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (search) {
+    sql += ` AND (p.prodName LIKE ? OR pv.prodVarName LIKE ?)`;
+    params.push(`%${search}%`, `%${search}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  sql += ` GROUP BY pv.prodVarId
+    ) t`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as { count: number }[];
+};

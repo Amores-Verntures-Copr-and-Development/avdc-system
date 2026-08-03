@@ -1,7 +1,9 @@
 import {
   countSales,
+  countSalesByProductVariant,
   selectDailyStoreSales,
   selectSales,
+  selectSalesByProductVariant,
   selectSalesByTrend,
   selectSalesTotalDetails,
 } from "@/models/saleModel";
@@ -170,5 +172,55 @@ export const getSalesServices = {
     to?: string;
   }) => {
     return await selectSalesByTrend({ trend, from, to });
+  },
+
+  getSalesByProductVariant: async ({
+    storeId,
+    storeName,
+    search,
+    from,
+    to,
+    limit,
+    offset,
+  }: {
+    storeId?: number;
+    storeName?: string;
+    search?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    return await selectSalesByProductVariant({
+      storeId,
+      storeName,
+      search,
+      from,
+      to,
+      limit,
+      offset,
+    });
+  },
+
+  getSalesByProductVariantCount: async ({
+    storeId,
+    storeName,
+    search,
+    from,
+    to,
+  }: {
+    storeId?: number;
+    storeName?: string;
+    search?: string;
+    from?: string;
+    to?: string;
+  }) => {
+    return await countSalesByProductVariant({
+      storeId,
+      storeName,
+      search,
+      from,
+      to,
+    });
   },
 };

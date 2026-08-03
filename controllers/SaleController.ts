@@ -326,3 +326,53 @@ export const getTotalSalesDetails = async ({
     };
   }
 };
+
+export const getSalesByProductVariant = async ({
+  storeId,
+  storeName,
+  search,
+  from,
+  to,
+  limit,
+  offset,
+}: {
+  storeId?: number;
+  storeName?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  try {
+    const data = await getSalesServices.getSalesByProductVariant({
+      storeId,
+      storeName,
+      search,
+      from,
+      to,
+      limit,
+      offset,
+    });
+    const count = await getSalesServices.getSalesByProductVariantCount({
+      storeId,
+      storeName,
+      search,
+      from,
+      to,
+    });
+
+    return {
+      success: true,
+      message: "Sales by product variant fetched successfully!",
+      data: data ?? null,
+      count: count[0]?.count ?? 0,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch sales by product variant!",
+      error: e,
+    };
+  }
+};
