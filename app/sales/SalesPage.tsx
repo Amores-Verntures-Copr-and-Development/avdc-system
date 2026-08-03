@@ -756,7 +756,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 filterConfig={salesFilterConfig}
                 showFilter
                 onRowSelection={(row) => {
-                  router.push(`/sales/${row.storeId}/${row.salesNo}`);
+                  router.push(`/sales/${row.salesId}`);
                 }}
                 onSave={handleSave}
                 renderTopActions={
@@ -796,7 +796,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   <div className="flex justify-center">
                     <IconButton
                       onClick={function (): void {
-                        router.push(`/sales/${row.storeId}/${row.salesNo}`);
+                        router.push(`/sales/${row.salesId}`);
                       }}
                       label={"View"}
                       bg={"gray"}

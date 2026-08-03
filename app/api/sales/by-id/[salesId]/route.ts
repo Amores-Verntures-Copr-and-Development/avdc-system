@@ -3,22 +3,18 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ storeId: string; salesNo: string }> },
+  { params }: { params: Promise<{ salesId: string }> },
 ) {
   try {
-    const { storeId: storeIdSlug, salesNo } = await params;
-    const storeId = Number(storeIdSlug);
+    const { salesId: salesIdSlug } = await params;
+    const salesId = Number(salesIdSlug);
 
-    if (!storeId) {
-      throw new Error("No store found");
-    }
-    if (!salesNo) {
-      throw new Error("No sales number found");
+    if (!salesId) {
+      throw new Error("No sales id found");
     }
 
     const res = await getSales({
-      keyFields: { salesNo },
-      storeId,
+      keyFields: { salesId },
       includeSaleItems: true,
     });
 

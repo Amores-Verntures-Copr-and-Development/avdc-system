@@ -7,20 +7,19 @@ import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { useParams, useRouter } from "next/navigation";
 import useSWR from "swr";
-import SelectedSalesPage from "../../SelectedSalesPage";
+import SelectedSalesPage from "../SelectedSalesPage";
 
 const Page = () => {
   const params = useParams();
   const router = useRouter();
-  const storeId = params.storeId as string;
-  const salesNo = params.salesNo as string;
+  const salesId = params.salesId as string;
 
   const {
     data: response,
     mutate,
     isLoading,
   } = useSWR<ApiResponse<DisplaySalesDto>>(
-    storeId && salesNo ? `/api/sales/${storeId}/by-no/${salesNo}` : null,
+    salesId ? `/api/sales/by-id/${salesId}` : null,
     fetcher,
   );
 
