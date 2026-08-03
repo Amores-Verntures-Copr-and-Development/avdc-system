@@ -17,6 +17,9 @@ export interface SalesItemRefund {
   salesItemId: number; // links to SalesItem
   salesRefItemQty: number;
   salesRefItemPrice: number;
+  // how many of the refunded units are physically returned to inventory -
+  // may be less than salesRefItemQty (e.g. damaged/defective items aren't restocked)
+  restockQty: number;
 }
 
 export interface SalesPaymentRefund {

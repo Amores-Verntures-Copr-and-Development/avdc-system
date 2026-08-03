@@ -29,6 +29,7 @@ import {
   Factory,
   LucideIcon,
   ListOrdered,
+  Ticket,
 } from "lucide-react";
 import Button from "../shared/Button";
 import Modal from "../shared/Modal";
@@ -177,6 +178,19 @@ const sideMenu: SideMenuGroup[] = [
           "owner",
         ],
       },
+      {
+        name: "Vouchers",
+        href: "/vouchers",
+        icon: Ticket,
+        roles: [
+          "superadmin",
+          "admin",
+          "supervisor",
+          "accounting",
+          "staff",
+          "owner",
+        ],
+      },
     ],
   },
   {
@@ -308,9 +322,7 @@ const Sidebar = () => {
     fetcher,
   );
   const { data: storeEmployeeRes } = useSWR<{ data: { storeId: number }[] }>(
-    user?.userId
-      ? `/api/stores/userId/${user.userId}/store-employee`
-      : null,
+    user?.userId ? `/api/stores/userId/${user.userId}/store-employee` : null,
     fetcher,
   );
 
@@ -372,9 +384,7 @@ const Sidebar = () => {
       sections: group.sections.filter((s) => {
         const roleMatch = !s.roles
           ? true
-          : s.roles.includes(
-              user?.userRole !== "employee" ? role : position,
-            );
+          : s.roles.includes(user?.userRole !== "employee" ? role : position);
 
         const assignmentMatch = s.alsoShowIf
           ? assignmentFlags[s.alsoShowIf]
@@ -507,7 +517,7 @@ const Sidebar = () => {
                         />
 
                         {!isCollapsed && (
-                          <span className="truncate">{name}</span>
+                          <span className="truncate text-xs">{name}</span>
                         )}
                       </Link>
                     );

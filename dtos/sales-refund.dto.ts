@@ -20,7 +20,8 @@ export type CreateSalesRefundDto = Pick<
 export type CreateSaleItemRefundDto = Pick<
   SalesItemRefund,
   "salesItemId" | "salesRefItemPrice" | "salesRefItemQty" | "salesRefId"
->;
+> &
+  Partial<Pick<SalesItemRefund, "restockQty">>;
 
 export type CreateSalePaymentRefundDto = Pick<
   SalesPaymentRefund,

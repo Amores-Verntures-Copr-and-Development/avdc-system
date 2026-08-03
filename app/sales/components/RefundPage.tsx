@@ -14,6 +14,7 @@ import {
 import { useSession } from "@/hooks/useSession";
 import { PaymentMethods } from "@/types/payment-methods";
 import toast from "react-hot-toast";
+import { PackageCheck } from "lucide-react";
 
 interface RefundPageProps {
   salesData: DisplaySalesDto | null;
@@ -29,6 +30,8 @@ interface RefundItem extends CreateSaleItemRefundDto {
   salesItemTotal: number;
   selectedQty: number;
   selected: boolean;
+  // whether this variant can be restocked at all - direct inventory link or composite (has components)
+  canRestock: boolean;
 }
 
 interface RefundPaymentItem
@@ -114,6 +117,12 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
               (sum, i) => sum + Number(i.salesRefItemQty),
               0,
             ) ?? 0),
+          restockQty: 0,
+          canRestock: Boolean(
+            item.inventoryItemId ||
+              (item.variantComponents?.filter((c) => c !== null).length ?? 0) >
+                0,
+          ),
         })),
       );
     }
@@ -132,12 +141,25 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
 
   const updateQty = (id: string | number, qty: number) => {
     setRefundItems((prev) =>
+      prev.map((i) => {
+        if (i.salesItemId !== id) return i;
+
+        const selectedQty = Math.max(1, Math.min(qty, i.salesItemQuantity));
+
+        return {
+          ...i,
+          selectedQty,
+          restockQty: Math.min(Number(i.restockQty) || 0, selectedQty),
+        };
+      }),
+    );
+  };
+
+  const updateRestockQty = (id: string | number, qty: number) => {
+    setRefundItems((prev) =>
       prev.map((i) =>
         i.salesItemId === id
-          ? {
-              ...i,
-              selectedQty: Math.max(1, Math.min(qty, i.salesItemQuantity)),
-            }
+          ? { ...i, restockQty: Math.max(0, Math.min(qty, i.selectedQty)) }
           : i,
       ),
     );
@@ -187,6 +209,7 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
         salesRefId: 0,
         salesRefItemPrice: i.salesItemPrice,
         salesRefItemQty: i.selectedQty,
+        restockQty: i.canRestock ? Number(i.restockQty) || 0 : 0,
       }));
     const salesPaymentRefundData: CreateSalePaymentRefundDto[] =
       refundPayments.map((rp) => ({
@@ -395,6 +418,13 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
                   <p className="text-xs text-gray-500">
                     {formatPeso(item.salesItemPrice)} × {item.selectedQty}
                   </p>
+                  {item.canRestock && (
+                    <p className="text-xs text-green-700 mt-0.5">
+                      {Number(item.restockQty) > 0
+                        ? `${item.restockQty} of ${item.selectedQty} returned to inventory`
+                        : "Not returned to inventory"}
+                    </p>
+                  )}
                 </div>
                 <span className="text-sm font-semibold text-gray-800">
                   {formatPeso(item.salesItemPrice * item.selectedQty)}
@@ -812,8 +842,9 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
             {refundItems.map((item) => (
               <div
                 key={String(item.salesItemId)}
-                className={`flex items-center gap-4 px-5 py-4 transition-colors ${item.selected ? "bg-blue-50" : "hover:bg-gray-50"}`}
+                className={`flex flex-col gap-2 px-5 py-4 transition-colors ${item.selected ? "bg-blue-50" : "hover:bg-gray-50"}`}
               >
+              <div className="flex items-center gap-4">
                 <button
                   disabled={item.salesItemQuantity === 0}
                   onClick={() => toggleItem(item.salesItemId)}
@@ -889,6 +920,73 @@ const RefundPage = ({ salesData, onBack, mutateSales }: RefundPageProps) => {
                         : item.salesItemQuantity),
                   )}
                 </span>
+              </div>
+
+              {/* Return to inventory - only for variants that are actually stock-tracked */}
+              {item.selected && item.canRestock && (
+                <div
+                  className={`ml-9 flex items-center justify-between gap-3 rounded-lg border px-3 py-2 transition-colors ${
+                    Number(item.restockQty) > 0
+                      ? "border-green-200 bg-green-50"
+                      : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <PackageCheck
+                      className={`h-4 w-4 flex-shrink-0 ${
+                        Number(item.restockQty) > 0
+                          ? "text-green-600"
+                          : "text-amber-600"
+                      }`}
+                    />
+                    <div className="min-w-0">
+                      <p
+                        className={`text-xs font-semibold ${
+                          Number(item.restockQty) > 0
+                            ? "text-green-800"
+                            : "text-amber-800"
+                        }`}
+                      >
+                        Return to Inventory
+                      </p>
+                      <p className="text-[11px] text-gray-500 truncate">
+                        {Number(item.restockQty) > 0
+                          ? `${item.restockQty} of ${item.selectedQty} unit${item.selectedQty !== 1 ? "s" : ""} will be restocked`
+                          : "Not restocked - set a quantity if this item is sellable"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() =>
+                        updateRestockQty(
+                          item.salesItemId,
+                          Number(item.restockQty) - 1,
+                        )
+                      }
+                      disabled={Number(item.restockQty) <= 0}
+                      className="w-6 h-6 rounded-full border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm leading-none"
+                    >
+                      −
+                    </button>
+                    <span className="w-6 text-center text-xs font-semibold">
+                      {item.restockQty}
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateRestockQty(
+                          item.salesItemId,
+                          Number(item.restockQty) + 1,
+                        )
+                      }
+                      disabled={Number(item.restockQty) >= item.selectedQty}
+                      className="w-6 h-6 rounded-full border border-gray-300 bg-white text-gray-600 hover:bg-gray-100 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-sm leading-none"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
               </div>
             ))}
           </div>

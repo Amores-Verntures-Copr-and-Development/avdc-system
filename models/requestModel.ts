@@ -300,7 +300,7 @@ COALESCE((
     AND its.inventoryReference = 'stock-room'
   INNER JOIN StockStores ss
     ON ss.stockRoomId = sr.stockRoomId
-  WHERE iis.inventoryItemReferenceId = i.itemId
+  WHERE iis.inventoryItemReferenceId = i.itemId AND iis.inventoryItemDeletedAt IS NULL
     AND EXISTS (
       SELECT 1
       FROM RequestOrders selected_ro

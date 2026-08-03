@@ -38,14 +38,15 @@ export const insertSalesItemRefunds = async ({
   }
 
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO SalesItemRefunds(salesRefId,salesItemId,salesRefItemQty,salesRefItemPrice) 
-               VALUES ${data.map(() => "(?,?,?,?)").join(", ")}`;
+  const sql = `INSERT INTO SalesItemRefunds(salesRefId,salesItemId,salesRefItemQty,salesRefItemPrice,restockQty)
+               VALUES ${data.map(() => "(?,?,?,?,?)").join(", ")}`;
 
   const values = data.flatMap((item) => [
     item.salesRefId,
     item.salesItemId,
     item.salesRefItemQty,
     item.salesRefItemPrice,
+    item.restockQty ?? 0,
   ]);
 
   const [result] = await pool.execute<ResultSetHeader>(sql, values);

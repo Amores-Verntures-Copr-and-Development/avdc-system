@@ -5,7 +5,7 @@ import Modal from "@/components/shared/Modal";
 import Table, { Column } from "@/components/shared/Table";
 import { DisplaProductVariantsDtos } from "@/dtos/products.dto";
 import { formatPeso } from "@/utils/formatPeso";
-import { Barcode, Eye, Plus, Trash } from "lucide-react";
+import { Barcode, Eye, ImageIcon, Plus, Trash } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -93,9 +93,7 @@ const prodVarcolumns: Column<DisplaProductVariantsDtos>[] = [
     selector: (row) => {
       const label = Number(row.isAvailableOnline) === 1 ? "Yes" : "No";
       const textColor =
-        Number(row.isAvailableOnline) === 1
-          ? "text-green-600"
-          : "text-red-600";
+        Number(row.isAvailableOnline) === 1 ? "text-green-600" : "text-red-600";
       return (
         <div className="">
           <span
@@ -285,20 +283,116 @@ const ProductVariantTable = ({
           </div>
         )}
         maxHeight="h-full"
-        renderTopActions={
-          <div className="flex items-center">
-            <div>
-              <Button
-                size="sm"
-                label="Add Variants"
-                icon={Plus}
-                onClick={() => {
-                  // setShowAddModal(true);
-                }}
-              />
+        renderTopActionButtons={[
+          {
+            props: {
+              label: "Add Variants",
+              icon: Plus,
+              size: "sm",
+              className: "font-semibold",
+              color: "primary",
+            },
+          },
+        ]}
+        renderMobileCard={(row, index) => {
+          const imageUrl = row.prodVarImage
+            ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${row.prodVarImage}`
+            : "";
+
+          return (
+            <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+              <div className="flex items-start justify-between">
+                <span className="rounded-full bg-pink-50 px-2 py-1 text-[11px] font-semibold text-primary-1">
+                  #{index + 1}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 2xl:gap-3">
+                <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={row.prodVarName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-gray-300" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="2xl:truncate text-[10px] 2xl:text-sm font-semibold text-gray-900">
+                    {row.prodVarName}
+                  </p>
+                  <p className="2xl:truncate text-xs text-gray-500">
+                    {row.prodName}
+                  </p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-semibold text-primary-1">
+                      {row.prodVarUnit || "pc"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-gray-500">
+                Barcode: {row.barcode || "No Barcode"}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 border-t border-gray-100 pt-2 text-xs">
+                <div>
+                  <p className="text-[10px] text-gray-400">Price</p>
+                  <p className="font-semibold text-gray-900">
+                    {formatPeso(row.prodVarPrice)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Stock</p>
+                  <p className="font-semibold text-green-600">
+                    {row.inventoryItemQuantity || 0}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Sold</p>
+                  <p className="font-semibold text-red-600">{row.sold || 0}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-gray-400">Sales</p>
+                  <p className="font-semibold text-gray-900">
+                    {row.totalSales
+                      ? formatPeso(row.totalSales)
+                      : formatPeso(0)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 border-t border-gray-100 pt-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(`/products/${row.prodId}/${row.prodVarId}`)
+                  }
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBarcode(row)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 text-blue-600 hover:bg-blue-50"
+                >
+                  <Barcode className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteComfirmation(row)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                >
+                  <Trash className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          </div>
-        }
+          );
+        }}
       />
       <ConfirmationModal
         title={`Delete ${showDeleteConfirmation?.prodVarName}`}

@@ -11,13 +11,18 @@ import React, { useState } from "react";
 import AssignComponentModal from "./AssignComponentModal";
 import IconButton from "@/components/shared/IconButton";
 import {
+  Calendar,
   Camera,
+  CheckCircle2,
+  Globe,
   ImageIcon,
   Link2,
   Pencil,
   Plus,
   RefreshCw,
+  Ruler,
   Save,
+  Tag,
   Trash,
   TrendingUp,
   Upload,
@@ -48,7 +53,6 @@ interface VariantComponentPageProps {
   prod: DisplayProductsDtos | null;
   storeId: number;
   mutate: () => void;
-  onClose: () => void;
 }
 
 const VariantComponentPage = ({
@@ -57,7 +61,6 @@ const VariantComponentPage = ({
   setShowAddComponent: setShowComponent,
   prod,
   mutate,
-  onClose,
   storeId,
 }: VariantComponentPageProps) => {
   const { user, hasStore } = useSession();
@@ -203,7 +206,6 @@ const VariantComponentPage = ({
       setIsChangeInventoryItemOpen(false);
       setShowComponent(false);
       mutate();
-      onClose();
     } catch (e: any) {
       toast.error(e.message || "Failed to save variant");
     } finally {
@@ -319,7 +321,7 @@ const VariantComponentPage = ({
   return (
     <div className="min-h-0 flex-1 grid grid-cols-1 lg:grid-cols-2 items-start content-start auto-rows-min gap-3 overflow-y-auto">
       <BigCard
-        title="Variant Details"
+        title={`Variant Details${data?.prodVarId ? ` #${data.prodVarId}` : ""}`}
         isRounded={false}
         leftTitle={
           !isEdit ? (
@@ -362,20 +364,22 @@ const VariantComponentPage = ({
           {" "}
           {!isEdit ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                <DetailCard label="ID" value={data?.prodVarId} icon="#" />
-                <DetailCard label="Name" value={data?.prodVarName} icon="▣" />
+              <div className="grid grid-cols-2 gap-2">
+                <DetailCard
+                  label="Name"
+                  value={data?.prodVarName}
+                  icon={<Tag className="h-3.5 w-3.5" />}
+                />
                 <DetailCard
                   label="Unit"
                   value={data?.prodVarUnit || "-"}
-                  icon="□"
+                  icon={<Ruler className="h-3.5 w-3.5" />}
                 />
                 <DetailCard
                   label="Price"
                   value={`₱${Number(data?.prodVarPrice ?? 0).toLocaleString()}`}
-                  icon="₱"
+                  icon={<Tag className="h-3.5 w-3.5" />}
                 />
-
                 <DetailCard
                   label="Online Price"
                   value={
@@ -383,34 +387,30 @@ const VariantComponentPage = ({
                       ? `₱${Number(data.prodVarPriceOnline).toLocaleString()}`
                       : "-"
                   }
-                  icon="🌐"
+                  icon={<Globe className="h-3.5 w-3.5" />}
                 />
-
                 <DetailCard
                   label="Is Deduct"
                   value={Boolean(data?.isDeductInv) ? "Yes" : "No"}
-                  icon="✓"
+                  icon={<CheckCircle2 className="h-3.5 w-3.5" />}
                   badge={Boolean(data?.isDeductInv)}
                 />
-
                 <DetailCard
                   label="Is Available Online"
                   value={Boolean(data?.isAvailableOnline) ? "Yes" : "No"}
-                  icon="🌐"
+                  icon={<Globe className="h-3.5 w-3.5" />}
                   badge={Boolean(data?.isAvailableOnline)}
                 />
-
-                <DetailCard
-                  label="Updated At"
-                  value={formatDateToWords(data?.prodVarUpdatedAt || "")}
-                  icon="📅"
-                />
-
-                <DetailCard
-                  label="Created At"
-                  value={formatDateToWords(data?.prodVarCreatedAt || "")}
-                  icon="📅"
-                />
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-gray-400">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  Created {formatDateToWords(data?.prodVarCreatedAt || "")}
+                </span>
+                <span>·</span>
+                <span>
+                  Updated {formatDateToWords(data?.prodVarUpdatedAt || "")}
+                </span>
               </div>
               {data?.inventoryItemId && (
                 <div className="rounded-lg border border-pink-200 bg-pink-50/60 p-2">
@@ -511,7 +511,7 @@ const VariantComponentPage = ({
 
               {form.isAvailableOnline && (
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-1">
                     <Input
                       label={"Online Price"}
                       sizes={"xs"}
@@ -519,6 +519,27 @@ const VariantComponentPage = ({
                       onChange={handleFormChange}
                       name="prodVarPriceOnline"
                     />
+                    {Number(form.prodVarPrice) > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setForm((prev) => ({
+                            ...prev,
+                            prodVarPriceOnline:
+                              Math.round(Number(prev.prodVarPrice) * 1.1 * 100) /
+                              100,
+                          }))
+                        }
+                        className="self-start text-[11px] font-medium text-pink-600 hover:underline"
+                      >
+                        Suggest +10% (₱
+                        {(Number(form.prodVarPrice) * 1.1).toLocaleString(
+                          undefined,
+                          { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                        )}
+                        )
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -666,20 +687,22 @@ const VariantComponentPage = ({
               </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 p-2">
+            <div className="flex items-center justify-between rounded-lg border border-dashed border-gray-300 p-4">
               <span className="text-xs text-gray-500">
                 No inventory item linked.
               </span>
 
-              <Button
-                size="xs"
-                icon={Link2}
-                onClick={() => {
-                  setIsChangeInventoryItemOpen(true);
-                  setShowComponent(true);
-                }}
-                label="Link Item"
-              ></Button>
+              <div>
+                <Button
+                  size="xs"
+                  icon={Link2}
+                  onClick={() => {
+                    setIsChangeInventoryItemOpen(true);
+                    setShowComponent(true);
+                  }}
+                  label="Link Item"
+                ></Button>
+              </div>
             </div>
           )}
         </div>

@@ -22,7 +22,6 @@ import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import SalesCard from "./components/SalesCard";
 
-import SelectedSalesPage from "./SelectedSalesPage";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -534,13 +533,9 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     [response?.data],
   );
   const router = useRouter();
-  const [seletectedSales, setSelectedSales] = useState<DisplaySalesDto | null>(
-    null,
-  );
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
   const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
-  const [isViewSales, setIsViewSales] = useState(false);
   const { stores } = useStores({
     user,
     hasStore,
@@ -598,17 +593,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     fetcher,
   );
 
-  const updateDataSelected = async () => {
-    console.log("Run");
-    const data = await mutateSales();
-    const findSales = data?.data.find(
-      (s) => s.salesId === seletectedSales?.salesId,
-    );
-    if (findSales) {
-      console.log({ findSales });
-      setSelectedSales(findSales);
-    }
-  };
   const handleDateRangeChange = useCallback(
     (rangeData: { from?: string; to?: string }) => {
       const { from, to } = rangeData;
@@ -704,22 +688,8 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
   return (
     <PageLayout className="p-2 gap-1 2xl:gap-2">
-      {isViewSales && seletectedSales ? (
-        <>
-          <div className="flex-1 overflow-y-auto">
-            <SelectedSalesPage
-              salesData={seletectedSales}
-              onBack={() => {
-                setSelectedSales(null);
-                setIsViewSales(false);
-              }}
-              mutateSales={updateDataSelected}
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="flex justify-between">
+      <>
+        <div className="flex justify-between">
             {" "}
             <PageHeader title={"Sales"} subtitle="Manage sales" />{" "}
             <div className="">
@@ -786,8 +756,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 filterConfig={salesFilterConfig}
                 showFilter
                 onRowSelection={(row) => {
-                  setSelectedSales(row);
-                  setIsViewSales(true);
+                  router.push(`/sales/${row.storeId}/${row.salesNo}`);
                 }}
                 onSave={handleSave}
                 renderTopActions={
@@ -827,8 +796,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                   <div className="flex justify-center">
                     <IconButton
                       onClick={function (): void {
-                        setSelectedSales(row);
-                        setIsViewSales(true);
+                        router.push(`/sales/${row.storeId}/${row.salesNo}`);
                       }}
                       label={"View"}
                       bg={"gray"}
@@ -873,7 +841,6 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
             </div>
           </div>
         </>
-      )}
       <Modal
         title={
           showModal === "report"

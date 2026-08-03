@@ -6,7 +6,7 @@ export async function createInventoryMovement({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreateInventoryMovementDto[];
 }) {
   try {

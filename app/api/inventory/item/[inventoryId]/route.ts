@@ -73,7 +73,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Store added successfully!",
+        message: "Item added successfully!",
         // data: res, // could sanitize before returning
       },
       { status: 201 },
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Store add failed!",
+        message: "Item add failed!",
         error: err?.message || String(err),
       },
       { status: 500 },

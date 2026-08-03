@@ -103,7 +103,7 @@ const Pagination: React.FC<PaginationProps> = ({
   }, [page, totalPages]);
 
   return (
-    <div className="flex items-center justify-between gap-4 border-t border-gray-100 bg-white px-2 py-1.5 2xl:px-4 2xl:py-3">
+    <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-100 bg-white px-2 py-1.5 sm:flex-row sm:gap-4 2xl:px-4 2xl:py-3">
       {/* Rows per page */}
       <div className="flex items-center gap-2">
         <label
@@ -137,7 +137,7 @@ const Pagination: React.FC<PaginationProps> = ({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-1">
         <button
           className="
             flex h-5 w-5 items-center justify-center

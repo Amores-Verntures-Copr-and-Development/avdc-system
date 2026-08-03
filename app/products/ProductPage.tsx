@@ -19,16 +19,15 @@ const ProductPage = () => {
     }
   }, [user]);
 
-  if (loading) return <LoaderComponent />;
-  return (
-    <PageLayout className="gap-4 p-2">
-      {loading ? (
+  if (loading) {
+    return (
+      <PageLayout className="gap-4 p-2">
         <LoaderComponent />
-      ) : (
-        <ProductStorePage storeId={storeId} user={user} />
-      )}
-    </PageLayout>
-  );
+      </PageLayout>
+    );
+  }
+
+  return <ProductStorePage storeId={storeId} user={user} />;
 };
 
 export default ProductPage;

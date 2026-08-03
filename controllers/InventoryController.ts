@@ -232,6 +232,7 @@ export const addItemToInventory = async (data: CreateFirstItem) => {
       data: data ?? null,
     };
   } catch (e) {
+    console.log(e);
     await connection.rollback();
     return {
       success: false,

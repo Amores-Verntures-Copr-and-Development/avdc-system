@@ -67,7 +67,7 @@ const SelectedSalesPage = ({
   );
   if (isLoading) return <LoaderComponent />;
   return (
-    <div className="min-h-screen overflow-auto-y">
+    <div className="flex-1 min-h-0 overflow-y-auto">
       {!showViews ? (
         <div className="max-w-4xl mx-auto">
           <button

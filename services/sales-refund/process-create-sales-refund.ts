@@ -24,6 +24,11 @@ import { SalesItemRefund } from "@/types/sales-refund";
 import { updateSalesByFields } from "../sales/update-sales";
 import { SaleItems, SalesItemStatus, SalesStatus } from "@/types/sales";
 import { updateSaleItemsByFields } from "../sales/sale-items/update-sale-items";
+import { updateInventoryItem } from "../inventory/inventory-items/update-inventory-items";
+import { createInventoryMovement } from "../inventory/inventory-movement/create-inventory-movement";
+import { findInventoryByStoreFields } from "../inventory/get-inventory";
+import { InventoryItemInterface } from "@/types/inventory";
+import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 
 export async function processCreateSaleRefund({
   data,
@@ -128,6 +133,80 @@ export async function processCreateSaleRefund({
       salesId: data.salesId,
       connection: connection,
     });
+
+    // Return items to inventory - only for lines the user explicitly marked
+    // with a restockQty (e.g. skipped for damaged/defective items), and only
+    // for variants that are actually inventory-linked (direct or composite).
+    const restockLines = (data.salesItemRefunds ?? []).filter(
+      (r) => Number(r.restockQty) > 0,
+    );
+
+    if (restockLines.length > 0) {
+      const inventory = await findInventoryByStoreFields({
+        keyFields: { storeId: data.storeId },
+        connection,
+      });
+
+      const directRestock: Partial<InventoryItemInterface>[] = [];
+      const componentRestock: Partial<InventoryItemInterface>[] = [];
+
+      for (const line of restockLines) {
+        const saleItem = salesItems.find(
+          (si) => si.salesItemId === line.salesItemId,
+        );
+        if (!saleItem) continue;
+
+        // never trust the client for more than what was actually refunded
+        const restockQty = Math.min(
+          Number(line.restockQty),
+          Number(line.salesRefItemQty),
+        );
+        if (restockQty <= 0) continue;
+
+        if (saleItem.inventoryItemId) {
+          directRestock.push({
+            inventoryItemId: saleItem.inventoryItemId,
+            inventoryItemQuantity: restockQty,
+          });
+        } else if (saleItem.variantComponents?.length) {
+          for (const comp of saleItem.variantComponents) {
+            if (!comp?.inventoryItemId) continue;
+            componentRestock.push({
+              inventoryItemId: comp.inventoryItemId,
+              inventoryItemQuantity: comp.quantityRequired * restockQty,
+            });
+          }
+        }
+      }
+
+      const restockAll = [...directRestock, ...componentRestock];
+
+      if (restockAll.length > 0 && inventory[0]) {
+        const inventoryMovement: CreateInventoryMovementDto[] = restockAll.map(
+          (item) => ({
+            inventoryId: inventory[0].inventoryId,
+            inventoryItemId: item.inventoryItemId ?? 0,
+            itemMovementReference: "refund",
+            itemMovementQuantity: item.inventoryItemQuantity ?? 0,
+            itemMovementReferenceId: refundId,
+            itemMovementType: "in",
+            itemMovementRemarks: "",
+          }),
+        );
+
+        await updateInventoryItem({
+          connection,
+          fieldModes: { inventoryItemQuantity: "increment" },
+          updates: restockAll,
+          keyFields: ["inventoryItemId"],
+        });
+        await createInventoryMovement({
+          connection,
+          data: inventoryMovement,
+        });
+      }
+    }
+
     let salesItemRefund: SalesItemRefund[] = [];
     const salesItemsCount = salesItems.reduce(
       (count, item) => Number(item.salesItemQuantity) + Number(count),

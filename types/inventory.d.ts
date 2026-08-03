@@ -56,7 +56,15 @@ export interface InventoryItemMovement {
   inventoryItemId: number;
   itemMovementType: "in" | "out";
   itemMovementReferenceId: number | null;
-  itemMovementReference: "sales" | "po" | "adjustment" | "ro" | "convert";
+  itemMovementReference:
+    | "sales"
+    | "po"
+    | "adjustment"
+    | "ro"
+    | "convert"
+    | "refund"
+    | "initial"
+    | "stocking";
   itemMovementQuantity: number;
   itemMovementRemarks?: string;
   itemMovementCreatedAt?: string;

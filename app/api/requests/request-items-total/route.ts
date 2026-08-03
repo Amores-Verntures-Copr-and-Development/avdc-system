@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     if (!idsParam) {
       return NextResponse.json(
         { success: false, message: "No IDs provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const ids: number[] = idsParam
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
         message: "Failed to create request",
         error: err?.message || String(err),
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

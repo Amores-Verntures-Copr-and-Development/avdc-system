@@ -115,6 +115,9 @@ interface TableProps<T> {
   showDateRange?: boolean;
   onDateRangeChange?: (range: { from: string; to: string }) => void;
   renderTopActionButtons?: RenderTopActionButtons[];
+  // When provided, rows render as cards below the `md` breakpoint instead of
+  // the raw <table> - the search/filter/date/pagination toolbar stays shared.
+  renderMobileCard?: (row: T, rowIndex: number) => React.ReactNode;
 }
 
 export interface TableHandle {
@@ -159,6 +162,7 @@ const TableInner = <T extends Record<string, any>>(
     defaultLimit = 100,
     localSearch,
     addContentLeftTitle,
+    renderMobileCard,
   }: TableProps<T>,
   ref?: React.Ref<TableHandle>,
 ) => {
@@ -365,60 +369,64 @@ const TableInner = <T extends Record<string, any>>(
   }, [selectedRows, onSelectionChange]);
 
   const isRowSelected = React.useCallback(
-    (row: T) => selectedRows.some((item) => getUniqueId(item) === getUniqueId(row)),
+    (row: T) =>
+      selectedRows.some((item) => getUniqueId(item) === getUniqueId(row)),
     [selectedRows, getUniqueId],
   );
 
-  const handleInputChange = React.useCallback((row: T, columnKey: string, value: any) => {
-    const currentData = editableDataRef.current;
-    const rowId = getUniqueId(row);
-    const rowIndex = currentData.findIndex((r) => getUniqueId(r) === rowId);
-    if (rowIndex === -1) return;
+  const handleInputChange = React.useCallback(
+    (row: T, columnKey: string, value: any) => {
+      const currentData = editableDataRef.current;
+      const rowId = getUniqueId(row);
+      const rowIndex = currentData.findIndex((r) => getUniqueId(r) === rowId);
+      if (rowIndex === -1) return;
 
-    // Only the edited row's compute columns need recalculating - every
-    // `compute` in this codebase only reads fields off its own row, so
-    // re-running it for every other row on each keystroke was pure waste.
-    let updatedRow: T = { ...currentData[rowIndex], [columnKey]: value };
+      // Only the edited row's compute columns need recalculating - every
+      // `compute` in this codebase only reads fields off its own row, so
+      // re-running it for every other row on each keystroke was pure waste.
+      let updatedRow: T = { ...currentData[rowIndex], [columnKey]: value };
 
-    columns.forEach((col) => {
-      if (!col.compute) return;
+      columns.forEach((col) => {
+        if (!col.compute) return;
 
-      if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
-        updatedRow = { ...updatedRow, [col.key]: col.compute!(updatedRow) };
+        if (!col.dependsOn || col.dependsOn.includes(columnKey)) {
+          updatedRow = { ...updatedRow, [col.key]: col.compute!(updatedRow) };
+        }
+      });
+
+      const newData = currentData.map((r, idx) =>
+        idx === rowIndex ? updatedRow : r,
+      );
+
+      setEditableData(newData);
+
+      onCellChange?.(rowIndex, columnKey, value, updatedRow);
+
+      const errorKey = `${rowIndex}-${columnKey}`;
+
+      setErrors((prev) => {
+        const newErrors = new Map(prev);
+        const column = columns.find((c) => c.key === columnKey);
+
+        if (column?.validate && !column.validate(value, updatedRow)) {
+          newErrors.set(errorKey, "Invalid value");
+        } else {
+          newErrors.delete(errorKey);
+        }
+
+        return newErrors;
+      });
+
+      if (updateData) {
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+
+        debounceRef.current = setTimeout(() => {
+          updateData(newData);
+        }, debounceTime);
       }
-    });
-
-    const newData = currentData.map((r, idx) =>
-      idx === rowIndex ? updatedRow : r,
-    );
-
-    setEditableData(newData);
-
-    onCellChange?.(rowIndex, columnKey, value, updatedRow);
-
-    const errorKey = `${rowIndex}-${columnKey}`;
-
-    setErrors((prev) => {
-      const newErrors = new Map(prev);
-      const column = columns.find((c) => c.key === columnKey);
-
-      if (column?.validate && !column.validate(value, updatedRow)) {
-        newErrors.set(errorKey, "Invalid value");
-      } else {
-        newErrors.delete(errorKey);
-      }
-
-      return newErrors;
-    });
-
-    if (updateData) {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-
-      debounceRef.current = setTimeout(() => {
-        updateData(newData);
-      }, debounceTime);
-    }
-  }, [columns, getUniqueId, onCellChange, updateData, debounceTime]);
+    },
+    [columns, getUniqueId, onCellChange, updateData, debounceTime],
+  );
 
   const isFieldEditable = React.useCallback(
     (column: Column<T>, row: T, rowIndex: number): boolean => {
@@ -431,81 +439,85 @@ const TableInner = <T extends Record<string, any>>(
     [],
   );
 
-  const renderCell = React.useCallback((column: Column<T>, row: T, rowIndex: number) => {
-    const editable = isFieldEditable(column, row, rowIndex);
-    const errorKey = `${rowIndex}-${column.key}`;
-    const hasError = errorsRef.current.has(errorKey);
-    const cellBg = column.bgCol ?? "";
-    const realRow = getRowById(row);
+  const renderCell = React.useCallback(
+    (column: Column<T>, row: T, rowIndex: number) => {
+      const editable = isFieldEditable(column, row, rowIndex);
+      const errorKey = `${rowIndex}-${column.key}`;
+      const hasError = errorsRef.current.has(errorKey);
+      const cellBg = column.bgCol ?? "";
+      const realRow = getRowById(row);
 
-    if (editable && editMode === "inline") {
-      if (column.inputType === "select") {
-        const opts =
-          typeof column.options === "function"
-            ? column.options(row)
-            : column.options || [];
+      if (editable && editMode === "inline") {
+        if (column.inputType === "select") {
+          const opts =
+            typeof column.options === "function"
+              ? column.options(row)
+              : column.options || [];
 
-        const rawValue = column.value
-          ? column.value(row)
-          : realRow?.[column.key];
+          const rawValue = column.value
+            ? column.value(row)
+            : realRow?.[column.key];
 
-        const selectedValue =
-          rawValue === null || rawValue === undefined ? "" : String(rawValue);
+          const selectedValue =
+            rawValue === null || rawValue === undefined ? "" : String(rawValue);
 
-        if (column.selectOptionVariant === "custom") {
+          if (column.selectOptionVariant === "custom") {
+            return (
+              <div className={cellBg}>
+                <CustomSelect
+                  value={selectedValue}
+                  options={opts}
+                  onChange={(v) => handleInputChange(row, column.key, v)}
+                />
+              </div>
+            );
+          }
+
           return (
             <div className={cellBg}>
-              <CustomSelect
+              <select
+                onClick={(e) => e.stopPropagation()}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 outline-none transition focus:border-gray-300 focus:bg-white"
                 value={selectedValue}
-                options={opts}
-                onChange={(v) => handleInputChange(row, column.key, v)}
-              />
+                onChange={(e) =>
+                  handleInputChange(realRow ?? row, column.key, e.target.value)
+                }
+              >
+                {opts.map((opt, idx) => (
+                  <option key={idx} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           );
         }
 
         return (
-          <div className={cellBg}>
-            <select
+          <div className={`${cellBg} flex flex-col`}>
+            <input
               onClick={(e) => e.stopPropagation()}
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 outline-none transition focus:border-gray-300 focus:bg-white"
-              value={selectedValue}
-              onChange={(e) =>
-                handleInputChange(realRow ?? row, column.key, e.target.value)
+              type={column.inputType ?? "text"}
+              name={column.name}
+              onWheel={
+                column.inputType === "number"
+                  ? (e) => e.currentTarget.blur()
+                  : undefined
               }
-            >
-              {opts.map((opt, idx) => (
-                <option key={idx} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        );
-      }
-
-      return (
-        <div className={`${cellBg} flex flex-col`}>
-          <input
-            onClick={(e) => e.stopPropagation()}
-            type={column.inputType ?? "text"}
-            name={column.name}
-            onWheel={
-              column.inputType === "number"
-                ? (e) => e.currentTarget.blur()
-                : undefined
-            }
-            value={
-              column.value
-                ? column.value(row)
-                : column.inputType === "number"
-                  ? realRow?.[column.key] === 0 || realRow?.[column.key] === 0.0
-                    ? ""
-                    : (realRow?.[column.key] ?? "")
-                  : realRow?.[column.key] || ""
-            }
-            onChange={(e) => handleInputChange(row, column.key, e.target.value)}
-            className={`
+              value={
+                column.value
+                  ? column.value(row)
+                  : column.inputType === "number"
+                    ? realRow?.[column.key] === 0 ||
+                      realRow?.[column.key] === 0.0
+                      ? ""
+                      : (realRow?.[column.key] ?? "")
+                    : realRow?.[column.key] || ""
+              }
+              onChange={(e) =>
+                handleInputChange(row, column.key, e.target.value)
+              }
+              className={`
               w-full rounded-xl border px-3 py-2 text-xs text-gray-800 outline-none transition
               ${
                 hasError
@@ -513,24 +525,26 @@ const TableInner = <T extends Record<string, any>>(
                   : "border-gray-200 bg-gray-50 focus:border-gray-300 focus:bg-white"
               }
             `}
-            {...(column.inputProps || {})}
-          />
+              {...(column.inputProps || {})}
+            />
+          </div>
+        );
+      }
+
+      if (column.selector) {
+        return <div className={cellBg}>{column.selector(row, rowIndex)}</div>;
+      }
+
+      const value = row[column.key];
+
+      return (
+        <div className={cellBg}>
+          {column.format ? column.format(value) : value}
         </div>
       );
-    }
-
-    if (column.selector) {
-      return <div className={cellBg}>{column.selector(row, rowIndex)}</div>;
-    }
-
-    const value = row[column.key];
-
-    return (
-      <div className={cellBg}>
-        {column.format ? column.format(value) : value}
-      </div>
-    );
-  }, [getRowById, editMode, handleInputChange, isFieldEditable]);
+    },
+    [getRowById, editMode, handleInputChange, isFieldEditable],
+  );
 
   const colSpanCount = React.useMemo(
     () => columns.length + (showActions ? 1 : 0) + (showCheckBox ? 1 : 0),
@@ -558,7 +572,7 @@ const TableInner = <T extends Record<string, any>>(
           localSearch ||
           showDateRange ||
           addContentLeftTitle) && (
-          <div className="flex items-center justify-between gap-4 border-b border-gray-100 bg-white/90 2xl:px-4 2xl:py-3 px-2 py-1.5 backdrop-blur-sm">
+          <div className="flex flex-col gap-2 border-b border-gray-100 bg-white/90 2xl:px-4 2xl:py-3 px-2 py-1.5 backdrop-blur-sm md:flex-row md:items-center md:justify-between md:gap-4">
             {(subtitle || title) && (
               <div className="min-w-0">
                 {title && (
@@ -575,7 +589,7 @@ const TableInner = <T extends Record<string, any>>(
               </div>
             )}
 
-            <div className="flex flex-1 items-center justify-end gap-3">
+            <div className="flex flex-1 flex-wrap items-center justify-start sm:justify-end  2xl:justify-end gap-2 md:gap-3">
               {searchUrl && (
                 <div className="w-36 xl:w-48">
                   <SearchBar url={searchUrl} />
@@ -687,9 +701,32 @@ const TableInner = <T extends Record<string, any>>(
           className="no-scrollbar flex-1 overflow-auto"
           style={{ maxHeight }}
         >
+          {renderMobileCard && (
+            <div className="p-2 md:hidden">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-20">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <span className="text-sm text-gray-400">Loading...</span>
+                </div>
+              ) : !Array.isArray(filteredData) || filteredData.length === 0 ? (
+                <p className="py-20 text-center text-sm text-gray-400">
+                  {Datalabel ?? "No records found"}
+                </p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {filteredData.map((row, rowIndex) => (
+                    <React.Fragment key={getUniqueId(row) ?? rowIndex}>
+                      {renderMobileCard(row, rowIndex)}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <table
             onClick={(e) => e.stopPropagation()}
-            className="w-full border-collapse text-left"
+            className={`w-full border-collapse text-left ${renderMobileCard ? "hidden md:table" : ""}`}
           >
             <thead className="sticky top-0 z-20 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
               <tr>

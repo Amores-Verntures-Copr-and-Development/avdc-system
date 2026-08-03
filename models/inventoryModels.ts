@@ -587,7 +587,7 @@ export const insertInventoryMovement = async ({
   connection,
   data,
 }: {
-  connection: PoolConnection;
+  connection?: PoolConnection;
   data: CreateInventoryMovementDto[];
 }) => {
   if (!data || data.length === 0) return;

@@ -678,7 +678,19 @@ SELECT *, (
   )
   FROM SalesItemRefunds sr
   WHERE sr.salesItemId = si.salesItemId
-) AS salesItemsRefunds
+) AS salesItemsRefunds, (
+  SELECT JSON_ARRAYAGG(
+    JSON_OBJECT(
+      'varComId', vc.varComId,
+      'prodVarId', vc.prodVarId,
+      'quantityRequired', vc.quantityRequired,
+      'inventoryItemId', vc.inventoryItemId,
+      'isDeductVar', vc.isDeductVar
+    )
+  )
+  FROM VariantComponents vc
+  WHERE vc.prodVarId = pv.prodVarId
+) AS variantComponents
 FROM SalesItems si
 LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
 LEFT JOIN Products p ON p.prodId = pv.prodId

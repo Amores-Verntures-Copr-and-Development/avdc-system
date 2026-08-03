@@ -1,7 +1,5 @@
 import { ApiResponse } from "@/types/api";
 import { CategoryInterface } from "@/types/categories";
-import { StockRoom } from "@/types/stockRoom";
-import { StoreInterface } from "@/types/stores";
 import useSWR from "swr";
 
 export function useCategories({

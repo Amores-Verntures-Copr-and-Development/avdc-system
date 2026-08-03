@@ -326,16 +326,18 @@ const Button: React.FC<ButtonProps> = ({
   const iconSize = iconSizes[size];
 
   return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
+    <div>
+      {" "}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
 
-        if (!isDisabled && onClick) {
-          onClick();
-        }
-      }}
-      disabled={isDisabled}
-      className={`
+          if (!isDisabled && onClick) {
+            onClick();
+          }
+        }}
+        disabled={isDisabled}
+        className={`
         relative flex w-full items-center justify-center gap-2
         
         ${isRounded ? "rounded-xl" : "rounded-sm"}
@@ -368,27 +370,28 @@ const Button: React.FC<ButtonProps> = ({
 
         ${className}
       `}
-    >
-      {loading ? (
-        <>
-          <span className="absolute inset-0 flex items-center justify-center">
-            <Loader2 size={iconSize} className="animate-spin" />
-          </span>
+      >
+        {loading ? (
+          <>
+            <span className="absolute inset-0 flex items-center justify-center">
+              <Loader2 size={iconSize} className="animate-spin" />
+            </span>
 
-          <span className="invisible flex items-center gap-2">
-            {Icon && <Icon size={iconSize} />}
+            <span className="invisible flex items-center gap-2">
+              {Icon && <Icon size={iconSize} />}
 
-            {label && <span>{label}</span>}
-          </span>
-        </>
-      ) : (
-        <>
-          {Icon && <Icon size={iconSize} className="shrink-0" />}
+              {label && <span>{label}</span>}
+            </span>
+          </>
+        ) : (
+          <>
+            {Icon && <Icon size={iconSize} className="shrink-0" />}
 
-          {label && <span className="truncate">{label}</span>}
-        </>
-      )}
-    </button>
+            {label && <span className="truncate">{label}</span>}
+          </>
+        )}
+      </button>
+    </div>
   );
 };
 

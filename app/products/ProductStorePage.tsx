@@ -416,33 +416,32 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               title={"Products"}
               subtitle="Add, edit, and track products"
             />
-            <div>
-              <div>
-                {productView === "product" ? (
-                  <Button
-                    label="Product Varaiants"
-                    size="sm"
-                    icon={ArrowLeftRight}
-                    hasBorder
-                    onClick={() => {
-                      setProductView("product-variants");
-                    }}
-                  />
-                ) : (
-                  <Button
-                    label="Products"
-                    size="sm"
-                    icon={ArrowLeftRight}
-                    hasBorder
-                    onClick={() => {
-                      setProductView("product");
-                    }}
-                  />
-                )}
-              </div>
+            <div className="bg-border flex gap-2 p-1  2xl:px-1.5 2xl:py-1.5 rounded-sm">
+              <Button
+                label="Product"
+                size="sm"
+                isRounded={false}
+                color={productView === "product" ? "primary" : "neutral"}
+                hasBorder
+                onClick={() => {
+                  setProductView("product");
+                }}
+              />
+              <Button
+                label="Product Variants"
+                size="sm"
+                color={
+                  productView === "product-variants" ? "primary" : "neutral"
+                }
+                isRounded={false}
+                hasBorder
+                onClick={() => {
+                  setProductView("product-variants");
+                }}
+              />
             </div>
           </div>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <ProductCardDetails
               title={"Total Products"}
               value={20}
@@ -609,6 +608,89 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     </div>
                   )
                 }
+                renderMobileCard={(row, index) => {
+                  const variantCount = (row.productVariants || []).filter(
+                    (v) => v !== null,
+                  ).length;
+
+                  return (
+                    <div
+                      onClick={() => {
+                        setSelectedRow(row);
+                        setShowProductVariantPage(true);
+                      }}
+                      className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between">
+                        <span className="rounded-full bg-pink-50 px-2 py-1 text-[11px] font-semibold text-primary-1">
+                          #{index + 1}
+                        </span>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+                          <Package2 className="h-5 w-5 text-gray-300" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="2xl:truncate text-[11px] 2xl:text-sm font-semibold text-gray-900">
+                            {row.prodName}
+                          </p>
+                          <p className="2xl:truncate text-[10px] 2xl:text-xs text-gray-500">
+                            {row.prodCatName || "No Category"}
+                            {!hasStore && row.storeName
+                              ? ` · ${row.storeName}`
+                              : ""}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5">
+                            <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-semibold text-primary-1">
+                              {variantCount} variant
+                              {variantCount !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-gray-100 pt-2 text-[11px] text-gray-400">
+                        Created {formatDateToWords(row.prodCreatedAt)}
+                      </div>
+
+                      <div className="flex items-center justify-center gap-2 border-t border-gray-100 pt-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRow(row);
+                            setShowProductVariantPage(true);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedRow(row);
+                            setShowEdit(true);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-green-200 text-green-600 hover:bg-green-50"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDeleteComfirmation(row);
+                          }}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }}
               />
             ) : (
               <ProductVariantTable

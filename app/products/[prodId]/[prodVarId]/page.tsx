@@ -78,7 +78,6 @@ const Page = () => {
         prod={product}
         storeId={storeId ?? 0}
         mutate={() => mutate()}
-        onClose={() => router.back()}
         showAddComponent={showAddComponent}
         setShowAddComponent={setShowAddComponent}
       />
