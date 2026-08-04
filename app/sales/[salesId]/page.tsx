@@ -29,7 +29,7 @@ const Page = () => {
     <PageLayout className="p-2">
       <SelectedSalesPage
         salesData={response?.data ?? null}
-        onBack={() => router.push("/sales")}
+        onBack={() => router.back()}
         mutateSales={() => mutate()}
       />
     </PageLayout>

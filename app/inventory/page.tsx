@@ -1,8 +1,13 @@
 import React from "react";
+import RequireRole from "@/components/shared/RequireRole";
 import InventoryPage from "./InventoryPage";
 
 const page = () => {
-  return <InventoryPage />;
+  return (
+    <RequireRole>
+      <InventoryPage />
+    </RequireRole>
+  );
 };
 
 export default page;

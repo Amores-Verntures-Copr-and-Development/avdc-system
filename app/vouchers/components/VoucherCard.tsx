@@ -1,20 +1,27 @@
-import { Voucher, VoucherStatus } from "@/types/voucher";
+import { DisplayVoucher, VoucherStatus } from "@/types/voucher";
 import { formatPeso } from "@/utils/formatPeso";
 import {
   Ban,
   CalendarClock,
+  Pencil,
   Printer,
   Repeat,
   Store,
   Ticket,
 } from "lucide-react";
 import React from "react";
-import { MOCK_STORES } from "../mockVoucherData";
+
+interface StoreOption {
+  storeId: number;
+  storeName: string;
+}
 
 interface VoucherCardProps {
-  voucher: Voucher;
-  onPrint: (voucher: Voucher) => void;
-  onVoid: (voucher: Voucher) => void;
+  voucher: DisplayVoucher;
+  stores: StoreOption[];
+  onPrint: (voucher: DisplayVoucher) => void;
+  onVoid: (voucher: DisplayVoucher) => void;
+  onEdit: (voucher: DisplayVoucher) => void;
 }
 
 const statusDotStyles: Record<VoucherStatus, string> = {
@@ -31,7 +38,7 @@ const statusDotColor: Record<VoucherStatus, string> = {
   void: "bg-rose-500",
 };
 
-const formatVoucherValue = (voucher: Voucher) => {
+const formatVoucherValue = (voucher: DisplayVoucher) => {
   if (voucher.voucherValueType === "fixed") {
     return `${formatPeso(voucher.voucherFixedValue)} credit`;
   }
@@ -43,7 +50,7 @@ const formatVoucherValue = (voucher: Voucher) => {
   return `${voucher.voucherPercent}% off${cap}`;
 };
 
-const formatUsage = (voucher: Voucher) => {
+const formatUsage = (voucher: DisplayVoucher) => {
   if (voucher.voucherValueType === "fixed") {
     return `${formatPeso(voucher.voucherBalance)} left`;
   }
@@ -51,11 +58,11 @@ const formatUsage = (voucher: Voucher) => {
   return `${voucher.voucherUsedCount}/${voucher.voucherMaxUses} used`;
 };
 
-const formatRedeemableAt = (voucher: Voucher) => {
+const formatRedeemableAt = (voucher: DisplayVoucher, stores: StoreOption[]) => {
   if (voucher.voucherIsAllStores) return "All Stores";
 
-  const names = voucher.voucherStoreIds
-    .map((id) => MOCK_STORES.find((s) => s.storeId === id)?.storeName)
+  const names = (voucher.storeIds ?? [])
+    .map((id) => stores.find((s) => s.storeId === id)?.storeName)
     .filter(Boolean);
 
   if (names.length === 0) return "-";
@@ -92,7 +99,13 @@ const StatTile = ({
   </div>
 );
 
-const VoucherCard = ({ voucher, onPrint, onVoid }: VoucherCardProps) => {
+const VoucherCard = ({
+  voucher,
+  stores,
+  onPrint,
+  onVoid,
+  onEdit,
+}: VoucherCardProps) => {
   return (
     <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between gap-2">
@@ -134,7 +147,7 @@ const VoucherCard = ({ voucher, onPrint, onVoid }: VoucherCardProps) => {
           icon={<Store className="h-3 w-3 text-green-600" />}
           iconBg="bg-green-100"
           label="Redeemable At"
-          value={formatRedeemableAt(voucher)}
+          value={formatRedeemableAt(voucher, stores)}
         />
         <StatTile
           icon={<CalendarClock className="h-3 w-3 text-amber-600" />}
@@ -154,6 +167,18 @@ const VoucherCard = ({ voucher, onPrint, onVoid }: VoucherCardProps) => {
           <Printer className="h-3.5 w-3.5" />
           Print
         </button>
+
+        {voucher.voucherStatus === "active" && (
+          <button
+            type="button"
+            title="Edit"
+            className="flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-800"
+            onClick={() => onEdit(voucher)}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </button>
+        )}
 
         {voucher.voucherStatus === "active" && (
           <button

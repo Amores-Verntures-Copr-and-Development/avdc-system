@@ -29,6 +29,7 @@ import { SalesPaymentStatus } from "../../types/sales";
 import { CreateTransactionDto } from "@/dtos/transaction.dto";
 import { createTransactions } from "../transaction/create-transaction";
 import { sendEmailSalesBasePaymentMethods } from "./send-email-sales";
+import { redeemVouchersForSale } from "../vouchers/redeem-vouchers";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -144,6 +145,14 @@ export async function processCreateSales(data: CreateSaleDto) {
     if (salesDiscounts.length > 0) {
       await createSalesDiscounts({ connection, data: salesDiscounts });
     }
+
+    await redeemVouchersForSale({
+      connection,
+      salesId,
+      storeId: data.storeId,
+      createdBy: data.salesCreatedBy,
+      vouchers: data.vouchers,
+    });
 
     const needDeductVariantComponentInventory = saleItemData.filter(
       (i) => (i.components?.length ?? 0) > 0,

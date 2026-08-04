@@ -19,6 +19,7 @@ import {
   SalesPaymentRefund,
   SalesRefund,
 } from "@/types/sales-refund";
+import { CreateSalesVoucherDto } from "@/dtos/voucher.dto";
 
 export type CreateSaleDto = Pick<
   Sales,
@@ -37,6 +38,7 @@ export type CreateSaleDto = Pick<
     salesItems?: CreateSaleItemDto[];
     salesPayments?: CreateSalePaymentDto[];
     saleDiscounts?: CreateSalesDiscount[];
+    vouchers?: CreateSalesVoucherDto[];
     // human-readable Order number, only set when salesSource === "order" - not persisted, just carried through for the receipt email
     orderNumber?: string;
     // Order's delivery fee, only set when salesSource === "order" - not persisted, just carried through for the receipt email

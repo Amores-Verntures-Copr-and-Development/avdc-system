@@ -5,7 +5,8 @@ interface DynamicInputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   error?: string;
   sizes?: "xs" | "sm" | "md" | "lg";
   allow?: boolean;
-  leadingIcon?: React.ReactNode; // ✅ dynamic leading icon
+  leadingIcon?: React.ReactNode;
+  showLabel?: boolean; // ✅ dynamic leading icon
 }
 
 const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
@@ -22,6 +23,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       allow,
       defaultValue,
       leadingIcon,
+      showLabel = true,
       ...rest
     },
     ref,
@@ -34,8 +36,6 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
         ? "text"
         : "password"
       : type;
-
-    const showLabel = !placeholder;
 
     const labelClass = {
       xs: "text-[10px] xl:text-xs",

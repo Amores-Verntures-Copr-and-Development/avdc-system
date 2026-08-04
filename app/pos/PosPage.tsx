@@ -1,7 +1,13 @@
 "use client";
 
 import PageLayout from "@/components/shared/PageLayout";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import Button from "@/components/shared/Button";
 import {
@@ -15,6 +21,7 @@ import {
   Receipt,
   ShoppingCart,
   Tag,
+  Ticket,
   TicketPercent,
   UserRoundPlus,
 } from "lucide-react";
@@ -36,6 +43,7 @@ import PaymentMethodList from "./components/sidebar/PaymentMethodList";
 import ProductList from "./components/sidebar/ProductList";
 import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
+import { AppliedVoucher } from "@/types/voucher";
 import {
   CreateSaleDto,
   CreateSaleItemDisc,
@@ -45,6 +53,7 @@ import {
 } from "@/dtos/sales.dto";
 import Modal from "@/components/shared/Modal";
 import ViewAppliedDiscountModal from "./components/ViewAppliedDiscountModal";
+import ViewAppliedVoucherModal from "./components/ViewAppliedVoucherModal";
 import toast from "react-hot-toast";
 
 import CheckOutModal from "./components/CheckOutModal";
@@ -120,6 +129,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   >(null);
   const [isConfirmingOrder, setIsConfirmingOrder] = useState(false);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [showVoucherModal, setShowVoucherModal] = useState(false);
   const [isCheckOut, setIsCheckOut] = useState(false);
 
   const [selectedProduct, setSelectedProduct] =
@@ -132,6 +142,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   const [selectedDiscount, setSelectedDiscount] = useState<
     CreateSalesDiscount[] | null
   >(null);
+
+  const [appliedVouchers, setAppliedVouchers] = useState<AppliedVoucher[]>([]);
 
   const [selectedOrder, setSelectedOrder] = useLocalStorage<OrderList[]>(
     "selectedOrder",
@@ -224,14 +236,26 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   );
 
   const getTotalAmount = (): number => {
-    if (!selectedDiscount || selectedDiscount.length === 0) return subtotal;
+    const totalDiscount =
+      selectedDiscount?.reduce((acc, disc) => acc + disc.discountAmount, 0) ??
+      0;
 
-    const totalDiscount = selectedDiscount.reduce(
-      (acc, disc) => acc + disc.discountAmount,
+    const totalVoucherAmount = appliedVouchers.reduce(
+      (acc, av) => acc + av.appliedAmount,
       0,
     );
 
-    return Math.max(subtotal - totalDiscount, 0);
+    return Math.max(subtotal - totalDiscount - totalVoucherAmount, 0);
+  };
+
+  const addVoucher = (appliedVoucher: AppliedVoucher) => {
+    setAppliedVouchers((prev) => [...prev, appliedVoucher]);
+  };
+
+  const removeVoucher = (voucherId: number) => {
+    setAppliedVouchers((prev) =>
+      prev.filter((av) => av.voucher.voucherId !== voucherId),
+    );
   };
 
   const remaining = Math.max(0, getTotalAmount() - (totalPaid || 0));
@@ -271,11 +295,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
   );
 
   const calculateItemDiscount = useCallback(
-    (
-      price: number,
-      quantity: number,
-      discounts: CreateSaleItemDisc[] = [],
-    ) => {
+    (price: number, quantity: number, discounts: CreateSaleItemDisc[] = []) => {
       const subtotal = price * quantity;
       let discountTotal = 0;
 
@@ -310,9 +330,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       }
 
       setSelectedOrder((prev) => {
-        const existing = prev.find(
-          (p) => p.prodVarId === newProduct.prodVarId,
-        );
+        const existing = prev.find((p) => p.prodVarId === newProduct.prodVarId);
 
         if (!existing) {
           const quantity = 1;
@@ -539,7 +557,8 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       isShowIcons === "open-scanner" ||
       isCheckOut ||
       editOrderAmount !== null ||
-      showDiscountModal;
+      showDiscountModal ||
+      showVoucherModal;
 
     if (scannerModalOpen) return;
 
@@ -590,7 +609,13 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
     window.addEventListener("keydown", handleKeyDown, true);
 
     return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [isShowIcons, isCheckOut, editOrderAmount, showDiscountModal]);
+  }, [
+    isShowIcons,
+    isCheckOut,
+    editOrderAmount,
+    showDiscountModal,
+    showVoucherModal,
+  ]);
 
   const handleConfirmOrder = async (remarks?: string) => {
     const totalAmount = getTotalAmount();
@@ -661,6 +686,10 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       salesPayments: paymentMethodData,
       salesRemarks: remarks ?? "",
       salesSource: "pos",
+      vouchers: appliedVouchers.map((av) => ({
+        voucherId: av.voucher.voucherId,
+        salesVoucherAmount: av.appliedAmount,
+      })),
     };
 
     try {
@@ -690,6 +719,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       setPaymentMethod([]);
       setSelectedOrder([]);
       setSelectedDiscount([]);
+      setAppliedVouchers([]);
       handleClearCustomerComponent();
 
       return true;
@@ -1105,7 +1135,17 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                 </h1>
               </div>
 
-              <div>
+              <div className="flex items-center gap-2">
+                <Button
+                  icon={Ticket}
+                  size="xs"
+                  label="Voucher"
+                  onClick={() => {
+                    setShowVoucherModal(true);
+                  }}
+                  color="secondary"
+                  disabled={cantDiscountAll}
+                />
                 <Button
                   icon={Tag}
                   size="xs"
@@ -1148,6 +1188,22 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
                     </div>
                   );
                 })}
+              </>
+            )}
+
+            {appliedVouchers.length > 0 && (
+              <>
+                {appliedVouchers.map(({ voucher, appliedAmount }) => (
+                  <div
+                    key={voucher.voucherId}
+                    className="flex justify-between text-gray-500 text-xs 2xl:text-xs"
+                  >
+                    <span>Voucher ({voucher.voucherCode})</span>
+                    <span className="font-semibold">
+                      - {formatPeso(appliedAmount)}
+                    </span>
+                  </div>
+                ))}
               </>
             )}
 
@@ -1268,9 +1324,30 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         </Modal>
       )}
 
+      {showVoucherModal && (
+        <Modal
+          className="h-[50%]"
+          leadingIcon={Ticket}
+          title="Apply Voucher"
+          isOpen={showVoucherModal}
+          onClose={function (): void {
+            setShowVoucherModal(false);
+          }}
+        >
+          <ViewAppliedVoucherModal
+            storeId={storeId}
+            appliedVouchers={appliedVouchers}
+            addVoucher={addVoucher}
+            removeVoucher={removeVoucher}
+            remainingAmount={getTotalAmount()}
+          />
+        </Modal>
+      )}
+
       {isCheckOut && (
         <Modal
-          title={!isPaymentSuccess ? "Confirm Order" : ""}
+          title=""
+          showCloseButton={isPaymentSuccess}
           className={isPaymentSuccess ? `` : `h-[95%]`}
           isOpen={isCheckOut}
           onClose={function (): void {
@@ -1281,10 +1358,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               setRecentSales(null);
             }
           }}
-          size="lg"
+          size="xl"
         >
           {!isPaymentSuccess ? (
             <CheckOutModal
+              onClose={() => setIsCheckOut(false)}
               addPayment={addPayment}
               order={selectedOrder}
               discounts={selectedDiscount}
@@ -1299,6 +1377,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               change={change}
               canComplete={canComplete}
               isConfirming={isConfirmingOrder}
+              appliedVouchers={appliedVouchers}
             />
           ) : (
             <PaymentSuccessModal

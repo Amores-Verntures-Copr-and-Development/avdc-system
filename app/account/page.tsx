@@ -1,8 +1,13 @@
 import React from "react";
+import RequireRole from "@/components/shared/RequireRole";
 import AccountPage from "./AccountPage";
 
 const page = () => {
-  return <AccountPage />;
+  return (
+    <RequireRole>
+      <AccountPage />
+    </RequireRole>
+  );
 };
 
 export default page;

@@ -1,15 +1,13 @@
 "use client";
 
 import Button from "@/components/shared/Button";
-import DropdownSelect from "@/components/shared/DropdownSelect";
 import { DropdownSearch } from "@/components/shared/DropDownSearch";
 import Input from "@/components/shared/Input";
 import TextArea from "@/components/shared/TextArea";
 import Toggle from "@/components/shared/Toggle";
-import { CreateVoucherDto } from "@/dtos/voucher.dto";
+import { UpdateVoucherDto } from "@/dtos/voucher.dto";
 import { Customer } from "@/types/customer";
-import { DisplayVoucher, VoucherValueType } from "@/types/voucher";
-import { RefreshCw } from "lucide-react";
+import { DisplayVoucher } from "@/types/voucher";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -18,20 +16,12 @@ interface StoreOption {
   storeName: string;
 }
 
-interface CreateVoucherModalProps {
+interface EditVoucherModalProps {
+  voucher: DisplayVoucher;
   stores: StoreOption[];
   onCancel: () => void;
-  onCreated: (voucher: DisplayVoucher) => void;
+  onUpdated: (voucher: DisplayVoucher) => void;
 }
-
-const generateVoucherCode = () => {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return `VCH-${code}`;
-};
 
 const searchCustomers = async (query: string): Promise<Customer[]> => {
   const res = await fetch(`/api/customers?search=${encodeURIComponent(query)}`);
@@ -39,23 +29,41 @@ const searchCustomers = async (query: string): Promise<Customer[]> => {
   return json.data || [];
 };
 
-const CreateVoucherModal = ({
+const EditVoucherModal = ({
+  voucher,
   stores,
   onCancel,
-  onCreated,
-}: CreateVoucherModalProps) => {
-  const [voucherCode, setVoucherCode] = useState(generateVoucherCode());
-  const [voucherName, setVoucherName] = useState("");
-  const [valueType, setValueType] = useState<VoucherValueType>("fixed");
-  const [fixedValue, setFixedValue] = useState("");
-  const [percent, setPercent] = useState("");
-  const [maxDiscount, setMaxDiscount] = useState("");
-  const [maxUses, setMaxUses] = useState("1");
-  const [expiresAt, setExpiresAt] = useState("");
-  const [isAllStores, setIsAllStores] = useState(true);
-  const [selectedStoreIds, setSelectedStoreIds] = useState<number[]>([]);
-  const [issuedTo, setIssuedTo] = useState<Customer | null>(null);
-  const [remarks, setRemarks] = useState("");
+  onUpdated,
+}: EditVoucherModalProps) => {
+  const [voucherName, setVoucherName] = useState(voucher.voucherName ?? "");
+  const [fixedValue, setFixedValue] = useState(
+    voucher.voucherFixedValue != null ? String(voucher.voucherFixedValue) : "",
+  );
+  const [percent, setPercent] = useState(
+    voucher.voucherPercent != null ? String(voucher.voucherPercent) : "",
+  );
+  const [maxDiscount, setMaxDiscount] = useState(
+    voucher.voucherMaxDiscount != null
+      ? String(voucher.voucherMaxDiscount)
+      : "",
+  );
+  const [maxUses, setMaxUses] = useState(String(voucher.voucherMaxUses ?? 1));
+  const [expiresAt, setExpiresAt] = useState(voucher.voucherExpiresAt ?? "");
+  const [isAllStores, setIsAllStores] = useState(
+    Boolean(voucher.voucherIsAllStores),
+  );
+  const [selectedStoreIds, setSelectedStoreIds] = useState<number[]>(
+    voucher.storeIds ?? [],
+  );
+  const [issuedTo, setIssuedTo] = useState<Customer | null>(
+    voucher.voucherIssuedTo
+      ? ({
+          customerId: voucher.voucherIssuedTo,
+          customerName: voucher.voucherIssuedToName ?? "",
+        } as Customer)
+      : null,
+  );
+  const [remarks, setRemarks] = useState(voucher.voucherRemarks ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleStore = (storeId: number) => {
@@ -67,12 +75,12 @@ const CreateVoucherModal = ({
   };
 
   const handleSubmit = async () => {
-    if (valueType === "fixed" && Number(fixedValue) <= 0) {
+    if (voucher.voucherValueType === "fixed" && Number(fixedValue) <= 0) {
       toast.error("Enter a voucher value greater than 0!");
       return;
     }
 
-    if (valueType === "percent" && Number(percent) <= 0) {
+    if (voucher.voucherValueType === "percent" && Number(percent) <= 0) {
       toast.error("Enter a discount percent greater than 0!");
       return;
     }
@@ -82,27 +90,29 @@ const CreateVoucherModal = ({
       return;
     }
 
-    const data: CreateVoucherDto = {
-      voucherCode,
+    const data: UpdateVoucherDto = {
       voucherName: voucherName || null,
-      voucherValueType: valueType,
-      voucherFixedValue: valueType === "fixed" ? Number(fixedValue) : null,
-      voucherPercent: valueType === "percent" ? Number(percent) : null,
+      voucherFixedValue:
+        voucher.voucherValueType === "fixed" ? Number(fixedValue) : undefined,
+      voucherPercent:
+        voucher.voucherValueType === "percent" ? Number(percent) : undefined,
       voucherMaxDiscount:
-        valueType === "percent" && maxDiscount ? Number(maxDiscount) : null,
-      voucherMaxUses: valueType === "percent" ? Number(maxUses) || 1 : 1,
+        voucher.voucherValueType === "percent" && maxDiscount
+          ? Number(maxDiscount)
+          : null,
+      voucherMaxUses:
+        voucher.voucherValueType === "percent" ? Number(maxUses) || 1 : 1,
       voucherExpiresAt: expiresAt || null,
       voucherIsAllStores: isAllStores,
       storeIds: isAllStores ? [] : selectedStoreIds,
       voucherIssuedTo: issuedTo?.customerId ?? null,
-      voucherIssuedBy: 0, // set server-side from the session
       voucherRemarks: remarks || null,
     };
 
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/vouchers", {
-        method: "POST",
+      const res = await fetch(`/api/vouchers/${voucher.voucherId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
@@ -110,14 +120,14 @@ const CreateVoucherModal = ({
       const json = await res.json();
 
       if (!json.success) {
-        toast.error(json.message || "Failed to create voucher");
+        toast.error(json.message || "Failed to update voucher");
         return;
       }
 
-      toast.success("Voucher created successfully!");
-      onCreated(json.data);
+      toast.success("Voucher updated successfully!");
+      onUpdated(json.data);
     } catch (e: any) {
-      toast.error(e?.message || "Failed to create voucher");
+      toast.error(e?.message || "Failed to update voucher");
     } finally {
       setIsSubmitting(false);
     }
@@ -125,20 +135,7 @@ const CreateVoucherModal = ({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <Input label="Voucher Code" sizes="xs" value={voucherCode} readOnly />
-        </div>
-        <Button
-          icon={RefreshCw}
-          label=""
-          size="sm"
-          color="secondary"
-          className="w-auto shrink-0"
-          onClick={() => setVoucherCode(generateVoucherCode())}
-          disabled={isSubmitting}
-        />
-      </div>
+      <Input label="Voucher Code" sizes="xs" value={voucher.voucherCode} readOnly />
 
       <Input
         label="Voucher Name (optional)"
@@ -150,20 +147,7 @@ const CreateVoucherModal = ({
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <DropdownSelect
-          name="valueType"
-          label="Voucher Type"
-          sizes="xs"
-          value={valueType}
-          options={[
-            { label: "Fixed value (gift card / store credit)", value: "fixed" },
-            { label: "Percent discount", value: "percent" },
-          ]}
-          onChange={(e) => setValueType(e.target.value as VoucherValueType)}
-          disabled={isSubmitting}
-        />
-
-        {valueType === "fixed" ? (
+        {voucher.voucherValueType === "fixed" ? (
           <Input
             label="Value (₱)"
             sizes="xs"
@@ -206,7 +190,7 @@ const CreateVoucherModal = ({
           label="Expiry Date (optional)"
           sizes="xs"
           type="date"
-          value={expiresAt}
+          value={expiresAt ? String(expiresAt).slice(0, 10) : ""}
           onChange={(e) => setExpiresAt(e.target.value)}
           disabled={isSubmitting}
         />
@@ -215,6 +199,7 @@ const CreateVoucherModal = ({
           label="Issued To (optional)"
           sizes="xs"
           placeholder="Leave blank for a bearer voucher"
+          selectedValue={issuedTo?.customerName ?? ""}
           searchFn={searchCustomers}
           onSelect={(row) => setIssuedTo(row ?? null)}
           renderItem={(c) => <span>{c.customerName}</span>}
@@ -259,12 +244,12 @@ const CreateVoucherModal = ({
       <TextArea
         label="Remarks (optional)"
         sizes="xs"
-        value={remarks}
+        value={remarks ?? ""}
         onChange={(e) => setRemarks(e.target.value)}
         disabled={isSubmitting}
       />
 
-      <div className="flex justify-end gap-3  pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <Button
           label="Cancel"
           size="xs"
@@ -274,7 +259,7 @@ const CreateVoucherModal = ({
           disabled={isSubmitting}
         />
         <Button
-          label="Create Voucher"
+          label="Save Changes"
           size="xs"
           color="primary"
           hasBorder
@@ -286,4 +271,4 @@ const CreateVoucherModal = ({
   );
 };
 
-export default CreateVoucherModal;
+export default EditVoucherModal;

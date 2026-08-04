@@ -7,6 +7,10 @@ import Input from "@/components/shared/Input";
 import Modal from "@/components/shared/Modal";
 import PageLayout from "@/components/shared/PageLayout";
 import Pagination from "@/components/shared/Pagintation";
+import { ApiResponse } from "@/types/api";
+import { DisplayVoucher, VoucherStatus } from "@/types/voucher";
+import { StoreInterface } from "@/types/stores";
+import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import {
   Search,
@@ -18,11 +22,11 @@ import {
 import { useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import useSWR from "swr";
 import CreateVoucherModal from "./components/CreateVoucherModal";
+import EditVoucherModal from "./components/EditVoucherModal";
 import VoucherCard from "./components/VoucherCard";
 import VoucherStatCard from "./components/VoucherStatCard";
-import { MOCK_STORES, MOCK_VOUCHERS } from "./mockVoucherData";
-import { Voucher, VoucherStatus } from "@/types/voucher";
 
 const statusOptions = [
   { label: "All Status", value: "all" },
@@ -33,17 +37,47 @@ const statusOptions = [
 ];
 
 const VoucherPage = () => {
-  const [vouchers, setVouchers] = useState<Voucher[]>(MOCK_VOUCHERS);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [voidTarget, setVoidTarget] = useState<Voucher | null>(null);
+  const [editTarget, setEditTarget] = useState<DisplayVoucher | null>(null);
+  const [voidTarget, setVoidTarget] = useState<DisplayVoucher | null>(null);
+  const [isVoiding, setIsVoiding] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<VoucherStatus | "all">(
     "all",
   );
 
+  const { data: storesResponse } = useSWR<ApiResponse<StoreInterface[]>>(
+    "/api/stores",
+    fetcher,
+  );
+
+  const stores = useMemo(() => {
+    return (storesResponse?.data ?? [])
+      .filter((s): s is StoreInterface & { storeId: number } => !!s.storeId)
+      .map((s) => ({ storeId: s.storeId, storeName: s.storeName }));
+  }, [storesResponse]);
+
   const searchParams = useSearchParams();
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(1, parseInt(searchParams.get("limit") || "100", 10));
+
+  const apiUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (search) params.append("search", search);
+    if (statusFilter !== "all") params.append("status", statusFilter);
+    params.append("limit", String(limit));
+    params.append("page", String(page));
+
+    return `/api/vouchers?${params.toString()}`;
+  }, [search, statusFilter, limit, page]);
+
+  const {
+    data: response,
+    isLoading,
+    mutate,
+  } = useSWR<ApiResponse<DisplayVoucher[]>>(apiUrl, fetcher);
+
+  const vouchers = response?.data ?? [];
 
   const stats = useMemo(() => {
     const active = vouchers.filter((v) => v.voucherStatus === "active").length;
@@ -55,55 +89,50 @@ const VoucherPage = () => {
       .reduce((sum, v) => sum + Number(v.voucherFixedValue ?? 0), 0);
 
     return {
-      total: vouchers.length,
+      total: response?.count ?? vouchers.length,
       active,
       redeemed,
       totalValueIssued,
     };
-  }, [vouchers]);
+  }, [vouchers, response?.count]);
 
-  const filteredVouchers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return vouchers.filter((v) => {
-      const matchesStatus =
-        statusFilter === "all" || v.voucherStatus === statusFilter;
-
-      const matchesSearch =
-        !query ||
-        v.voucherCode.toLowerCase().includes(query) ||
-        (v.voucherName ?? "").toLowerCase().includes(query);
-
-      return matchesStatus && matchesSearch;
-    });
-  }, [vouchers, search, statusFilter]);
-
-  const paginatedVouchers = useMemo(() => {
-    const start = (page - 1) * limit;
-    return filteredVouchers.slice(start, start + limit);
-  }, [filteredVouchers, page, limit]);
-
-  const handleCreate = (voucher: Voucher) => {
-    setVouchers((prev) => [voucher, ...prev]);
+  const handleCreated = () => {
     setShowCreateModal(false);
+    mutate();
   };
 
-  const handlePrint = (voucher: Voucher) => {
-    toast(`Printing voucher ${voucher.voucherCode} (mock - no backend yet)`);
+  const handleUpdated = () => {
+    setEditTarget(null);
+    mutate();
   };
 
-  const handleVoid = () => {
+  const handlePrint = (voucher: DisplayVoucher) => {
+    toast(`Printing voucher ${voucher.voucherCode}`);
+  };
+
+  const handleVoid = async () => {
     if (!voidTarget) return;
 
-    setVouchers((prev) =>
-      prev.map((v) =>
-        v.voucherId === voidTarget.voucherId
-          ? { ...v, voucherStatus: "void" as const }
-          : v,
-      ),
-    );
-    toast.success(`Voucher ${voidTarget.voucherCode} voided`);
-    setVoidTarget(null);
+    setIsVoiding(true);
+    try {
+      const res = await fetch(`/api/vouchers/${voidTarget.voucherId}/void`, {
+        method: "POST",
+      });
+      const json = await res.json();
+
+      if (!json.success) {
+        toast.error(json.message || "Failed to void voucher");
+        return;
+      }
+
+      toast.success(`Voucher ${voidTarget.voucherCode} voided`);
+      setVoidTarget(null);
+      mutate();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to void voucher");
+    } finally {
+      setIsVoiding(false);
+    }
   };
 
   return (
@@ -191,25 +220,31 @@ const VoucherPage = () => {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto rounded-2xl">
-        {paginatedVouchers.length === 0 ? (
+        {isLoading ? (
+          <div className="flex h-full items-center justify-center text-sm text-gray-400">
+            Loading...
+          </div>
+        ) : vouchers.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-gray-400">
             No vouchers found
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {paginatedVouchers.map((voucher) => (
+            {vouchers.map((voucher) => (
               <VoucherCard
                 key={voucher.voucherId}
                 voucher={voucher}
+                stores={stores}
                 onPrint={handlePrint}
                 onVoid={setVoidTarget}
+                onEdit={setEditTarget}
               />
             ))}
           </div>
         )}
       </div>
 
-      <Pagination totalItems={filteredVouchers.length} defaultLimit={100} />
+      <Pagination totalItems={response?.count ?? 0} defaultLimit={100} />
 
       <Modal
         isOpen={showCreateModal}
@@ -218,13 +253,26 @@ const VoucherPage = () => {
         size="lg"
       >
         <CreateVoucherModal
-          stores={MOCK_STORES}
-          nextVoucherId={
-            Math.max(0, ...vouchers.map((v) => v.voucherId)) + 1
-          }
+          stores={stores}
           onCancel={() => setShowCreateModal(false)}
-          onCreate={handleCreate}
+          onCreated={handleCreated}
         />
+      </Modal>
+
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title="Edit Voucher"
+        size="lg"
+      >
+        {editTarget && (
+          <EditVoucherModal
+            voucher={editTarget}
+            stores={stores}
+            onCancel={() => setEditTarget(null)}
+            onUpdated={handleUpdated}
+          />
+        )}
       </Modal>
 
       <ConfirmationModal
@@ -233,6 +281,7 @@ const VoucherPage = () => {
         onConfirm={handleVoid}
         title="Void Voucher"
         confirmLabel="Void"
+        isLoading={isVoiding}
         confirmationInfo={`Are you sure you want to void ${voidTarget?.voucherCode}? This cannot be undone.`}
       />
     </PageLayout>

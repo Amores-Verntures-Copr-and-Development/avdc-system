@@ -1,11 +1,6 @@
 export type VoucherValueType = "fixed" | "percent";
 export type VoucherStatus = "active" | "redeemed" | "expired" | "void";
 
-export interface MockStore {
-  storeId: number;
-  storeName: string;
-}
-
 export interface Voucher {
   voucherId: number;
   voucherCode: string;
@@ -19,11 +14,43 @@ export interface Voucher {
   voucherUsedCount: number;
   voucherStatus: VoucherStatus;
   voucherExpiresAt?: string | null;
-  voucherIsAllStores: boolean;
-  voucherStoreIds: number[]; // ignored when voucherIsAllStores is true
-  voucherIssuedTo?: string | null; // customer name, optional/bearer if empty
-  storeId: number; // issuing store
-  voucherIssuedBy: string;
+  voucherIsAllStores: number; // tinyint(1) as returned by mysql2 - 0 | 1
+  voucherIssuedTo?: number | null; // Customers FK, null = bearer voucher
+  voucherIssuedBy: number; // Users FK
+  voucherPrintCount: number;
+  voucherPrintedAt?: string | null;
   voucherRemarks?: string | null;
-  voucherCreatedAt: string;
+  voucherCreatedAt?: string;
+  voucherUpdatedAt?: string;
+  voucherDeletedAt?: string | null;
+}
+
+export interface VoucherStore {
+  voucherStoreId: number;
+  voucherId: number;
+  storeId: number;
+}
+
+export interface SalesVoucher {
+  salesVoucherId: number;
+  salesId: number;
+  voucherId: number;
+  storeId: number;
+  salesVoucherAmount: number;
+  salesVoucherCreatedAt?: string;
+  salesVoucherUpdatedAt?: string;
+  salesVoucherDeletedAt?: string | null;
+  salesVoucherCreatedBy: number;
+}
+
+export interface DisplayVoucher extends Voucher {
+  voucherIssuedByName?: string;
+  voucherIssuedToName?: string | null;
+  storeIds: number[];
+  storeNames?: string[];
+}
+
+export interface AppliedVoucher {
+  voucher: DisplayVoucher;
+  appliedAmount: number;
 }

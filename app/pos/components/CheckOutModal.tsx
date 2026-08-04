@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { OrderList } from "../PosPage";
 import { formatPeso } from "@/utils/formatPeso";
-import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import { PaymentMethods } from "@/types/payment-methods";
 import IconButton from "@/components/shared/IconButton";
 import {
   Banknote,
   Check,
+  CheckCircle2,
+  ClipboardList,
   CreditCard,
+  FileText,
   PhilippinePeso,
   Plus,
+  ShoppingCart,
   Wallet,
   X,
 } from "lucide-react";
@@ -21,6 +24,7 @@ import Textarea from "@/components/shared/TextArea";
 import { SalesPaymentStatus } from "@/types/sales";
 import { Customer } from "@/types/customer";
 import toast from "react-hot-toast";
+import { AppliedVoucher } from "@/types/voucher";
 
 interface CheckOutModalProps {
   order: OrderList[] | null;
@@ -39,6 +43,8 @@ interface CheckOutModalProps {
   canComplete: boolean;
   isConfirming: boolean;
   customer?: Customer | null;
+  appliedVouchers: AppliedVoucher[];
+  onClose: () => void;
 }
 
 const CheckOutModal = ({
@@ -55,9 +61,10 @@ const CheckOutModal = ({
   canComplete,
   isConfirming,
   customer,
+  appliedVouchers,
+  onClose,
 }: CheckOutModalProps) => {
   const [remarks, setRemarks] = useState<string>("");
-  const handleRemarkChange = handleChange(remarks, setRemarks);
   const [selectedMethod, setSelectedMethod] =
     useState<CreateSalePaymentDto | null>({
       paymentReference: "",
@@ -157,55 +164,141 @@ const CheckOutModal = ({
     });
   };
   const getTotalAmount = (): number => {
-    if (!discounts || discounts.length === 0) return subtotal;
+    const totalDiscount =
+      discounts?.reduce((acc, disc) => acc + disc.discountAmount, 0) ?? 0;
 
-    const totalDiscount = discounts.reduce(
-      (acc, disc) => acc + disc.discountAmount,
+    const totalVoucherAmount = appliedVouchers.reduce(
+      (acc, av) => acc + av.appliedAmount,
       0,
     );
 
-    return Math.max(subtotal - totalDiscount, 0); // prevent negative
+    return Math.max(subtotal - totalDiscount - totalVoucherAmount, 0); // prevent negative
   };
-  return (
-    <div className="flex flex-col h-full gap-1 2xl:gap-5">
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-slate-50  p-1 2xl:p-4 shadow text-center">
-          <p className="text-[10px] 2xl:text-xs text-slate-500 mb-1">Total</p>
-          <p className="font-bold text-[9px] md:text-xs 2xl:text-sm text-slate-800">
-            {formatPeso(getTotalAmount())}
-          </p>
-        </div>
-        <div className="bg-emerald-50 shadow p-1 2xl:p-4 text-center">
-          <p className="text-[10px] 2xl:text-xs text-emerald-600 mb-1">Paid</p>
-          <p className="font-bold text-[9px] md:text-xs 2xl:text-sm text-emerald-600">
-            {formatPeso(totalPaid || 0)}
-          </p>
-        </div>
-        <div
-          className={`shadow p-1 2xl:p-4 text-center ${
-            remaining > 0 ? "bg-amber-50" : "bg-emerald-50"
-          }`}
-        >
-          <p
-            className="text-[10px] 2xl:text-xs mb-1"
-            style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
-          >
-            {remaining > 0 ? "Remaining" : "Change"}
-          </p>
-          <p
-            className="font-bold text-[9px] md:text-xs 2xl:text-sm"
-            style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
-          >
-            {remaining > 0 ? formatPeso(remaining) : formatPeso(change)}
-          </p>
-        </div>
+
+  const SectionHeader = ({
+    icon: Icon,
+    iconBg,
+    iconColor,
+    label,
+  }: {
+    icon: React.ElementType;
+    iconBg: string;
+    iconColor: string;
+    label: string;
+  }) => (
+    <div className="flex items-center gap-2 mb-3">
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${iconBg}`}
+      >
+        <Icon className={`h-4 w-4 ${iconColor}`} />
       </div>
-      {!canComplete ? (
-        <div className="flex flex-col lg:flex-row flex-1 gap-3 lg:gap-0">
-          <div className="flex-1">
-            <BigCard isRounded={false} title="Current Payments">
-              {selectedPaymentMethod && selectedPaymentMethod.length > 0 && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      <span className="text-sm font-semibold text-gray-900">{label}</span>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50">
+            <ShoppingCart className="h-5 w-5 text-primary-1" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-900">
+              Confirm Order
+            </h2>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Review your payment details and complete your order.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-gray-400 transition hover:text-gray-600"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4">
+        {/* Stat cards */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="flex items-center justify-between rounded-2xl bg-indigo-50 p-3 2xl:p-4">
+            <div>
+              <p className="text-[10px] font-medium text-indigo-500 2xl:text-xs">
+                Total
+              </p>
+              <p className="mt-1 text-xs font-bold text-gray-900 2xl:text-lg">
+                {formatPeso(getTotalAmount())}
+              </p>
+            </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 2xl:h-9 2xl:w-9">
+              <Wallet className="h-4 w-4 text-indigo-500" />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-2xl bg-emerald-50 p-3 2xl:p-4">
+            <div>
+              <p className="text-[10px] font-medium text-emerald-600 2xl:text-xs">
+                Paid
+              </p>
+              <p className="mt-1 text-xs font-bold text-emerald-700 2xl:text-lg">
+                {formatPeso(totalPaid || 0)}
+              </p>
+            </div>
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 2xl:h-9 2xl:w-9">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            </div>
+          </div>
+
+          <div
+            className={`flex items-center justify-between rounded-2xl p-3 2xl:p-4 ${
+              remaining > 0 ? "bg-amber-50" : "bg-emerald-50"
+            }`}
+          >
+            <div>
+              <p
+                className="text-[10px] font-medium 2xl:text-xs"
+                style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
+              >
+                {remaining > 0 ? "Remaining" : "Change"}
+              </p>
+              <p
+                className="mt-1 text-xs font-bold 2xl:text-lg"
+                style={{ color: remaining > 0 ? "#d97706" : "#059669" }}
+              >
+                {remaining > 0 ? formatPeso(remaining) : formatPeso(change)}
+              </p>
+            </div>
+            <div
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full 2xl:h-9 2xl:w-9 ${
+                remaining > 0 ? "bg-amber-100" : "bg-emerald-100"
+              }`}
+            >
+              <CreditCard
+                className={`h-4 w-4 ${
+                  remaining > 0 ? "text-amber-600" : "text-emerald-600"
+                }`}
+              />
+            </div>
+          </div>
+        </div>
+
+        {!canComplete ? (
+          <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="flex flex-col rounded-2xl border border-gray-100 p-4">
+              <SectionHeader
+                icon={ClipboardList}
+                iconBg="bg-indigo-50"
+                iconColor="text-indigo-500"
+                label="Current Payments"
+              />
+
+              {selectedPaymentMethod && selectedPaymentMethod.length > 0 ? (
+                <div className="grid grid-cols-1 gap-2">
                   {selectedPaymentMethod.map((payment, index) => {
                     const method = paymentMethods?.find(
                       (m) => m.payMetId === payment.payMetId,
@@ -214,28 +307,28 @@ const CheckOutModal = ({
                     const Icon = details.icon || Banknote;
                     return (
                       <div
-                        className="flex items-center justify-between bg-slate-50 rounded-lg p-3"
+                        className="flex items-center justify-between rounded-lg bg-slate-50 p-3"
                         key={index}
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`p-2 rounded-lg ${details.color} text-white`}
+                            className={`rounded-lg p-2 ${details.color} text-white`}
                           >
-                            <Icon className="w-2 h-2 2xl:w-4 2xl:h-4" />
+                            <Icon className="h-2 w-2 2xl:h-4 2xl:w-4" />
                           </div>
                           <div>
-                            <span className="text-[9px] 2xl:text-sm  font-medium text-slate-800">
+                            <span className="text-[9px] font-medium text-slate-800 2xl:text-sm">
                               {method?.payMetName}
                             </span>
                             {payment.paymentReference && (
-                              <p className="text-[9px]  2xl:text-xs text-slate-500">
+                              <p className="text-[9px] text-slate-500 2xl:text-xs">
                                 {payment.paymentReference}
                               </p>
                             )}
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className=" text-[9px] 2xl:text-sm   font-semibold text-slate-800">
+                          <span className="text-[9px] font-semibold text-slate-800 2xl:text-sm">
                             {formatPeso(payment.salesPaymentAmount)}
                           </span>
                           <IconButton
@@ -251,15 +344,35 @@ const CheckOutModal = ({
                     );
                   })}
                 </div>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
+                  <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gray-50">
+                    <FileText className="h-6 w-6 text-gray-300" />
+                  </div>
+                  <p className="text-sm font-semibold text-gray-700">
+                    No payments added yet
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    Add a payment to get started.
+                  </p>
+                </div>
               )}
-            </BigCard>
-          </div>
-          <div className="flex-1">
-            <BigCard isRounded={false} title="Add Payments">
-              <div className="flex flex-col divide-gray-200 overflow-auto p-1  2xl:p-3 gap-3 h-full">
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 p-4">
+              <SectionHeader
+                icon={Wallet}
+                iconBg="bg-indigo-50"
+                iconColor="text-indigo-500"
+                label="Add Payment"
+              />
+
+              <div className="flex h-full flex-col gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                   {paymentMethods?.map((payment) => {
-                    const { icon, color } = getPaymentIcon(payment.payMetName);
+                    const { icon, color } = getPaymentIcon(
+                      payment.payMetName,
+                    );
                     const Icon = icon || Banknote;
                     return (
                       <button
@@ -289,25 +402,26 @@ const CheckOutModal = ({
                             };
                           });
                         }}
-                        className={`flex flex-col items-center justify-center p-1 2xl:p-4 rounded-xl border-2 transition-all ${
+                        className={`flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all 2xl:p-4 ${
                           selectedMethod?.payMetId === payment.payMetId
                             ? "border-emerald-500 bg-emerald-50"
                             : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <div
-                          className={`p-2 rounded-lg ${color} text-white mb-2`}
+                          className={`mb-2 rounded-lg p-2 ${color} text-white`}
                         >
-                          <Icon className="w-3 h-3 2xl:w-5 2xl:h-5" />
+                          <Icon className="h-3 w-3 2xl:h-5 2xl:w-5" />
                         </div>
-                        <span className="text-[9px] 2xl:text-sm font-medium text-slate-700">
+                        <span className="text-[9px] font-medium text-slate-700 2xl:text-sm">
                           {payment.payMetName}
                         </span>
                       </button>
                     );
                   })}
                 </div>
-                <div className="flex gap-2 flex-wrap">
+
+                <div className="flex flex-wrap gap-2">
                   {quickAmounts.map((qa) => (
                     <Button
                       key={qa}
@@ -322,10 +436,11 @@ const CheckOutModal = ({
                     color="warning"
                     size="sm"
                     onClick={() => handleQuickAmount(remaining)}
-                    className="flex-1 bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100"
+                    className="flex-1 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
                     label={`${formatPeso(remaining)}`}
                   ></Button>
                 </div>
+
                 <div className="flex flex-col gap-2">
                   <Input
                     leadingIcon={<PhilippinePeso className="w-4 h-4" />}
@@ -362,18 +477,20 @@ const CheckOutModal = ({
                   />
                 </div>
               </div>
-            </BigCard>
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col h-full">
-          <div className="flex flex-col gap-2 mt-2">
-            <label className="text-gray-600 font-semibold text-xs xl:text-sm">
-              Applied Payments
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+        ) : (
+          <div className="rounded-2xl border border-gray-100 p-4">
+            <SectionHeader
+              icon={ClipboardList}
+              iconBg="bg-indigo-50"
+              iconColor="text-indigo-500"
+              label="Applied Payments"
+            />
+
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {selectedPaymentMethod &&
-                selectedPaymentMethod.length &&
+                selectedPaymentMethod.length > 0 &&
                 selectedPaymentMethod.map((payment, index) => {
                   const method = paymentMethods?.find(
                     (m) => m.payMetId === payment.payMetId,
@@ -382,17 +499,17 @@ const CheckOutModal = ({
                   const Icon = details.icon || Banknote;
                   return (
                     <div
-                      className="flex items-center justify-between bg-slate-50 rounded-lg p-3 shadow"
+                      className="flex items-center justify-between rounded-lg bg-slate-50 p-3 shadow"
                       key={index}
                     >
                       <div className="flex items-center gap-3">
                         <div
-                          className={`p-2 rounded-lg ${details.color} text-white`}
+                          className={`rounded-lg p-2 ${details.color} text-white`}
                         >
-                          <Icon className="w-4 h-4" />
+                          <Icon className="h-4 w-4" />
                         </div>
                         <div>
-                          <span className="font-medium text-[10px] 2xl:text-sm  text-slate-800">
+                          <span className="text-[10px] font-medium text-slate-800 2xl:text-sm">
                             {method?.payMetName}
                           </span>
                           {payment.paymentReference && (
@@ -403,7 +520,7 @@ const CheckOutModal = ({
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[9px] 2xl:text-sm  text-slate-800">
+                        <span className="text-[9px] font-semibold text-slate-800 2xl:text-sm">
                           {formatPeso(payment.salesPaymentAmount)}
                         </span>
                         <IconButton
@@ -420,37 +537,46 @@ const CheckOutModal = ({
                 })}
             </div>
           </div>
-          <div className="flex flex-col gap-2 mt-5">
-            <label className="text-gray-600 font-semibold text-xs xl:text-sm">
-              Add Order Remarks
-            </label>
-            <Textarea
-              label={""}
-              sizes="sm"
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-              name="remarks"
-            />
-          </div>
-          <div className="mt-auto">
-            <Button
-              label={
-                change
-                  ? `Complete Sale(Change: ${formatPeso(change)})`
-                  : `Complete Sale`
-              }
-              size={"md"}
-              className="w-full"
-              onClick={() => {
-                handleCompleteSale(remarks);
-              }}
-              icon={Check}
-              disabled={!canComplete}
-              loading={isConfirming}
-            />
-          </div>
+        )}
+
+        <div className="flex flex-col gap-2">
+          <label className="text-xs font-semibold text-gray-600 xl:text-sm">
+            Order Remarks (optional)
+          </label>
+          <Textarea
+            label={""}
+            sizes="sm"
+            value={remarks}
+            onChange={(e) => setRemarks(e.target.value)}
+            name="remarks"
+          />
         </div>
-      )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+        <Button
+          label="Cancel"
+          size="md"
+          color="secondary"
+          className="w-auto px-6"
+          onClick={onClose}
+          disabled={isConfirming}
+        />
+        <Button
+          label={
+            change && canComplete
+              ? `Confirm Order (Change: ${formatPeso(change)})`
+              : "Confirm Order"
+          }
+          size="md"
+          className="w-auto px-6"
+          onClick={() => handleCompleteSale(remarks)}
+          icon={Check}
+          disabled={!canComplete}
+          loading={isConfirming}
+        />
+      </div>
     </div>
   );
 };
