@@ -184,7 +184,7 @@ WHERE 1=1`;
     params.push(storeId);
   }
   if (from && to) {
-    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from);
     params.push(to);
   }
@@ -267,7 +267,7 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   }
 
   if (from && to) {
-    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from);
     params.push(to);
   }
@@ -781,18 +781,24 @@ export const selectSalesTotalDetails = async ({
   }
 
   if (from && to) {
-    totalSaleConditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalSaleConditions.push(
+      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
+    );
     totalSalesparams.push(from, to);
 
     totalSalePaymentMethodConditions.push(
-      "DATE(s.salesCreatedAt) BETWEEN ? AND ?",
+      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
     );
     totalSalePaymentMethodparams.push(from, to);
 
-    totalCountSalesconditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalCountSalesconditions.push(
+      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
+    );
     totalCountSalesparams.push(from, to);
 
-    totalCustomerConditions.push("DATE(s.salesCreatedAt) BETWEEN ? AND ?");
+    totalCustomerConditions.push(
+      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
+    );
     totalCustomeparams.push(from, to);
   }
 
@@ -1070,7 +1076,7 @@ export const selectSalesByTrend = async ({
   `;
 
   if (from && to) {
-    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from, to);
   }
 
@@ -1137,7 +1143,7 @@ export const selectSalesByProductVariant = async ({
   }
 
   if (from && to) {
-    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from, to);
   }
 
@@ -1198,7 +1204,7 @@ export const countSalesByProductVariant = async ({
   }
 
   if (from && to) {
-    sql += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from, to);
   }
 
