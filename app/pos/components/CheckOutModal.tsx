@@ -65,6 +65,10 @@ const CheckOutModal = ({
   onClose,
 }: CheckOutModalProps) => {
   const [remarks, setRemarks] = useState<string>("");
+  const [mobilePaymentView, setMobilePaymentView] = useState<
+    "current" | "add"
+  >("add");
+  const [showRemarksMobile, setShowRemarksMobile] = useState(false);
   const [selectedMethod, setSelectedMethod] =
     useState<CreateSalePaymentDto | null>({
       paymentReference: "",
@@ -199,16 +203,16 @@ const CheckOutModal = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-4">
+      <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-2 lg:pb-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50">
-            <ShoppingCart className="h-5 w-5 text-primary-1" />
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-pink-50 lg:h-11 lg:w-11">
+            <ShoppingCart className="h-4 w-4 text-primary-1 lg:h-5 lg:w-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-sm font-bold text-gray-900 lg:text-base">
               Confirm Order
             </h2>
-            <p className="mt-0.5 text-xs text-gray-500">
+            <p className="mt-0.5 hidden text-xs text-gray-500 sm:block">
               Review your payment details and complete your order.
             </p>
           </div>
@@ -223,10 +227,10 @@ const CheckOutModal = ({
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto py-4">
+      <div className="flex flex-1 flex-col gap-2 overflow-y-auto py-2 lg:gap-4 lg:py-4">
         {/* Stat cards */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="flex items-center justify-between rounded-2xl bg-indigo-50 p-3 2xl:p-4">
+        <div className="grid grid-cols-3 gap-2 lg:gap-3">
+          <div className="flex items-center justify-between rounded-2xl bg-indigo-50 p-2 lg:p-3 2xl:p-4">
             <div>
               <p className="text-[10px] font-medium text-indigo-500 2xl:text-xs">
                 Total
@@ -235,12 +239,12 @@ const CheckOutModal = ({
                 {formatPeso(getTotalAmount())}
               </p>
             </div>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-100 2xl:h-9 2xl:w-9">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 lg:h-8 lg:w-8 2xl:h-9 2xl:w-9">
               <Wallet className="h-4 w-4 text-indigo-500" />
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-2xl bg-emerald-50 p-3 2xl:p-4">
+          <div className="flex items-center justify-between rounded-2xl bg-emerald-50 p-2 lg:p-3 2xl:p-4">
             <div>
               <p className="text-[10px] font-medium text-emerald-600 2xl:text-xs">
                 Paid
@@ -249,13 +253,13 @@ const CheckOutModal = ({
                 {formatPeso(totalPaid || 0)}
               </p>
             </div>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 2xl:h-9 2xl:w-9">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 lg:h-8 lg:w-8 2xl:h-9 2xl:w-9">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
             </div>
           </div>
 
           <div
-            className={`flex items-center justify-between rounded-2xl p-3 2xl:p-4 ${
+            className={`flex items-center justify-between rounded-2xl p-2 lg:p-3 2xl:p-4 ${
               remaining > 0 ? "bg-amber-50" : "bg-emerald-50"
             }`}
           >
@@ -274,7 +278,7 @@ const CheckOutModal = ({
               </p>
             </div>
             <div
-              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full 2xl:h-9 2xl:w-9 ${
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full lg:h-8 lg:w-8 2xl:h-9 2xl:w-9 ${
                 remaining > 0 ? "bg-amber-100" : "bg-emerald-100"
               }`}
             >
@@ -288,87 +292,125 @@ const CheckOutModal = ({
         </div>
 
         {!canComplete ? (
-          <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
-            <div className="flex flex-col rounded-2xl border border-gray-100 p-4">
-              <SectionHeader
-                icon={ClipboardList}
-                iconBg="bg-indigo-50"
-                iconColor="text-indigo-500"
-                label="Current Payments"
-              />
-
-              {selectedPaymentMethod && selectedPaymentMethod.length > 0 ? (
-                <div className="grid grid-cols-1 gap-2">
-                  {selectedPaymentMethod.map((payment, index) => {
-                    const method = paymentMethods?.find(
-                      (m) => m.payMetId === payment.payMetId,
-                    );
-                    const details = getPaymentIcon(method?.payMetName || "");
-                    const Icon = details.icon || Banknote;
-                    return (
-                      <div
-                        className="flex items-center justify-between rounded-lg bg-slate-50 p-3"
-                        key={index}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`rounded-lg p-2 ${details.color} text-white`}
-                          >
-                            <Icon className="h-2 w-2 2xl:h-4 2xl:w-4" />
-                          </div>
-                          <div>
-                            <span className="text-[9px] font-medium text-slate-800 2xl:text-sm">
-                              {method?.payMetName}
-                            </span>
-                            {payment.paymentReference && (
-                              <p className="text-[9px] text-slate-500 2xl:text-xs">
-                                {payment.paymentReference}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-semibold text-slate-800 2xl:text-sm">
-                            {formatPeso(payment.salesPaymentAmount)}
-                          </span>
-                          <IconButton
-                            bg="red"
-                            icon={<X className="h-4 w-4" />}
-                            label="Remove"
-                            onClick={() => {
-                              removePayment(index);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
-                  <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full bg-gray-50">
-                    <FileText className="h-6 w-6 text-gray-300" />
-                  </div>
-                  <p className="text-sm font-semibold text-gray-700">
-                    No payments added yet
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    Add a payment to get started.
-                  </p>
-                </div>
-              )}
+          <div className="flex flex-col gap-2 lg:flex-1 lg:gap-4">
+            {/* Mobile/tablet tab switcher - both panels show side by side on lg+ */}
+            <div className="flex gap-2 lg:hidden">
+              <button
+                type="button"
+                onClick={() => setMobilePaymentView("current")}
+                className={`flex-1 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
+                  mobilePaymentView === "current"
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                    : "border-gray-200 text-gray-500"
+                }`}
+              >
+                Current Payments
+                {selectedPaymentMethod && selectedPaymentMethod.length > 0
+                  ? ` (${selectedPaymentMethod.length})`
+                  : ""}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobilePaymentView("add")}
+                className={`flex-1 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
+                  mobilePaymentView === "add"
+                    ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+                    : "border-gray-200 text-gray-500"
+                }`}
+              >
+                Add Payment
+              </button>
             </div>
 
-            <div className="rounded-2xl border border-gray-100 p-4">
-              <SectionHeader
-                icon={Wallet}
-                iconBg="bg-indigo-50"
-                iconColor="text-indigo-500"
+            <div className="grid grid-cols-1 gap-2 lg:flex-1 lg:grid-cols-2 lg:gap-4">
+              <div
+                className={`flex flex-col rounded-2xl border border-gray-100 p-3 lg:p-4 ${
+                  mobilePaymentView === "current" ? "flex" : "hidden lg:flex"
+                }`}
+              >
+                <SectionHeader
+                  icon={ClipboardList}
+                  iconBg="bg-indigo-50"
+                  iconColor="text-indigo-500"
+                  label="Current Payments"
+                />
+
+                {selectedPaymentMethod && selectedPaymentMethod.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-2">
+                    {selectedPaymentMethod.map((payment, index) => {
+                      const method = paymentMethods?.find(
+                        (m) => m.payMetId === payment.payMetId,
+                      );
+                      const details = getPaymentIcon(method?.payMetName || "");
+                      const Icon = details.icon || Banknote;
+                      return (
+                        <div
+                          className="flex items-center justify-between rounded-lg bg-slate-50 p-3"
+                          key={index}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`rounded-lg p-2 ${details.color} text-white`}
+                            >
+                              <Icon className="h-2 w-2 2xl:h-4 2xl:w-4" />
+                            </div>
+                            <div>
+                              <span className="text-[9px] font-medium text-slate-800 2xl:text-sm">
+                                {method?.payMetName}
+                              </span>
+                              {payment.paymentReference && (
+                                <p className="text-[9px] text-slate-500 2xl:text-xs">
+                                  {payment.paymentReference}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] font-semibold text-slate-800 2xl:text-sm">
+                              {formatPeso(payment.salesPaymentAmount)}
+                            </span>
+                            <IconButton
+                              bg="red"
+                              icon={<X className="h-4 w-4" />}
+                              label="Remove"
+                              onClick={() => {
+                                removePayment(index);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-1 py-4 text-center lg:py-10">
+                    <div className="mb-2 hidden h-14 w-14 items-center justify-center rounded-full bg-gray-50 lg:flex">
+                      <FileText className="h-6 w-6 text-gray-300" />
+                    </div>
+                    <p className="text-sm font-semibold text-gray-700">
+                      No payments added yet
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Add a payment to get started.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className={`rounded-2xl border border-gray-100 p-3 lg:p-4 ${
+                  mobilePaymentView === "add" ? "block" : "hidden lg:block"
+                }`}
+              >
+                <SectionHeader
+                  icon={Wallet}
+                  iconBg="bg-indigo-50"
+                  iconColor="text-indigo-500"
                 label="Add Payment"
               />
 
-              <div className="flex h-full flex-col gap-3">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="flex flex-col gap-2 lg:h-full lg:gap-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                   {paymentMethods?.map((payment) => {
                     const { icon, color } = getPaymentIcon(
                       payment.payMetName,
@@ -402,18 +444,18 @@ const CheckOutModal = ({
                             };
                           });
                         }}
-                        className={`flex flex-col items-center justify-center rounded-2xl border-2 p-2 transition-all 2xl:p-4 ${
+                        className={`flex items-center gap-2 rounded-xl border-2 px-2 py-1.5 transition-all lg:flex-col lg:justify-center lg:gap-0 lg:rounded-2xl lg:p-2 lg:text-center 2xl:p-4 ${
                           selectedMethod?.payMetId === payment.payMetId
                             ? "border-emerald-500 bg-emerald-50"
                             : "border-slate-200 hover:border-slate-300"
                         }`}
                       >
                         <div
-                          className={`mb-2 rounded-lg p-2 ${color} text-white`}
+                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg lg:mb-2 lg:h-auto lg:w-auto lg:p-2 ${color} text-white`}
                         >
                           <Icon className="h-3 w-3 2xl:h-5 2xl:w-5" />
                         </div>
-                        <span className="text-[9px] font-medium text-slate-700 2xl:text-sm">
+                        <span className="truncate text-[10px] font-medium text-slate-700 2xl:text-sm">
                           {payment.payMetName}
                         </span>
                       </button>
@@ -479,8 +521,9 @@ const CheckOutModal = ({
               </div>
             </div>
           </div>
+        </div>
         ) : (
-          <div className="rounded-2xl border border-gray-100 p-4">
+          <div className="rounded-2xl border border-gray-100 p-3 lg:p-4">
             <SectionHeader
               icon={ClipboardList}
               iconBg="bg-indigo-50"
@@ -539,27 +582,39 @@ const CheckOutModal = ({
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold text-gray-600 xl:text-sm">
+        <div className="flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={() => setShowRemarksMobile((prev) => !prev)}
+            className="text-left text-xs font-semibold text-gray-600 lg:hidden"
+          >
+            {showRemarksMobile ? "− Hide remarks" : "+ Add remarks (optional)"}
+          </button>
+
+          <label className="hidden text-xs font-semibold text-gray-600 lg:block xl:text-sm">
             Order Remarks (optional)
           </label>
-          <Textarea
-            label={""}
-            sizes="sm"
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            name="remarks"
-          />
+
+          <div className={showRemarksMobile ? "block" : "hidden lg:block"}>
+            <Textarea
+              label={""}
+              sizes="sm"
+              rows={2}
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              name="remarks"
+            />
+          </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
+      <div className="flex justify-end gap-2 border-t border-gray-100 pt-2 lg:gap-3 lg:pt-4">
         <Button
           label="Cancel"
           size="md"
           color="secondary"
-          className="w-auto px-6"
+          className="flex-1 sm:w-auto sm:flex-none sm:px-6"
           onClick={onClose}
           disabled={isConfirming}
         />

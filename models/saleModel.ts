@@ -1116,14 +1116,22 @@ export const selectSalesByProductVariant = async ({
       pv.prodVarName,
       p.prodId,
       p.prodName,
-      SUM(si.salesItemQuantity) AS totalQtySold,
-      SUM(si.salesItemSubtotal) AS totalSales,
+      SUM(si.salesItemQuantity - COALESCE(sir.refundedQty, 0)) AS totalQtySold,
+      SUM(si.salesItemSubtotal - COALESCE(sir.refundedAmount, 0)) AS totalSales,
       COUNT(DISTINCT si.salesId) AS totalTransactions
     FROM SalesItems si
     INNER JOIN Sales s ON s.salesId = si.salesId
     LEFT JOIN Stores st ON st.storeId = s.storeId
     LEFT JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
     LEFT JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN (
+      SELECT
+        salesItemId,
+        SUM(salesRefItemQty) AS refundedQty,
+        SUM(salesRefItemQty * salesRefItemPrice) AS refundedAmount
+      FROM SalesItemRefunds
+      GROUP BY salesItemId
+    ) sir ON sir.salesItemId = si.salesItemId
     WHERE 1=1
   `;
 
