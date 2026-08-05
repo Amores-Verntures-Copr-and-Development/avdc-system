@@ -2,6 +2,7 @@ import Button from "@/components/shared/Button";
 import IconButton from "@/components/shared/IconButton";
 import Popup from "@/components/shared/Popup";
 import Table, { Column } from "@/components/shared/Table";
+import Textarea from "@/components/shared/TextArea";
 import {
   CreatePurchaseOrderFormDto,
   CreatePurchaseOrderItemDto,
@@ -38,6 +39,15 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     useState<DisplayTotalOrderItem | null>(null);
   const [orderItem, setOrderItem] = useState<DisplayTotalOrderItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [description, setDescription] = useState("");
+
+  const currentMonthName = new Date().toLocaleString("en-US", {
+    month: "long",
+  });
+  const descriptionSuggestions = [
+    `${currentMonthName} - Weekly`,
+    `${currentMonthName} - 2 Weeks`,
+  ];
   const { data: itemResponse = { data: [] }, isLoading: loading } = useSWR<{
     data: DisplayGroupedRequestItem[];
   }>(
@@ -179,7 +189,7 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
 
       const purchaseFormData: CreatePurchaseOrderFormDto = {
         poCreatedBy: user?.userId ?? 0,
-        poDescription: "",
+        poDescription: description,
         poNumber: "",
         purchaseOrderItems: purchaseItems,
         purchaseOrderRequest: data.map((req) => ({
@@ -282,6 +292,35 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
 
   return (
     <div className="flex flex-col h-full">
+      {/* Description */}
+      <div className="flex flex-col gap-2 border-b border-gray-100 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <label className="text-xs font-semibold text-gray-700">
+            Description (optional)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {descriptionSuggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setDescription(suggestion)}
+                className="rounded-full border border-gray-200 px-3 py-1 text-[10px] font-medium text-gray-600 transition hover:border-primary-1 hover:text-primary-1"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+        <Textarea
+          label=""
+          sizes="sm"
+          rows={2}
+          placeholder={`e.g. ${currentMonthName} - 2 Weeks`}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+      </div>
+
       {/* Scrollable Table Section */}
       <div className="flex-1 overflow-y-auto p-4">
         <Table

@@ -19,7 +19,8 @@ import { UserAuth } from "@/hooks/useSession";
 import ShowPOByRequest from "./ShowPOByRequest";
 import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/shared/Button";
-import { ArrowLeft, Clock } from "lucide-react";
+import Textarea from "@/components/shared/TextArea";
+import { ArrowLeft, Check, Clock, Pencil, X } from "lucide-react";
 import ShowAllIItems from "./ShowAllIItems";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import SupplierView from "./SupplierView";
@@ -44,6 +45,38 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
   const [showPage, setShowPage] = useState<
     "status" | "all" | "request" | "supplier"
   >("status");
+  const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState(
+    data?.poDescription ?? "",
+  );
+  const [isSavingDescription, setIsSavingDescription] = useState(false);
+
+  const handleSaveDescription = async () => {
+    if (!data?.poId) return;
+
+    setIsSavingDescription(true);
+    try {
+      const result = await fetch(`/api/purchase-order`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          controller: "description",
+          data: { poId: data.poId, poDescription: descriptionDraft },
+        }),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(res.message || "Failed to update description");
+      }
+      toast.success("Description updated successfully!");
+      setIsEditingDescription(false);
+      mutateInventory();
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to update description");
+    } finally {
+      setIsSavingDescription(false);
+    }
+  };
   const api =
     data?.poStatus === "pending"
       ? `/api/purchase-order/po-items/${data?.poId}`
@@ -483,6 +516,63 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
             color="secondary"
           />
         </div>
+      </div>
+
+      <div className="mt-2 mb-1">
+        {isEditingDescription ? (
+          <div className="flex flex-col gap-2">
+            <Textarea
+              label=""
+              sizes="sm"
+              rows={2}
+              placeholder="Add a description for this purchase order..."
+              value={descriptionDraft}
+              onChange={(e) => setDescriptionDraft(e.target.value)}
+              disabled={isSavingDescription}
+            />
+            <div className="flex gap-2">
+              <Button
+                size="xs"
+                color="primary"
+                icon={Check}
+                label="Save"
+                className="w-auto px-4"
+                onClick={handleSaveDescription}
+                loading={isSavingDescription}
+              />
+              <Button
+                size="xs"
+                color="secondary"
+                icon={X}
+                label="Cancel"
+                className="w-auto px-4"
+                onClick={() => {
+                  setDescriptionDraft(data?.poDescription ?? "");
+                  setIsEditingDescription(false);
+                }}
+                disabled={isSavingDescription}
+              />
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setDescriptionDraft(data?.poDescription ?? "");
+              setIsEditingDescription(true);
+            }}
+            className="group flex items-start gap-1.5 text-left"
+          >
+            <p
+              className={`text-[10px] xl:text-xs ${
+                data?.poDescription ? "text-gray-500" : "text-gray-400 italic"
+              }`}
+            >
+              {data?.poDescription || "No description - click to add one"}
+            </p>
+            <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-gray-300 opacity-0 transition group-hover:opacity-100" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden">

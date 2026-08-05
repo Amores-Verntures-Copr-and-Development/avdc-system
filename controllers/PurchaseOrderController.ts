@@ -15,6 +15,7 @@ import { processCreatePO } from "@/services/purchase/process-create-po";
 import { processDeliverItemToStore } from "@/services/purchase/process-deliver-po-store";
 import { processReceivedPO } from "@/services/purchase/process-received-purchase";
 import { processSendPO } from "@/services/purchase/process-sent-purchase";
+import { updatePurchase } from "@/services/purchase/update-purchase-order";
 import {
   createPurchaseOrderItem,
   createPurchaseOrderItemWithSupplier,
@@ -243,6 +244,13 @@ export const updatePurchaseOrder = async (
     if (controller === "completed") {
       await processCompletePO(data);
       message = `Purchase Order ${data.poNumber} successfully completed!`;
+    }
+    if (controller === "description") {
+      await updatePurchase({
+        keyFields: ["poId"],
+        updates: [{ poId: data.poId, poDescription: data.poDescription }],
+      });
+      message = "Purchase Order description updated successfully!";
     }
 
     return {

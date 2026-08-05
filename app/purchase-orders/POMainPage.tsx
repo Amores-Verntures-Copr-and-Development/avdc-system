@@ -18,6 +18,15 @@ const purchaseOrderColumns: Column<PurchaseOrders>[] = [
       </span>
     ),
   },
+  {
+    name: "Description",
+    key: "poDescription",
+    selector: (row) => (
+      <span className="block max-w-[200px] truncate text-[10px] text-gray-500 sm:text-xs">
+        {row.poDescription || "-"}
+      </span>
+    ),
+  },
 
   { name: "Created By", key: "poCreatedByName" },
   {

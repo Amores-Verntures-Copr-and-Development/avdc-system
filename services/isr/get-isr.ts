@@ -32,9 +32,6 @@ export async function getISRUserInfoById(userId: number) {
     });
     if (isRequestHandler.data.length > 0) {
     }
-    console.log(isPurchaser.data);
-    console.log(isRequestHandler.data);
-    console.log({ isrIds });
     return {
       isr: [],
       purchaser: [],
