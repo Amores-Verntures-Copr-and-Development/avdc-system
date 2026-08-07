@@ -14,7 +14,7 @@ import { createInventoryMovement } from "@/services/inventory/inventory-movement
 export async function processDeductReceiveItem(data: DeductReceiveDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
-
+  let checkRequestItems: any = [];
   try {
     await connection.beginTransaction();
     if (Number(data.requestItems.reqItemReceived) < data.deductReceive) {
@@ -41,27 +41,35 @@ export async function processDeductReceiveItem(data: DeductReceiveDto) {
       reqItemId: requestItemUpdate.reqItemId!,
     });
 
-    const checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
-      connection,
-      poItemId: poItems[0].poItemId,
-    });
-    const sumOfOrderReceived = checkRequestItems.reduce((sumItems, i) => {
-      return sumItems + Number(i.reqItemReceived);
-    }, 0);
-    const requestItemsIsAllDelivered = checkRequestItems.every((req) =>
-      ["received", "complete"].includes(req.reqItemStatus),
-    );
-    if (requestItemsIsAllDelivered) {
-      await updatePurchaseOrderItems({
+    // No linked PO item (e.g. request was never actually ordered) - skip the
+    // PO reconciliation step and just deduct the request/inventory below.
+    if (poItems && poItems.length > 0) {
+      checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
         connection,
-        updates: [
-          {
-            poItemId: poItems[0].poItemId,
-            poItemOrderedQty: Number(sumOfOrderReceived),
-          },
-        ],
-        keyFields: ["poItemId"],
+        poItemId: poItems[0].poItemId,
       });
+
+      const sumOfOrderReceived = checkRequestItems.reduce(
+        (sumItems: any, i: any) => {
+          return sumItems + Number(i.reqItemReceived);
+        },
+        0,
+      );
+      const requestItemsIsAllDelivered = checkRequestItems.every((req: any) =>
+        ["received", "complete"].includes(req.reqItemStatus),
+      );
+      if (requestItemsIsAllDelivered) {
+        await updatePurchaseOrderItems({
+          connection,
+          updates: [
+            {
+              poItemId: poItems[0].poItemId,
+              poItemOrderedQty: Number(sumOfOrderReceived),
+            },
+          ],
+          keyFields: ["poItemId"],
+        });
+      }
     }
     const inventoryItem = await findInventoryItemsByField({
       connection: connection,
@@ -98,7 +106,9 @@ export async function processDeductReceiveItem(data: DeductReceiveDto) {
     });
     await connection.commit();
   } catch (e) {
+    console.log(e);
     await connection.rollback();
+    throw e;
   } finally {
     connection.release();
   }

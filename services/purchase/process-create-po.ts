@@ -15,6 +15,10 @@ import { updateRequests } from "../request/update-request";
 import { Request } from "@/types/request";
 
 export async function processCreatePO(data: CreatePurchaseOrderFormDto) {
+  if (!data.purchaseOrderItems || data.purchaseOrderItems.length === 0) {
+    throw new Error("Purchase order must have at least one item");
+  }
+
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
   try {

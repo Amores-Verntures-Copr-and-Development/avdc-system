@@ -49,10 +49,10 @@ export const createPurchaseOrder = async (data: CreatePurchaseOrderFormDto) => {
       success: true,
       message: "Purchase order created successfully",
     };
-  } catch (e) {
+  } catch (e: any) {
     return {
       success: false,
-      message: "Failed to create purchase order",
+      message: e?.message || "Failed to create purchase order",
       error: e,
     };
   }

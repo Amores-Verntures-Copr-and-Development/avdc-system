@@ -11,6 +11,7 @@ interface POStatusInfo {
   bgClass: string;
   textClass: string;
   borderClass: string;
+  dotClass: string;
 }
 
 export function getPOStatusInfo(status: POStatus): POStatusInfo {
@@ -21,6 +22,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-gray-100",
         textClass: "text-gray-700 ",
         borderClass: "border border-gray-200",
+        dotClass: "bg-gray-400",
       };
     case "approved":
       return {
@@ -28,6 +30,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-indigo-100",
         textClass: "text-blue-700 ",
         borderClass: "border border-indigo-200",
+        dotClass: "bg-indigo-500",
       };
     case "sent":
       return {
@@ -35,6 +38,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-orange-100",
         textClass: "text-yellow-700 ",
         borderClass: "border border-orange-200",
+        dotClass: "bg-amber-500",
       };
     case "received":
       return {
@@ -42,6 +46,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-purple-100",
         textClass: "text-purple-700 ",
         borderClass: "border border-purple-200",
+        dotClass: "bg-purple-500",
       };
     case "completed":
       return {
@@ -49,6 +54,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-green-200",
         textClass: "text-green-700",
         borderClass: "border border-green-300",
+        dotClass: "bg-emerald-500",
       };
     case "not_ordered":
       return {
@@ -56,6 +62,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-red-200",
         textClass: "text-red-700",
         borderClass: "border border-red-300",
+        dotClass: "bg-rose-500",
       };
     default:
       return {
@@ -63,6 +70,7 @@ export function getPOStatusInfo(status: POStatus): POStatusInfo {
         bgClass: "bg-gray-100",
         textClass: "text-gray-700",
         borderClass: "border border-gray-200",
+        dotClass: "bg-gray-400",
       };
   }
 }

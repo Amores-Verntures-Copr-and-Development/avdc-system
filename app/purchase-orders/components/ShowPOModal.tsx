@@ -17,10 +17,9 @@ import { Request } from "@/types/request";
 import { UserAuth } from "@/hooks/useSession";
 
 import ShowPOByRequest from "./ShowPOByRequest";
-import PageHeader from "@/components/shared/PageHeader";
 import Button from "@/components/shared/Button";
 import Textarea from "@/components/shared/TextArea";
-import { ArrowLeft, Check, Clock, Pencil, X } from "lucide-react";
+import { ArrowLeft, Check, ClipboardList, Pencil, X } from "lucide-react";
 import ShowAllIItems from "./ShowAllIItems";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import SupplierView from "./SupplierView";
@@ -484,98 +483,108 @@ const ShowPOModal: React.FC<ShowPOModalPros> = ({
       return false;
     }
   };
-  const { status, bgClass, textClass, borderClass } = getPOStatusInfo(
-    data?.poStatus ?? "pending",
-  );
+  const { status, bgClass, textClass, borderClass, dotClass } =
+    getPOStatusInfo(data?.poStatus ?? "pending");
   return (
     <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center">
-        <PageHeader title={`${data?.poNumber}`} subtitle={"Purchase Order"} />
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex">
+      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-pink-50">
+            <ClipboardList className="h-5 w-5 text-primary-1" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-gray-900 xl:text-lg">
+              {data?.poNumber}
+            </h1>
+
+            {isEditingDescription ? (
+              <div className="mt-2 flex flex-col gap-2">
+                <Textarea
+                  label=""
+                  sizes="sm"
+                  rows={2}
+                  placeholder="Add a description for this purchase order..."
+                  value={descriptionDraft}
+                  onChange={(e) => setDescriptionDraft(e.target.value)}
+                  disabled={isSavingDescription}
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="xs"
+                    color="primary"
+                    icon={Check}
+                    label="Save"
+                    className="w-auto px-4"
+                    onClick={handleSaveDescription}
+                    loading={isSavingDescription}
+                  />
+                  <Button
+                    size="xs"
+                    color="secondary"
+                    icon={X}
+                    label="Cancel"
+                    className="w-auto px-4"
+                    onClick={() => {
+                      setDescriptionDraft(data?.poDescription ?? "");
+                      setIsEditingDescription(false);
+                    }}
+                    disabled={isSavingDescription}
+                  />
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setDescriptionDraft(data?.poDescription ?? "");
+                  setIsEditingDescription(true);
+                }}
+                className="group mt-0.5 flex items-start gap-1.5 text-left"
+              >
+                <p
+                  className={`text-[10px] xl:text-xs ${
+                    data?.poDescription
+                      ? "text-gray-500"
+                      : "text-gray-400 italic"
+                  }`}
+                >
+                  {data?.poDescription || "No description - click to add one"}
+                </p>
+                <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-gray-300 opacity-0 transition group-hover:opacity-100" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+          <div className="flex flex-col items-start gap-1 sm:items-end">
             <span
-              className={`${bgClass} px-2 py-1 ${textClass} gap-2 items-center font-semibold text-[10px] 2xl:text-xs ${borderClass} flex rounded-xl`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold capitalize 2xl:text-xs ${bgClass} ${textClass} ${borderClass}`}
             >
-              <Clock className="w-2.5 h-2.5 font-se" /> {status}
+              <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+              {status.replace("_", " ")}
+            </span>
+            <span className="text-[9px] text-gray-400 2xl:text-xs">
+              Updated{" "}
+              {formatDateToWords(data?.poUpdatedAt ?? "", {
+                showHour: true,
+                showMinute: true,
+              })}
             </span>
           </div>
-          <span className="text-[8px] 2xl:text-xs text-gray-500 ">
-            Last updated:
-            {formatDateToWords(data?.poUpdatedAt ?? "", {
-              showHour: true,
-              showMinute: true,
-            })}
-          </span>
-        </div>
-        <div>
+
           <Button
             size="sm"
             onClick={onClose}
             label="Back to Main"
             icon={ArrowLeft}
             color="secondary"
+            className="w-auto px-4"
           />
         </div>
       </div>
 
-      <div className="mt-2 mb-1">
-        {isEditingDescription ? (
-          <div className="flex flex-col gap-2">
-            <Textarea
-              label=""
-              sizes="sm"
-              rows={2}
-              placeholder="Add a description for this purchase order..."
-              value={descriptionDraft}
-              onChange={(e) => setDescriptionDraft(e.target.value)}
-              disabled={isSavingDescription}
-            />
-            <div className="flex gap-2">
-              <Button
-                size="xs"
-                color="primary"
-                icon={Check}
-                label="Save"
-                className="w-auto px-4"
-                onClick={handleSaveDescription}
-                loading={isSavingDescription}
-              />
-              <Button
-                size="xs"
-                color="secondary"
-                icon={X}
-                label="Cancel"
-                className="w-auto px-4"
-                onClick={() => {
-                  setDescriptionDraft(data?.poDescription ?? "");
-                  setIsEditingDescription(false);
-                }}
-                disabled={isSavingDescription}
-              />
-            </div>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setDescriptionDraft(data?.poDescription ?? "");
-              setIsEditingDescription(true);
-            }}
-            className="group flex items-start gap-1.5 text-left"
-          >
-            <p
-              className={`text-[10px] xl:text-xs ${
-                data?.poDescription ? "text-gray-500" : "text-gray-400 italic"
-              }`}
-            >
-              {data?.poDescription || "No description - click to add one"}
-            </p>
-            <Pencil className="mt-0.5 h-3 w-3 shrink-0 text-gray-300 opacity-0 transition group-hover:opacity-100" />
-          </button>
-        )}
-      </div>
-
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden mt-3">
         {isLoading ? (
           <LoaderComponent />
         ) : showPage === "status" ? (

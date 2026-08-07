@@ -1402,6 +1402,17 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         bg={"green"}
                         icon={<Plus className="w-4 h-4" />}
                       />
+                      {Number(row.reqItemReceived) === 0 && (
+                        <IconButton
+                          onClick={function (): void {
+                            setSelectedRowItem(row);
+                            setShowNotOrderedConfirmation(true);
+                          }}
+                          label={"Convert to Not Ordered"}
+                          bg={"red"}
+                          icon={<Trash className="w-4 h-4" />}
+                        />
+                      )}
                     </div>
                   )}
                 </div>

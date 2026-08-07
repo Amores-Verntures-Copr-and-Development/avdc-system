@@ -18,6 +18,7 @@ import { formatPeso } from "@/utils/formatPeso";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import { XCircle, ClipboardCheck, Send, RefreshCcw } from "lucide-react";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 import ConvertSideModal from "./ConvertSideModal";
 import { DisplayItemConversionFromTo } from "@/dtos/items.dto";
@@ -175,18 +176,25 @@ const CreatePOModal: React.FC<CreatePOModalPros> = ({
     ...baseColumns.slice(5), // totals and editable fields
   ];
   const handleSubmit = async () => {
+    const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem
+      .filter((i) => Number(i.poItemOrder) !== 0)
+      .map((item) => ({
+        poId: 0,
+        poItemReceivedQty: 0,
+        poItemOrderedQty: item.poItemOrder,
+        itemId: item.itemId,
+        unitPrice: item.itemPrice,
+      }));
+
+    if (purchaseItems.length === 0) {
+      toast.error(
+        "Enter a quantity to order for at least one item (or use Fillup Order) before submitting!",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const purchaseItems: CreatePurchaseOrderItemDto[] = orderItem
-        .filter((i) => Number(i.poItemOrder) !== 0)
-        .map((item) => ({
-          poId: 0,
-          poItemReceivedQty: 0,
-          poItemOrderedQty: item.poItemOrder,
-          itemId: item.itemId,
-          unitPrice: item.itemPrice,
-        }));
-
       const purchaseFormData: CreatePurchaseOrderFormDto = {
         poCreatedBy: user?.userId ?? 0,
         poDescription: description,
