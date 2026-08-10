@@ -52,6 +52,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesCreatedBy: data.salesCreatedBy,
       salesRemarks: data.salesRemarks,
       salesSource: data.salesSource ?? "pos",
+      salesCreatedAt: data.salesCreatedAt,
     };
 
     const salesId = await createSale({ connection, data: salesData });

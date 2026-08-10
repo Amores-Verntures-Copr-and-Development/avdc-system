@@ -15,10 +15,12 @@ import {
   Eye,
   FileText,
   PhilippinePeso,
+  Plus,
   Store,
   Users,
 } from "lucide-react";
 import React, { useCallback, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 import SalesCard from "./components/SalesCard";
 
@@ -33,6 +35,7 @@ import { useDebounce } from "@/hooks/useDebounce";
 
 import SalesReportModal from "./components/SalesReportModal";
 import SalesByProductVariantTab from "./components/SalesByProductVariantTab";
+import CreateSalesModal from "./components/CreateSalesModal";
 import { FilterConfig, FilterOption } from "@/components/shared/FilterDropDown";
 import { PaymentMethods } from "@/types/payment-methods";
 import SalesStatusBadge from "./components/SalesStatusBadge";
@@ -62,6 +65,8 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const page = searchParams.get("page") || "1";
   const limitNumber = Number(limit) || 100; // default limit
   const pageNumber = Number(page) || 1;
+
+  const selectedStoreIdFromUrl = searchParams.get("store");
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
@@ -536,6 +541,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
   const router = useRouter();
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
+  const [showCreateSales, setShowCreateSales] = useState(false);
+  const [createSalesStoreId, setCreateSalesStoreId] = useState<number | null>(
+    null,
+  );
   const [showModal, setShowModal] = useState<"report" | "export" | null>(null);
   const [isReport, setIsReport] = useState<"Customer" | "Sales" | null>(null);
   const { stores } = useStores({
@@ -558,6 +567,16 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
 
   const defaultStoreFromUrl = searchParams.get("store") || "";
+
+  const canCreateSalesRole = !["staff", "supervisor", "purchaser"].includes(
+    user?.empPosition ?? "",
+  );
+  const needsStoreSelection = !hasStore || isAdmin;
+  const hasStoreSelected =
+    !needsStoreSelection ||
+    Boolean(selectedStoreId) ||
+    Boolean(defaultStoreFromUrl);
+  const canCreateSales = canCreateSalesRole && hasStoreSelected;
 
   const detailsUrl =
     user && storeId
@@ -688,13 +707,39 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     },
     [router, salesFilterConfig],
   );
+
+  const handleClickCreateSales = () => {
+    const resolvedStoreId =
+      selectedStoreId ??
+      (Array.isArray(stores)
+        ? stores.find((s) => s.storeName === defaultStoreFromUrl)?.storeId
+        : undefined) ??
+      (storeId || undefined);
+
+    if (!resolvedStoreId) {
+      toast.error("Select a store first!");
+      return;
+    }
+
+    setCreateSalesStoreId(resolvedStoreId);
+    setShowCreateSales(true);
+  };
+
   return (
     <PageLayout className="p-2 gap-1 2xl:gap-2">
       <>
         <div className="flex justify-between">
           {" "}
-          <PageHeader title={"Sales"} subtitle="Manage sales" />{" "}
-          <div className="">
+          <PageHeader title={"Sales"} subtitle="Manage sales" />
+          <div className="flex gap-2">
+            {canCreateSales && (
+              <Button
+                label={"Create Sales"}
+                size="sm"
+                icon={Plus}
+                onClick={handleClickCreateSales}
+              />
+            )}
             <Button
               label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
               size="sm"
@@ -865,6 +910,28 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
           </div>
         </div>
       </>
+      <Modal
+        title="Create Sales"
+        isOpen={showCreateSales}
+        onClose={() => {
+          setShowCreateSales(false);
+          setCreateSalesStoreId(null);
+        }}
+        size="xl"
+        className="h-[95%]"
+      >
+        {createSalesStoreId && (
+          <CreateSalesModal
+            storeId={createSalesStoreId}
+            user={user}
+            onCreated={() => mutateSales()}
+            onClose={() => {
+              setShowCreateSales(false);
+              setCreateSalesStoreId(null);
+            }}
+          />
+        )}
+      </Modal>
       <Modal
         title={
           showModal === "report"

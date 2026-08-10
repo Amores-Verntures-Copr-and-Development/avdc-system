@@ -39,6 +39,9 @@ export type CreateSaleDto = Pick<
     salesPayments?: CreateSalePaymentDto[];
     saleDiscounts?: CreateSalesDiscount[];
     vouchers?: CreateSalesVoucherDto[];
+    // Backdates the sale record (e.g. manually logging a past sale) - defaults
+    // to CURRENT_TIMESTAMP at the DB level when omitted.
+    salesCreatedAt?: string;
     // human-readable Order number, only set when salesSource === "order" - not persisted, just carried through for the receipt email
     orderNumber?: string;
     // Order's delivery fee, only set when salesSource === "order" - not persisted, just carried through for the receipt email

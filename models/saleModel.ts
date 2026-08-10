@@ -315,8 +315,20 @@ export const insertSales = async ({
   data: CreateSaleDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Sales(salesNo,salesInvoice,salesTotalAmount,salesSubTotal,salesTotalPaid,salesCreatedBy,storeId,customerId,salesStatus,salesRemarks,salesSource) VALUES(?,?,?,?,?,?,?,?,?,?,?)`;
-  const [results] = await pool.execute<ResultSetHeader>(sql, [
+  const columns = [
+    "salesNo",
+    "salesInvoice",
+    "salesTotalAmount",
+    "salesSubTotal",
+    "salesTotalPaid",
+    "salesCreatedBy",
+    "storeId",
+    "customerId",
+    "salesStatus",
+    "salesRemarks",
+    "salesSource",
+  ];
+  const values: any[] = [
     data.salesNo,
     data.salesInvoice,
     data.salesTotalAmount,
@@ -328,7 +340,15 @@ export const insertSales = async ({
     data.salesStatus,
     data.salesRemarks || "",
     data.salesSource ?? "pos",
-  ]);
+  ];
+
+  if (data.salesCreatedAt) {
+    columns.push("salesCreatedAt");
+    values.push(data.salesCreatedAt);
+  }
+
+  const sql = `INSERT INTO Sales(${columns.join(",")}) VALUES(${columns.map(() => "?").join(",")})`;
+  const [results] = await pool.execute<ResultSetHeader>(sql, values);
   return results.insertId;
 };
 
