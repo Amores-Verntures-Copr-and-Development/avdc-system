@@ -19,6 +19,7 @@ import { Discounts } from "@/types/discount";
 import { PaymentMethods } from "@/types/payment-methods";
 import { ApiResponse } from "@/types/api";
 import { SalesPaymentStatus, SalesStatus } from "@/types/sales";
+import { formatDateForMySQL } from "@/utils/formatDateToWords";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import { Check, Layers, Minus, Plus, Trash2, X } from "lucide-react";
@@ -428,7 +429,16 @@ const CreateSalesModal = ({
       salesStatus: SalesStatus.COMPLETED,
       salesRemarks: draft.notes,
       salesSource: "pos",
-      salesCreatedAt: `${draft.salesDate} ${now.toTimeString().slice(0, 8)}`,
+      // Same conversion EditSalesPage uses for its date field: build a local
+      // wall-clock Date (date picked + current time), then convert to UTC
+      // before sending, since salesCreatedAt is stored as UTC and re-converted
+      // via CONVERT_TZ(+00:00, +08:00) everywhere else it's read - sending the
+      // raw local string here shifted the displayed date/time by 8 hours.
+      salesCreatedAt: formatDateForMySQL(
+        new Date(
+          `${draft.salesDate}T${now.toTimeString().slice(0, 8)}`,
+        ).toISOString(),
+      ),
       salesItems,
       saleDiscounts: discount
         ? [
