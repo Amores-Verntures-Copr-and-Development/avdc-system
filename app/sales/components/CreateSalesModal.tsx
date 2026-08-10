@@ -66,8 +66,25 @@ interface CreateSalesModalProps {
 
 const todayDate = () => new Date().toISOString().slice(0, 10);
 
+// crypto.randomUUID() only exists in secure contexts (HTTPS/localhost) - on
+// a plain-HTTP prod deployment (e.g. LAN-hosted over http://<ip>:port) it's
+// undefined, so calling it throws and silently aborts the "Add Sale" click
+// before any state update happens. Fall back to a UUID-shaped string built
+// from Math.random() so draft ids stay unique either way.
+const generateDraftId = (): string => {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
 const createEmptyDraft = (): DraftSale => ({
-  id: crypto.randomUUID(),
+  id: generateDraftId(),
   customer: null,
   salesDate: todayDate(),
   discountId: null,
