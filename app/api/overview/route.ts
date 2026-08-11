@@ -1,10 +1,62 @@
 import { OverviewController } from "@/controllers/OverviewController";
+import { verifyExternalDashboardSession } from "@/services/externalDashboardAccess/dashboard-session-jwt";
+import { getExternalDashboardAccessByUserId } from "@/services/externalDashboardAccess/get-external-dashboard-access";
 import { NextRequest, NextResponse } from "next/server";
 
+// Only consumer of this route is avdc-track - scoped to whichever stores
+// the logged-in dashboard user was granted, re-checked live on every
+// request (not cached in the session JWT) so a revoke or a scope change
+// from Users > External Dashboard Access takes effect immediately.
 export async function GET(req: NextRequest) {
   try {
+    const authHeader = req.headers.get("authorization") || "";
+
+    const sessionToken = authHeader.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : "";
+
+    if (!sessionToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    let userId: number;
+    try {
+      ({ userId } = verifyExternalDashboardSession(sessionToken));
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid or expired session" },
+        { status: 401 },
+      );
+    }
+
+    const access = await getExternalDashboardAccessByUserId(userId);
+    if (!access || access.edaStatus !== "active") {
+      return NextResponse.json(
+        { error: "External dashboard access has been revoked" },
+        { status: 403 },
+      );
+    }
+
+    let storeIds = access.edaIsAllStores ? undefined : access.storeIds;
+
     const { searchParams } = new URL(req.url);
-    const search = searchParams.get("search") || "";
+    const storeIdParam = searchParams.get("storeId");
+
+    if (storeIdParam) {
+      const requestedStoreId = Number(storeIdParam);
+      const isPermitted =
+        access.edaIsAllStores || access.storeIds.includes(requestedStoreId);
+
+      if (!isPermitted) {
+        return NextResponse.json(
+          { error: "Store is outside your granted access" },
+          { status: 403 },
+        );
+      }
+
+      storeIds = [requestedStoreId];
+    }
+
     const trendParam = searchParams.get("trend") || "";
     const fromParam = searchParams.get("from") || "";
     const toParam = searchParams.get("to") || "";
@@ -25,6 +77,7 @@ export async function GET(req: NextRequest) {
       from,
       to,
       notZeroSales: true,
+      storeIds,
     });
 
     if (!res.success) {

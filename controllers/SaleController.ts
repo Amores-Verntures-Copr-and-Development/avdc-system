@@ -137,6 +137,7 @@ export const getSalesByStoreId = async ({
   limit,
   method,
   noLimit,
+  excludeStatus,
 }: {
   storeId: number;
   search?: string;
@@ -149,6 +150,7 @@ export const getSalesByStoreId = async ({
   offset?: number;
   method?: string;
   noLimit?: boolean;
+  excludeStatus?: string;
 }) => {
   try {
     const data = await getSalesServices.getSales({
@@ -162,6 +164,7 @@ export const getSalesByStoreId = async ({
       limit,
       method,
       nolimit: noLimit,
+      excludeStatus,
     });
     const count = await getSalesServices.getSalesCount({
       keyFields: { storeId: storeId },
@@ -169,6 +172,7 @@ export const getSalesByStoreId = async ({
       customer,
       from,
       to,
+      excludeStatus,
     });
 
     return {

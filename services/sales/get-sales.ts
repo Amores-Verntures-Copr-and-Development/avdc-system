@@ -35,6 +35,7 @@ export const getSalesServices = {
     storeId,
     method,
     nolimit,
+    excludeStatus,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -50,6 +51,7 @@ export const getSalesServices = {
     storeId?: number;
     method?: string;
     nolimit?: boolean;
+    excludeStatus?: string;
   }) => {
     try {
       const data = await selectSales({
@@ -67,6 +69,7 @@ export const getSalesServices = {
         storeId,
         method,
         nolimit,
+        excludeStatus,
       });
       return data;
     } catch (e) {
@@ -84,6 +87,7 @@ export const getSalesServices = {
     customer,
     storeId,
     method,
+    excludeStatus,
   }: {
     keyFields?: Partial<Sales>;
     connection?: PoolConnection;
@@ -95,6 +99,7 @@ export const getSalesServices = {
     customer?: boolean;
     storeId?: number;
     method?: string;
+    excludeStatus?: string;
   }) => {
     try {
       const data = await countSales({
@@ -108,6 +113,7 @@ export const getSalesServices = {
         customerId,
         storeId,
         method,
+        excludeStatus,
       });
 
       return data;
@@ -139,6 +145,7 @@ export const getSalesServices = {
   },
   findSalesTotalsByStoreId: async ({
     storeId,
+    storeIds,
     search,
     customer,
     from,
@@ -147,6 +154,7 @@ export const getSalesServices = {
     notZeroSales,
   }: {
     storeId?: number;
+    storeIds?: number[];
     search?: string;
     customer?: boolean;
     from?: string;
@@ -155,7 +163,13 @@ export const getSalesServices = {
     notZeroSales?: boolean;
   }) => {
     try {
-      const data = await selectSalesTotalDetails({ storeId, from, to, store });
+      const data = await selectSalesTotalDetails({
+        storeId,
+        storeIds,
+        from,
+        to,
+        store,
+      });
       return data;
     } catch (e) {
       throw e;
@@ -166,12 +180,14 @@ export const getSalesServices = {
     trend,
     from,
     to,
+    storeIds,
   }: {
     trend?: "year" | "month" | "weeks" | "days";
     from?: string;
     to?: string;
+    storeIds?: number[];
   }) => {
-    return await selectSalesByTrend({ trend, from, to });
+    return await selectSalesByTrend({ trend, from, to, storeIds });
   },
 
   getSalesByProductVariant: async ({

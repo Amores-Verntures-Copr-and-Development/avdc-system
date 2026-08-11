@@ -49,12 +49,14 @@ export async function getStoreSales({
   from,
   to,
   notZeroSales,
+  storeIds,
 }: {
   from?: string;
   to?: string;
   notZeroSales?: boolean;
+  storeIds?: number[];
 }) {
-  return await selectStoreSales({ from, to, notZeroSales });
+  return await selectStoreSales({ from, to, notZeroSales, storeIds });
 }
 
 export async function findStoreByInventoryFields({

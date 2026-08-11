@@ -15,7 +15,24 @@ import {
   changeUserPassword,
   updateUserInfo,
 } from "@/services/user/update-user";
+import { resetUserPassword } from "@/services/user/reset-user-password";
 import { InterStoreRequests } from "@/types/isr";
+import { AuthUser } from "@/lib/auth/getCurrentUser";
+
+// Resetting someone else's password is more sensitive than a typical UI
+// action, so this is checked server-side rather than trusting the client
+// to only show the button to the right roles.
+function assertCanResetPasswords(actingUser: AuthUser) {
+  const canManage =
+    actingUser.userRole === "superadmin" ||
+    actingUser.userRole === "owner" ||
+    (actingUser as unknown as { empPosition?: string }).empPosition ===
+      "admin";
+
+  if (!canManage) {
+    throw new Error("Only Owner or Admin can reset a user's password");
+  }
+}
 
 export const createUser = async (data: CreateUserDto) => {
   try {
@@ -154,5 +171,32 @@ export const getUserNotInISRRequestHandlerController = async ({
     return res;
   } catch (e) {
     throw e;
+  }
+};
+
+export const resetUserPasswordController = async ({
+  userId,
+  newPassword,
+  actingUser,
+}: {
+  userId: number;
+  newPassword: string;
+  actingUser: AuthUser;
+}) => {
+  try {
+    assertCanResetPasswords(actingUser);
+
+    await resetUserPassword({ userId, newPassword });
+
+    return {
+      success: true,
+      message: "Password reset successfully!",
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: e?.message || "Failed to reset password!",
+      error: e,
+    };
   }
 };

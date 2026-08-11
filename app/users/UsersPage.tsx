@@ -5,8 +5,8 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table from "@/components/shared/Table";
-import { Edit, Plus, Trash2 } from "lucide-react";
-import React, { useState } from "react";
+import { Edit, KeyRound, Plus, Radar, Trash2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import AddUserModal from "./components/AddUserModal";
 import { CreateUserDto, DisplayUserDto } from "@/dtos/user.dto";
 
@@ -18,6 +18,10 @@ import { useSession } from "@/hooks/useSession";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import Popup from "@/components/shared/Popup";
 import ViewUserModal from "./components/ViewUserModal";
+import ExternalDashboardAccessModal from "./components/ExternalDashboardAccessModal";
+import ResetPasswordModal from "./components/ResetPasswordModal";
+import { ApiResponse } from "@/types/api";
+import { StoreInterface } from "@/types/stores";
 
 const userColumn = [
   { name: "ID", key: "userId" },
@@ -42,13 +46,37 @@ const userColumn = [
 const UserPage = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<DisplayUserDto | null>(null);
+  const [externalDashboardUser, setExternalDashboardUser] =
+    useState<DisplayUserDto | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] =
+    useState<DisplayUserDto | null>(null);
   const { user } = useSession();
+
+  // Gates both External Dashboard Access management and password resets -
+  // both hand a user standing access to something (a token, or the account
+  // itself), so both are restricted the same way, checked server-side too.
+  const isAdminOrOwner =
+    user?.userRole === "superadmin" ||
+    user?.userRole === "owner" ||
+    user?.empPosition === "admin";
 
   const {
     data: response = { data: [] },
     isLoading,
     mutate,
   } = useSWR<{ data: DisplayUserDto[] }>("/api/users/", fetcher);
+
+  const { data: storesResponse } = useSWR<ApiResponse<StoreInterface[]>>(
+    isAdminOrOwner ? "/api/stores" : null,
+    fetcher,
+  );
+  const stores = useMemo(
+    () =>
+      (storesResponse?.data ?? [])
+        .filter((s): s is StoreInterface & { storeId: number } => !!s.storeId)
+        .map((s) => ({ storeId: s.storeId, storeName: s.storeName })),
+    [storesResponse],
+  );
   const handleAddUser = async (data: CreateUserDto) => {
     if (!user) {
       toast.error("No user ID found!");
@@ -113,6 +141,26 @@ const UserPage = () => {
           showCheckBox
           renderActions={(row: DisplayUserDto) => (
             <div className="flex justify-center gap-2">
+              {isAdminOrOwner && (
+                <IconButton
+                  onClick={function (): void {
+                    setExternalDashboardUser(row);
+                  }}
+                  label={"External Dashboard Access"}
+                  bg={"gray"}
+                  icon={<Radar size={18} />}
+                />
+              )}
+              {isAdminOrOwner && (
+                <IconButton
+                  onClick={function (): void {
+                    setResetPasswordUser(row);
+                  }}
+                  label={"Reset Password"}
+                  bg={"gray"}
+                  icon={<KeyRound size={18} />}
+                />
+              )}
               <IconButton
                 onClick={function (): void {
                   console.log(row);
@@ -160,6 +208,41 @@ const UserPage = () => {
       >
         <ViewUserModal data={selectedUser} user={user} />
       </Popup>
+      <Modal
+        className="bg-white"
+        isOpen={externalDashboardUser !== null}
+        title="External Dashboard Access"
+        size="md"
+        onClose={() => {
+          setExternalDashboardUser(null);
+        }}
+      >
+        {externalDashboardUser && (
+          <ExternalDashboardAccessModal
+            userId={externalDashboardUser.userId}
+            userName={externalDashboardUser.fullName}
+            stores={stores}
+            onClose={() => setExternalDashboardUser(null)}
+          />
+        )}
+      </Modal>
+      <Modal
+        className="bg-white"
+        isOpen={resetPasswordUser !== null}
+        title="Reset Password"
+        size="sm"
+        onClose={() => {
+          setResetPasswordUser(null);
+        }}
+      >
+        {resetPasswordUser && (
+          <ResetPasswordModal
+            userId={resetPasswordUser.userId}
+            userName={resetPasswordUser.fullName}
+            onClose={() => setResetPasswordUser(null)}
+          />
+        )}
+      </Modal>
     </PageLayout>
   );
 };

@@ -221,14 +221,16 @@ export const selectStoreSales = async ({
   from,
   to,
   notZeroSales = false,
+  storeIds,
 }: {
   from?: string;
   to?: string;
   notZeroSales?: boolean;
+  storeIds?: number[];
 }) => {
   const pool = await getDBConnection();
 
-  const params: string[] = [];
+  const params: any[] = [];
 
   let salesJoin = `LEFT JOIN Sales s ON s.storeId = st.storeId`;
 
@@ -237,8 +239,14 @@ export const selectStoreSales = async ({
     params.push(from, to);
   }
 
+  let whereClause = "";
+  if (storeIds && storeIds.length > 0) {
+    whereClause = `WHERE st.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    params.push(...storeIds);
+  }
+
   const sql = `
-    SELECT 
+    SELECT
       st.storeId,
       st.storeName,
       COALESCE(
@@ -252,6 +260,7 @@ export const selectStoreSales = async ({
       FROM SalesRefunds
       GROUP BY salesId
     ) sr ON sr.salesId = s.salesId
+    ${whereClause}
     GROUP BY st.storeId, st.storeName
      ${notZeroSales ? "HAVING totalSales <> 0" : ""}
   `;

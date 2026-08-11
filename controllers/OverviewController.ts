@@ -6,14 +6,22 @@ export const OverviewController = {
     from,
     to,
     notZeroSales,
+    storeIds,
   }: {
     trend?: "year" | "month" | "weeks" | "days";
     from?: string;
     to?: string;
     notZeroSales?: boolean;
+    storeIds?: number[];
   }) => {
     try {
-      const res = await getOverview({ trend, from, to, notZeroSales });
+      const res = await getOverview({
+        trend,
+        from,
+        to,
+        notZeroSales,
+        storeIds,
+      });
 
       return {
         success: true,

@@ -52,7 +52,6 @@ export const selectUsers = async ({
         FROM Users u LEFT JOIN Employees e ON e.userId = u.userId LEFT JOIN Users us ON us.userId = u.userAddedBy ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
 
-  console.log("selectUsers result:", rows);
   return rows;
 };
 

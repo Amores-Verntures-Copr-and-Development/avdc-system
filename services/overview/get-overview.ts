@@ -6,11 +6,15 @@ export async function getOverview({
   from,
   to,
   notZeroSales,
+  storeIds,
 }: {
   trend: "year" | "month" | "month" | "weeks" | "days";
   from?: string;
   to?: string;
   notZeroSales?: boolean;
+  // Scopes every underlying query to this set of stores - omit for
+  // unrestricted (all stores).
+  storeIds?: number[];
 }) {
   try {
     //get stores
@@ -18,12 +22,14 @@ export async function getOverview({
     const salesDetails = await getSalesServices.findSalesTotalsByStoreId({
       from,
       to,
+      storeIds,
     });
-    const stores = await getStoreSales({ from, to, notZeroSales });
+    const stores = await getStoreSales({ from, to, notZeroSales, storeIds });
     const salesByTrends = await getSalesServices.getSalesByTrend({
       trend,
       from,
       to,
+      storeIds,
     });
 
     return {

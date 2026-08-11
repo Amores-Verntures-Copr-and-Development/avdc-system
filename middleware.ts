@@ -45,15 +45,20 @@ export function middleware(request: NextRequest) {
       "/api/loyverse/callback",
       "/api/loyverse/webhook",
       "/api/overview",
+      "/api/external-dashboard/auth",
       "/api/auth/customers/register/st-martins",
       "/api/auth/customers/verify-email",
       "/api/auth/customers/resend-verification",
       "/api/auth/customers/forgot-password",
       "/api/auth/customers/verify-password-reset",
       "/api/auth/customers/reset-password",
+      "/api/external-dashboard/login",
+      "/api/external-dashboard/auth",
+      "/api/external-dashboard/session",
+      "/api/external-dashboard/sales",
       "/api/auth/customers/login",
       "/api/products/st-martins-cafe",
-      "api/auth/customers/me",
+      "/api/auth/customers/me",
     ];
     if (!publicApiRoutes.includes(pathname) && !token && !customerToken) {
       return withCors(

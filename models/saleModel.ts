@@ -30,6 +30,7 @@ export const selectSales = async ({
   storeId,
   method,
   nolimit = false,
+  excludeStatus,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -45,6 +46,9 @@ export const selectSales = async ({
   storeId?: number;
   method?: string;
   nolimit?: boolean;
+  // e.g. "refunded" to hide refunded sales from a read-only view (the
+  // external dashboard) without affecting the internal admin Sales page.
+  excludeStatus?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -197,6 +201,10 @@ WHERE 1=1`;
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
   }
+  if (excludeStatus) {
+    sql += ` AND s.salesStatus != ?`;
+    params.push(excludeStatus);
+  }
   if (method) {
     sql += `
     AND EXISTS (
@@ -234,6 +242,7 @@ export const countSales = async ({
   customer,
   storeId,
   method,
+  excludeStatus,
 }: {
   keyFields: Partial<Sales>;
   connection?: PoolConnection;
@@ -245,6 +254,7 @@ export const countSales = async ({
   customerId?: number;
   storeId?: number;
   method?: string;
+  excludeStatus?: string;
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -287,6 +297,10 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   if (storeId) {
     sql += ` AND s.storeId = ? `;
     params.push(storeId);
+  }
+  if (excludeStatus) {
+    sql += ` AND s.salesStatus != ?`;
+    params.push(excludeStatus);
   }
   if (method) {
     sql += `
@@ -731,11 +745,13 @@ WHERE 1=1
 
 export const selectSalesTotalDetails = async ({
   storeId,
+  storeIds,
   store,
   from,
   to,
 }: {
   storeId?: number;
+  storeIds?: number[];
   store?: string;
   from?: string;
   to?: string;
@@ -778,6 +794,30 @@ export const selectSalesTotalDetails = async ({
 
     totalCustomerConditions.push("s.storeId = ?");
     totalCustomeparams.push(storeId);
+  }
+
+  // Scopes to a specific set of stores (e.g. an external dashboard user
+  // restricted to certain stores) rather than one store or all of them.
+  if (storeIds && storeIds.length > 0) {
+    const placeholders = storeIds.map(() => "?").join(",");
+
+    totalSaleConditions.push(`s.storeId IN (${placeholders})`);
+    totalSalesparams.push(...storeIds);
+
+    totalSalePaymentMethodConditions.push(`s.storeId IN (${placeholders})`);
+    totalSalePaymentMethodparams.push(...storeIds);
+
+    todaySalePaymentMethodConditions.push(`s.storeId IN (${placeholders})`);
+    todaySalePaymentMethodparams.push(...storeIds);
+
+    totalCountSalesconditions.push(`s.storeId IN (${placeholders})`);
+    totalCountSalesparams.push(...storeIds);
+
+    todaySalesConditions.push(`s.storeId IN (${placeholders})`);
+    todaySalesparams.push(...storeIds);
+
+    totalCustomerConditions.push(`s.storeId IN (${placeholders})`);
+    totalCustomeparams.push(...storeIds);
   }
 
   if (store) {
@@ -1043,15 +1083,17 @@ export const selectSalesByTrend = async ({
   trend,
   from,
   to,
+  storeIds,
 }: {
   trend?: "year" | "month" | "weeks" | "days";
   from?: string;
   to?: string;
+  storeIds?: number[];
 }) => {
   const pool = await getDBConnection();
 
   let periodExpression = "";
-  const params: string[] = [];
+  const params: any[] = [];
 
   switch (trend) {
     case "year":
@@ -1098,6 +1140,11 @@ export const selectSalesByTrend = async ({
   if (from && to) {
     sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
     params.push(from, to);
+  }
+
+  if (storeIds && storeIds.length > 0) {
+    sql += ` AND s.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    params.push(...storeIds);
   }
 
   sql += `
