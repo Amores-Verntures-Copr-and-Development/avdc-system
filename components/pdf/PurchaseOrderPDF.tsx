@@ -208,12 +208,15 @@ export const PurchaseOrderPDF = ({ data }: PurchaseOrderProps) => {
           <Text style={styles.colDesc}>{item.itemName}</Text>
           <Text style={styles.colUnit}>{item.itemUnit}</Text>
           <Text style={styles.colQty}>
-            {formatQuantityByUnit(item.unitPric, item.itemUnit ?? "")}
+            {formatQuantityByUnit(item.poItemOrderedQty, item.itemUnit ?? "")}
           </Text>
           <Text style={styles.colQty}>
-            {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
+            {item.poItemReceivedQty === 0 || item.poItemReceivedQty === "0.00"
               ? ""
-              : formatQuantityByUnit(item.reqItemReceived, item.itemUnit ?? "")}
+              : formatQuantityByUnit(
+                  item.poItemReceivedQty,
+                  item.itemUnit ?? "",
+                )}
           </Text>
         </View>
       ))}
@@ -242,15 +245,16 @@ export const PurchaseOrderPDF = ({ data }: PurchaseOrderProps) => {
               <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
               <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
-                  item.reqItemQuantity,
+                  item.poItemOrderedQty,
                   item.itemUnit ?? ""
                 )}
               </Text>
               <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
+                {item.poItemReceivedQty === 0 ||
+                item.poItemReceivedQty === "0.00"
                   ? ""
                   : formatQuantityByUnit(
-                      item.reqItemReceived,
+                      item.poItemReceivedQty,
                       item.itemUnit ?? ""
                     )}
               </Text>
@@ -276,15 +280,16 @@ export const PurchaseOrderPDF = ({ data }: PurchaseOrderProps) => {
               <Text style={styles.twoColUnit}>{item.itemUnit}</Text>
               <Text style={styles.twoColQty}>
                 {formatQuantityByUnit(
-                  item.reqItemQuantity,
+                  item.poItemOrderedQty,
                   item.itemUnit ?? ""
                 )}
               </Text>
               <Text style={styles.twoColQty}>
-                {item.reqItemReceived === 0 || item.reqItemReceived === "0.00"
+                {item.poItemReceivedQty === 0 ||
+                item.poItemReceivedQty === "0.00"
                   ? ""
                   : formatQuantityByUnit(
-                      item.reqItemReceived,
+                      item.poItemReceivedQty,
                       item.itemUnit ?? ""
                     )}
               </Text>

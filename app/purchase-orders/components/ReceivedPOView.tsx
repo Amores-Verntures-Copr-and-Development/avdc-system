@@ -1655,7 +1655,17 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
             ) : showROPDF === "suppliers" ? (
               <POSuppliersPDF data={data} poData={poData} />
             ) : (
-              <PurchaseOrderPDF data={poData} />
+              <PurchaseOrderPDF
+                data={
+                  poData && {
+                    ...poData,
+                    // poData.purchaseOrderItems is never populated by the
+                    // backend (only set on create) - the real items live in
+                    // this view's own `data` prop, grouped by supplier.
+                    purchaseOrderItems: data.flatMap((supp) => supp.items),
+                  }
+                }
+              />
             )}
           </PDFViewer>
         ) : (
