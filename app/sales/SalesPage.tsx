@@ -552,21 +552,36 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     hasStore,
     isAdmin,
   });
+
+  const defaultStoreFromUrl = searchParams.get("store") || "";
+
+  // selectedStoreId only gets set when the store dropdown's onChange fires -
+  // on a fresh page load/refresh with ?store= already in the URL (e.g. a
+  // link from another page, or just reloading), it's still null even though
+  // a store IS effectively selected. Falling back to resolving the URL's
+  // store name against the loaded store list keeps the Payment Method
+  // filter (and anything else keyed off the store) from silently going
+  // empty in that case.
+  const filterStoreId =
+    selectedStoreId ??
+    (Array.isArray(stores)
+      ? stores.find((s) => s.storeName === defaultStoreFromUrl)?.storeId
+      : undefined) ??
+    null;
+
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(
     hasStore
       ? `/api/payment-method/store/${user?.storeId}/`
-      : selectedStoreId
-        ? `/api/payment-method/store/${selectedStoreId}/`
+      : filterStoreId
+        ? `/api/payment-method/store/${filterStoreId}/`
         : null,
     fetcher,
   );
   const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
     (p) => ({ label: p.payMetName, value: String(p.payMetName) }),
   );
-
-  const defaultStoreFromUrl = searchParams.get("store") || "";
 
   const canCreateSalesRole = !["staff", "supervisor", "purchaser"].includes(
     user?.empPosition ?? "",
