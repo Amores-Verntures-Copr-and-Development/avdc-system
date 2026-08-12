@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
+import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
 import { ProductVariants } from "@/types/products";
 import { formatPeso } from "@/utils/formatPeso";
 
@@ -73,9 +74,7 @@ const ProductVariantCard = ({
     return true;
   })();
 
-  const imageUrl = data?.prodVarImage
-    ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${data?.prodVarImage}`
-    : "";
+  const imageUrl = getNextCloudImageUrl(data?.prodVarImage);
 
   const handleClick = () => {
     if (!hasStock) return;

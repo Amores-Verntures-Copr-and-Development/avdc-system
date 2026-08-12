@@ -58,6 +58,7 @@ export function middleware(request: NextRequest) {
       "/api/external-dashboard/sales",
       "/api/auth/customers/login",
       "/api/products/st-martins-cafe",
+      "/api/nextcloud-image",
       "/api/auth/customers/me",
     ];
     if (!publicApiRoutes.includes(pathname) && !token && !customerToken) {

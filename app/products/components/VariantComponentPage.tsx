@@ -1,4 +1,5 @@
 import BigCard from "@/components/shared/BigCard";
+import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import {
@@ -561,8 +562,7 @@ const VariantComponentPage = ({
               {data?.prodVarImage || imagePreview ? (
                 <Image
                   src={
-                    imagePreview ||
-                    `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${data?.prodVarImage}`
+                    imagePreview || getNextCloudImageUrl(data?.prodVarImage)
                   }
                   alt={data?.prodVarName ?? "Variant Image"}
                   fill

@@ -1,4 +1,5 @@
 import Button from "@/components/shared/Button";
+import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 
@@ -35,7 +36,7 @@ const columns: Column<DisplaProductVariantsDtos>[] = [
     selector: (row) =>
       row.prodVarImage ? (
         <img
-          src={`${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${row.prodVarImage}`}
+          src={getNextCloudImageUrl(row.prodVarImage)}
           alt={row.prodVarName}
           className="w-10 h-10 rounded-md object-cover"
         />
@@ -303,9 +304,7 @@ const ProductVariantPage = ({
             </div>
           }
           renderMobileCard={(row, index) => {
-            const imageUrl = row.prodVarImage
-              ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${row.prodVarImage}`
-              : "";
+            const imageUrl = getNextCloudImageUrl(row.prodVarImage);
 
             return (
               <div

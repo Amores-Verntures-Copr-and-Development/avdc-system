@@ -22,6 +22,7 @@ import { OrderItemStatus, OrderStatus, Orders } from "@/types/orders";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
+import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
 import { PDFViewer } from "@react-pdf/renderer";
 import {
   ArrowLeft,
@@ -479,9 +480,7 @@ const Page = () => {
       key: "prodVarName",
       name: "Item",
       selector: (row) => {
-        const imageUrl = row.prodVarImage
-          ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${row.prodVarImage}`
-          : "";
+        const imageUrl = getNextCloudImageUrl(row.prodVarImage);
 
         return (
           <div className="flex items-center gap-3">
@@ -814,9 +813,7 @@ const Page = () => {
                 </p>
               )}
               {itemResponse.data.map((item) => {
-                const imageUrl = item.prodVarImage
-                  ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${item.prodVarImage}`
-                  : "";
+                const imageUrl = getNextCloudImageUrl(item.prodVarImage);
 
                 return (
                   <div

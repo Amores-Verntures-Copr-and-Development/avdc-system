@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { DisplayProductsDtos } from "@/dtos/products.dto";
+import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
 import { Package, ImageIcon } from "lucide-react";
 import React from "react";
 import { OrderList } from "../PosPage";
@@ -23,9 +24,7 @@ const ProductCard = ({
     (v) => v.prodVarImage,
   )?.prodVarImage;
 
-  const imageUrl = variantImage
-    ? `${process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW}${variantImage}`
-    : "";
+  const imageUrl = getNextCloudImageUrl(variantImage);
 
   const handleSelect = () => {
     if (variantCount === 1 && data.productVariants) {

@@ -42,8 +42,18 @@ const Sidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Width alone can't tell a tablet from a small desktop window - an
+    // iPad (even iPad Pro) in landscape reports >= 1024px, which used to
+    // get the persistent desktop sidebar instead of the collapsible one.
+    // Touch-primary devices (pointer: coarse / hover: none) get the mobile
+    // treatment regardless of width; the width check remains as a floor
+    // for narrow desktop/laptop windows.
     const checkScreenSize = () => {
-      const mobile = window.innerWidth < 1024;
+      const isTouchPrimary = window.matchMedia(
+        "(hover: none), (pointer: coarse)",
+      ).matches;
+      const isNarrow = window.innerWidth < 1024;
+      const mobile = isNarrow || isTouchPrimary;
       setIsMobile(mobile);
       setIsCollapsed(mobile);
     };
@@ -108,7 +118,7 @@ const Sidebar = () => {
         <button
           type="button"
           onClick={() => setIsCollapsed(false)}
-          className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:bg-gray-50 lg:hidden"
+          className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:bg-gray-50"
         >
           <Menu className="h-5 w-5 text-gray-700" />
         </button>
@@ -116,7 +126,7 @@ const Sidebar = () => {
 
       {isMobile && !isCollapsed && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
           onClick={() => setIsCollapsed(true)}
         />
       )}
@@ -125,12 +135,13 @@ const Sidebar = () => {
         className={`
           fixed left-0 top-0 z-50 flex h-screen flex-col
           border-r border-gray-100 bg-white/95 shadow-xl backdrop-blur-md
-          transition-all duration-300 lg:static lg:shadow-none
+          transition-all duration-300
+          ${!isMobile ? "static shadow-none" : ""}
           ${
             isCollapsed
               ? isMobile
-                ? "-translate-x-full lg:translate-x-0 lg:w-15"
-                : "lg:w-15"
+                ? "-translate-x-full w-50"
+                : "w-15"
               : isMobile
                 ? "translate-x-0 w-50"
                 : "w-50"
