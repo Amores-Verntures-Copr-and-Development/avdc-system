@@ -19,8 +19,17 @@ const inFlight = new Map<string, Promise<CachedImage>>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
 async function fetchFromUpstream(file: string): Promise<CachedImage> {
-  const base = process.env.NEXT_CLOUD_IMAGE_PREVIEW || "";
-  const upstreamUrl = `${base}${file}`;
+  // Reuses the existing public var rather than a new server-only one -
+  // it's already present wherever this app runs, so there's no separate
+  // env rollout to coordinate before this works.
+  const base = process.env.NEXT_PUBLIC_NEXT_CLOUD_IMAGE_PREVIEW;
+  if (!base) {
+    throw Object.assign(new Error("Image source not configured"), {
+      status: 500,
+    });
+  }
+
+  const upstreamUrl = `${base}${encodeURIComponent(file)}`;
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -60,13 +69,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
 
+    // Reject path traversal / anything outside a plain filename.
+    if (file.includes("..") || file.includes("/")) {
+      return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+    }
+
     const cached = imageCache.get(file);
     if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
       return new NextResponse(cached.buffer, {
         status: 200,
         headers: {
           "Content-Type": cached.contentType,
-          "Cache-Control": "public, max-age=86400",
+          "Cache-Control":
+            "public, max-age=86400, stale-while-revalidate=604800",
         },
       });
     }
@@ -86,13 +101,14 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": result.contentType,
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control":
+          "public, max-age=86400, stale-while-revalidate=604800",
       },
     });
   } catch (e: any) {
     console.error("nextcloud-image proxy failed:", e);
     const isTimeout = e?.name === "AbortError";
-    const status = isTimeout ? 504 : e?.status === 404 ? 404 : 502;
+    const status = isTimeout ? 504 : (e?.status ?? 502);
 
     return NextResponse.json(
       {
