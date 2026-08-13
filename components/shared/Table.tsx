@@ -698,7 +698,7 @@ const TableInner = <T extends Record<string, any>>(
         )}
 
         <div
-          className="no-scrollbar flex-1 overflow-auto"
+          className="no-scrollbar flex-1 overflow-auto overscroll-contain"
           style={{ maxHeight }}
         >
           {renderMobileCard && (

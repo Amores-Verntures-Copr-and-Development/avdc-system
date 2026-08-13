@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, Store } from "lucide-react";
+import { Bell, Maximize2, Minimize2, Store } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
+import { useFullscreen } from "@/hooks/useFullscreen";
 import { StoreInterface } from "@/types/stores";
 import { useStores } from "@/hooks/userStore";
 import { ApiResponse } from "@/types/api";
@@ -17,6 +18,8 @@ const Header = () => {
 
   const { user, hasStore, isAdmin, refreshSession } = useSession();
   useStores({ user, hasStore, isAdmin });
+  const { isFullscreen, isSupported: isFullscreenSupported, toggle: toggleFullscreen } =
+    useFullscreen();
 
   const isSuperVisor = user?.empPosition === "supervisor";
 
@@ -116,6 +119,21 @@ const Header = () => {
 
       {/* Right */}
       <div className="flex items-center gap-1.5 sm:gap-2 xl:gap-3">
+        {isFullscreenSupported && (
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? "Exit full screen" : "Full screen"}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 sm:h-9 sm:w-9"
+          >
+            {isFullscreen ? (
+              <Minimize2 className="h-3.5 w-3.5 text-primary-1 sm:h-4 sm:w-4" />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5 text-primary-1 sm:h-4 sm:w-4" />
+            )}
+          </button>
+        )}
+
         <div className="relative" ref={notifRef}>
           <button
             type="button"

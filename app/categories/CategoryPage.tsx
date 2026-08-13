@@ -5,7 +5,7 @@ import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import Table, { Column } from "@/components/shared/Table";
-import { Edit, Plus, Trash2 } from "lucide-react";
+import { Boxes, Edit, Package, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import AddCategoryModal from "./components/AddCategoryModal";
 import { CreateCategoryDto } from "@/dtos/category.dto";
@@ -15,7 +15,7 @@ import useSWR from "swr";
 import IconButton from "@/components/shared/IconButton";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
-import { CategoryInterface } from "@/types/categories";
+import { CategoryInterface, CategoryType } from "@/types/categories";
 import { useStockRoom } from "@/hooks/useStockRoom";
 import { ApiResponse } from "@/types/api";
 import EditCategoryModal from "./components/EditCategoryModal";
@@ -33,7 +33,12 @@ const categoriesColumn: Column<CategoryInterface>[] = [
   },
 ];
 const CategoryPage = () => {
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  // null = modal closed; "item"/"product" = open, pre-filled to that type
+  // (the dropdown inside the modal can still be changed, e.g. to "services",
+  // this just gives Inventory/Product their own clear entry points).
+  const [addCategoryType, setAddCategoryType] = useState<CategoryType | null>(
+    null,
+  );
   const [showEditCategoryModal, setShowEditCategoryModal] =
     useState<CategoryInterface | null>(null);
   const [showDeleteCategoryModal, setShowDeleteCategoryModal] =
@@ -100,19 +105,24 @@ const CategoryPage = () => {
           showPagination
           uniqueIdKey="categoryId"
           renderTopActions={
-            <>
-              <div>
-                <Button
-                  icon={Plus}
-                  label="Add Category"
-                  onClick={() => {
-                    setShowAddCategoryModal(true);
-                  }}
-                  size="xs"
-                  className="font-semibold"
-                />
-              </div>
-            </>
+            <div className="flex gap-2">
+              <Button
+                icon={Boxes}
+                label="Add Inventory Category"
+                onClick={() => setAddCategoryType("item")}
+                size="xs"
+                className="font-semibold"
+              />
+              <Button
+                icon={Package}
+                label="Add Product Category"
+                onClick={() => setAddCategoryType("product")}
+                size="xs"
+                color="secondary"
+                hasBorder
+                className="font-semibold"
+              />
+            </div>
           }
           showActions
           columns={categoriesColumn}
@@ -143,15 +153,20 @@ const CategoryPage = () => {
       </div>
       <Modal
         className="bg-white"
-        title="Add Category"
-        isOpen={showAddCategoryModal}
+        title={
+          addCategoryType === "item"
+            ? "Add Inventory Category"
+            : "Add Product Category"
+        }
+        isOpen={addCategoryType !== null}
         onClose={() => {
-          setShowAddCategoryModal(false);
+          setAddCategoryType(null);
         }}
       >
         <AddCategoryModal
+          defaultType={addCategoryType ?? "item"}
           onCancel={() => {
-            setShowAddCategoryModal(false);
+            setAddCategoryType(null);
           }}
           onSubmit={handleSubmit}
         />

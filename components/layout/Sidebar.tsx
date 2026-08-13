@@ -83,7 +83,7 @@ const Sidebar = () => {
 
   if (user?.userRole === undefined) {
     return (
-      <div className="fixed left-0 top-0 h-screen w-64 border-r border-gray-100 bg-white" />
+      <div className="fixed left-0 top-0 h-dvh w-64 border-r border-gray-100 bg-white" />
     );
   }
 
@@ -132,10 +132,11 @@ const Sidebar = () => {
       )}
 
       <aside
+        style={{ willChange: "transform, width" }}
         className={`
-          fixed left-0 top-0 z-50 flex h-screen flex-col
+          fixed left-0 top-0 z-50 flex h-dvh flex-col
           border-r border-gray-100 bg-white/95 shadow-xl backdrop-blur-md
-          transition-all duration-300
+          transition-[transform,width] duration-300 ease-out
           ${!isMobile ? "static shadow-none" : ""}
           ${
             isCollapsed

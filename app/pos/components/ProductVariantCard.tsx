@@ -82,16 +82,22 @@ const ProductVariantCard = ({
     const variantName = data.prodVarName?.trim() || "";
     const productName = product.prodName?.trim() || "";
 
+    // "".split(" ") is [""], and anyString.includes("") is always true, so
+    // an empty variantName made alreadyIncluded true below and displayed
+    // the (blank) variant name alone instead of falling back to the
+    // product name - handle it explicitly instead of relying on that quirk.
     const variantWords = variantName.toLowerCase().split(" ");
     const productLower = productName.toLowerCase();
 
-    const alreadyIncluded = variantWords.some((word) =>
-      productLower.includes(word),
-    );
+    const alreadyIncluded =
+      variantName !== "" &&
+      variantWords.some((word) => productLower.includes(word));
 
-    const prodVarName = alreadyIncluded
-      ? variantName
-      : `${productName} ${variantName}`;
+    const prodVarName = !variantName
+      ? productName
+      : alreadyIncluded
+        ? variantName
+        : `${productName} ${variantName}`;
 
     addProductOrder({
       prodVarId: data.prodVarId,

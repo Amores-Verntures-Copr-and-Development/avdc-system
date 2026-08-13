@@ -1382,6 +1382,18 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                         icon={<X className="w-4 h-4" />}
                       />
                     )}
+                  {row.reqItemStatus === "not_ordered" &&
+                    findOriginalData?.reqItemStatus === "not_ordered" && (
+                      <IconButton
+                        onClick={() => {
+                          setShowReceiveItemModal(true);
+                          setSelectedRow(row);
+                        }}
+                        label={"Receive Item"}
+                        bg={"green"}
+                        icon={<PackageCheck className="w-4 h-4" />}
+                      />
+                    )}
                   {row.reqItemStatus === "received" && (
                     <div className="flex gap-1">
                       <IconButton

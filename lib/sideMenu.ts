@@ -19,6 +19,7 @@ import {
   LucideIcon,
   ListOrdered,
   Ticket,
+  Tablet,
 } from "lucide-react";
 
 export interface SideMenuSection {
@@ -60,6 +61,12 @@ export const sideMenu: SideMenuGroup[] = [
         name: "Point of Sale",
         href: "/pos",
         icon: ShoppingCart,
+        roles: ["supervisor", "staff"],
+      },
+      {
+        name: "Kiosks",
+        href: "/kiosks",
+        icon: Tablet,
         roles: ["supervisor", "staff"],
       },
     ],

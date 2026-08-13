@@ -6,12 +6,17 @@ import Header from "@/components/layout/Header";
 import { usePathname, useRouter } from "next/navigation";
 import { Toaster } from "react-hot-toast";
 import { useSession } from "@/hooks/useSession";
+import { useFullscreen } from "@/hooks/useFullscreen";
 // Create this component
 
 const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: isLoading } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+  // document.fullscreenElement is global, so this independently observes
+  // the same state as the toggle button inside KiosksPage - no need to
+  // thread it down through props/context.
+  const { isFullscreen } = useFullscreen();
 
   const isAuthPage =
     pathname === "/login" ||
@@ -41,7 +46,7 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
   // Show loading while checking session
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div className="flex items-center justify-center h-dvh">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -62,13 +67,26 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
+  // Kiosks are a customer-facing display, full-screened on a tablet once
+  // set up - only hide the staff Sidebar/Header once actually in full
+  // screen, so whoever's setting up the kiosk still has normal navigation
+  // beforehand instead of getting stranded on a shell-less page.
+  if (pathname.startsWith("/kiosks") && isFullscreen) {
+    return (
+      <div className="w-full h-dvh">
+        {children}
+        <Toaster position="top-right" />
+      </div>
+    );
+  }
+
   // Check if user needs to select a store
   if (
     (user?.empPosition === "supervisor" || user?.empPosition === "staff") &&
     !user?.storeId
   ) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-dvh bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Redirecting to store selection...</p>
@@ -79,7 +97,7 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
 
   // Regular layout for authenticated users with store
   return (
-    <div className="h-screen w-screen flex overflow-hidden">
+    <div className="h-dvh w-screen flex overflow-hidden">
       <Toaster
         position="top-right"
         toastOptions={{

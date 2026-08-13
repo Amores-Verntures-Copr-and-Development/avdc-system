@@ -3,20 +3,23 @@ import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
 import { categoryTypeOptions } from "@/constants/dropdown-options";
 import { CreateCategoryDto } from "@/dtos/category.dto";
+import { CategoryType } from "@/types/categories";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 
 interface AddCategoryModalProps {
+  defaultType?: CategoryType;
   onCancel: () => void;
   onSubmit: (data: CreateCategoryDto) => Promise<boolean>;
 }
 const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
+  defaultType = null,
   onSubmit,
   onCancel,
 }) => {
   const [categoryForm, setCategoryForm] = useState<CreateCategoryDto>({
     categoryName: "",
-    categoryType: null,
+    categoryType: defaultType,
     categoryCreatedBy: 1,
     categoryReferenceId: 0,
     categoryReferenceType: null,

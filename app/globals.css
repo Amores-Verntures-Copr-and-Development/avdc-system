@@ -29,6 +29,24 @@ body {
 
   /* POS Essentials */
   font-family: var(--font-poppins), sans-serif;
+
+  /* Removes the gray flash Chrome/Safari draw on every tap on mobile -
+     without this every button/card tap looks like it "flickers" even
+     though nothing is actually slow. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* touch-action: manipulation drops the ~300ms delay mobile browsers use
+   to disambiguate a tap from the start of a double-tap-to-zoom gesture,
+   so taps on buttons/links register immediately instead of feeling
+   laggy. -webkit-touch-callout is off just on these (not globally, so
+   normal text selection elsewhere is unaffected) to skip the long-press
+   context menu on icon-only buttons. */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
 }
 
 .no-scrollbar::-webkit-scrollbar {
