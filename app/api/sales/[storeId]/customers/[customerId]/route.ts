@@ -7,6 +7,9 @@ export async function GET(
 ) {
   try {
     const { storeId, customerId } = await params;
+    const { searchParams } = new URL(request.url);
+    const from = searchParams.get("from") || undefined;
+    const to = searchParams.get("to") || undefined;
 
     if (!storeId) {
       throw new Error("No store ID found!");
@@ -17,6 +20,9 @@ export async function GET(
 
     const res = await getSales({
       customerId: Number(customerId),
+      storeId: Number(storeId),
+      from,
+      to,
     });
 
     return NextResponse.json(

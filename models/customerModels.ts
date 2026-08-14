@@ -58,7 +58,13 @@ export const selectCustomers = async ({
     offset !== undefined ? Math.max(0, Math.floor(Number(offset))) : undefined;
   const params: unknown[] = [];
 
-  let totalSpentExpression = `COALESCE(SUM(sa.salesTotalAmount), 0)`;
+  // SalesRefunds is a separate append-only ledger - Sales.salesTotalAmount
+  // is never decremented when a refund happens, so it has to be netted out
+  // here explicitly or a refunded sale gets counted at its full original
+  // amount.
+  let totalSpentExpression = `
+    COALESCE(SUM(sa.salesTotalAmount - COALESCE(sr.totalRefunds, 0)), 0)
+  `;
 
   if (from && to) {
     totalSpentExpression = `
@@ -67,7 +73,7 @@ export const selectCustomers = async ({
           CASE
             WHEN sa.salesCreatedAt >= ?
               AND sa.salesCreatedAt <= ?
-            THEN sa.salesTotalAmount
+            THEN sa.salesTotalAmount - COALESCE(sr.totalRefunds, 0)
             ELSE 0
           END
         ),
@@ -102,6 +108,11 @@ export const selectCustomers = async ({
       ON st.storeId = c.storeId
     LEFT JOIN Sales sa
       ON sa.customerId = c.customerId AND sa.storeId = c.storeId
+    LEFT JOIN (
+      SELECT salesId, SUM(salesRefAmount) AS totalRefunds
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) sr ON sr.salesId = sa.salesId
     LEFT JOIN (
       SELECT
         customerId,

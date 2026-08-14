@@ -40,13 +40,41 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
   const [tableView, setTableView] = useState<
     "recent" | "payments" | "refunds" | "orders"
   >("recent");
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
+    from: "",
+    to: "",
+  });
+
+  const salesUrl = useMemo(() => {
+    if (!customerId) return null;
+
+    const params = new URLSearchParams();
+    if (dateRange.from) params.set("from", dateRange.from);
+    if (dateRange.to) params.set("to", dateRange.to);
+
+    const query = params.toString();
+    return `/api/sales/${storeId}/customers/${customerId}${query ? `?${query}` : ""}`;
+  }, [customerId, storeId, dateRange]);
 
   const { data: salesData, isLoading: isLoadingSales } = useSWR<
     ApiResponse<DisplaySalesDto[]>
-  >(
-    customerId ? `/api/sales/${storeId}/customers/${customerId}` : null,
-    fetcher,
-  );
+  >(salesUrl, fetcher);
+
+  // Nets out refunds the same way the "Total Amount" column below does,
+  // so this reflects actual net spend for whatever date range is selected
+  // - not the sale's original gross amount.
+  const totalSpentInRange = useMemo(() => {
+    return (salesData?.data ?? []).reduce((sum, row) => {
+      const totalRefunds = Array.isArray(row.salesRefunds)
+        ? row.salesRefunds.reduce(
+            (total, sr) => total + Number(sr.salesRefAmount),
+            0,
+          )
+        : 0;
+
+      return sum + (Number(row.salesTotalAmount) - totalRefunds);
+    }, 0);
+  }, [salesData?.data]);
 
   const { data: ordersData, isLoading: isLoadingOrders } = useSWR<
     ApiResponse<DisplayOrderDto[]>
@@ -213,7 +241,20 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
   }, [salesData?.data]);
   return (
     <div className="flex-[8] border-border border rounded bg-white shadow p-2 h-full min-h-0 flex flex-col">
-      <h1 className=" text-sm font-medium">RECENT ACTIVITY</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-sm font-medium">RECENT ACTIVITY</h1>
+
+        {tableView !== "orders" && (
+          <div className="text-right">
+            <p className="text-sm font-semibold text-primary-1">
+              {totalSpentInRange !== 0 ? formatPeso(totalSpentInRange) : "-"}
+            </p>
+            <p className="text-[10px] text-gray-500">
+              Total Spent{dateRange.from && dateRange.to ? " (selected range)" : ""}
+            </p>
+          </div>
+        )}
+      </div>
       <div className="flex gap-2 mt-5 shrink-0">
         <button
           onClick={() => setTableView("recent")}
@@ -268,6 +309,8 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
             showPagination={true}
             totalCount={salesData?.count}
             onRowSelection={(row) => setSelectedRow(row)}
+            showDateRange
+            onDateRangeChange={setDateRange}
           />
         )}
       </div>
