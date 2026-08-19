@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/shared/Button";
+import IconButton from "@/components/shared/IconButton";
 import { CreateBarcodeDto } from "@/dtos/barcode.dto";
 import { DisplayInventoryItems } from "@/dtos/inventory.dto";
 import { useSession } from "@/hooks/useSession";
@@ -12,7 +13,13 @@ import { BrowserMultiFormatReader, IScannerControls } from "@zxing/browser";
 
 import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 
-import { Camera, CameraOff, RefreshCcw, ScanLine } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  RefreshCcw,
+  ScanLine,
+  Trash,
+} from "lucide-react";
 
 import React, { useEffect, useRef, useState } from "react";
 
@@ -37,7 +44,10 @@ const BarcodeComponent = ({
 
   const { user } = useSession();
 
-  const [showView, setShowView] = useState<"view" | "add">("view");
+  const [showView, setShowView] = useState<"view" | "add" | "delete">("view");
+  const [barcodeToDelete, setBarcodeToDelete] = useState<Barcodes | null>(
+    null,
+  );
 
   const [addUse, setAddUse] = useState<"scan" | "input">("scan");
 
@@ -48,6 +58,7 @@ const BarcodeComponent = ({
   const [cameraStatus, setCameraStatus] = useState("Initializing camera...");
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: barcodeResponse, mutate: mutateBarcode } = useSWR<
     ApiResponse<Barcodes[]>
@@ -98,6 +109,38 @@ const BarcodeComponent = ({
       toast.error(error.message);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteBarcode = async (barcodeId: number) => {
+    setIsDeleting(true);
+    try {
+      const bodyData: Partial<Barcodes> = {
+        barcodeId: barcodeId,
+        inventoryItemId: null,
+      };
+      const res = await fetch(`/api/barcode/${barcodeId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bodyData),
+      });
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      mutateBarcode();
+      mutate();
+      toast.success("Barcode deleted successfully!");
+      setShowView("view");
+      setBarcodeToDelete(null);
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -231,8 +274,19 @@ const BarcodeComponent = ({
                   </div>
                 </div>
 
-                <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-600">
-                  Active
+                <div className="flex items-center gap-4">
+                  <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-600">
+                    Active
+                  </div>
+                  <IconButton
+                    onClick={function (): void {
+                      setBarcodeToDelete(item);
+                      setShowView("delete");
+                    }}
+                    label={"Delete"}
+                    bg={"red"}
+                    icon={<Trash className="w-5 h-5" />}
+                  />
                 </div>
               </div>
             ))
@@ -256,7 +310,7 @@ const BarcodeComponent = ({
             </div>
           )}
         </div>
-      ) : (
+      ) : showView === "add" ? (
         <>
           {/* Toggle */}
           <div className="flex rounded-2xl bg-zinc-100 p-1">
@@ -444,6 +498,56 @@ const BarcodeComponent = ({
             />
           </div>
         </>
+      ) : (
+        <div className="flex flex-col gap-5 rounded-3xl border border-red-100 bg-red-50 p-6">
+          <div className="flex items-start gap-4">
+            <div className="rounded-full bg-red-100 p-3 text-red-600">
+              <Trash className="h-6 w-6" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-red-700">
+                Delete Barcode?
+              </h3>
+              <p className="mt-1 text-sm text-red-500">
+                This will unlink the barcode from this inventory item. If it
+                isn't used elsewhere, it will be permanently deleted.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
+            <div className="text-xs text-zinc-500">Barcode</div>
+            <div className="mt-1 font-mono text-xl tracking-widest text-zinc-900">
+              {barcodeToDelete?.barcode}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              label="Cancel"
+              color="secondary"
+              disabled={isDeleting}
+              onClick={() => {
+                setShowView("view");
+                setBarcodeToDelete(null);
+              }}
+            />
+            <Button
+              label="Delete Barcode"
+              color="danger"
+              loading={isDeleting}
+              disabled={!barcodeToDelete?.barcode}
+              onClick={() => {
+                if (!barcodeToDelete?.barcodeId) {
+                  toast.error("No barcode ID found!");
+                  return;
+                }
+                handleDeleteBarcode(barcodeToDelete.barcodeId);
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

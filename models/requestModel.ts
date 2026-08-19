@@ -4,6 +4,7 @@ import {
   InsertItemsRequestDto,
 } from "@/dtos/request.dto";
 import { getDBConnection } from "@/lib/db";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import { Request, RequestItems, RequestStatus } from "@/types/request";
 import { sq } from "date-fns/locale";
 import {
@@ -12,6 +13,36 @@ import {
   ResultSetHeader,
   RowDataPacket,
 } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real table columns prevents a
+// crafted request body (e.g. an extra key on a Partial<...>-typed JSON
+// body, or an un-picked array body) from injecting arbitrary SQL via an
+// object key.
+const REQUEST_ORDERS_COLUMNS = new Set<keyof Request>([
+  "requestId",
+  "requestNo",
+  "storeId",
+  "requestById",
+  "requestStatus",
+  "requestDesc",
+  "requestCreatedAt",
+  "requestUpdatedAt",
+  "requestDeletedAt",
+]);
+
+const REQUEST_ITEMS_COLUMNS = new Set<keyof RequestItems>([
+  "reqItemId",
+  "requestId",
+  "invItem",
+  "unitPrice",
+  "reqItemQuantity",
+  "reqItemReceived",
+  "reqItemTransfer",
+  "reqItemToFollow",
+  "reqItemStatus",
+  "reqItemRemarks",
+]);
 
 export const insertRequest = async ({
   connection,
@@ -342,6 +373,9 @@ export const updateRequest = async ({
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
+  assertKnownColumns(keyFields, REQUEST_ORDERS_COLUMNS, "RequestOrders");
+  assertKnownColumns(Object.keys(updates[0]), REQUEST_ORDERS_COLUMNS, "RequestOrders");
+
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof Request),
@@ -463,6 +497,9 @@ export const updateRequestItem = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, REQUEST_ITEMS_COLUMNS, "RequestItems");
+  assertKnownColumns(Object.keys(updates[0]), REQUEST_ITEMS_COLUMNS, "RequestItems");
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(

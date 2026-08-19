@@ -2,6 +2,33 @@ import { CreateOrderDto, DisplayOrderDto } from "@/dtos/orders.dto";
 import { getDBConnection } from "@/lib/db";
 import { Orders } from "@/types/orders";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real Orders columns prevents a
+// crafted request body from injecting arbitrary SQL via an object key.
+const ORDER_COLUMNS = new Set<keyof Orders>([
+  "orderId",
+  "orderPublicId",
+  "storeId",
+  "customerId",
+  "orderNumber",
+  "fulfillmentType",
+  "deliveryAddress",
+  "payMetId",
+  "paymentReference",
+  "paymentStatus",
+  "orderStatus",
+  "customerNotes",
+  "internalNotes",
+  "subtotal",
+  "discountAmount",
+  "deliveryFee",
+  "totalAmount",
+  "orderCreatedAt",
+  "orderUpdatedAt",
+  "orderDeletedAt",
+]);
 
 export const insertOrder = async ({
   connection,
@@ -165,6 +192,9 @@ export const updateOrders = async ({
   const pool = connection ?? (await getDBConnection());
 
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, ORDER_COLUMNS, "Orders");
+  assertKnownColumns(Object.keys(updates[0]), ORDER_COLUMNS, "Orders");
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof Orders),

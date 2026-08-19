@@ -40,6 +40,9 @@ const BarcodeProductComponent = ({
   const { user } = useSession();
 
   const [showView, setShowView] = useState<"view" | "add" | "delete">("view");
+  const [barcodeToDelete, setBarcodeToDelete] = useState<Barcodes | null>(
+    null,
+  );
 
   const [addUse, setAddUse] = useState<"scan" | "input">("scan");
 
@@ -212,6 +215,7 @@ const BarcodeProductComponent = ({
       mutateBarcode();
       toast.success("Barcode deleted successfully!");
       setShowView("view");
+      setBarcodeToDelete(null);
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -270,6 +274,7 @@ const BarcodeProductComponent = ({
                   </div>
                   <IconButton
                     onClick={function (): void {
+                      setBarcodeToDelete(item);
                       setShowView("delete");
                     }}
                     label={"Delete"}
@@ -499,8 +504,8 @@ const BarcodeProductComponent = ({
                 Delete Barcode?
               </h3>
               <p className="mt-1 text-sm text-red-500">
-                This action cannot be undone. The barcode will be permanently
-                removed.
+                This will unlink the barcode from this product. If it isn't
+                used elsewhere, it will be permanently deleted.
               </p>
             </div>
           </div>
@@ -508,7 +513,7 @@ const BarcodeProductComponent = ({
           <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
             <div className="text-xs text-zinc-500">Barcode</div>
             <div className="mt-1 font-mono text-xl tracking-widest text-zinc-900">
-              {barcodeResponse?.data[0].barcode}
+              {barcodeToDelete?.barcode}
             </div>
           </div>
 
@@ -517,19 +522,22 @@ const BarcodeProductComponent = ({
               label="Cancel"
               color="secondary"
               disabled={isDeleting}
-              onClick={() => setShowView("view")}
+              onClick={() => {
+                setShowView("view");
+                setBarcodeToDelete(null);
+              }}
             />
             <Button
               label="Delete Barcode"
               color="danger"
               loading={isDeleting}
-              disabled={!barcodeResponse?.data[0].barcode}
+              disabled={!barcodeToDelete?.barcode}
               onClick={() => {
-                if (!barcodeResponse?.data[0].barcodeId) {
+                if (!barcodeToDelete?.barcodeId) {
                   toast.error("No barcode ID found!");
                   return;
                 }
-                handleDeleteBarcode(barcodeResponse?.data[0].barcodeId);
+                handleDeleteBarcode(barcodeToDelete.barcodeId);
               }}
             />
           </div>

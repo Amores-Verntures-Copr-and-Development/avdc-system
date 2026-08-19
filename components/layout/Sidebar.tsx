@@ -19,6 +19,8 @@ import { useSession } from "@/hooks/useSession";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { sideMenu } from "@/lib/sideMenu";
+import { ApiResponse } from "@/types/api";
+import { StoreInterface } from "@/types/stores";
 
 const Sidebar = () => {
   const pathname = usePathname();
@@ -32,9 +34,27 @@ const Sidebar = () => {
     user?.userId ? `/api/stores/userId/${user.userId}/store-employee` : null,
     fetcher,
   );
+  // Only fetched for users scoped to a single store (e.g. staff/supervisor)
+  // so their sidebar reflects that store's Kiosk/Order toggles.
+  const { data: currentStoreRes } = useSWR<ApiResponse<StoreInterface[]>>(
+    user?.storeId ? `/api/stores/${user.storeId}` : null,
+    fetcher,
+  );
 
   const hasStockRoom = (stockRoomRes?.data?.length ?? 0) > 0;
   const hasStore = (storeEmployeeRes?.data?.length ?? 0) > 0;
+  const currentStore = currentStoreRes?.data?.[0];
+
+  // Only fetched once the Orders link would actually be visible - no point
+  // polling this for users without a store or with Order disabled.
+  const { data: pendingOrdersRes } = useSWR<ApiResponse<unknown[]>>(
+    user?.storeId && currentStore?.storeOrderEnabled
+      ? `/api/order/${user.storeId}?status=PENDING&limit=1`
+      : null,
+    fetcher,
+    { refreshInterval: 30000 },
+  );
+  const pendingOrders = pendingOrdersRes?.count ?? 0;
 
   const [isLoading, setIsLoading] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -95,6 +115,18 @@ const Sidebar = () => {
     hasStore,
   };
 
+  // Only enforced when the user is scoped to a single store (has a
+  // storeId) - Owner/Admin/Super Admin manage many stores, so there's no
+  // single store's toggle to gate their sidebar by.
+  const featureFlags: Record<string, boolean> = {
+    kiosk: user?.storeId ? !!currentStore?.storeKioskEnabled : true,
+    order: user?.storeId ? !!currentStore?.storeOrderEnabled : true,
+  };
+
+  const badgeCounts: Record<string, number> = {
+    pendingOrders,
+  };
+
   const sections = sideMenu
     .map((group) => ({
       ...group,
@@ -107,7 +139,11 @@ const Sidebar = () => {
           ? assignmentFlags[s.alsoShowIf]
           : false;
 
-        return roleMatch || assignmentMatch;
+        const featureMatch = s.requiresFeature
+          ? featureFlags[s.requiresFeature]
+          : true;
+
+        return (roleMatch || assignmentMatch) && featureMatch;
       }),
     }))
     .filter((group) => group.sections.length > 0);
@@ -198,15 +234,22 @@ const Sidebar = () => {
                 )}
 
                 <div className="space-y-1">
-                  {menu.sections.map(({ name, href, icon: Icon }) => {
+                  {menu.sections.map(({ name, href, icon: Icon, badgeKey }) => {
                     const isActive = pathname.startsWith(href);
+                    const badgeCount = badgeKey ? badgeCounts[badgeKey] : 0;
 
                     return (
                       <Link
                         key={name}
                         href={href}
                         aria-current={isActive ? "page" : undefined}
-                        title={isCollapsed ? name : undefined}
+                        title={
+                          isCollapsed
+                            ? badgeCount > 0
+                              ? `${name} (${badgeCount})`
+                              : name
+                            : undefined
+                        }
                         onClick={() => {
                           if (isMobile) {
                             setIsCollapsed(true);
@@ -224,19 +267,43 @@ const Sidebar = () => {
                           ${isCollapsed ? "justify-center" : ""}
                         `}
                       >
-                        <Icon
-                          className={`
-                            h-4 w-4 2xl:h-5 2xl:w-5 shrink-0 transition
-                            ${
-                              isActive
-                                ? "text-white"
-                                : "text-gray-400 group-hover:text-gray-700"
-                            }
-                          `}
-                        />
+                        <div className="relative shrink-0">
+                          <Icon
+                            className={`
+                              h-4 w-4 2xl:h-5 2xl:w-5 transition
+                              ${
+                                isActive
+                                  ? "text-white"
+                                  : "text-gray-400 group-hover:text-gray-700"
+                              }
+                            `}
+                          />
+
+                          {isCollapsed && badgeCount > 0 && (
+                            <span className="absolute -right-1.5 -top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[8px] font-bold text-white">
+                              {badgeCount > 9 ? "9+" : badgeCount}
+                            </span>
+                          )}
+                        </div>
 
                         {!isCollapsed && (
                           <span className="truncate text-xs">{name}</span>
+                        )}
+
+                        {!isCollapsed && badgeCount > 0 && (
+                          <span
+                            className={`
+                              ml-auto flex h-4.5 min-w-4.5 items-center justify-center
+                              rounded-full px-1.5 text-[10px] font-bold
+                              ${
+                                isActive
+                                  ? "bg-white/20 text-white"
+                                  : "bg-rose-500 text-white"
+                              }
+                            `}
+                          >
+                            {badgeCount > 99 ? "99+" : badgeCount}
+                          </span>
                         )}
                       </Link>
                     );

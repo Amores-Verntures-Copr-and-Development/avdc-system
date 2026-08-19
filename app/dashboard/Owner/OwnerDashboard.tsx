@@ -3,16 +3,26 @@ import React, { useState } from "react";
 import DashboardCard from "../components/DashboardCard";
 import StoreCardSales from "../components/StoreCardSales";
 import Chart from "../components/Chart";
+import PaymentMethodBreakdown from "../components/PaymentMethodBreakdown";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
-import { Calendar, PhilippinePeso, Store } from "lucide-react";
+import {
+  Boxes,
+  Calendar,
+  ClipboardList,
+  PhilippinePeso,
+  Receipt,
+  Store,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import { formatPeso } from "@/utils/formatPeso";
 import { useRouter, useSearchParams } from "next/navigation";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { ApiResponse } from "@/types/api";
 import StoreRecentSalesCard from "../components/StoreRecentSalesCard";
 import PageHeader from "@/components/shared/PageHeader";
-import DateRange from "@/components/shared/DateRange";
+import SectionHeader from "@/components/shared/SectionHeader";
 import { useStores } from "@/hooks/userStore";
 import { useSession } from "@/hooks/useSession";
 
@@ -40,6 +50,11 @@ export interface StoreRecentSales {
   salesNo: number;
   salesTotalAmount: number;
   itemQty: number;
+}
+
+interface PaymentMethodTotal {
+  payMetName: string;
+  totalAmount: number;
 }
 
 const OwnerDashboard = () => {
@@ -106,6 +121,28 @@ const OwnerDashboard = () => {
   const totalStores = Number(totals?.totalStores) || 0;
   const totalInventoryCost = Number(totals?.totalInventoryCost) || 0;
   const totalPurchaseOrders = Number(totals?.totalPurchase) || 0;
+  const totalTransactions = Number(totals?.totalTransactions) || 0;
+  const averageSale = totalTransactions > 0 ? totalSales / totalTransactions : 0;
+  const paymentMethods: PaymentMethodTotal[] = Array.isArray(
+    totals?.paymentMethods,
+  )
+    ? totals.paymentMethods
+    : [];
+
+  const now = new Date();
+  const isCurrentYear = year === String(now.getFullYear());
+  const currentMonthIdx = now.getMonth();
+  const salesTrend = (() => {
+    if (!isCurrentYear || currentMonthIdx === 0) return null;
+    const current = salesData[currentMonthIdx]?.value ?? 0;
+    const previous = salesData[currentMonthIdx - 1]?.value ?? 0;
+    if (!previous) return null;
+    const pct = ((current - previous) / previous) * 100;
+    return {
+      trend: `${Math.abs(pct).toFixed(1)}%`,
+      trendType: (pct >= 0 ? "up" : "down") as "up" | "down",
+    };
+  })();
   const { stores } = useStores({ user, hasStore, isAdmin });
   const storeOptions = Array.isArray(stores)
     ? stores.map((s) => ({
@@ -157,12 +194,33 @@ const OwnerDashboard = () => {
         {/* Main Content - 3/4 on desktop, full on mobile */}
         <div className="lg:col-span-3  flex flex-1 flex-col gap-4">
           {/* Stats Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
             <DashboardCard
               title="Total Sales"
               value={formatPeso(totalSales)}
               icon={PhilippinePeso}
               bgColor="bg-primary-1"
+              trend={salesTrend?.trend}
+              trendType={salesTrend?.trendType}
+              trendLabel="vs last month"
+              onClick={() => {
+                router.push("/sales");
+              }}
+            />
+            <DashboardCard
+              title="Total Transactions"
+              value={totalTransactions.toLocaleString()}
+              icon={Receipt}
+              bgColor="bg-emerald-600"
+              onClick={() => {
+                router.push("/sales");
+              }}
+            />
+            <DashboardCard
+              title="Average Sale"
+              value={formatPeso(averageSale)}
+              icon={TrendingUp}
+              bgColor="bg-rose-500"
               onClick={() => {
                 router.push("/sales");
               }}
@@ -171,6 +229,7 @@ const OwnerDashboard = () => {
               title="Total Stores"
               value={`${totalStores}`}
               icon={Store}
+              bgColor="bg-indigo-600"
               onClick={() => {
                 router.push("/stores");
               }}
@@ -178,16 +237,16 @@ const OwnerDashboard = () => {
             <DashboardCard
               title="Total Inventory Cost"
               value={formatPeso(totalInventoryCost)}
-              icon={Calendar}
+              icon={Boxes}
               bgColor="bg-yellow-600"
               onClick={() => {
                 router.push("/inventory");
               }}
             />
             <DashboardCard
-              title="Total Purchase Order"
+              title="Purchase Order Value"
               value={formatPeso(totalPurchaseOrders)}
-              icon={Calendar}
+              icon={ClipboardList}
               bgColor="bg-blue-600"
               onClick={() => {
                 router.push("/purchase-orders");
@@ -197,9 +256,13 @@ const OwnerDashboard = () => {
 
           {/* Charts - Stack on mobile, side by side on larger screens */}
           <div className="grid grid-cols-1 xl:grid-cols-1 gap-4">
-            <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
-              <div className="flex justify-between">
-                <h1 className="font-semibold mb-2">Sales Chart</h1>
+            <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4">
+              <div className="flex justify-between items-center mb-3">
+                <SectionHeader
+                  icon={PhilippinePeso}
+                  title="Sales Chart"
+                  subtitle="Monthly sales revenue, net of refunds."
+                />
                 <div>
                   <DynamicDropdown
                     options={[
@@ -222,9 +285,13 @@ const OwnerDashboard = () => {
                 <Chart data={salesData} />
               </div>
             </div>
-            <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
-              <div className="flex justify-between">
-                <h1 className="font-semibold mb-2">Purchase Order Chart</h1>
+            <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4">
+              <div className="flex justify-between items-center mb-3">
+                <SectionHeader
+                  icon={ClipboardList}
+                  title="Purchase Order Chart"
+                  subtitle="Monthly received purchase order value."
+                />
                 <div>
                   <DynamicDropdown
                     options={[
@@ -251,26 +318,49 @@ const OwnerDashboard = () => {
         </div>
 
         <div className="lg:col-span-1 flex flex-col gap-4 h-full">
-          <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
-            <h1 className="font-semibold text-sm mb-3">Daily Store Sales</h1>
-            <div className="h-80 space-y-5 overflow-y-auto">
-              {storeSales
-                .slice() // optional: to avoid mutating original array
-                .sort((a, b) => b.sales - a.sales) // descending order
-                .map((store) => (
-                  <StoreCardSales data={store} key={store.id} />
-                ))}
+          <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4">
+            <SectionHeader
+              icon={Store}
+              title="Daily Store Sales"
+              subtitle="Today vs. yesterday, by store."
+            />
+            <div className="h-80 mt-3 space-y-5 overflow-y-auto">
+              {storeSales.length === 0 ? (
+                <p className="py-6 text-center text-xs text-gray-400">
+                  No sales recorded yet today.
+                </p>
+              ) : (
+                storeSales
+                  .slice() // optional: to avoid mutating original array
+                  .sort((a, b) => b.sales - a.sales) // descending order
+                  .map((store) => <StoreCardSales data={store} key={store.id} />)
+              )}
             </div>
           </div>
 
-          <div className="border rounded shadow-sm border-gray-200 bg-white p-4">
-            <h1 className="font-semibold text-sm mb-3">Recent Store Sales</h1>
-            <div className="h-80 space-y-5 overflow-y-auto">
+          <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4">
+            <SectionHeader
+              icon={Receipt}
+              title="Recent Store Sales"
+              subtitle="Latest transaction per store."
+            />
+            <div className="h-80 mt-3 space-y-5 overflow-y-auto">
               {recentStoreSales.data
                 ?.filter((store) => Number(store.salesTotalAmount) !== 0)
                 .map((store) => (
                   <StoreRecentSalesCard data={store} key={store.storeId} />
                 ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 shadow-sm bg-white p-4">
+            <SectionHeader
+              icon={Wallet}
+              title="Sales by Payment Method"
+              subtitle="Share of total sales per method."
+            />
+            <div className="mt-3">
+              <PaymentMethodBreakdown data={paymentMethods} />
             </div>
           </div>
         </div>

@@ -3,11 +3,23 @@ import {
   getOrderController,
 } from "@/controllers/OrderController";
 import { CreateOrderDto } from "@/dtos/orders.dto";
+import { OrderStatus, Orders } from "@/types/orders";
 import { AccessTokenPayload, verifyToken } from "@/utils/jwt";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
+function errorStatus(err: any): number {
+  if (err?.message === "Unauthorized") return 401;
+  if (err?.message === "You do not have access to this store") return 403;
+  return 500;
+}
+
+// Listing a store's orders is a staff/admin dashboard feature - unlike
+// order CREATION below, which the external customer-facing storefront also
+// calls (without a staff session) to let guests place orders.
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -18,15 +30,24 @@ export async function GET(
       throw new Error("No store found");
     }
 
-    const { searchParams } = new URL(_request.url);
+    const actingUser = getCurrentUser(request);
+    assertStoreAccess(actingUser, storeId);
+
+    const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";
+    const status = searchParams.get("status") as OrderStatus | null;
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
 
+    const keyFields: Partial<Orders> = { storeId };
+    if (status) {
+      keyFields.orderStatus = status;
+    }
+
     const res = await getOrderController({
-      keyFields: { storeId },
+      keyFields,
       search,
       limit: limitNumber,
       offset: limitNumber * (pageNumber - 1),
@@ -52,7 +73,7 @@ export async function GET(
         message: "Failed to fetched orders!",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }

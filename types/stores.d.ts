@@ -5,6 +5,8 @@ export interface StoreInterface {
   storeEmail: string;
   storeDescription?: string | null;
   storeLocation?: string | null;
+  storeKioskEnabled?: boolean;
+  storeOrderEnabled?: boolean;
   storeCreatedAt: string;
   storeUpdatedAt: string;
   storeDeletedAt?: string | null;

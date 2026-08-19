@@ -131,6 +131,30 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         name: "Discount",
         selector: (row: DisplaySalesDto) => {
           const discount = row.salesDiscounts || [];
+          const vouchers = row.vouchers || [];
+          const hasDiscount = discount.length > 0;
+          const hasVoucher = vouchers.length > 0;
+          const totalVoucherAmount = vouchers.reduce(
+            (sum, v) => sum + Number(v.salesVoucherAmount),
+            0,
+          );
+          const totalDiscountAmount = discount.reduce(
+            (sum, d) => sum + Number(d.discountAmount),
+            0,
+          );
+
+          const label =
+            hasVoucher && hasDiscount
+              ? `Voucher(${formatPeso(totalVoucherAmount)}), Discount(${formatPeso(totalDiscountAmount)})`
+              : hasVoucher
+                ? `Voucher(${formatPeso(totalVoucherAmount)})`
+                : discount.length > 1
+                  ? `Discounts (${discount.length})`
+                  : discount.length === 1
+                    ? `${discount[0].discountName} (${formatPeso(
+                        discount[0].discountAmount,
+                      )})`
+                    : "-";
 
           return (
             <div className="relative min-w-[70px]">
@@ -148,16 +172,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       xl:text-xs
     "
               >
-                {discount.length > 1
-                  ? `Discounts (${discount.length})`
-                  : discount.length === 1
-                    ? `${discount[0].discountName} (${formatPeso(
-                        discount[0].discountAmount,
-                      )})`
-                    : "-"}
+                {label}
               </button>
 
-              {discount.length > 0 && openDiscountId === row.salesId && (
+              {(hasVoucher || hasDiscount) && openDiscountId === row.salesId && (
                 <div
                   className="
           absolute left-0 top-full z-[9999] mt-1
@@ -167,6 +185,29 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         "
                 >
                   <div className="max-h-48 overflow-y-auto p-1">
+                    {vouchers.map((v) => (
+                      <div
+                        key={v.salesVoucherId}
+                        className="
+                rounded-lg px-3 py-2
+                transition hover:bg-gray-50
+              "
+                      >
+                        <div className="text-xs font-semibold text-gray-700">
+                          {v.voucherCode}
+                        </div>
+
+                        <div className="mt-1 flex justify-between">
+                          <span className="text-[10px] text-gray-400">
+                            {v.voucherName ?? "Voucher"}
+                          </span>
+
+                          <span className="text-[10px] font-semibold text-primary-1">
+                            - {formatPeso(v.salesVoucherAmount)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                     {discount.map((disc) => (
                       <div
                         key={disc.salesDiscountId}
@@ -354,7 +395,33 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         key: "salesDiscount ",
         name: "Discount",
         selector: (row: DisplaySalesDto) => {
-          const discount = row.salesDiscounts || [];
+          const discount = (row.salesDiscounts || []).filter(
+            (d): d is (typeof row.salesDiscounts)[0] => d !== null,
+          );
+          const vouchers = row.vouchers || [];
+          const hasDiscount = discount.length > 0;
+          const hasVoucher = vouchers.length > 0;
+          const totalVoucherAmount = vouchers.reduce(
+            (sum, v) => sum + Number(v.salesVoucherAmount),
+            0,
+          );
+          const totalDiscountAmount = discount.reduce(
+            (sum, d) => sum + Number(d.discountAmount),
+            0,
+          );
+
+          const label =
+            hasVoucher && hasDiscount
+              ? `Voucher(${formatPeso(totalVoucherAmount)}), Discount(${formatPeso(totalDiscountAmount)})`
+              : hasVoucher
+                ? `Voucher(${formatPeso(totalVoucherAmount)})`
+                : discount.length > 1
+                  ? `Discounts (${discount.length})`
+                  : discount.length === 1
+                    ? `${discount[0].discountName} (${formatPeso(
+                        discount[0].discountAmount,
+                      )})`
+                    : ``;
 
           return (
             <div className="group relative">
@@ -362,44 +429,56 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
                 disabled
               >
-                <option value="">
-                  {discount.length > 1
-                    ? `Discounts (${discount.filter((s) => s !== null).length})`
-                    : discount.length === 1
-                      ? `${discount[0].discountName} (${formatPeso(
-                          discount[0].discountAmount,
-                        )})`
-                      : ``}
-                </option>
+                <option value="">{label}</option>
               </select>
-              {discount?.length > 0 && discount.some((d) => d !== null) && (
+              {(hasVoucher || hasDiscount) && (
                 <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-40 overflow-y-auto">
-                  {discount
-                    .filter((d): d is (typeof discount)[0] => d !== null) // TypeScript-friendly
-                    .map((disc) => (
-                      <div
-                        key={disc.salesDiscountId}
-                        className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
-                      >
-                        <div className="flex">
-                          <span className=" text-xs font-semibold text-gray-700">
-                            {disc.discountName}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between">
-                          {" "}
-                          <span className="text-gray-400 text-[9px] xl:text-[10px]">
-                            {disc.discountType === "percent"
-                              ? `${disc.discountValue}%`
-                              : `₱${disc.discountValue.toFixed(2)}`}
-                          </span>
-                          <span className="text-[10px] font-semibold text-red-600">
-                            - ₱{disc.discountAmount.toFixed(2)}
-                          </span>
-                        </div>
+                  {vouchers.map((v) => (
+                    <div
+                      key={v.salesVoucherId}
+                      className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                    >
+                      <div className="flex">
+                        <span className=" text-xs font-semibold text-gray-700">
+                          {v.voucherCode}
+                        </span>
                       </div>
-                    ))}
+
+                      <div className="flex justify-between">
+                        {" "}
+                        <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                          {v.voucherName ?? "Voucher"}
+                        </span>
+                        <span className="text-[10px] font-semibold text-primary-1">
+                          - {formatPeso(v.salesVoucherAmount)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                  {discount.map((disc) => (
+                    <div
+                      key={disc.salesDiscountId}
+                      className="flex flex-col px-2 py-1 rounded hover:bg-gray-100 transition-colors duration-150 text-[10px] xl:text-xs"
+                    >
+                      <div className="flex">
+                        <span className=" text-xs font-semibold text-gray-700">
+                          {disc.discountName}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between">
+                        {" "}
+                        <span className="text-gray-400 text-[9px] xl:text-[10px]">
+                          {disc.discountType === "percent"
+                            ? `${disc.discountValue}%`
+                            : `₱${disc.discountValue.toFixed(2)}`}
+                        </span>
+                        <span className="text-[10px] font-semibold text-red-600">
+                          - ₱{disc.discountAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

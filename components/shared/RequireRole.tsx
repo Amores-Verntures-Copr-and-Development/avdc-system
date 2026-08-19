@@ -2,6 +2,8 @@
 
 import { useSession } from "@/hooks/useSession";
 import { sideMenu } from "@/lib/sideMenu";
+import { ApiResponse } from "@/types/api";
+import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { ShieldAlert } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -31,9 +33,14 @@ const RequireRole = ({ children }: RequireRoleProps) => {
     user?.userId ? `/api/stores/userId/${user.userId}/store-employee` : null,
     fetcher,
   );
+  const { data: currentStoreRes } = useSWR<ApiResponse<StoreInterface[]>>(
+    user?.storeId ? `/api/stores/${user.storeId}` : null,
+    fetcher,
+  );
 
   const hasStockRoom = (stockRoomRes?.data?.length ?? 0) > 0;
   const hasStore = (storeEmployeeRes?.data?.length ?? 0) > 0;
+  const currentStore = currentStoreRes?.data?.[0];
 
   if (loading) {
     return (
@@ -62,7 +69,17 @@ const RequireRole = ({ children }: RequireRoleProps) => {
     ? assignmentFlags[matchedSection.alsoShowIf]
     : false;
 
-  const isAllowed = !matchedSection || roleMatch || assignmentMatch;
+  const featureFlags: Record<string, boolean> = {
+    kiosk: user?.storeId ? !!currentStore?.storeKioskEnabled : true,
+    order: user?.storeId ? !!currentStore?.storeOrderEnabled : true,
+  };
+
+  const featureMatch = matchedSection?.requiresFeature
+    ? featureFlags[matchedSection.requiresFeature]
+    : true;
+
+  const isAllowed =
+    (!matchedSection || roleMatch || assignmentMatch) && featureMatch;
 
   if (!isAllowed) {
     return (

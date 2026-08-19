@@ -5,6 +5,7 @@ import {
   CreateVarianComponentDto,
 } from "@/dtos/products.dto";
 import { getDBConnection } from "@/lib/db";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import {
   ProductCategories,
   Products,
@@ -12,6 +13,57 @@ import {
   VariantComponents,
 } from "@/types/products";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real table columns prevents a
+// crafted request body (e.g. an extra key on an update endpoint's JSON
+// body, which is only loosely typed as Partial<X>) from injecting
+// arbitrary SQL via an object key.
+const PRODUCT_COLUMNS = new Set<keyof Products>([
+  "prodId",
+  "prodName",
+  "prodCreatedAt",
+  "prodUpdatedAt",
+  "prodDeletedAt",
+  "storeId",
+  "prodCreatedBy",
+  "prodCatId",
+]);
+
+const PRODUCT_VARIANT_COLUMNS = new Set<keyof ProductVariants>([
+  "prodVarId",
+  "prodVarName",
+  "prodVarPrice",
+  "prodVarPriceOnline",
+  "prodVarUnit",
+  "isDeductInv",
+  "isAvailableOnline",
+  "inventoryItemId",
+  "prodVarCreatedAt",
+  "prodVarUpdatedAt",
+  "prodVarDeletedAt",
+  "prodVarCreatedBy",
+  "prodId",
+  "prodVarImage",
+]);
+
+const PRODUCT_CATEGORY_COLUMNS = new Set<keyof ProductCategories>([
+  "prodCatId",
+  "prodCatName",
+  "prodCatCreatedAt",
+  "prodCatUpdatedAt",
+  "prodCatDeletedAt",
+  "prodCatCreatedBy",
+  "storeId",
+]);
+
+const VARIANT_COMPONENT_COLUMNS = new Set<keyof VariantComponents>([
+  "varComId",
+  "quantityRequired",
+  "prodVarId",
+  "inventoryItemId",
+  "isDeductVar",
+]);
 
 export const insertProducts = async ({
   connection,
@@ -84,6 +136,9 @@ export const updateProducts = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, PRODUCT_COLUMNS, "Products");
+  assertKnownColumns(Object.keys(updates[0]), PRODUCT_COLUMNS, "Products");
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof Products),
@@ -283,8 +338,16 @@ export const selectProducts = async ({
             'isDeductInv', pv.isDeductInv,
             'stocks', iis.inventoryItemQuantity,
             'inventoryItemId', pv.inventoryItemId,
-            'barcode', pb.barcode,
-            'barcodeId', pb.barcodeId,
+            'barcode', (
+              SELECT pb.barcode FROM Barcodes pb
+              WHERE pb.prodVarId = pv.prodVarId
+              ORDER BY pb.barcodeId ASC LIMIT 1
+            ),
+            'barcodeId', (
+              SELECT pb.barcodeId FROM Barcodes pb
+              WHERE pb.prodVarId = pv.prodVarId
+              ORDER BY pb.barcodeId ASC LIMIT 1
+            ),
             'prodVarImage', pv.prodVarImage,
             'sold', (
               SELECT COALESCE(SUM(si.salesItemQuantity), 0)
@@ -312,8 +375,6 @@ export const selectProducts = async ({
         FROM ProductVariants pv
         LEFT JOIN InventoryItems iis
           ON iis.inventoryItemId = pv.inventoryItemId
-        LEFT JOIN Barcodes pb
-          ON pb.prodVarId = pv.prodVarId
         WHERE pv.prodId = p.prodId
           AND pv.prodVarDeletedAt IS NULL
       ) AS productVariants
@@ -545,8 +606,16 @@ export const selectProductVariants = async ({
     p.prodName,
     u.userName,
     u.userFname,
-    b.barcodeId,
-    b.barcode,
+    (
+      SELECT b.barcodeId FROM Barcodes b
+      WHERE b.prodVarId = pv.prodVarId
+      ORDER BY b.barcodeId ASC LIMIT 1
+    ) AS barcodeId,
+    (
+      SELECT b.barcode FROM Barcodes b
+      WHERE b.prodVarId = pv.prodVarId
+      ORDER BY b.barcodeId ASC LIMIT 1
+    ) AS barcode,
     iis.inventoryItemQuantity,
     (SELECT SUM(si.salesItemQuantity) 
      FROM SalesItems si 
@@ -648,7 +717,6 @@ LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
 LEFT JOIN Items i ON i.itemId = iis.inventoryItemReferenceId AND iis.inventoryItemReferenceType = 'item'
-LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -670,7 +738,10 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
     AND (
       p.prodName LIKE ?
       OR pv.prodVarName LIKE ?
-      OR b.barcode LIKE ?
+      OR EXISTS (
+        SELECT 1 FROM Barcodes bs
+        WHERE bs.prodVarId = pv.prodVarId AND bs.barcode LIKE ?
+      )
     )
   `;
 
@@ -902,7 +973,6 @@ FROM ProductVariants pv
 LEFT JOIN Users u ON u.userId = pv.prodVarCreatedBy
 LEFT JOIN Products p ON p.prodId = pv.prodId
 LEFT JOIN InventoryItems iis ON iis.inventoryItemId = pv.inventoryItemId
-LEFT JOIN Barcodes b ON b.prodVarId = pv.prodVarId
 WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
   const params: any[] = [];
   for (const [key, value] of Object.entries(keyFields)) {
@@ -924,7 +994,10 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
     AND (
       p.prodName LIKE ?
       OR pv.prodVarName LIKE ?
-      OR b.barcode LIKE ?
+      OR EXISTS (
+        SELECT 1 FROM Barcodes bs
+        WHERE bs.prodVarId = pv.prodVarId AND bs.barcode LIKE ?
+      )
     )
   `;
 
@@ -1021,6 +1094,13 @@ export const updateProductVariants = async ({
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
+  assertKnownColumns(keyFields, PRODUCT_VARIANT_COLUMNS, "ProductVariants");
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    PRODUCT_VARIANT_COLUMNS,
+    "ProductVariants",
+  );
+
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof ProductVariants),
   );
@@ -1087,6 +1167,13 @@ export const updateProductCategories = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, PRODUCT_CATEGORY_COLUMNS, "ProductCategories");
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    PRODUCT_CATEGORY_COLUMNS,
+    "ProductCategories",
+  );
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof ProductCategories),
@@ -1155,6 +1242,17 @@ export const updateVariantComponents = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(
+    keyFields,
+    VARIANT_COMPONENT_COLUMNS,
+    "VariantComponents",
+  );
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    VARIANT_COMPONENT_COLUMNS,
+    "VariantComponents",
+  );
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof VariantComponents),

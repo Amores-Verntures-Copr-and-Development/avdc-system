@@ -1,12 +1,23 @@
 import { getOrderStatusHistory } from "@/controllers/OrderController";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
+
+function errorStatus(err: any): number {
+  if (err?.message === "Unauthorized") return 401;
+  if (err?.message === "You do not have access to this store") return 403;
+  return 500;
+}
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
   try {
-    const { orderId } = await params;
+    const { storeId, orderId } = await params;
+
+    const actingUser = getCurrentUser(request);
+    assertStoreAccess(actingUser, Number(storeId));
 
     const res = await getOrderStatusHistory({ orderId: Number(orderId) });
 
@@ -29,7 +40,7 @@ export async function GET(
         message: "Failed to fetch order status history!",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }

@@ -3,6 +3,7 @@ import { createVoucher as createVoucherService } from "@/services/vouchers/creat
 import {
   getVoucherByCode,
   getVoucherById,
+  getVoucherRedemptions,
   getVouchers,
 } from "@/services/vouchers/get-vouchers";
 import { updateVoucher as updateVoucherService } from "@/services/vouchers/update-voucher";
@@ -69,6 +70,23 @@ export const getVoucher = async (voucherId: number) => {
     return {
       success: false,
       message: "Failed to fetch voucher!",
+      error: e,
+    };
+  }
+};
+
+export const listVoucherRedemptions = async (voucherId: number) => {
+  try {
+    const data = await getVoucherRedemptions(voucherId);
+    return {
+      success: true,
+      message: "Voucher redemptions fetched successfully!",
+      data,
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: "Failed to fetch voucher redemptions!",
       error: e,
     };
   }

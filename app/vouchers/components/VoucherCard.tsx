@@ -9,6 +9,7 @@ import {
   Store,
   Ticket,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 interface StoreOption {
@@ -106,8 +107,13 @@ const VoucherCard = ({
   onVoid,
   onEdit,
 }: VoucherCardProps) => {
+  const router = useRouter();
+
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div
+      onClick={() => router.push(`/vouchers/${voucher.voucherId}`)}
+      className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-bold text-primary-1">
@@ -157,7 +163,10 @@ const VoucherCard = ({
         />
       </div>
 
-      <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-2">
+      <div
+        className="flex items-center justify-end gap-3 border-t border-gray-100 pt-2"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           title="Print"

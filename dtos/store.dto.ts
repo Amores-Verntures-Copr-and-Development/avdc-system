@@ -9,3 +9,7 @@ export type CreateStoreEmployeeDto = Pick<
   StoreEmployee,
   "storeId" | "empId" | "storeEmpCreatedBy"
 >;
+
+export type UpdateStoreFeaturesDto = Partial<
+  Pick<StoreInterface, "storeKioskEnabled" | "storeOrderEnabled">
+>;

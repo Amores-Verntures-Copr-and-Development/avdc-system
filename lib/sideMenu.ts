@@ -28,6 +28,12 @@ export interface SideMenuSection {
   icon: LucideIcon;
   roles?: (string | undefined)[];
   alsoShowIf?: "hasStockRoom" | "hasStore";
+  // Per-store feature toggle (Stores.storeKioskEnabled/storeOrderEnabled) -
+  // only enforced for users scoped to a single store (employees); Owner/
+  // Admin/Super Admin aren't tied to one store so this is skipped for them.
+  requiresFeature?: "kiosk" | "order";
+  // Shows a small count badge next to the label (e.g. pending orders).
+  badgeKey?: "pendingOrders";
 }
 
 export interface SideMenuGroup {
@@ -68,6 +74,7 @@ export const sideMenu: SideMenuGroup[] = [
         href: "/kiosks",
         icon: Tablet,
         roles: ["supervisor", "staff"],
+        requiresFeature: "kiosk",
       },
     ],
   },
@@ -169,6 +176,8 @@ export const sideMenu: SideMenuGroup[] = [
           "staff",
           "owner",
         ],
+        requiresFeature: "order",
+        badgeKey: "pendingOrders",
       },
       {
         name: "Vouchers",

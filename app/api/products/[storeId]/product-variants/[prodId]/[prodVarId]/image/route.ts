@@ -27,6 +27,10 @@ export async function POST(
     const formData = await req.formData();
     const file = formData.getAll("image") as File[];
 
+    if (!file[0]) {
+      throw new Error("No image file found!");
+    }
+
     const imageUpload = await NextCloudServices.uploadFile(
       Number(prodVarId),
       file[0],
@@ -52,12 +56,12 @@ export async function POST(
       },
       { status: 201 },
     );
-  } catch (e) {
+  } catch (e: any) {
     console.log({ e });
     return NextResponse.json(
       {
         success: false,
-        message: "Image failed to uploade!",
+        message: e?.message || "Image failed to upload!",
       },
       { status: 400 },
     );

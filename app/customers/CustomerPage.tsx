@@ -25,7 +25,7 @@ import { StoreInterface } from "@/types/stores";
 
 const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  { key: "customerName", name: "Name" },
+  { key: "customerName", name: "Name", sortable: true },
   { key: "customerEmail", name: "Email" },
   { key: "customerPhone", name: "Phone" },
   { key: "customerType", name: "Type" },
@@ -54,7 +54,7 @@ const columns: Column<DisplayCustomerDto>[] = [
 ];
 const adminColumns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
-  { key: "customerName", name: "Name" },
+  { key: "customerName", name: "Name", sortable: true },
   { key: "customerEmail", name: "Email" },
   { key: "customerPhone", name: "Phone" },
   { key: "storeName", name: "Store" },
@@ -114,6 +114,8 @@ const CustomerPage = () => {
       "to",
       "store",
       "limit",
+      "sort",
+      "order",
     ];
 
     keys.forEach((key) => {

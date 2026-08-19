@@ -2,6 +2,7 @@ import {
   countVouchers,
   selectVoucherByCode,
   selectVoucherById,
+  selectVoucherRedemptions,
   selectVouchers,
 } from "@/models/voucherModel";
 
@@ -28,4 +29,8 @@ export async function getVoucherById(voucherId: number) {
 
 export async function getVoucherByCode(voucherCode: string) {
   return selectVoucherByCode({ voucherCode });
+}
+
+export async function getVoucherRedemptions(voucherId: number) {
+  return selectVoucherRedemptions({ voucherId });
 }

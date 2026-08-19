@@ -1,7 +1,24 @@
 import { getDBConnection } from "../lib/db";
 import { CreateCategoryDto } from "@/dtos/category.dto";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import { CategoryInterface } from "@/types/categories";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real Categories columns prevents a
+// crafted request body (only loosely typed as Partial<CategoryInterface>)
+// from injecting arbitrary SQL via an object key.
+const CATEGORY_COLUMNS = new Set<keyof CategoryInterface>([
+  "categoryId",
+  "categoryName",
+  "categoryType",
+  "categoryReferenceType",
+  "categoryReferenceId",
+  "categoryCreatedAt",
+  "categoryUpdatedAt",
+  "categoryDeletedAt",
+  "categoryCreatedBy",
+]);
 
 export const insertCategory = async (data: CreateCategoryDto) => {
   const pool = await getDBConnection();
@@ -102,6 +119,9 @@ export const updateCategories = async ({
   const pool = connection ?? (await getDBConnection());
 
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, CATEGORY_COLUMNS, "Categories");
+  assertKnownColumns(Object.keys(updates[0]), CATEGORY_COLUMNS, "Categories");
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) =>

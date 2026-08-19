@@ -1,4 +1,5 @@
 import { OrderItems, Orders, OrderStatusHistory } from "@/types/orders";
+import { CreateOrderVoucherDto } from "@/dtos/voucher.dto";
 
 export type CreateOrderItemDto = Pick<
   OrderItems,
@@ -51,6 +52,7 @@ export type CreateOrderDto = Pick<
 > &
   Partial<Pick<Orders, "paymentStatus" | "orderStatus" | "internalNotes">> & {
     items: CreateOrderItemDto[];
+    vouchers?: CreateOrderVoucherDto[];
   };
 
 export type UpdateOrderDto = Pick<Orders, "orderId"> &

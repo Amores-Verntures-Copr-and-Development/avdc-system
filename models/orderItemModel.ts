@@ -2,13 +2,34 @@ import { CreateOrderItemDto, DisplayOrderItemDto } from "@/dtos/orders.dto";
 import { getDBConnection } from "@/lib/db";
 import { OrderItems } from "@/types/orders";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 
-// lineTotal is a generated column (quantity * unitPrice) - never write to it
+// lineTotal is a generated column (quantity * unitPrice) - never write to it.
+// This denylist only decides which *known, real* columns are business-logic
+// writable; it does NOT guard against SQL injection (a denylist can't stop an
+// attacker inventing a brand-new field name) - that's what ORDER_ITEM_COLUMNS
+// / assertKnownColumns below is for.
 const NON_WRITABLE_FIELDS: (keyof OrderItems)[] = [
   "lineTotal",
   "orderItemCreatedAt",
   "orderItemUpdatedAt",
 ];
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real OrderItems columns prevents a
+// crafted request body from injecting arbitrary SQL via an object key.
+const ORDER_ITEM_COLUMNS = new Set<keyof OrderItems>([
+  "orderItemId",
+  "orderId",
+  "prodVarId",
+  "quantity",
+  "unitPrice",
+  "lineTotal",
+  "itemStatus",
+  "notes",
+  "orderItemCreatedAt",
+  "orderItemUpdatedAt",
+]);
 
 export const insertOrderItems = async ({
   connection,
@@ -88,6 +109,9 @@ export const updateOrderItems = async ({
   const pool = connection ?? (await getDBConnection());
 
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, ORDER_ITEM_COLUMNS, "OrderItems");
+  assertKnownColumns(Object.keys(updates[0]), ORDER_ITEM_COLUMNS, "OrderItems");
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) =>

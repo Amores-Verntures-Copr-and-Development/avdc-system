@@ -32,14 +32,26 @@ type SignOptionsAndSecret = SignOptions & {
   secret: string;
 };
 
+// Fail fast on a missing secret instead of silently signing with an empty
+// string, which jsonwebtoken accepts as a valid (and trivially guessable)
+// HMAC key - a misconfigured deploy would otherwise forge-able tokens with
+// no error at all.
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
 const accessTokenOptions: SignOptionsAndSecret = {
   expiresIn: "30d",
-  secret: process.env.SECRET_KEY || "",
+  secret: requireEnv("SECRET_KEY"),
 };
 
 const refreshTokenOptions: SignOptionsAndSecret = {
   expiresIn: "30d",
-  secret: process.env.REFRESH_SECRET_KEY || "",
+  secret: requireEnv("REFRESH_SECRET_KEY"),
 };
 
 /**

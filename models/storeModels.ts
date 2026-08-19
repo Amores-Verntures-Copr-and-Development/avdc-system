@@ -76,6 +76,38 @@ export const selectStores = async ({
   return rows;
 };
 
+export const updateStoreFeatures = async ({
+  storeId,
+  storeKioskEnabled,
+  storeOrderEnabled,
+}: {
+  storeId: number;
+  storeKioskEnabled?: boolean;
+  storeOrderEnabled?: boolean;
+}) => {
+  const pool = await getDBConnection();
+  const setClauses: string[] = [];
+  const params: any[] = [];
+
+  if (storeKioskEnabled !== undefined) {
+    setClauses.push("storeKioskEnabled = ?");
+    params.push(storeKioskEnabled ? 1 : 0);
+  }
+
+  if (storeOrderEnabled !== undefined) {
+    setClauses.push("storeOrderEnabled = ?");
+    params.push(storeOrderEnabled ? 1 : 0);
+  }
+
+  if (setClauses.length === 0) return;
+
+  params.push(storeId);
+
+  const sql = `UPDATE Stores SET ${setClauses.join(", ")} WHERE storeId = ?`;
+  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+  return result;
+};
+
 export const selectStoresByEmpKeyFields = async ({
   keyFields = {},
 }: {

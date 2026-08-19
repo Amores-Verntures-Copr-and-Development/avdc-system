@@ -1,6 +1,6 @@
 // app/api/loyverse/connect/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 
 export async function GET(
@@ -26,14 +26,20 @@ export async function GET(
 
     baseUrl = `${url.protocol}//${url.host}`;
   }
-  const state = Buffer.from(
-    JSON.stringify({
+  // Signed (not just base64-encoded) so the callback can trust storeId/
+  // userId/baseUrl instead of taking them from an attacker-suppliable
+  // param - an unsigned state let anyone forge a callback request that
+  // binds their own Loyverse account to an arbitrary store/user.
+  const state = jwt.sign(
+    {
       storeId,
-      nonce: crypto.randomBytes(16).toString("hex"),
-      baseUrl: baseUrl,
+      baseUrl,
       userId: user.userId,
-    }),
-  ).toString("base64url");
+      purpose: "loyverse-oauth",
+    },
+    process.env.SECRET_KEY!,
+    { expiresIn: "10m" },
+  );
 
   const scopes = [
     "ITEMS_READ",

@@ -1,6 +1,14 @@
 import { completeOrderController } from "@/controllers/OrderController";
-import { AccessTokenPayload, verifyToken } from "@/utils/jwt";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
+
+function errorStatus(err: any): number {
+  if (err?.message === "Unauthorized" || err?.message === "Not authenticated")
+    return 401;
+  if (err?.message === "You do not have access to this store") return 403;
+  return 500;
+}
 
 export async function POST(
   request: NextRequest,
@@ -18,17 +26,13 @@ export async function POST(
       throw new Error("No orderId found");
     }
 
-    const token = request.cookies.get("avdc_accessToken")?.value;
-    if (!token) {
-      throw new Error("Not authenticated");
-    }
-
-    const decoded = verifyToken<AccessTokenPayload>(token);
+    const actingUser = getCurrentUser(request);
+    assertStoreAccess(actingUser, storeId);
 
     const res = await completeOrderController({
       storeId,
       orderId,
-      completedBy: decoded.userId,
+      completedBy: actingUser.userId,
     });
 
     if (!res.success) {
@@ -50,7 +54,7 @@ export async function POST(
         message: err?.message || String(err),
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }

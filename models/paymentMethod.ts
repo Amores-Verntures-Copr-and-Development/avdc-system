@@ -1,7 +1,27 @@
 import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
 import { getDBConnection } from "@/lib/db";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import { PaymentMethods } from "@/types/payment-methods";
 import { PoolConnection, RowDataPacket } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real PaymentMethods columns prevents
+// a crafted request body (only loosely typed as Partial<PaymentMethods>)
+// from injecting arbitrary SQL via an object key.
+const PAYMENT_METHOD_COLUMNS = new Set<keyof PaymentMethods>([
+  "payMetId",
+  "payMetName",
+  "payMetDesc",
+  "payMetHasRef",
+  "payMetIsEmail",
+  "payMetIsOnline",
+  "payMetIsCustomer",
+  "storeId",
+  "payMetCreatedBy",
+  "payMetCreatedAt",
+  "payMetUpdatedAt",
+  "payMetDeletedAt",
+]);
 
 export const insertPaymentMethod = async ({
   connection,
@@ -37,6 +57,13 @@ export const updatePaymentMethods = async ({
   const pool = connection ?? (await getDBConnection());
 
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, PAYMENT_METHOD_COLUMNS, "PaymentMethods");
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    PAYMENT_METHOD_COLUMNS,
+    "PaymentMethods",
+  );
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof PaymentMethods),

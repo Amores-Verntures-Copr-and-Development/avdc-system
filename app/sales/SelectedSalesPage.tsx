@@ -62,6 +62,13 @@ const SelectedSalesPage = ({
           0,
         )
       : 0;
+  const voucherTotal =
+    Array.isArray(salesData?.vouchers) && salesData.vouchers.length > 0
+      ? salesData.vouchers.reduce(
+          (total, v) => Number(total) + Number(v.salesVoucherAmount),
+          0,
+        )
+      : 0;
   const { label, bg, color, border } = getSalesStatusOption(
     salesData?.salesStatus ?? "",
   );
@@ -333,6 +340,19 @@ const SelectedSalesPage = ({
                   {formatPeso(salesData?.salesSubTotal ?? 0)}
                 </div>
               </div>
+
+              {/* Voucher */}
+              {Boolean(voucherTotal && voucherTotal !== 0) && (
+                <div className="flex justify-between mb-2">
+                  <div className="text-xs 2xl:text-sm text-primary-1 w-32">
+                    Voucher{(salesData?.vouchers?.length ?? 0) > 1 ? "s" : ""}
+                  </div>
+                  <div className="text-xs 2xl:text-sm text-primary-1 w-24 text-right">
+                    - {formatPeso(voucherTotal)}
+                  </div>
+                </div>
+              )}
+
               {Boolean(refundTotal && refundTotal !== 0) && (
                 <div className="flex justify-between mb-2">
                   <div className="text-xs 2xl:text-sm text-red-600 w-32">

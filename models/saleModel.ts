@@ -159,7 +159,21 @@ WHERE si.salesId = s.salesId
     FROM SalesPaymentRefunds spr
     LEFT JOIN SalesRefunds srs ON srs.salesRefId = spr.salesRefId
 	 WHERE srs.salesId = s.salesId
-	 ) AS salesPaymentRefunds
+	 ) AS salesPaymentRefunds,
+	  (
+  SELECT JSON_ARRAYAGG(
+      JSON_OBJECT(
+        'salesVoucherId', sv.salesVoucherId,
+        'voucherId', sv.voucherId,
+        'voucherCode', v.voucherCode,
+        'voucherName', v.voucherName,
+        'salesVoucherAmount', sv.salesVoucherAmount
+      )
+    )
+    FROM SalesVoucher sv
+    LEFT JOIN Vouchers v ON v.voucherId = sv.voucherId
+    WHERE sv.salesId = s.salesId AND sv.salesVoucherDeletedAt IS NULL
+	 ) AS vouchers
 FROM Sales s
 LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
 LEFT JOIN Customers c ON c.customerId = s.customerId
@@ -663,14 +677,32 @@ export const insertSalePayments = async ({
 
 export const selectDailyStoreSales = async () => {
   const pool = await getDBConnection();
-  const sql = `SELECT 
+  // DB server clock is UTC but the business operates in Asia/Manila -
+  // CURDATE() alone would use the wrong "today" boundary (same class of
+  // bug already fixed for Sales date-range filtering elsewhere), and
+  // salesTotalAmount is netted against SalesRefunds the same way every
+  // other sales total in the app is.
+  const sql = `SELECT
   st.storeId,
   st.storeName,
-  SUM(CASE WHEN DATE(ss.salesCreatedAt) = CURDATE() THEN ss.salesTotalAmount ELSE 0 END) AS todaySales,
-  SUM(CASE WHEN DATE(ss.salesCreatedAt) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN ss.salesTotalAmount ELSE 0 END) AS yesterdaySales
+  SUM(CASE
+    WHEN DATE(CONVERT_TZ(ss.salesCreatedAt, '+00:00', '+08:00')) = DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00'))
+    THEN ss.salesTotalAmount - COALESCE(sr.refundAmt, 0)
+    ELSE 0
+  END) AS todaySales,
+  SUM(CASE
+    WHEN DATE(CONVERT_TZ(ss.salesCreatedAt, '+00:00', '+08:00')) = DATE_SUB(DATE(CONVERT_TZ(NOW(), '+00:00', '+08:00')), INTERVAL 1 DAY)
+    THEN ss.salesTotalAmount - COALESCE(sr.refundAmt, 0)
+    ELSE 0
+  END) AS yesterdaySales
 FROM Stores st
-LEFT JOIN Sales ss 
+LEFT JOIN Sales ss
   ON ss.storeId = st.storeId
+LEFT JOIN (
+  SELECT salesId, SUM(salesRefAmount) AS refundAmt
+  FROM SalesRefunds
+  GROUP BY salesId
+) sr ON sr.salesId = ss.salesId
 GROUP BY st.storeId, st.storeName;`;
   const [rows] = await pool.execute(sql);
   return rows;

@@ -574,7 +574,7 @@ const Page = () => {
   }));
 
   return (
-    <PageLayout className="p-2 flex flex-col gap-4">
+    <PageLayout className="p-2 flex flex-col gap-4 overflow-y-auto">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1 text-xs text-gray-500">
           <Link href="/orders" className="hover:text-gray-700">
@@ -753,8 +753,8 @@ const Page = () => {
         </div>
       )}
 
-      <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4">
-        <div className="flex-1 min-h-0 flex flex-col gap-3">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1 flex flex-col gap-3">
           <div className="rounded-md border border-gray-200 bg-white p-3 flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-gray-800">

@@ -40,9 +40,13 @@ export async function GET(_request: Request) {
     const store = searchParams.get("store") || "";
     const fromParam = searchParams.get("from") || "";
     const toParam = searchParams.get("to") || "";
+    const sort = searchParams.get("sort") || "";
+    const rawOrder = searchParams.get("order");
 
     const from = fromParam ? `${fromParam} 00:00:00` : "";
     const to = toParam ? `${toParam} 23:59:59` : "";
+    const order: "asc" | "desc" | undefined =
+      rawOrder === "asc" || rawOrder === "desc" ? rawOrder : undefined;
 
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
@@ -55,6 +59,8 @@ export async function GET(_request: Request) {
       store,
       from,
       to,
+      sort,
+      order,
     });
 
     if (!res.success) {

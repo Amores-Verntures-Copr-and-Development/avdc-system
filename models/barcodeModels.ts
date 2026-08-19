@@ -4,6 +4,30 @@ import { Barcodes } from "@/types/barcode";
 
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real Barcodes columns prevents a
+// crafted request body (e.g. an extra key on the DELETE endpoint's JSON
+// body, which is only loosely typed as Partial<Barcodes>) from injecting
+// arbitrary SQL via an object key.
+const BARCODE_COLUMNS = new Set<keyof Barcodes>([
+  "barcodeId",
+  "barcode",
+  "prodVarId",
+  "inventoryItemId",
+  "createdBy",
+  "createdAt",
+  "updatedAt",
+  "deletedAt",
+]);
+
+function assertKnownBarcodeColumns(fields: string[]) {
+  for (const field of fields) {
+    if (!BARCODE_COLUMNS.has(field as keyof Barcodes)) {
+      throw new Error(`Unknown Barcodes column: ${field}`);
+    }
+  }
+}
+
 export const insertBarcode = async ({
   data,
   connection,
@@ -71,6 +95,9 @@ export const updateBarcodes = async ({
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
+  assertKnownBarcodeColumns(keyFields);
+  assertKnownBarcodeColumns(Object.keys(updates[0]));
+
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof Barcodes),
   );
@@ -122,7 +149,6 @@ export const updateBarcodes = async ({
     SET ${setClauses.join(", ")}
     WHERE ${whereSql};
   `;
-  console.log({ sql, params });
   const [result] = await pool.execute(sql, params);
 
   return result;
@@ -137,11 +163,11 @@ export const deleteBarcodes = async ({
   updates: Partial<Barcodes>[];
   keyFields?: (keyof Barcodes)[];
 }) => {
-  console.log({ updates });
-
   const pool = connection ?? (await getDBConnection());
 
   if (!updates || updates.length === 0) return;
+
+  assertKnownBarcodeColumns(keyFields);
 
   // Build WHERE clause
   const uniqueKeyCombinations = updates.map((row) =>
@@ -165,8 +191,6 @@ export const deleteBarcodes = async ({
     DELETE FROM Barcodes
     WHERE ${whereSql};
   `;
-
-  console.log({ sql, params });
 
   const [result] = await pool.execute(sql, params);
 

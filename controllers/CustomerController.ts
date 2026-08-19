@@ -99,6 +99,8 @@ export const getCustomer = async ({
   store,
   from,
   to,
+  sort,
+  order,
 }: {
   keyFields?: Partial<Customer>;
   search?: string;
@@ -108,6 +110,8 @@ export const getCustomer = async ({
   store?: string;
   from?: string;
   to?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }) => {
   try {
     const data = await customerServices.findCustomerByFields({
@@ -119,6 +123,8 @@ export const getCustomer = async ({
       store,
       from,
       to,
+      sort,
+      order,
     });
     const count = await customerServices.countCustomerByStoreId({
       keyFields,

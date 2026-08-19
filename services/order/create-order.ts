@@ -5,6 +5,7 @@ import { insertOrderItems } from "@/models/orderItemModel";
 import { insertOrderStatusHistory } from "@/models/orderStatusHistoryModel";
 import { generateOrderNumber } from "./generate-order-number";
 import { customerServices } from "../customer/customerServices";
+import { redeemVouchersForOrder } from "../vouchers/redeem-vouchers";
 import crypto from "crypto";
 
 export async function processCreateOrder(
@@ -45,6 +46,14 @@ export async function processCreateOrder(
     });
 
     await insertOrderItems({ connection, orderId, data: data.items });
+
+    await redeemVouchersForOrder({
+      connection,
+      orderId,
+      storeId: data.storeId,
+      createdBy,
+      vouchers: data.vouchers,
+    });
 
     await insertOrderStatusHistory({
       connection,

@@ -82,7 +82,8 @@ export type CreateInventoryMovementDto = Pick<
   | "itemMovementReference"
   | "itemMovementRemarks"
   | "itemMovementType"
->;
+> &
+  Partial<Pick<InventoryItemMovement, "itemMovementCreatedAt">>;
 
 export type DisplayInventoryMovementDto = Pick<
   InventoryItemMovement,

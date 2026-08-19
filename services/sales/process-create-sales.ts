@@ -29,7 +29,10 @@ import { SalesPaymentStatus } from "../../types/sales";
 import { CreateTransactionDto } from "@/dtos/transaction.dto";
 import { createTransactions } from "../transaction/create-transaction";
 import { sendEmailSalesBasePaymentMethods } from "./send-email-sales";
-import { redeemVouchersForSale } from "../vouchers/redeem-vouchers";
+import {
+  linkVouchersToSale,
+  redeemVouchersForSale,
+} from "../vouchers/redeem-vouchers";
 
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
@@ -126,6 +129,7 @@ export async function processCreateSales(data: CreateSaleDto) {
           itemMovementReferenceId: salesId,
           itemMovementType: "out",
           itemMovementRemarks: "",
+          itemMovementCreatedAt: data.salesCreatedAt,
         })) ?? [];
 
       await updateInventoryItem({
@@ -155,6 +159,14 @@ export async function processCreateSales(data: CreateSaleDto) {
       vouchers: data.vouchers,
     });
 
+    await linkVouchersToSale({
+      connection,
+      salesId,
+      storeId: data.storeId,
+      createdBy: data.salesCreatedBy,
+      vouchers: data.linkedVouchers,
+    });
+
     const needDeductVariantComponentInventory = saleItemData.filter(
       (i) => (i.components?.length ?? 0) > 0,
     );
@@ -182,6 +194,7 @@ export async function processCreateSales(data: CreateSaleDto) {
           itemMovementReferenceId: salesId,
           itemMovementType: "out",
           itemMovementRemarks: "",
+          itemMovementCreatedAt: data.salesCreatedAt,
         })) ?? [];
 
       await updateInventoryItem({

@@ -9,6 +9,7 @@ import {
   UpdatePurchaseOrdersDto,
 } from "@/dtos/purchase.dto";
 import { getDBConnection } from "@/lib/db";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import {
   PurchaseOrderItems,
   PurchaseOrderRequest,
@@ -16,6 +17,21 @@ import {
   PurchaseOrderStatus,
 } from "@/types/purchaseOrders";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real PurchaseOrderItems columns
+// prevents a crafted request body (e.g. an extra key on a Partial<...>-typed
+// JSON body) from injecting arbitrary SQL via an object key.
+const PURCHASE_ORDER_ITEMS_COLUMNS = new Set<keyof PurchaseOrderItems>([
+  "poItemId",
+  "poId",
+  "itemId",
+  "unitPrice",
+  "poItemOrderedQty",
+  "poItemReceivedQty",
+  "suppId",
+  "poItemStatus",
+]);
 
 export const insertPurchaseOrder = async ({
   connection,
@@ -282,6 +298,13 @@ export const updatePOItems = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, PURCHASE_ORDER_ITEMS_COLUMNS, "PurchaseOrderItems");
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    PURCHASE_ORDER_ITEMS_COLUMNS,
+    "PurchaseOrderItems",
+  );
 
   // ✅ Determine all updatable fields (exclude keys)
   const updateFields = Object.keys(updates[0]).filter(

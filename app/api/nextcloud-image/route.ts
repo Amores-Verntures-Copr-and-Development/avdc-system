@@ -18,6 +18,26 @@ const imageCache = new Map<string, CachedImage>();
 const inFlight = new Map<string, Promise<CachedImage>>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
+// Never trust the upstream Content-Type verbatim - uploads are validated
+// to real image types at write time (see services/next-cloud/next-cloud.ts),
+// but this proxy also serves whatever already exists on the share from
+// before that validation existed, so it re-validates on the way out too.
+// Anything not recognized as a safe image type is served as
+// application/octet-stream, which browsers won't execute as HTML/script.
+const SAFE_IMAGE_CONTENT_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+
+function sanitizeContentType(contentType: string): string {
+  const base = contentType.split(";")[0].trim().toLowerCase();
+  return SAFE_IMAGE_CONTENT_TYPES.has(base)
+    ? base
+    : "application/octet-stream";
+}
+
 async function fetchFromUpstream(file: string): Promise<CachedImage> {
   // Reuses the existing public var rather than a new server-only one -
   // it's already present wherever this app runs, so there's no separate
@@ -48,8 +68,9 @@ async function fetchFromUpstream(file: string): Promise<CachedImage> {
     );
   }
 
-  const contentType =
-    upstreamRes.headers.get("content-type") || "application/octet-stream";
+  const contentType = sanitizeContentType(
+    upstreamRes.headers.get("content-type") || "",
+  );
   const buffer = await upstreamRes.arrayBuffer();
 
   return { buffer, contentType, cachedAt: Date.now() };
@@ -80,6 +101,7 @@ export async function GET(req: NextRequest) {
         status: 200,
         headers: {
           "Content-Type": cached.contentType,
+          "X-Content-Type-Options": "nosniff",
           "Cache-Control":
             "public, max-age=86400, stale-while-revalidate=604800",
         },
@@ -101,6 +123,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": result.contentType,
+        "X-Content-Type-Options": "nosniff",
         "Cache-Control":
           "public, max-age=86400, stale-while-revalidate=604800",
       },

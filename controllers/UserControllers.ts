@@ -19,10 +19,11 @@ import { resetUserPassword } from "@/services/user/reset-user-password";
 import { InterStoreRequests } from "@/types/isr";
 import { AuthUser } from "@/lib/auth/getCurrentUser";
 
-// Resetting someone else's password is more sensitive than a typical UI
-// action, so this is checked server-side rather than trusting the client
-// to only show the button to the right roles.
-function assertCanResetPasswords(actingUser: AuthUser) {
+// Shared by any action where an admin needs to act on someone else's
+// account (reset their password, edit their profile, etc.) - checked
+// server-side rather than trusting the client to only show the button to
+// the right roles.
+function assertIsAdminOrOwner(actingUser: AuthUser, action: string) {
   const canManage =
     actingUser.userRole === "superadmin" ||
     actingUser.userRole === "owner" ||
@@ -30,7 +31,7 @@ function assertCanResetPasswords(actingUser: AuthUser) {
       "admin";
 
   if (!canManage) {
-    throw new Error("Only Owner or Admin can reset a user's password");
+    throw new Error(`Only Owner or Admin can ${action}`);
   }
 }
 
@@ -87,18 +88,26 @@ export const getUserInfo = async (userId: number) => {
 export const updateUserInfoController = async ({
   userId,
   data,
+  actingUser,
 }: {
   userId: number;
   data: UpdateUserInfoDto;
+  actingUser: AuthUser;
 }) => {
   try {
+    // Editing your own profile is always allowed; editing someone else's
+    // requires Owner/Admin, same as resetting a password.
+    if (actingUser.userId !== userId) {
+      assertIsAdminOrOwner(actingUser, "edit another user's information");
+    }
+
     const result = await updateUserInfo({ userId, data });
     return {
       success: true,
       message: "Profile updated successfully!",
       data: result,
     };
-  } catch (e) {
+  } catch (e: any) {
     return {
       success: false,
       message: e instanceof Error ? e.message : "Failed to update profile!",
@@ -184,7 +193,7 @@ export const resetUserPasswordController = async ({
   actingUser: AuthUser;
 }) => {
   try {
-    assertCanResetPasswords(actingUser);
+    assertIsAdminOrOwner(actingUser, "reset a user's password");
 
     await resetUserPassword({ userId, newPassword });
 

@@ -1,6 +1,7 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
+import SectionHeader from "@/components/shared/SectionHeader";
 import Table, { Column } from "@/components/shared/Table";
 import { positionOptions, roleOptions } from "@/constants/dropdown-options";
 import { CreateUserDto } from "@/dtos/user.dto";
@@ -8,6 +9,20 @@ import { UserAuth } from "@/hooks/useSession";
 import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { handleChange } from "@/utils/handle-change";
+import {
+  ArrowLeft,
+  ArrowRight,
+  AtSign,
+  Briefcase,
+  Check,
+  ClipboardCheck,
+  Lock,
+  LucideIcon,
+  Mail,
+  ShieldCheck,
+  Store,
+  User as UserIcon,
+} from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -19,12 +34,40 @@ interface AddUserModalProps {
 }
 
 type ModalStep = 1 | 2 | 3; // 1: User Info, 2: Employee Info, 3: Review & Submit
+
 const storeColumn: Column<StoreInterface>[] = [
   { name: "ID", key: "storeId" },
   { name: "Name", key: "storeName" },
   { name: "Location", key: "storeLocation" },
   { name: "Description", key: "storeDescription" },
 ];
+
+const roleLabelMap: Record<string, string> = {
+  superadmin: "Super Admin",
+  owner: "Owner",
+  employee: "Employee",
+};
+
+const ReviewItem = ({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: React.ReactNode;
+}) => (
+  <div className="flex items-start gap-2.5">
+    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gray-50">
+      <Icon className="h-3.5 w-3.5 text-gray-400" />
+    </div>
+    <div className="min-w-0">
+      <p className="text-[11px] text-gray-500">{label}</p>
+      <div className="truncate text-sm font-medium text-gray-900">{value}</div>
+    </div>
+  </div>
+);
+
 const AddUserModal: React.FC<AddUserModalProps> = ({
   onCancel,
   onSubmit,
@@ -74,7 +117,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   );
   const [selectedStores, setSelectedStores] = useState<StoreInterface[]>([]);
   const handleSelectionChange = (selected: StoreInterface[]) => {
-    // 👉 Here you can trigger bulk delete, bulk approve, etc.
     setSelectedStores(selected);
   };
 
@@ -118,71 +160,82 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     return true;
   };
 
+  const isEmployee = addUserFormData.userRole === "employee";
+  const isSkippingEmployeeStep = !isEmployee;
+
   // Step 1: User Information
   const renderUserInfoStep = () => (
-    <div className="space-y-5">
-      <div className="space-y-3">
-        <h1 className="text-md font-semibold mb-3">User Information</h1>
-        <div className="flex flex-wrap gap-4">
-          <Input
-            sizes={"xs"}
-            value={addUserFormData.userFname}
-            name="userFname"
-            label={"First Name"}
-            onChange={handleFormChange}
-            required
-          />
-          <Input
-            sizes={"xs"}
-            value={addUserFormData.userMname ?? ""}
-            name="userMname"
-            label={"Middle Name (optional)"}
-            onChange={handleFormChange}
-          />
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <Input
-            sizes={"xs"}
-            value={addUserFormData.userLname ?? ""}
-            name="userLname"
-            label={"Last Name"}
-            onChange={handleFormChange}
-            required
-          />
-          <Input
-            sizes={"xs"}
-            name="userEmail"
-            value={addUserFormData.userEmail}
-            label={"Email"}
-            type="email"
-            onChange={handleFormChange}
-            required
-          />
-        </div>
-        <div className="flex flex-wrap gap-4">
-          <Input
-            sizes={"xs"}
-            label={"Username"}
-            value={addUserFormData.userName}
-            name="userName"
-            onChange={handleFormChange}
-            required
-          />
-          <Input
-            sizes={"xs"}
-            label={"Password"}
-            value={addUserFormData.userPassword}
-            name="userPassword"
-            type="password"
-            onChange={handleFormChange}
-            required
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
+    <div className="flex flex-col gap-5">
+      <SectionHeader
+        icon={UserIcon}
+        title="User Information"
+        subtitle="Basic account details for the new user."
+      />
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input
+          sizes="xs"
+          value={addUserFormData.userFname}
+          name="userFname"
+          label="First Name"
+          onChange={handleFormChange}
+          leadingIcon={<UserIcon className="h-3.5 w-3.5" />}
+          required
+        />
+        <Input
+          sizes="xs"
+          value={addUserFormData.userMname ?? ""}
+          name="userMname"
+          label="Middle Name (optional)"
+          onChange={handleFormChange}
+          leadingIcon={<UserIcon className="h-3.5 w-3.5" />}
+        />
+        <Input
+          sizes="xs"
+          value={addUserFormData.userLname ?? ""}
+          name="userLname"
+          label="Last Name"
+          onChange={handleFormChange}
+          leadingIcon={<UserIcon className="h-3.5 w-3.5" />}
+          required
+        />
+        <Input
+          sizes="xs"
+          name="userEmail"
+          value={addUserFormData.userEmail}
+          label="Email"
+          type="email"
+          onChange={handleFormChange}
+          leadingIcon={<Mail className="h-3.5 w-3.5" />}
+          required
+        />
+        <Input
+          sizes="xs"
+          label="Username"
+          value={addUserFormData.userName}
+          name="userName"
+          onChange={handleFormChange}
+          leadingIcon={<AtSign className="h-3.5 w-3.5" />}
+          required
+        />
+        <Input
+          sizes="xs"
+          label="Password"
+          value={addUserFormData.userPassword}
+          name="userPassword"
+          type="password"
+          onChange={handleFormChange}
+          leadingIcon={<Lock className="h-3.5 w-3.5" />}
+          required
+        />
+      </div>
+
+      <div className="border-t border-gray-100 pt-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <DropdownSelect
-            name={"userRole"}
-            sizes={"xs"}
-            label={"Role"}
+            name="userRole"
+            sizes="xs"
+            label="Role"
             value={addUserFormData.userRole ?? ""}
             onChange={handleFormChange}
             options={roleOptions}
@@ -194,102 +247,138 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   );
 
   // Step 2: Employee Information (only shown if userRole is "employee")
-  const renderEmployeeInfoStep = () => (
-    <div className="space-y-5">
-      <div className="space-y-3">
-        <h1 className="text-md font-semibold mb-3">Employee Information</h1>
-        <div className="grid grid-cols-2 gap-4">
-          <DropdownSelect
-            name={"empPosition"}
-            sizes={"xs"}
-            label={"Position"}
-            value={addUserFormData.empPosition ?? ""}
-            onChange={handleFormChange}
-            options={positionOptions}
-            required
-          />
-        </div>
-      </div>
+  const renderEmployeeInfoStep = () => {
+    const canAssignStores =
+      addUserFormData.empPosition === "supervisor" ||
+      addUserFormData.empPosition === "staff";
 
-      {Boolean(
-        addUserFormData.empPosition === "supervisor" ||
-        addUserFormData.empPosition === "staff",
-      ) && (
-        <div className="space-y-3">
-          <h1 className="text-md font-semibold mb-3">Assign Stores</h1>
-          <Table
-            showCheckBox
-            isRounded={false}
-            columns={storeColumn}
-            data={response.data}
-            onSelectionChange={handleSelectionChange}
-            uniqueIdKey="storeId"
+    return (
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          <SectionHeader
+            icon={Briefcase}
+            title="Employee Information"
+            subtitle="Define this employee's position within the organization."
           />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <DropdownSelect
+              name="empPosition"
+              sizes="xs"
+              label="Position"
+              value={addUserFormData.empPosition ?? ""}
+              onChange={handleFormChange}
+              options={positionOptions}
+              required
+            />
+          </div>
         </div>
-      )}
-    </div>
-  );
+
+        {canAssignStores && (
+          <div className="flex flex-col gap-3 border-t border-gray-100 pt-5">
+            <div className="flex items-center justify-between">
+              <SectionHeader
+                icon={Store}
+                title="Assign Stores"
+                subtitle="Select which store(s) this employee can access."
+              />
+              {selectedStores.length > 0 && (
+                <span className="shrink-0 rounded-full bg-primary-1/10 px-2.5 py-1 text-[11px] font-semibold text-primary-1">
+                  {selectedStores.length} selected
+                </span>
+              )}
+            </div>
+
+            <div className="overflow-hidden rounded-xl border border-gray-200">
+              <Table
+                showCheckBox
+                isRounded={false}
+                columns={storeColumn}
+                data={response.data}
+                onSelectionChange={handleSelectionChange}
+                uniqueIdKey="storeId"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Step 3: Review and Submit
   const renderReviewStep = () => (
-    <div className="space-y-5">
-      <div className="space-y-3">
-        <h1 className="text-md font-semibold mb-3">Review Information</h1>
+    <div className="flex flex-col gap-5">
+      <SectionHeader
+        icon={ClipboardCheck}
+        title="Review & Submit"
+        subtitle="Double-check the details before creating this account."
+      />
 
-        <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-          <div>
-            <h3 className="text-sm font-medium mb-2">User Details:</h3>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="text-gray-600">Name:</span>{" "}
-                <span className="font-medium">
-                  {addUserFormData.userFname} {addUserFormData.userLname}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-600">Email:</span>{" "}
-                <span className="font-medium">{addUserFormData.userEmail}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Username:</span>{" "}
-                <span className="font-medium">{addUserFormData.userName}</span>
-              </div>
-              <div>
-                <span className="text-gray-600">Role:</span>{" "}
-                <span className="font-medium">{addUserFormData.userRole}</span>
-              </div>
-            </div>
-          </div>
-
-          {addUserFormData.userRole === "employee" && (
-            <div>
-              <h3 className="text-sm font-medium mb-2">Employee Details:</h3>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <span className="text-gray-600">Position:</span>{" "}
-                  <span className="font-medium">
-                    {addUserFormData.empPosition}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Assigned Stores:</span>{" "}
-                  <span className="font-medium">{selectedStores.length}</span>
-                </div>
-              </div>
-
-              {selectedStores.length > 0 && (
-                <div className="mt-2">
-                  <h4 className="text-xs font-medium mb-1">Store List:</h4>
-                  <ul className="text-sm list-disc list-inside">
-                    {selectedStores.map((store) => (
-                      <li key={store.storeId}>{store.storeName}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
+      <div className="divide-y divide-gray-100 rounded-xl border border-gray-200">
+        <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+          <ReviewItem
+            icon={UserIcon}
+            label="Full Name"
+            value={`${addUserFormData.userFname} ${addUserFormData.userLname}`.trim()}
+          />
+          <ReviewItem
+            icon={Mail}
+            label="Email"
+            value={addUserFormData.userEmail || "-"}
+          />
+          <ReviewItem
+            icon={AtSign}
+            label="Username"
+            value={addUserFormData.userName || "-"}
+          />
+          <ReviewItem
+            icon={ShieldCheck}
+            label="Role"
+            value={
+              <span className="inline-flex items-center rounded-full bg-primary-1/10 px-2.5 py-0.5 text-xs font-semibold text-primary-1">
+                {roleLabelMap[addUserFormData.userRole ?? ""] ??
+                  addUserFormData.userRole ??
+                  "-"}
+              </span>
+            }
+          />
         </div>
+
+        {isEmployee && (
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+            <ReviewItem
+              icon={Briefcase}
+              label="Position"
+              value={
+                positionOptions.find(
+                  (o) => o.value === addUserFormData.empPosition,
+                )?.label ??
+                addUserFormData.empPosition ??
+                "-"
+              }
+            />
+            <ReviewItem
+              icon={Store}
+              label="Assigned Stores"
+              value={`${selectedStores.length} store${
+                selectedStores.length === 1 ? "" : "s"
+              }`}
+            />
+          </div>
+        )}
+
+        {selectedStores.length > 0 && (
+          <div className="flex flex-wrap gap-2 p-4">
+            {selectedStores.map((store) => (
+              <span
+                key={store.storeId}
+                className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-medium text-gray-700"
+              >
+                <Store className="h-3 w-3 text-gray-400" />
+                {store.storeName}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -308,80 +397,78 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     }
   };
 
+  const steps: { step: ModalStep; label: string; icon: LucideIcon }[] = [
+    { step: 1, label: "User Info", icon: UserIcon },
+    {
+      step: 2,
+      label: isEmployee ? "Employee Info" : "Additional Info",
+      icon: Briefcase,
+    },
+    { step: 3, label: "Review & Submit", icon: ClipboardCheck },
+  ];
+
   // Step indicators
   const renderStepIndicators = () => (
-    <div className="flex justify-between items-center mb-6">
-      <div className="flex items-center space-x-2">
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 1 ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          1
-        </div>
-        <span className={`text-sm ${currentStep === 1 ? "font-medium" : ""}`}>
-          User Info
-        </span>
-      </div>
+    <div className="flex items-start">
+      {steps.map((s, index) => {
+        const isCompleted = currentStep > s.step;
+        const isActive = currentStep === s.step;
+        const Icon = s.icon;
 
-      <div className="flex-1 h-0.5 bg-gray-200 mx-4"></div>
+        return (
+          <React.Fragment key={s.step}>
+            <div className="flex flex-col items-center gap-1.5">
+              <div
+                className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors ${
+                  isCompleted
+                    ? "border-primary-1 bg-primary-1 text-white"
+                    : isActive
+                      ? "border-primary-1 bg-white text-primary-1"
+                      : "border-gray-200 bg-white text-gray-300"
+                }`}
+              >
+                {isCompleted ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Icon className="h-4 w-4" />
+                )}
+              </div>
+              <span
+                className={`text-center text-[11px] font-medium ${
+                  isActive || isCompleted ? "text-gray-900" : "text-gray-400"
+                }`}
+              >
+                {s.label}
+              </span>
+            </div>
 
-      <div className="flex items-center space-x-2">
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 2 ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          2
-        </div>
-        <span className={`text-sm ${currentStep === 2 ? "font-medium" : ""}`}>
-          {addUserFormData.userRole === "employee"
-            ? "Employee Info"
-            : "Additional Info"}
-        </span>
-      </div>
-
-      <div className="flex-1 h-0.5 bg-gray-200 mx-4"></div>
-
-      <div className="flex items-center space-x-2">
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full ${
-            currentStep >= 3 ? "bg-blue-500 text-white" : "bg-gray-200"
-          }`}
-        >
-          3
-        </div>
-        <span className={`text-sm ${currentStep === 3 ? "font-medium" : ""}`}>
-          Review & Submit
-        </span>
-      </div>
+            {index < steps.length - 1 && (
+              <div
+                className={`mx-2 mb-5 h-0.5 flex-1 self-start rounded-full transition-colors ${
+                  currentStep > s.step ? "bg-primary-1" : "bg-gray-200"
+                }`}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
     </div>
   );
 
   // Navigation buttons
   const renderNavigationButtons = () => {
-    // const isEmployeeStep =
-    //   currentStep === 2 && addUserFormData.userRole === "employee";
-    // const isEmployeeWithStores =
-    //   isEmployeeStep &&
-    //   (addUserFormData.empPosition === "supervisor" ||
-    //     addUserFormData.empPosition === "staff");
-
     return (
-      <div className="flex justify-end gap-4 pt-4 border-t">
+      <div className="flex justify-end gap-3 border-t border-gray-100 pt-4">
         <div>
           {currentStep > 1 ? (
             <Button
               size="sm"
               className="text-sm font-semibold"
               color="secondary"
+              icon={ArrowLeft}
               label="Back"
               onClick={() => {
-                !["owner", "super-admin"].includes(
-                  addUserFormData.userRole ?? "",
-                )
-                  ? goToPrevStep()
-                  : setCurrentStep(1);
+                isSkippingEmployeeStep ? setCurrentStep(1) : goToPrevStep();
               }}
             />
           ) : (
@@ -395,11 +482,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
           )}
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex gap-2">
           {currentStep < 3 ? (
             <Button
               size="sm"
               label="Next"
+              icon={ArrowRight}
               className="text-sm font-semibold"
               onClick={() => {
                 const continueStep = validateStep1();
@@ -408,17 +496,14 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
                   return;
                 }
 
-                !["owner", "super-admin"].includes(
-                  addUserFormData.userRole ?? "",
-                )
-                  ? goToNextStep()
-                  : setCurrentStep(3);
+                isSkippingEmployeeStep ? setCurrentStep(3) : goToNextStep();
               }}
             />
           ) : (
             <Button
               size="sm"
-              label="Submit"
+              label="Create User"
+              icon={Check}
               className="text-sm font-semibold"
               onClick={handleSubmit}
             />
@@ -429,7 +514,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-6">
       {renderStepIndicators()}
       {renderCurrentStep()}
       {renderNavigationButtons()}

@@ -5,7 +5,10 @@ import Modal from "@/components/shared/Modal";
 
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
+import SectionHeader from "@/components/shared/SectionHeader";
 import Table, { Column } from "@/components/shared/Table";
+import Toggle from "@/components/shared/Toggle";
+import { useSession } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
 import { StoreEmployee, StoreInterface } from "@/types/stores";
 import { UserRole } from "@/types/users";
@@ -15,13 +18,16 @@ import {
   ArrowLeft,
   Calendar,
   IdCard,
+  ListOrdered,
   MapPin,
   Pencil,
   Puzzle,
   Store,
+  Tablet,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import useSWR from "swr";
 import AddUserToStoreForm from "./components/AddUserToStoreForm";
 import { IntegrationInterface } from "@/types/integrations";
@@ -59,13 +65,56 @@ const Page = () => {
   const [isAddUser, setIsAddUser] = useState(false);
   const { storeName } = params;
   const [showIntegration, setShowIntegration] = useState(false);
-  const { data } = useSWR<ApiResponse<StoreInterface[]>>(
+  const [updatingFeature, setUpdatingFeature] = useState<
+    "kiosk" | "order" | null
+  >(null);
+  const { user } = useSession();
+  const { data, mutate: mutateStore } = useSWR<ApiResponse<StoreInterface[]>>(
     storeName ? `/api/stores/search?storeName=${storeName}` : null,
     fetcher,
   );
 
   const store = data?.data[0];
   console.log({ store });
+
+  const canManageFeatures =
+    user?.userRole === "superadmin" ||
+    user?.userRole === "owner" ||
+    (user?.userRole === "employee" && user?.empPosition === "admin");
+
+  const handleToggleFeature = async (
+    feature: "kiosk" | "order",
+    enabled: boolean,
+  ) => {
+    if (!store?.storeId) return;
+
+    setUpdatingFeature(feature);
+    try {
+      const res = await fetch(`/api/stores/${store.storeId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          feature === "kiosk"
+            ? { storeKioskEnabled: enabled }
+            : { storeOrderEnabled: enabled },
+        ),
+      });
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      toast.success(
+        `${feature === "kiosk" ? "Kiosk" : "Order"} ${enabled ? "enabled" : "disabled"} for this store.`,
+      );
+      mutateStore();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to update store feature.");
+    } finally {
+      setUpdatingFeature(null);
+    }
+  };
   const {
     data: employeeData,
     isLoading: isEmpLoading,
@@ -130,6 +179,64 @@ const Page = () => {
           </div>
         </CardContent>
       </Card>
+      {canManageFeatures && (
+        <Card>
+          <CardContent className="p-4 flex flex-col gap-4">
+            <SectionHeader
+              icon={Store}
+              title="Store Features"
+              subtitle="Enable or disable features for this store's staff."
+            />
+            <div className="flex flex-col divide-y divide-gray-100">
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-1/10">
+                    <Tablet className="h-4 w-4 text-primary-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Kiosk
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Shows the Kiosks page in the sidebar for this store's
+                      staff and supervisors.
+                    </p>
+                  </div>
+                </div>
+                <Toggle
+                  initial={!!store?.storeKioskEnabled}
+                  onToggle={(enabled) => handleToggleFeature("kiosk", enabled)}
+                  disabled={updatingFeature === "kiosk"}
+                  sizes="sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-1/10">
+                    <ListOrdered className="h-4 w-4 text-primary-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Order
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Shows the Orders page in the sidebar for this store's
+                      staff.
+                    </p>
+                  </div>
+                </div>
+                <Toggle
+                  initial={!!store?.storeOrderEnabled}
+                  onToggle={(enabled) => handleToggleFeature("order", enabled)}
+                  disabled={updatingFeature === "order"}
+                  sizes="sm"
+                />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       <Card className="flex flex-col gap-3  min-h-0">
         <CardContent className="p-3 flex-1 flex flex-col">
           <div className="border-b-2 border-border">

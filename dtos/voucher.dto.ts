@@ -40,6 +40,11 @@ export interface CreateSalesVoucherDto {
   salesVoucherAmount: number;
 }
 
+export interface CreateOrderVoucherDto {
+  voucherId: number;
+  orderVoucherAmount: number;
+}
+
 export interface ValidateVoucherDto {
   voucherCode: string;
   storeId: number;

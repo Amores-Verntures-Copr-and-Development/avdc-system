@@ -1,5 +1,4 @@
 import { getInventoryNotInStoreController } from "@/controllers/InventoryController";
-import { count } from "console";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(

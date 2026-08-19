@@ -1,6 +1,10 @@
 // app/api/auth/update-token/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { generateTokens } from "@/utils/jwt";
+import {
+  getStore,
+  getStoresByEmployeeByUserId,
+} from "@/controllers/StoreControllers";
 import jwt from "jsonwebtoken";
 export async function PUT(req: NextRequest) {
   try {
@@ -39,6 +43,41 @@ export async function PUT(req: NextRequest) {
         { success: false, message: "Valid storeId is required" },
         { status: 400 },
       );
+    }
+
+    // 3b. Verify the caller is actually allowed to switch to this store -
+    // owner/superadmin manage every store; anyone else must have an
+    // employee assignment for it. Without this check, any authenticated
+    // user (including "staff") could mint themselves a valid cookie
+    // claiming any storeId, regardless of what they're actually assigned to.
+    const isStoreUnrestricted =
+      decoded.userRole === "superadmin" || decoded.userRole === "owner";
+
+    if (isStoreUnrestricted) {
+      const storeCheck = await getStore({ keyfields: { storeId } });
+      const storeExists =
+        storeCheck.success &&
+        Array.isArray(storeCheck.data) &&
+        storeCheck.data.length > 0;
+
+      if (!storeExists) {
+        return NextResponse.json(
+          { success: false, message: "Store not found" },
+          { status: 404 },
+        );
+      }
+    } else {
+      const membership = await getStoresByEmployeeByUserId(decoded.userId);
+      const allowedStoreIds = Array.isArray(membership.data)
+        ? membership.data.map((s: any) => s.storeId)
+        : [];
+
+      if (!allowedStoreIds.includes(storeId)) {
+        return NextResponse.json(
+          { success: false, message: "You are not assigned to this store" },
+          { status: 403 },
+        );
+      }
     }
 
     // 4. Generate NEW tokens with updated storeId

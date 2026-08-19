@@ -1,6 +1,12 @@
 import { CreateVoucherDto, UpdateVoucherDto } from "@/dtos/voucher.dto";
 import { getDBConnection } from "@/lib/db";
-import { DisplayVoucher, SalesVoucher, Voucher } from "@/types/voucher";
+import {
+  DisplayVoucher,
+  OrderVoucher,
+  SalesVoucher,
+  Voucher,
+  VoucherRedemption,
+} from "@/types/voucher";
 import {
   PoolConnection,
   ResultSetHeader,
@@ -382,5 +388,121 @@ export const selectSalesVouchersBySalesId = async ({
   `;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, [salesId]);
+  return rows;
+};
+
+export const insertOrderVoucher = async ({
+  connection,
+  data,
+}: {
+  connection?: PoolConnection;
+  data: Pick<
+    OrderVoucher,
+    "orderId" | "voucherId" | "storeId" | "orderVoucherAmount"
+  > &
+    Partial<Pick<OrderVoucher, "orderVoucherCreatedBy">>;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `
+    INSERT INTO OrderVoucher (
+      orderId, voucherId, storeId, orderVoucherAmount, orderVoucherCreatedBy
+    ) VALUES (?, ?, ?, ?, ?)
+  `;
+
+  const [result] = await pool.execute<ResultSetHeader>(sql, [
+    data.orderId,
+    data.voucherId,
+    data.storeId,
+    data.orderVoucherAmount,
+    data.orderVoucherCreatedBy ?? null,
+  ]);
+
+  return result;
+};
+
+// Redemption history for a voucher - who used it (customer + the staff
+// that processed it, if any) and on what sale/order, across both the POS
+// (SalesVoucher) and online-order (OrderVoucher) redemption paths.
+export const selectVoucherRedemptions = async ({
+  connection,
+  voucherId,
+}: {
+  connection?: PoolConnection;
+  voucherId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `
+    SELECT
+      'sale' AS source,
+      sv.salesId AS referenceId,
+      s.salesNo AS referenceNo,
+      s.salesCreatedAt AS referenceCreatedAt,
+      s.salesTotalAmount AS referenceTotalAmount,
+      sv.salesVoucherAmount AS appliedAmount,
+      sv.storeId AS storeId,
+      st.storeName AS storeName,
+      s.customerId AS customerId,
+      c.customerName AS customerName,
+      sv.salesVoucherCreatedBy AS redeemedByUserId,
+      NULLIF(CONCAT_WS(' ', u.userName, u.userLname), '') AS redeemedByName
+    FROM SalesVoucher sv
+    LEFT JOIN Sales s ON s.salesId = sv.salesId
+    LEFT JOIN Stores st ON st.storeId = sv.storeId
+    LEFT JOIN Customers c ON c.customerId = s.customerId
+    LEFT JOIN Users u ON u.userId = sv.salesVoucherCreatedBy
+    WHERE sv.voucherId = ? AND sv.salesVoucherDeletedAt IS NULL
+
+    UNION ALL
+
+    SELECT
+      'order' AS source,
+      ov.orderId AS referenceId,
+      o.orderNumber AS referenceNo,
+      o.orderCreatedAt AS referenceCreatedAt,
+      o.totalAmount AS referenceTotalAmount,
+      ov.orderVoucherAmount AS appliedAmount,
+      ov.storeId AS storeId,
+      st2.storeName AS storeName,
+      o.customerId AS customerId,
+      c2.customerName AS customerName,
+      ov.orderVoucherCreatedBy AS redeemedByUserId,
+      NULLIF(CONCAT_WS(' ', u2.userName, u2.userLname), '') AS redeemedByName
+    FROM OrderVoucher ov
+    LEFT JOIN Orders o ON o.orderId = ov.orderId
+    LEFT JOIN Stores st2 ON st2.storeId = ov.storeId
+    LEFT JOIN Customers c2 ON c2.customerId = o.customerId
+    LEFT JOIN Users u2 ON u2.userId = ov.orderVoucherCreatedBy
+    WHERE ov.voucherId = ? AND ov.orderVoucherDeletedAt IS NULL
+
+    ORDER BY referenceCreatedAt DESC
+  `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [
+    voucherId,
+    voucherId,
+  ]);
+
+  return rows as VoucherRedemption[];
+};
+
+export const selectOrderVouchersByOrderId = async ({
+  connection,
+  orderId,
+}: {
+  connection?: PoolConnection;
+  orderId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `
+    SELECT ov.*, v.voucherCode, v.voucherName
+    FROM OrderVoucher ov
+    LEFT JOIN Vouchers v ON v.voucherId = ov.voucherId
+    WHERE ov.orderId = ? AND ov.orderVoucherDeletedAt IS NULL
+  `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [orderId]);
   return rows;
 };

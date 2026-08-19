@@ -13,7 +13,28 @@ import {
 } from "@/types/inventory";
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 export type UpdateInventoryQtyMode = "replace" | "increment" | "decrement";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real InventoryItems columns prevents a
+// crafted request body (e.g. the untyped `PUT /api/inventory/item/...` route,
+// which does `await request.json()` with no cast at all) from injecting
+// arbitrary SQL via an object key. Note: InventoryItemInterface also declares
+// `inventoryItemPrice`, which is NOT a real InventoryItems column - it is
+// intentionally left out of this allowlist.
+const INVENTORY_ITEM_COLUMNS = new Set<keyof InventoryItemInterface>([
+  "inventoryItemId",
+  "inventoryId",
+  "inventoryItemReferenceType",
+  "inventoryItemReferenceId",
+  "inventoryItemQuantity",
+  "inventoryItemMin",
+  "inventoryItemCreatedAt",
+  "inventoryItemUpdatedAt",
+  "inventoryItemDeletedAt",
+  "inventoryItemCreatedBy",
+]);
 export const insertInventory = async ({
   data,
   connection,
@@ -512,6 +533,13 @@ export const updateInventoryItems = async ({
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
 
+  assertKnownColumns(keyFields, INVENTORY_ITEM_COLUMNS, "InventoryItems");
+  assertKnownColumns(
+    Object.keys(updates[0]),
+    INVENTORY_ITEM_COLUMNS,
+    "InventoryItems",
+  );
+
   // ✅ Determine all updatable fields (exclude key fields)
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof InventoryItemInterface),
@@ -601,10 +629,15 @@ export const insertInventoryMovement = async ({
       itemMovementReferenceId,
       itemMovementReference,
       itemMovementQuantity,
-      itemMovementRemarks
+      itemMovementRemarks,
+      itemMovementCreatedAt
     )
-    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?,?)").join(", ")}
+    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))").join(", ")}
   `;
+  // itemMovementCreatedAt defaults to CURRENT_TIMESTAMP when not passed
+  // (adjustments, PO/RO receiving, refunds, etc. all happen "now") - sales
+  // pass the sale's own date so a backdated sale's stock deduction is
+  // logged against that date instead of whenever this insert happens to run.
   const values = data.flatMap((item) => [
     item.inventoryId,
     item.inventoryItemId,
@@ -613,6 +646,7 @@ export const insertInventoryMovement = async ({
     item.itemMovementReference,
     item.itemMovementQuantity,
     item.itemMovementRemarks || null,
+    item.itemMovementCreatedAt || null,
   ]);
   const [results] = await pool.execute(sql, values);
   return results;

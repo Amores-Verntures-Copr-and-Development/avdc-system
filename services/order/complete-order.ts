@@ -3,6 +3,8 @@ import {
   CreateSaleItemDto,
   CreateSalePaymentDto,
 } from "@/dtos/sales.dto";
+import { CreateSalesVoucherDto } from "@/dtos/voucher.dto";
+import { selectOrderVouchersByOrderId } from "@/models/voucherModel";
 import { SalesPaymentStatus, SalesStatus } from "@/types/sales";
 import { getProductVariants } from "../products/product-variant/get-product-variants";
 import { processCreateSales } from "../sales/process-create-sales";
@@ -61,6 +63,16 @@ export async function processCompleteOrder({
     },
   ];
 
+  // Carry over any voucher already redeemed on the order - this only
+  // records the link on the new sale (see linkVouchersToSale), it doesn't
+  // re-apply the redemption since that already happened when the order
+  // itself was created.
+  const orderVouchers = await selectOrderVouchersByOrderId({ orderId });
+  const linkedVouchers: CreateSalesVoucherDto[] = orderVouchers.map((ov) => ({
+    voucherId: ov.voucherId,
+    salesVoucherAmount: Number(ov.orderVoucherAmount),
+  }));
+
   const saleData: CreateSaleDto = {
     customerId: order.customerId,
     salesCreatedBy: completedBy,
@@ -79,6 +91,7 @@ export async function processCompleteOrder({
     customerPhone: order.customerPhone,
     salesItems,
     salesPayments,
+    linkedVouchers,
   };
 
   const sales = await processCreateSales(saleData);

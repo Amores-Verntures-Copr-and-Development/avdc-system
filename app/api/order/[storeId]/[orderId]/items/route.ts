@@ -1,18 +1,29 @@
 import { OrderItemController } from "@/controllers/OrderController";
 import { CreateOrderItemDto } from "@/dtos/orders.dto";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
+
+function errorStatus(err: any): number {
+  if (err?.message === "Unauthorized") return 401;
+  if (err?.message === "You do not have access to this store") return 403;
+  return 500;
+}
 
 export async function GET(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
   try {
-    const slug = (await params).orderId;
-    const orderId = Number(slug);
+    const { storeId, orderId: orderIdSlug } = await params;
+    const orderId = Number(orderIdSlug);
 
     if (!orderId) {
       throw new Error("No orderId found");
     }
+
+    const actingUser = getCurrentUser(request);
+    assertStoreAccess(actingUser, Number(storeId));
 
     const res = await OrderItemController.get(orderId);
 
@@ -35,24 +46,27 @@ export async function GET(
         message: "Failed to fetched order items!",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }
 
 export async function POST(
-  _request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string; orderId: string }> },
 ) {
   try {
-    const slug = (await params).orderId;
-    const orderId = Number(slug);
+    const { storeId, orderId: orderIdSlug } = await params;
+    const orderId = Number(orderIdSlug);
 
     if (!orderId) {
       throw new Error("No orderId found");
     }
 
-    const body = (await _request.json()) as CreateOrderItemDto[];
+    const actingUser = getCurrentUser(request);
+    assertStoreAccess(actingUser, Number(storeId));
+
+    const body = (await request.json()) as CreateOrderItemDto[];
 
     const res = await OrderItemController.create({ orderId, data: body });
 
@@ -75,7 +89,7 @@ export async function POST(
         message: err?.message || String(err),
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }

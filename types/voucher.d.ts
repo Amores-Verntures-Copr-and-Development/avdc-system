@@ -43,6 +43,18 @@ export interface SalesVoucher {
   salesVoucherCreatedBy: number;
 }
 
+export interface OrderVoucher {
+  orderVoucherId: number;
+  orderId: number;
+  voucherId: number;
+  storeId: number;
+  orderVoucherAmount: number;
+  orderVoucherCreatedAt?: string;
+  orderVoucherUpdatedAt?: string;
+  orderVoucherDeletedAt?: string | null;
+  orderVoucherCreatedBy?: number | null; // Users FK, null when redeemed by a customer directly (no staff involved)
+}
+
 export interface DisplayVoucher extends Voucher {
   voucherIssuedByName?: string;
   voucherIssuedToName?: string | null;
@@ -53,4 +65,19 @@ export interface DisplayVoucher extends Voucher {
 export interface AppliedVoucher {
   voucher: DisplayVoucher;
   appliedAmount: number;
+}
+
+export interface VoucherRedemption {
+  source: "sale" | "order";
+  referenceId: number;
+  referenceNo: string | null;
+  referenceCreatedAt: string;
+  referenceTotalAmount: number;
+  appliedAmount: number;
+  storeId: number;
+  storeName: string | null;
+  customerId: number | null;
+  customerName: string | null;
+  redeemedByUserId: number | null;
+  redeemedByName: string | null;
 }

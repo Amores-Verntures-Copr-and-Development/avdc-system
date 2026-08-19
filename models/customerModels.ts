@@ -3,9 +3,29 @@ import {
   CreateCustomerDto,
 } from "@/dtos/customer.dto";
 import { getDBConnection } from "@/lib/db";
+import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
 import { Barcodes } from "@/types/barcode";
 import { Customer, CustomerAccount } from "@/types/customer";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
+
+// Column names are interpolated directly into raw SQL below (CASE/WHERE
+// builders) - allowlisting against the real Customers columns prevents a
+// crafted request body (only loosely typed as Partial<Customer>) from
+// injecting arbitrary SQL via an object key.
+const CUSTOMER_COLUMNS = new Set<keyof Customer>([
+  "customerId",
+  "customerName",
+  "customerEmail",
+  "customerAddress",
+  "customerPhone",
+  "customerType",
+  "customerSource",
+  "customerCreatedAt",
+  "customerUpdatedAt",
+  "customerDeletedAt",
+  "customerCreatedBy",
+  "storeId",
+]);
 
 export const insertCustomer = async ({
   data,
@@ -39,6 +59,8 @@ export const selectCustomers = async ({
   store,
   from,
   to,
+  sort,
+  order,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -49,8 +71,13 @@ export const selectCustomers = async ({
   store?: string;
   from?: string;
   to?: string;
+  sort?: string;
+  order?: "asc" | "desc";
 }) => {
   const pool = connection ?? (await getDBConnection());
+  const allowedSorts: Record<string, string> = {
+    customerName: "c.customerName",
+  };
   const safeLimit =
     limit !== undefined ? Math.max(1, Math.floor(Number(limit))) : undefined;
 
@@ -182,6 +209,10 @@ export const selectCustomers = async ({
       ca.accountCreatedAt
   `;
 
+  if (sort && order && allowedSorts[sort]) {
+    sql += ` ORDER BY ${allowedSorts[sort]} ${order.toUpperCase()}`;
+  }
+
   if (safeLimit !== undefined && Number.isFinite(safeLimit)) {
     sql += ` LIMIT ${safeLimit}`;
   }
@@ -264,6 +295,9 @@ export const updateCustomers = async ({
 }) => {
   const pool = connection ?? (await getDBConnection());
   if (!updates || updates.length === 0) return;
+
+  assertKnownColumns(keyFields, CUSTOMER_COLUMNS, "Customers");
+  assertKnownColumns(Object.keys(updates[0]), CUSTOMER_COLUMNS, "Customers");
 
   const updateFields = Object.keys(updates[0]).filter(
     (field) => !keyFields.includes(field as keyof Customer),

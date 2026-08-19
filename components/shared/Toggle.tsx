@@ -6,6 +6,7 @@ type ToggleProps = {
   onToggle?: (state: boolean) => void;
   sizes?: "xs" | "sm" | "md" | "lg";
   flexType?: "flex" | "flex-col";
+  disabled?: boolean;
 };
 
 export default function Toggle({
@@ -14,6 +15,7 @@ export default function Toggle({
   onToggle,
   sizes = "md",
   flexType = "flex",
+  disabled = false,
 }: ToggleProps) {
   const [enabled, setEnabled] = useState(initial);
 
@@ -22,6 +24,8 @@ export default function Toggle({
   }, [initial]);
 
   const handleToggle = () => {
+    if (disabled) return;
+
     const newState = !enabled;
     setEnabled(newState);
     onToggle?.(newState);
@@ -51,9 +55,10 @@ export default function Toggle({
       <button
         type="button"
         onClick={handleToggle}
+        disabled={disabled}
         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
           enabled ? "bg-primary-1" : "bg-gray-300"
-        }`}
+        } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
       >
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

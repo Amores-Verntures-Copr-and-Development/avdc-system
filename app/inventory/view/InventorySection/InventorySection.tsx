@@ -328,7 +328,7 @@ const InventorySection: React.FC<InventorySectionProps> = ({
     !hasStore ? `/api/inventory/${inventoryId}/supplier` : null,
     fetcher,
   );
-  console.log({ responseSupplier });
+
   const supplierOptions: { label: string; value: string }[] = [
     { label: "No Supplier", value: "null" },
     ...(responseSupplier?.data.map((s) => ({

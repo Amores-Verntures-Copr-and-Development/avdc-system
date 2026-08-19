@@ -39,6 +39,12 @@ export type CreateSaleDto = Pick<
     salesPayments?: CreateSalePaymentDto[];
     saleDiscounts?: CreateSalesDiscount[];
     vouchers?: CreateSalesVoucherDto[];
+    // Vouchers already redeemed elsewhere (e.g. on the source Order this
+    // sale was converted from) - only records the SalesVoucher link so the
+    // sale shows/reports the voucher, without re-validating or decrementing
+    // the voucher's balance a second time. Use `vouchers` above instead for
+    // a fresh redemption happening on this sale.
+    linkedVouchers?: CreateSalesVoucherDto[];
     // Backdates the sale record (e.g. manually logging a past sale) - defaults
     // to CURRENT_TIMESTAMP at the DB level when omitted.
     salesCreatedAt?: string;
@@ -61,6 +67,15 @@ export interface DisplaySalesDto extends Sales {
   totalItem: number;
   salesDiscounts: SaleDiscountExtends[];
   salesPaymentRefunds: SalesPaymentRefund[];
+  vouchers: DisplaySalesVoucherDto[];
+}
+
+export interface DisplaySalesVoucherDto {
+  salesVoucherId: number;
+  voucherId: number;
+  voucherCode: string;
+  voucherName: string | null;
+  salesVoucherAmount: number;
 }
 
 interface SalePaymentMethods extends SalePayments, PaymentMethods {}

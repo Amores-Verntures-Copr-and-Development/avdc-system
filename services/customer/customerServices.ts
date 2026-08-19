@@ -114,6 +114,8 @@ export const customerServices = {
     store,
     from,
     to,
+    sort,
+    order,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -124,6 +126,8 @@ export const customerServices = {
     store?: string;
     from?: string;
     to?: string;
+    sort?: string;
+    order?: "asc" | "desc";
   }) => {
     try {
       const data = await selectCustomers({
@@ -135,6 +139,8 @@ export const customerServices = {
         store,
         from,
         to,
+        sort,
+        order,
       });
       return data;
     } catch (e) {

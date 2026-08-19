@@ -81,16 +81,41 @@ export const selectOwnerDashboardStats = async ({
 }) => {
   const pool = await getDBConnection();
   const params: any[] = [];
-  const sql = `SELECT 
-(SELECT SUM(s.salesTotalAmount) FROM Sales s ${storeId ? `WHERE s.storeId = ?` : ``}) AS totalSales, 
+  // Sales.salesTotalAmount is never decremented on refund (SalesRefunds is
+  // a separate append-only ledger, same as everywhere else this is netted
+  // in the app) - left un-netted here, "Total Sales" overstated actual
+  // revenue by however much had been refunded.
+  const sql = `SELECT
+(
+  SELECT COALESCE(SUM(s.salesTotalAmount) - COALESCE(SUM(sr.refundAmt), 0), 0)
+  FROM Sales s
+  LEFT JOIN (
+    SELECT salesId, SUM(salesRefAmount) AS refundAmt
+    FROM SalesRefunds
+    GROUP BY salesId
+  ) sr ON sr.salesId = s.salesId
+  ${storeId ? `WHERE s.storeId = ?` : ``}
+) AS totalSales,
+(SELECT COUNT(*) FROM Sales s ${storeId ? `WHERE s.storeId = ?` : ``}) AS totalTransactions,
 (SELECT COUNT(*) FROM Stores s) AS totalStores,
 (SELECT SUM(ii.inventoryItemQuantity * i.itemPrice ) FROM InventoryItems ii INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND  ii.inventoryItemReferenceType = 'item' ${storeId ? ` LEFT JOIN Inventories iis ON iis.inventoryId = ii.inventoryId` : ``} WHERE ii.inventoryItemDeletedAt IS NULL ${storeId ? ` AND inventoryReference = 'store' AND inventoryReferenceId = ?` : ``})
 AS totalInventoryCost,
-(SELECT SUM(poi.unitPrice * poi.poItemReceivedQty)  FROM PurchaseOrderItems poi WHERE poi.poItemStatus = 'received' OR poi.poItemStatus = 'delivered' OR poi.poItemStatus = 'completed') AS  totalPurchase
+(SELECT SUM(poi.unitPrice * poi.poItemReceivedQty)  FROM PurchaseOrderItems poi WHERE poi.poItemStatus = 'received' OR poi.poItemStatus = 'delivered' OR poi.poItemStatus = 'completed') AS  totalPurchase,
+(
+  SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT('payMetName', pmTotals.payMetName, 'totalAmount', pmTotals.totalAmount)), JSON_ARRAY())
+  FROM (
+    SELECT pm.payMetName AS payMetName, SUM(sp.salesPaymentAmount) AS totalAmount
+    FROM SalesPayments sp
+    INNER JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
+    INNER JOIN Sales s2 ON s2.salesId = sp.salesId
+    ${storeId ? `WHERE s2.storeId = ?` : ``}
+    GROUP BY pm.payMetName
+    ORDER BY totalAmount DESC
+  ) pmTotals
+) AS paymentMethods
 ; `;
   if (storeId) {
-    params.push(storeId);
-    params.push(storeId);
+    params.push(storeId, storeId, storeId, storeId);
   }
   const [rows] = await pool.execute(sql, params);
   return rows;
@@ -98,19 +123,19 @@ AS totalInventoryCost,
 
 export const selectStoresRecentSales = async () => {
   const pool = await getDBConnection();
-  const sql = `SELECT 
+  const sql = `SELECT
   s.storeId,
     s.storeName,
     sl.salesNo,
-    sl.salesTotalAmount,
+    COALESCE(sl.salesTotalAmount - sr.refundAmt, sl.salesTotalAmount) AS salesTotalAmount,
     (
-        SELECT SUM(si.salesItemQuantity) 
-        FROM SalesItems si 
+        SELECT SUM(si.salesItemQuantity)
+        FROM SalesItems si
         WHERE si.salesId = sl.salesId
     ) AS itemQty
 FROM Stores s
-LEFT JOIN Sales sl 
-    ON sl.storeId = s.storeId 
+LEFT JOIN Sales sl
+    ON sl.storeId = s.storeId
     AND DATE(sl.salesCreatedAt) = CURRENT_DATE
     AND sl.salesCreatedAt = (
         SELECT MAX(sl2.salesCreatedAt)
@@ -118,6 +143,11 @@ LEFT JOIN Sales sl
         WHERE sl2.storeId = s.storeId
           AND DATE(sl2.salesCreatedAt) = CURRENT_DATE
     )
+LEFT JOIN (
+    SELECT salesId, SUM(salesRefAmount) AS refundAmt
+    FROM SalesRefunds
+    GROUP BY salesId
+) sr ON sr.salesId = sl.salesId
 ORDER BY sl.salesCreatedAt DESC;`;
 
   const [rows] = await pool.execute(sql);
@@ -134,11 +164,16 @@ export const selectSalesChartData = async ({
   const pool = await getDBConnection();
 
   let sql = `
-    SELECT 
+    SELECT
       MONTH(s.salesCreatedAt) AS monthNumber,
       DATE_FORMAT(s.salesCreatedAt, '%M') AS monthName,
-      SUM(s.salesTotalAmount) AS totalSales
+      COALESCE(SUM(s.salesTotalAmount) - COALESCE(SUM(sr.refundAmt), 0), 0) AS totalSales
     FROM Sales s
+    LEFT JOIN (
+      SELECT salesId, SUM(salesRefAmount) AS refundAmt
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) sr ON sr.salesId = s.salesId
     WHERE YEAR(s.salesCreatedAt) = ?
   `;
 

@@ -1,7 +1,7 @@
 import { getUserInfo, updateUserInfoController } from "@/controllers/UserControllers";
 import { UpdateUserInfoDto } from "@/dtos/user.dto";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 
 export async function GET(
   _request: NextRequest,
@@ -34,25 +34,7 @@ export async function PATCH(
 ) {
   try {
     const userId = Number((await params).userId);
-
-    const token = request.cookies.get("avdc_accessToken")?.value;
-    if (!token) {
-      return NextResponse.json(
-        { success: false, message: "Unauthorized" },
-        { status: 401 },
-      );
-    }
-
-    const decoded = jwt.verify(token, process.env.SECRET_KEY!) as {
-      userId: number;
-    };
-
-    if (decoded.userId !== userId) {
-      return NextResponse.json(
-        { success: false, message: "You can only update your own account." },
-        { status: 403 },
-      );
-    }
+    const actingUser = getCurrentUser(request);
 
     const data = (await request.json()) as UpdateUserInfoDto;
 
@@ -66,7 +48,7 @@ export async function PATCH(
       );
     }
 
-    const res = await updateUserInfoController({ userId, data });
+    const res = await updateUserInfoController({ userId, data, actingUser });
     if (!res.success) {
       throw new Error(res.message);
     }
@@ -77,13 +59,16 @@ export async function PATCH(
       data: res.data,
     });
   } catch (err: any) {
+    const isAuthError = err?.message === "Unauthorized";
+    const isForbidden = err?.message?.includes("Only Owner or Admin");
+
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to update profile",
+        message: err?.message || "Failed to update profile",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: isAuthError ? 401 : isForbidden ? 403 : 500 },
     );
   }
 }

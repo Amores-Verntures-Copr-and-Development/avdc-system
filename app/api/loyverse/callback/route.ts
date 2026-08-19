@@ -1,6 +1,15 @@
 import { getStore } from "@/controllers/StoreControllers";
 import { processCreateNewLoyverseIntegration } from "@/services/integration/loyverse/process-create-new-loyverse-integration";
+import { allowedOrigins } from "@/middleware";
+import jwt from "jsonwebtoken";
 import { NextRequest, NextResponse } from "next/server";
+
+interface LoyverseOAuthState {
+  storeId: number;
+  baseUrl: string;
+  userId: number;
+  purpose: string;
+}
 
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
@@ -10,9 +19,28 @@ export async function GET(req: NextRequest) {
   if (!state) {
     return NextResponse.json({ error: "Missing state" }, { status: 400 });
   }
-  const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
 
-  const { storeId, baseUrl, userId } = decoded;
+  let decoded: LoyverseOAuthState;
+  try {
+    decoded = jwt.verify(state, process.env.SECRET_KEY!) as LoyverseOAuthState;
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid or expired state" },
+      { status: 400 },
+    );
+  }
+
+  if (decoded.purpose !== "loyverse-oauth") {
+    return NextResponse.json({ error: "Invalid state" }, { status: 400 });
+  }
+
+  const { storeId, userId } = decoded;
+  // Only redirect back to an origin this app actually serves - an
+  // unvalidated baseUrl would let a forged (but signed-by-us-if-leaked)
+  // state redirect the browser to an attacker-controlled site.
+  const baseUrl = allowedOrigins.includes(decoded.baseUrl)
+    ? decoded.baseUrl
+    : allowedOrigins[0];
 
   if (!code) {
     return NextResponse.json({ error: "Missing code" }, { status: 400 });

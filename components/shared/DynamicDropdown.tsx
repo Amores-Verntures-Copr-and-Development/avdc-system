@@ -51,7 +51,7 @@ const DynamicDropdown = ({
   const selectedOption =
     options.find((o) => o.value === value) ||
     options.find((o) => o.value === defaultValue);
-  console.log({ value, options, selectedOption });
+
   const updatePosition = () => {
     if (!triggerRef.current) return;
 
