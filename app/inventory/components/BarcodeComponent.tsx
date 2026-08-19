@@ -511,7 +511,7 @@ const BarcodeComponent = ({
               </h3>
               <p className="mt-1 text-sm text-red-500">
                 This will unlink the barcode from this inventory item. If it
-                isn't used elsewhere, it will be permanently deleted.
+                isn&apos;t used elsewhere, it will be permanently deleted.
               </p>
             </div>
           </div>

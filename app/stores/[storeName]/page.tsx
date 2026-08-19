@@ -3,7 +3,6 @@ import Button from "@/components/shared/Button";
 import { Card, CardContent, CardTitle } from "@/components/shared/CustomCard";
 import Modal from "@/components/shared/Modal";
 
-import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import SectionHeader from "@/components/shared/SectionHeader";
 import Table, { Column } from "@/components/shared/Table";
@@ -26,6 +25,7 @@ import {
   Tablet,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -198,8 +198,8 @@ const Page = () => {
                       Kiosk
                     </p>
                     <p className="text-xs text-gray-500">
-                      Shows the Kiosks page in the sidebar for this store's
-                      staff and supervisors.
+                      Shows the Kiosks page in the sidebar for this
+                      store&apos;s staff and supervisors.
                     </p>
                   </div>
                 </div>
@@ -221,8 +221,8 @@ const Page = () => {
                       Order
                     </p>
                     <p className="text-xs text-gray-500">
-                      Shows the Orders page in the sidebar for this store's
-                      staff.
+                      Shows the Orders page in the sidebar for this
+                      store&apos;s staff.
                     </p>
                   </div>
                 </div>
@@ -315,11 +315,17 @@ const Page = () => {
                     }
                   >
                     <div className="p-2  border-border border flex h-30 w-30 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                      <img
-                        src={image}
-                        alt={name}
-                        className="h-20 w-20 object-contain"
-                      />
+                      {image ? (
+                        <Image
+                          src={image}
+                          alt={name}
+                          width={80}
+                          height={80}
+                          className="h-20 w-20 object-contain"
+                        />
+                      ) : (
+                        <Puzzle className="h-8 w-8 text-gray-300" />
+                      )}
                     </div>
                   </div>
                 );
@@ -359,9 +365,11 @@ const Page = () => {
               }}
             >
               <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                <img
+                <Image
                   src={integration.image}
                   alt={integration.name}
+                  width={40}
+                  height={40}
                   className="h-10 w-10 object-contain"
                 />
               </div>

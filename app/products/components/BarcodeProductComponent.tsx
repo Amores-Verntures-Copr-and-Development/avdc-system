@@ -40,9 +40,7 @@ const BarcodeProductComponent = ({
   const { user } = useSession();
 
   const [showView, setShowView] = useState<"view" | "add" | "delete">("view");
-  const [barcodeToDelete, setBarcodeToDelete] = useState<Barcodes | null>(
-    null,
-  );
+  const [barcodeToDelete, setBarcodeToDelete] = useState<Barcodes | null>(null);
 
   const [addUse, setAddUse] = useState<"scan" | "input">("scan");
 
@@ -504,7 +502,7 @@ const BarcodeProductComponent = ({
                 Delete Barcode?
               </h3>
               <p className="mt-1 text-sm text-red-500">
-                This will unlink the barcode from this product. If it isn't
+                This will unlink the barcode from this product. If it isn&apos;t
                 used elsewhere, it will be permanently deleted.
               </p>
             </div>
