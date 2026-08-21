@@ -60,6 +60,19 @@ export interface DisplaProductVariantsDtos extends ProductVariants, Products {
 export interface DisplayVariantComponents
   extends VariantComponents, InventoryItemInterface, ItemInterface {}
 
+export interface DisplayKioskProductVariantDto {
+  prodVarId: number;
+  prodVarName: string;
+  prodVarPrice: number;
+  prodVarUnit: string | null;
+  prodVarImage: string | null;
+  kioskOrder: number;
+  prodId: number;
+  prodName: string;
+  prodCatId: number | null;
+  prodCatName: string | null;
+}
+
 export type CreateProductCategoryDto = Pick<
   ProductCategories,
   "prodCatCreatedBy" | "prodCatName" | "storeId"

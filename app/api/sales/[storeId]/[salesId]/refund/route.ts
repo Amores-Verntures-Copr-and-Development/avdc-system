@@ -4,6 +4,8 @@ import {
   refundSalesController,
   updateSalesController,
 } from "@/controllers/SaleController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; salesId: string }> },
@@ -27,6 +29,10 @@ export async function POST(
     if (!salesId) {
       throw new Error("No sales id found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const req = await _request.json();
     const decoded = jwt.verify(accessToken, process.env.SECRET_KEY!) as {
       userId: number;

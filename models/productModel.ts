@@ -12,6 +12,7 @@ import {
   ProductVariants,
   VariantComponents,
 } from "@/types/products";
+import { buildDailyTrend, growthPct } from "@/utils/trendStats";
 import { PoolConnection, ResultSetHeader, RowDataPacket } from "mysql2/promise";
 
 // Column names are interpolated directly into raw SQL below (CASE/WHERE
@@ -38,6 +39,8 @@ const PRODUCT_VARIANT_COLUMNS = new Set<keyof ProductVariants>([
   "prodVarUnit",
   "isDeductInv",
   "isAvailableOnline",
+  "isAvailableKiosk",
+  "kioskOrder",
   "inventoryItemId",
   "prodVarCreatedAt",
   "prodVarUpdatedAt",
@@ -579,6 +582,238 @@ WHERE p.prodDeletedAt IS NULL`;
   return rows;
 };
 
+// Powers the Products page KPI cards (Total Products, Total Sold, Total
+// Sales, Best Seller) - each with a 14-day trend for its sparkline, and a
+// this-month-vs-last-month growth % where that's meaningful.
+export const selectProductsDashboardStats = async ({
+  storeId,
+  storeName,
+}: {
+  storeId?: number;
+  storeName?: string;
+}) => {
+  const pool = await getDBConnection();
+
+  const productConditions: string[] = ["p.prodDeletedAt IS NULL"];
+  const productParams: any[] = [];
+  if (storeId) {
+    productConditions.push("p.storeId = ?");
+    productParams.push(storeId);
+  }
+  if (storeName?.trim()) {
+    productConditions.push("s.storeName LIKE ?");
+    productParams.push(`%${storeName.trim()}%`);
+  }
+  const productWhereClause = `WHERE ${productConditions.join(" AND ")}`;
+
+  // Sold quantity/revenue is scoped through the product's own storeId
+  // (Products.storeId), same as the rest of this query, rather than the
+  // sale's storeId - keeps this consistent with how "sold" is already
+  // computed per-variant in selectProducts above.
+  const soldConditions: string[] = ["p.prodDeletedAt IS NULL"];
+  const soldParams: any[] = [];
+  if (storeId) {
+    soldConditions.push("p.storeId = ?");
+    soldParams.push(storeId);
+  }
+  if (storeName?.trim()) {
+    soldConditions.push("st.storeName LIKE ?");
+    soldParams.push(`%${storeName.trim()}%`);
+  }
+  const soldWhereClause = `WHERE ${soldConditions.join(" AND ")}`;
+
+  // 1️⃣ Total products (all time)
+  const totalProductsSql = `
+    SELECT COUNT(DISTINCT p.prodId) AS totalProducts
+    FROM Products p
+    LEFT JOIN Stores s ON s.storeId = p.storeId
+    ${productWhereClause};
+  `;
+
+  // 2️⃣ New-products trend (daily count, last 14 days)
+  const productsTrendSql = `
+    SELECT
+      DATE_FORMAT(CONVERT_TZ(p.prodCreatedAt, '+00:00', '+08:00'), '%Y-%m-%d') AS period,
+      COUNT(*) AS value
+    FROM Products p
+    LEFT JOIN Stores s ON s.storeId = p.storeId
+    ${productWhereClause}
+      AND DATE(CONVERT_TZ(p.prodCreatedAt, '+00:00', '+08:00'))
+        >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+    GROUP BY period
+    ORDER BY period ASC;
+  `;
+
+  // 3️⃣ New-products growth (this calendar month vs last calendar month)
+  const productsGrowthSql = `
+    SELECT
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(p.prodCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE(), '%Y-%m') THEN 1 ELSE 0 END) AS thisMonthCount,
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(p.prodCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m') THEN 1 ELSE 0 END) AS lastMonthCount
+    FROM Products p
+    LEFT JOIN Stores s ON s.storeId = p.storeId
+    ${productWhereClause};
+  `;
+
+  // 4️⃣ Total units sold + total product revenue (all time)
+  const totalSoldSql = `
+    SELECT
+      COALESCE(SUM(si.salesItemQuantity), 0) AS totalSold,
+      COALESCE(SUM(si.salesItemTotal), 0) AS totalSales
+    FROM SalesItems si
+    JOIN Sales s ON s.salesId = si.salesId
+    JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+    JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN Stores st ON st.storeId = p.storeId
+    ${soldWhereClause};
+  `;
+
+  // 5️⃣ Units-sold + revenue trend (daily, last 14 days)
+  const soldTrendSql = `
+    SELECT
+      DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m-%d') AS period,
+      COALESCE(SUM(si.salesItemQuantity), 0) AS soldValue,
+      COALESCE(SUM(si.salesItemTotal), 0) AS salesValue
+    FROM SalesItems si
+    JOIN Sales s ON s.salesId = si.salesId
+    JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+    JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN Stores st ON st.storeId = p.storeId
+    ${soldWhereClause}
+      AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'))
+        >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+    GROUP BY period
+    ORDER BY period ASC;
+  `;
+
+  // 6️⃣ Units-sold + revenue growth (this calendar month vs last calendar month)
+  const soldGrowthSql = `
+    SELECT
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE(), '%Y-%m') THEN si.salesItemQuantity ELSE 0 END) AS thisMonthSold,
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m') THEN si.salesItemQuantity ELSE 0 END) AS lastMonthSold,
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE(), '%Y-%m') THEN si.salesItemTotal ELSE 0 END) AS thisMonthSales,
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m') THEN si.salesItemTotal ELSE 0 END) AS lastMonthSales
+    FROM SalesItems si
+    JOIN Sales s ON s.salesId = si.salesId
+    JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+    JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN Stores st ON st.storeId = p.storeId
+    ${soldWhereClause};
+  `;
+
+  // 7️⃣ Best seller (highest units sold, all time)
+  const bestSellerSql = `
+    SELECT p.prodId, p.prodName, COALESCE(SUM(si.salesItemQuantity), 0) AS totalSold
+    FROM SalesItems si
+    JOIN Sales s ON s.salesId = si.salesId
+    JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+    JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN Stores st ON st.storeId = p.storeId
+    ${soldWhereClause}
+    GROUP BY p.prodId, p.prodName
+    ORDER BY totalSold DESC
+    LIMIT 1;
+  `;
+
+  const [totalProductsRows] = await pool.query<RowDataPacket[]>(
+    totalProductsSql,
+    productParams,
+  );
+  const [productsTrendRows] = await pool.query<RowDataPacket[]>(
+    productsTrendSql,
+    productParams,
+  );
+  const [productsGrowthRows] = await pool.query<RowDataPacket[]>(
+    productsGrowthSql,
+    productParams,
+  );
+  const [totalSoldRows] = await pool.query<RowDataPacket[]>(
+    totalSoldSql,
+    soldParams,
+  );
+  const [soldTrendRows] = await pool.query<RowDataPacket[]>(
+    soldTrendSql,
+    soldParams,
+  );
+  const [soldGrowthRows] = await pool.query<RowDataPacket[]>(
+    soldGrowthSql,
+    soldParams,
+  );
+  const [bestSellerRows] = await pool.query<RowDataPacket[]>(
+    bestSellerSql,
+    soldParams,
+  );
+
+  const bestSeller = bestSellerRows[0] ?? null;
+  let bestSellerTrend: { period: string; value: number }[] = [];
+  if (bestSeller) {
+    const [bestSellerTrendRows] = await pool.query<RowDataPacket[]>(
+      `
+      SELECT
+        DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m-%d') AS period,
+        COALESCE(SUM(si.salesItemQuantity), 0) AS value
+      FROM SalesItems si
+      JOIN Sales s ON s.salesId = si.salesId
+      JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
+      JOIN Products p ON p.prodId = pv.prodId
+      WHERE p.prodId = ?
+        AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'))
+          >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+      GROUP BY period
+      ORDER BY period ASC;
+      `,
+      [bestSeller.prodId],
+    );
+    bestSellerTrend = buildDailyTrend(bestSellerTrendRows as any[], 14);
+  }
+
+  return {
+    totalProducts: Number(totalProductsRows[0]?.totalProducts ?? 0),
+    productsTrend: buildDailyTrend(productsTrendRows as any[], 14),
+    productsGrowthPct: growthPct(
+      Number(productsGrowthRows[0]?.thisMonthCount ?? 0),
+      Number(productsGrowthRows[0]?.lastMonthCount ?? 0),
+    ),
+    totalSold: Number(totalSoldRows[0]?.totalSold ?? 0),
+    totalSales: Number(totalSoldRows[0]?.totalSales ?? 0),
+    soldTrend: buildDailyTrend(
+      (soldTrendRows as any[]).map((r) => ({
+        period: r.period,
+        value: r.soldValue,
+      })),
+      14,
+    ),
+    salesTrend: buildDailyTrend(
+      (soldTrendRows as any[]).map((r) => ({
+        period: r.period,
+        value: r.salesValue,
+      })),
+      14,
+    ),
+    soldGrowthPct: growthPct(
+      Number(soldGrowthRows[0]?.thisMonthSold ?? 0),
+      Number(soldGrowthRows[0]?.lastMonthSold ?? 0),
+    ),
+    salesGrowthPct: growthPct(
+      Number(soldGrowthRows[0]?.thisMonthSales ?? 0),
+      Number(soldGrowthRows[0]?.lastMonthSales ?? 0),
+    ),
+    bestSeller: bestSeller
+      ? {
+          prodId: bestSeller.prodId,
+          prodName: bestSeller.prodName,
+          totalSold: Number(bestSeller.totalSold),
+        }
+      : null,
+    bestSellerTrend,
+  };
+};
+
 export const selectProductVariants = async ({
   connection,
   keyFields = {},
@@ -946,6 +1181,41 @@ WHERE 1=1 AND pv.prodVarDeletedAt IS NULL`;
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows[0].totalItems;
+};
+
+export const selectKioskProductVariants = async ({
+  connection,
+  storeId,
+}: {
+  connection?: PoolConnection;
+  storeId: number;
+}) => {
+  const pool = connection ? connection : await getDBConnection();
+
+  const sql = `
+    SELECT
+      pv.prodVarId,
+      pv.prodVarName,
+      pv.prodVarPrice,
+      pv.prodVarUnit,
+      pv.prodVarImage,
+      pv.kioskOrder,
+      p.prodId,
+      p.prodName,
+      pc.prodCatId,
+      pc.prodCatName
+    FROM ProductVariants pv
+    LEFT JOIN Products p ON p.prodId = pv.prodId
+    LEFT JOIN ProductCategories pc ON pc.prodCatId = p.prodCatId
+    WHERE pv.prodVarDeletedAt IS NULL
+      AND pv.isAvailableKiosk = 1
+      AND p.storeId = ?
+      AND p.prodDeletedAt IS NULL
+    ORDER BY (pv.kioskOrder = 0), pv.kioskOrder ASC, pv.prodVarName ASC
+  `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [storeId]);
+  return rows;
 };
 
 export const selectProductCountVariants = async ({

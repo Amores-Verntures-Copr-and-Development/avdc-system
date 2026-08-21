@@ -1,8 +1,10 @@
 import { getStore } from "@/controllers/StoreControllers";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const actingUser = getCurrentUser(request);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
     const storeName = searchParams.get("storeName") || "";
@@ -13,6 +15,7 @@ export async function GET(request: NextRequest) {
       keyfields: {
         storeName: storeName !== "" ? storeName : undefined,
       },
+      actingUser,
     });
     if (!res.success) {
       // propagate the actual message if available

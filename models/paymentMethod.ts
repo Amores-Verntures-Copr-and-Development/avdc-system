@@ -141,6 +141,26 @@ export const selectPaymentMethods = async ({
   return rows as PaymentMethods[];
 };
 
+// Payment methods are configured per store, so the same label (Cash, GCash,
+// Credit...) exists as a separate row for every store - callers picking a
+// method to filter/report by (not to charge against) want the distinct
+// labels, not one option per store.
+export const selectUniquePaymentMethodNames = async ({
+  connection,
+}: {
+  connection?: PoolConnection;
+} = {}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const sql = `
+    SELECT DISTINCT payMetName
+    FROM PaymentMethods
+    WHERE payMetDeletedAt IS NULL
+    ORDER BY payMetName ASC
+  `;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql);
+  return rows.map((row) => row.payMetName as string);
+};
+
 export const selectPaymentMethodByNameAndStore = async ({
   connection,
   name,

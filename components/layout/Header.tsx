@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Bell, Maximize2, Minimize2, Store } from "lucide-react";
+import { Bell, Building2, Maximize2, Minimize2, Store } from "lucide-react";
 import { useSession } from "@/hooks/useSession";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import { StoreInterface } from "@/types/stores";
@@ -94,7 +94,17 @@ const Header = () => {
   return (
     <header className="sticky top-0 z-40 flex h-12 items-center justify-between border-b border-gray-100 bg-white/90 px-2 shadow-sm backdrop-blur-md sm:h-14 sm:px-4 xl:h-16">
       {/* Left */}
-      <div className="flex min-w-0 items-center">
+      <div className="flex min-w-0 items-center gap-3">
+        {/* superadmin is platform-level, not scoped to one company - so
+            there's no company name to show them here. */}
+        {user?.userRole !== "superadmin" && user?.companyName && (
+          <div className="flex items-center gap-1.5 min-w-0 text-gray-700">
+            <Building2 className="h-3.5 w-3.5 shrink-0 text-primary-1" />
+            <span className="truncate text-xs font-semibold sm:text-sm">
+              {user.companyName}
+            </span>
+          </div>
+        )}
         {!isLoading && response?.data && response.data.length > 1 && (
           <div className="w-28 sm:w-36 lg:w-44">
             <DynamicDropdown
@@ -141,32 +151,18 @@ const Header = () => {
             className="relative flex h-8 w-8 items-center justify-center rounded-full border border-gray-100 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 sm:h-9 sm:w-9"
           >
             <Bell className="h-3.5 w-3.5 text-primary-1 sm:h-4 sm:w-4" />
-
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-              3
-            </span>
           </button>
 
           {isNotifOpen && (
             <div className="absolute right-0 mt-3 w-72 max-w-[90vw] overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-2xl sm:w-80">
-              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    Notifications
-                  </h3>
-                  <p className="text-xs text-gray-400">Latest updates</p>
-                </div>
-
-                <button
-                  type="button"
-                  className="text-xs font-medium text-primary-1 hover:underline"
-                >
-                  Mark all as read
-                </button>
+              <div className="border-b border-gray-100 px-4 py-3">
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Notifications
+                </h3>
               </div>
 
               <div className="flex min-h-32 items-center justify-center px-4 py-8">
-                <p className="text-sm text-gray-400">No notifications</p>
+                <p className="text-sm text-gray-400">Working on it, soon!</p>
               </div>
             </div>
           )}

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 
 export async function GET(
   req: NextRequest,
@@ -18,6 +19,8 @@ export async function GET(
   if (!storeId) {
     throw new Error("No store ID found!");
   }
+
+  await assertStoreAccess(user, Number(storeId));
 
   const referer = req.headers.get("referer");
 

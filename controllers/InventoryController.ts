@@ -224,12 +224,20 @@ export const addItemToInventory = async (data: CreateFirstItem) => {
       inventoryItemReferenceId: itemId,
       inventoryItemReferenceType: "item",
     };
-    await handleInsertItemInventory(connection, inventoryItemData);
+    const insertResult = await handleInsertItemInventory(
+      connection,
+      inventoryItemData,
+    );
     await connection.commit();
     return {
       success: true,
       message: "Item fetched successfully!",
-      data: data ?? null,
+      data: {
+        ...data,
+        itemId,
+        inventoryItemId:
+          "insertId" in insertResult ? insertResult.insertId : null,
+      },
     };
   } catch (e) {
     console.log(e);

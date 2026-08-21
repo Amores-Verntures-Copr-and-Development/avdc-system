@@ -1,9 +1,11 @@
 import { createVariantComponentController } from "@/controllers/ProductController";
 import { CreateVarianComponentDto } from "@/dtos/products.dto";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -16,6 +18,10 @@ export async function POST(
     if (!storeId) {
       throw new Error("No storeId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as CreateVarianComponentDto[];
     const res = await createVariantComponentController(data);
     if (!res.success) {

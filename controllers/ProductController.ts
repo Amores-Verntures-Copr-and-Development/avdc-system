@@ -10,7 +10,10 @@ import {
   createProducts,
 } from "@/services/products/create-products";
 import { deleteProducts } from "@/services/products/delete-product";
-import { getProducts } from "@/services/products/get-products";
+import {
+  getProducts,
+  getProductsDashboardStats,
+} from "@/services/products/get-products";
 import { processAddProducts } from "@/services/products/process-add-products";
 import { createProductCategory } from "@/services/products/product-category/create-product-category";
 import { deleteProductCategoriesByFields } from "@/services/products/product-category/delete-product-category";
@@ -23,6 +26,7 @@ import {
 import { deleteBarcodeByFields } from "@/controllers/BarcodeController";
 import { deleteProductVariants } from "@/services/products/product-variant/delete-product-variants";
 import {
+  getKioskProductVariants,
   getProductVariantForOnline,
   getProductVariants,
 } from "@/services/products/product-variant/get-product-variants";
@@ -189,6 +193,30 @@ export const getProduct = async ({
   }
 };
 
+export const getProductsDashboardStatsController = async ({
+  storeId,
+  storeName,
+}: {
+  storeId?: number;
+  storeName?: string;
+}) => {
+  try {
+    const data = await getProductsDashboardStats({ storeId, storeName });
+    return {
+      data,
+      message: "Product dashboard stats fetched successfully!",
+      success: true,
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      error: e,
+      message: "Failed to fetch product dashboard stats!",
+      success: false,
+    };
+  }
+};
+
 export const updateProductById = async (product: Partial<Products>) => {
   try {
     const res = await updateProductsByFields({
@@ -303,6 +331,27 @@ export const getProductVariantController = async ({
     return {
       error: e,
       message: "Failed to fetched product variants!",
+      success: false,
+    };
+  }
+};
+
+export const getKioskProductVariantController = async ({
+  storeId,
+}: {
+  storeId: number;
+}) => {
+  try {
+    const data = await getKioskProductVariants({ storeId });
+    return {
+      data,
+      message: "Kiosk menu fetched successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: "Failed to fetch kiosk menu!",
       success: false,
     };
   }

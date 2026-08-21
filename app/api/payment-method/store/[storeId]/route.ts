@@ -3,10 +3,12 @@ import {
   getPaymentMethodByStore,
 } from "@/controllers/PaymentMethodController";
 import { CreatePaymentMethodDto } from "@/dtos/paymentMethods.dto";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -15,6 +17,10 @@ export async function POST(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as CreatePaymentMethodDto;
     const res = await createPaymentMethod(data);
     if (!res.success) {
@@ -42,12 +48,15 @@ export async function POST(
   }
 }
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+
+    const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, storeId);
 
     const { searchParams } = new URL(request.url);
     const isOnlineParam = searchParams.get("isOnline");

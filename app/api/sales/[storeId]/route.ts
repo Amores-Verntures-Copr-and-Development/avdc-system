@@ -1,9 +1,11 @@
 import { getSalesByStoreId } from "@/controllers/SaleController";
 import { count } from "console";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -13,6 +15,10 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const limit = searchParams.get("limit") || "";
@@ -24,6 +30,11 @@ export async function GET(
     const to = toParam ? `${toParam} 23:59:59` : "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
+    const customerTypeParam = searchParams.get("customerType");
+    const customerType =
+      customerTypeParam === "customer" || customerTypeParam === "walk-in"
+        ? customerTypeParam
+        : undefined;
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
@@ -35,6 +46,7 @@ export async function GET(
       search,
       includeSaleItems: includeSaleItems === "true",
       customer: customer === "true",
+      customerType,
       from,
       to,
       offset: offset,

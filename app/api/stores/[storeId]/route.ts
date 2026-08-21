@@ -4,6 +4,7 @@ import {
 } from "@/controllers/StoreControllers";
 import { UpdateStoreFeaturesDto } from "@/dtos/store.dto";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -17,6 +18,9 @@ export async function GET(
 ) {
   try {
     const storeId = Number((await params).storeId);
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await getStore({ keyfields: { storeId } });
     if (!res.success) {
@@ -47,6 +51,7 @@ export async function PATCH(
   try {
     const storeId = Number((await params).storeId);
     const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, storeId);
     const data = (await request.json()) as UpdateStoreFeaturesDto;
 
     const res = await updateStoreFeaturesController({
@@ -65,7 +70,9 @@ export async function PATCH(
     });
   } catch (err: any) {
     const isAuthError = err?.message === "Unauthorized";
-    const isForbidden = err?.message?.includes("Only Owner or Admin");
+    const isForbidden =
+      err?.message?.includes("Only Owner or Admin") ||
+      err?.message === "You do not have access to this store";
 
     return NextResponse.json(
       {

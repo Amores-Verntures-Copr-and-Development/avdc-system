@@ -116,6 +116,7 @@ export const customerServices = {
     to,
     sort,
     order,
+    paymentMethods,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -128,6 +129,7 @@ export const customerServices = {
     to?: string;
     sort?: string;
     order?: "asc" | "desc";
+    paymentMethods?: string[];
   }) => {
     try {
       const data = await selectCustomers({
@@ -141,6 +143,7 @@ export const customerServices = {
         to,
         sort,
         order,
+        paymentMethods,
       });
       return data;
     } catch (e) {
@@ -155,6 +158,7 @@ export const customerServices = {
     search,
     from,
     to,
+    paymentMethods,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -163,6 +167,7 @@ export const customerServices = {
     store?: string;
     from?: string;
     to?: string;
+    paymentMethods?: string[];
   }) => {
     try {
       const count = await selectCountCustomers({
@@ -172,6 +177,7 @@ export const customerServices = {
         to,
         search,
         store,
+        paymentMethods,
       });
       return count;
     } catch (e) {

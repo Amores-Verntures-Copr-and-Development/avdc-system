@@ -42,6 +42,7 @@ export async function GET(_request: Request) {
     const toParam = searchParams.get("to") || "";
     const sort = searchParams.get("sort") || "";
     const rawOrder = searchParams.get("order");
+    const paymentMethods = searchParams.getAll("paymentMethod");
 
     const from = fromParam ? `${fromParam} 00:00:00` : "";
     const to = toParam ? `${toParam} 23:59:59` : "";
@@ -61,6 +62,7 @@ export async function GET(_request: Request) {
       to,
       sort,
       order,
+      paymentMethods,
     });
 
     if (!res.success) {

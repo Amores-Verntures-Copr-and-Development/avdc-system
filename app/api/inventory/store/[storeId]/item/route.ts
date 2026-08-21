@@ -1,13 +1,19 @@
 import { getInventoryItems } from "@/controllers/InventoryController";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+
+    const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, storeId);
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
 

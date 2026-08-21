@@ -4,10 +4,12 @@ import {
   updateProductVariantController,
 } from "@/controllers/ProductController";
 import { ProductVariants } from "@/types/products";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -15,12 +17,16 @@ export async function GET(
   },
 ) {
   try {
+    const storeId = Number((await params).storeId);
     const slug = (await params).prodVarId;
     const prodVarId = Number(slug);
 
     if (!prodVarId) {
       throw new Error("No prodVarId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await getProductVariantController({
       keyFields: { prodVarId },
@@ -60,7 +66,7 @@ export async function GET(
 }
 
 export async function PUT(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -78,6 +84,10 @@ export async function PUT(
     if (!prodVarId) {
       throw new Error("No prodVarId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as Partial<ProductVariants>;
     const res = await updateProductVariantController(data);
     if (!res.success) {
@@ -106,7 +116,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -130,6 +140,10 @@ export async function DELETE(
     if (!prodId) {
       throw new Error("No productId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const res = await deleteProductVariantController({ prodVarId: prodVarId });
 
     if (!res.success) {

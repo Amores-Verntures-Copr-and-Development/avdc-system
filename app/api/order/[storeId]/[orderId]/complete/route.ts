@@ -27,7 +27,7 @@ export async function POST(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, storeId);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await completeOrderController({
       storeId,

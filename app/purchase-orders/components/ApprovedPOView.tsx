@@ -24,6 +24,7 @@ import {
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import StoreCardInSupplier from "./_components/StoreCardInSupplier";
+import { storeColumns } from "./ReceivedPOView";
 import useSWR from "swr";
 import { fetcher } from "@/utils/fetcher";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
@@ -186,6 +187,10 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
   const [isShowUpdateStatusConfirm, setIsShowUpdateStatusConfirm] =
     useState(false);
   const [isView, setIsView] = useState<"all" | "store">("all");
+  const [selectedStoreSupplier, setSelectedStoreSupplier] = useState<{
+    data: StoreSupplierDetails;
+    supplier: DisplayPOItemsSupplier;
+  } | null>(null);
   const [receivedSupplierItem, setReceivedSupplierItem] =
     useState<DisplayPOItemsSupplier | null>(null);
   const [selectedSupplier, setSelectedSupplier] =
@@ -436,7 +441,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                     <div
                       className="border border-gray-300 rounded-lg overflow-hidden flex flex-col"
                       key={data.suppId}
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
                         setExpandedSupplier({
                           index:
                             expandedSupplier.index === index ? null : index,
@@ -667,7 +673,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                               </p>
                             </div>
                             <div
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.preventDefault();
                                 setExpandedSupplier({
                                   suppId:
                                     expandedSupplier.suppId === data.suppId
@@ -677,8 +684,8 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                     expandedSupplier.index === index
                                       ? null
                                       : index,
-                                })
-                              }
+                                });
+                              }}
                               className="cursor-pointer"
                             >
                               {expandedSupplier.suppId === data.suppId ? (
@@ -723,18 +730,45 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                 )}
                               />
                             </div>
-                          ) : (
+                          ) : !selectedStoreSupplier ? (
                             <div className="min-h-50 overflow-auto p-2">
                               {" "}
                               {/* Fixed height for cards */}
                               <div className="flex gap-4">
-                                {itemResponse.data.map((data) => (
+                                {itemResponse.data.map((row) => (
                                   <StoreCardInSupplier
-                                    data={data}
-                                    key={data.storeId}
+                                    data={row}
+                                    key={row.storeId}
+                                    onClick={(store) =>
+                                      setSelectedStoreSupplier({
+                                        data: store,
+                                        supplier: data,
+                                      })
+                                    }
                                   />
                                 ))}
                               </div>
+                            </div>
+                          ) : (
+                            <div className="min-h-50 overflow-auto p-2">
+                              <Table
+                                title={selectedStoreSupplier.data.storeName}
+                                subtitle={`${selectedStoreSupplier.data.items.length} items`}
+                                renderTopActions={
+                                  <Button
+                                    hasBorder={true}
+                                    size="xs"
+                                    onClick={() =>
+                                      setSelectedStoreSupplier(null)
+                                    }
+                                    color="secondary"
+                                    label="Back to Stores"
+                                    className="font-semibold"
+                                  />
+                                }
+                                columns={storeColumns}
+                                data={selectedStoreSupplier.data.items}
+                              />
                             </div>
                           )}
                         </div>
@@ -840,16 +874,43 @@ const ApprovedPOView: React.FC<ApprovedPOViewProps> = ({
                                 isRounded={false}
                               />
                             </div>
-                          ) : (
+                          ) : !selectedStoreSupplier ? (
                             <div className="h-96 overflow-auto p-2">
                               <div className="flex gap-4">
-                                {itemResponse.data.map((data) => (
+                                {itemResponse.data.map((row) => (
                                   <StoreCardInSupplier
-                                    data={data}
-                                    key={data.storeId}
+                                    data={row}
+                                    key={row.storeId}
+                                    onClick={(store) =>
+                                      setSelectedStoreSupplier({
+                                        data: store,
+                                        supplier: data,
+                                      })
+                                    }
                                   />
                                 ))}
                               </div>
+                            </div>
+                          ) : (
+                            <div className="h-96 overflow-auto p-2">
+                              <Table
+                                title={selectedStoreSupplier.data.storeName}
+                                subtitle={`${selectedStoreSupplier.data.items.length} items`}
+                                renderTopActions={
+                                  <Button
+                                    hasBorder={true}
+                                    size="xs"
+                                    onClick={() =>
+                                      setSelectedStoreSupplier(null)
+                                    }
+                                    color="secondary"
+                                    label="Back to Stores"
+                                    className="font-semibold"
+                                  />
+                                }
+                                columns={storeColumns}
+                                data={selectedStoreSupplier.data.items}
+                              />
                             </div>
                           )}
                         </div>

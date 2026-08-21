@@ -12,6 +12,10 @@ import { Request, RequestItems } from "@/types/request";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import { getRequestStatusOption } from "@/utils/requestOrderUtils";
+import {
+  getPurchaseStatusOption,
+  requestStatusOptions,
+} from "@/utils/purchaserOrderUtils";
 
 import {
   Edit,
@@ -36,63 +40,12 @@ import AddItemToRequestFromPOModal, {
 } from "./_components/AddItemToRequestFromPOModal";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
-interface StatusOption {
-  label: string;
-  value: string;
-  bg: string;
-  color: string;
-}
-
-export const statusOptions: StatusOption[] = [
-  {
-    label: "Not Ordered",
-    value: "not_ordered",
-    bg: "bg-red-100",
-    color: "text-red-600",
-  },
-  {
-    label: "Removed",
-    value: "removed",
-    bg: "bg-red-100",
-    color: "text-red-600",
-  },
-  {
-    label: "Pending",
-    value: "pending",
-    bg: "bg-gray-100",
-    color: "text-gray-700",
-  },
-  {
-    label: "Delivered",
-    value: "delivered",
-    bg: "bg-yellow-100",
-    color: "text-yellow-700",
-  },
-
-  {
-    label: "Received",
-    value: "received",
-    bg: "bg-emerald-100",
-    color: "text-emerald-700",
-  },
-  {
-    label: "Partial",
-    value: "partial",
-    bg: "bg-blue-100",
-    color: "text-blue-700",
-  },
-];
-export function getStatusOption(value: string): StatusOption {
-  const option = statusOptions.find((opt) => opt.value === value);
-  return (
-    option ?? {
-      label: "Unknown",
-      value,
-      bg: "bg-gray-100",
-      color: "text-gray-700",
-    }
-  );
-}
+// reqItemStatus shares poItemStatus's color map (getPurchaseStatusOption)
+// rather than keeping its own - the two are shown side by side in views
+// like ReceivedPOView, so a status word (e.g. "Delivered") must resolve to
+// the same color in both or it reads as two different things.
+export const statusOptions = requestStatusOptions;
+export const getStatusOption = getPurchaseStatusOption;
 interface CompletePOViewProps {
   data: DisplayRequisitionWithItems[];
   poData: PurchaseOrders | null;

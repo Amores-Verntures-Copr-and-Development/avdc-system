@@ -116,6 +116,7 @@ const CustomerPage = () => {
       "limit",
       "sort",
       "order",
+      "paymentMethod",
     ];
 
     keys.forEach((key) => {
@@ -133,6 +134,39 @@ const CustomerPage = () => {
     mutate,
   } = useSWR<ApiResponse<DisplayCustomerDto[]>>(getApiUrl, fetcher);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Payment methods are configured per store, so the same names (Cash,
+  // Credit, GCash...) exist as separate rows per store - this endpoint
+  // returns the distinct names so the filter doesn't show duplicates.
+  const { data: paymentMethodNamesRes } = useSWR<ApiResponse<string[]>>(
+    "/api/payment-method/names",
+    fetcher,
+  );
+  const paymentMethodConfig = useMemo(
+    () => [
+      {
+        id: "paymentMethod",
+        label: "Payment Method",
+        options: (paymentMethodNamesRes?.data ?? []).map((name) => ({
+          label: name,
+          value: name,
+        })),
+      },
+    ],
+    [paymentMethodNamesRes],
+  );
+  const handleFilterSave = useCallback(
+    (newFilters: Record<string, string[]>) => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const filterKeys = paymentMethodConfig.map((f) => f.id);
+      filterKeys.forEach((key) => currentParams.delete(key));
+      Object.entries(newFilters).forEach(([key, values]) => {
+        values.forEach((value) => currentParams.append(key, value));
+      });
+      router.push(`?${currentParams.toString()}`);
+    },
+    [router, paymentMethodConfig],
+  );
 
   const handleSubmitAddCustomerStores = async (
     dataCus: CreateCustomerDto[],
@@ -273,6 +307,9 @@ const CustomerPage = () => {
       <div className="min-h-0 flex-1 flex flex-col">
         <Table
           searchUrl="/customers"
+          showFilter
+          filterConfig={paymentMethodConfig}
+          onSave={handleFilterSave}
           renderTopActions={
             <div className="flex gap-2">
               <div>

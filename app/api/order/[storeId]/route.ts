@@ -31,7 +31,7 @@ export async function GET(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, storeId);
+    await assertStoreAccess(actingUser, storeId);
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";

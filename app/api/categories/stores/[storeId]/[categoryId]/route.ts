@@ -1,13 +1,18 @@
 import { deleteCategory, editCategory } from "@/controllers/CategoryController";
 import { CategoryInterface } from "@/types/categories";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; categoryId: string }> },
 ) {
   try {
     const { storeId, categoryId } = await params;
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const body = (await _request.json()) as Partial<CategoryInterface>;
     const res = await editCategory({
@@ -40,11 +45,14 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; categoryId: string }> },
 ) {
   try {
     const { storeId, categoryId } = await params;
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     // Implement delete logic here, e.g., call a deleteCategory function
     const res = await deleteCategory({

@@ -72,6 +72,34 @@ export const requestStatusOptions: PurchaseStatusOption[] = [
     border: "border-blue-1/50",
     dot: "bg-blue-500",
   },
+  // Only reachable via reqItemStatus (not a poItemStatus enum value), but
+  // defined here too so both fields share one color per status - shown
+  // side by side in views like ReceivedPOView, two different colors for
+  // the same word ("Removed"/"Partial") would be confusing.
+  {
+    label: "Removed",
+    value: "removed",
+    bg: "bg-red-100",
+    color: "text-red-600",
+    border: "border-red-1/50",
+    dot: "bg-red-500",
+  },
+  {
+    label: "Partial",
+    value: "partial",
+    bg: "bg-indigo-50",
+    color: "text-indigo-700",
+    border: "border-indigo-200",
+    dot: "bg-indigo-500",
+  },
+  {
+    label: "Complete",
+    value: "complete",
+    bg: "bg-primary-1/20",
+    color: "text-primary-1",
+    border: "border-primary-1/50",
+    dot: "bg-primary-1",
+  },
 ];
 
 export function getPurchaseStatusOption(value: string): PurchaseStatusOption {

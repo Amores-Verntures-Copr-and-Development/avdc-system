@@ -4,6 +4,7 @@ import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
 import {
   DisplaProductVariantsDtos,
+  DisplayKioskProductVariantDto,
   DisplayProductsDtos,
   DisplayVariantComponents,
 } from "@/dtos/products.dto";
@@ -19,6 +20,8 @@ import {
   Globe,
   ImageIcon,
   Link2,
+  ListOrdered,
+  Monitor,
   Pencil,
   Plus,
   RefreshCw,
@@ -84,6 +87,17 @@ const VariantComponentPage = ({
   const { data: responseInventory } = useSWR<
     ApiResponse<DisplayAllInventory[]>
   >(storeId ? `/api/inventory/store/${storeId}` : null, fetcher);
+  const { data: responseKioskMenu } = useSWR<
+    ApiResponse<DisplayKioskProductVariantDto[]>
+  >(storeId ? `/api/products/${storeId}/kiosk-menu` : null, fetcher);
+  // New kiosk items default to the end of the line rather than 0 (unranked),
+  // so staff adding one variant at a time don't have to go back and manually
+  // renumber it - it can always be dragged earlier later.
+  const nextKioskOrder =
+    (responseKioskMenu?.data ?? []).reduce(
+      (max, item) => Math.max(max, Number(item.kioskOrder) || 0),
+      0,
+    ) + 1;
   const linkedItem = responseItem?.data?.[0];
   // A variant can keep pointing at an inventoryItemId after that inventory
   // item gets soft-deleted (nothing clears the reference) - distinguish that
@@ -172,6 +186,8 @@ const VariantComponentPage = ({
     isDeductInv: Boolean(data?.isDeductInv),
     inventoryItemId: data?.inventoryItemId ?? null,
     isAvailableOnline: Boolean(data?.isAvailableOnline),
+    isAvailableKiosk: Boolean(data?.isAvailableKiosk),
+    kioskOrder: data?.kioskOrder ?? 0,
   });
   const handleFormChange = handleChange(form, setForm);
   const handleSave = async () => {
@@ -191,6 +207,8 @@ const VariantComponentPage = ({
       prodVarUnit: form.prodVarUnit,
       isDeductInv: form.isDeductInv,
       isAvailableOnline: form.isAvailableOnline,
+      isAvailableKiosk: form.isAvailableKiosk,
+      kioskOrder: Number(form.kioskOrder) || 0,
       inventoryItemId: form.inventoryItemId,
     };
 
@@ -413,6 +431,19 @@ const VariantComponentPage = ({
                   badge={Boolean(data?.isAvailableOnline)}
                 />
                 <DetailCard
+                  label="Is Available in Kiosk"
+                  value={Boolean(data?.isAvailableKiosk) ? "Yes" : "No"}
+                  icon={<Monitor className="h-3.5 w-3.5" />}
+                  badge={Boolean(data?.isAvailableKiosk)}
+                />
+                {Boolean(data?.isAvailableKiosk) && (
+                  <DetailCard
+                    label="Kiosk Order"
+                    value={`${data?.kioskOrder ?? 0}`}
+                    icon={<ListOrdered className="h-3.5 w-3.5" />}
+                  />
+                )}
+                <DetailCard
                   label="Sold"
                   value={`${Number(data?.sold ?? 0).toLocaleString()} ${data?.prodVarUnit || "pc"}`}
                   icon={<ShoppingBag className="h-3.5 w-3.5" />}
@@ -528,6 +559,41 @@ const VariantComponentPage = ({
                     }
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col">
+                  <Toggle
+                    sizes="xs"
+                    label="Show in Kiosk?"
+                    flexType="flex-col"
+                    initial={form.isAvailableKiosk === true}
+                    onToggle={(state) =>
+                      setForm((prev) => {
+                        const nextIsAvailableKiosk = Boolean(state) === true;
+                        return {
+                          ...prev,
+                          isAvailableKiosk: nextIsAvailableKiosk,
+                          kioskOrder:
+                            nextIsAvailableKiosk && Number(prev.kioskOrder) === 0
+                              ? nextKioskOrder
+                              : prev.kioskOrder,
+                        };
+                      })
+                    }
+                  />
+                </div>
+                {form.isAvailableKiosk && (
+                  <div className="flex flex-col">
+                    <Input
+                      label={"Kiosk Order"}
+                      sizes={"xs"}
+                      value={form.kioskOrder}
+                      onChange={handleFormChange}
+                      name="kioskOrder"
+                    />
+                  </div>
+                )}
               </div>
 
               {form.isAvailableOnline && (

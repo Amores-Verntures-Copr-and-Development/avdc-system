@@ -1,4 +1,5 @@
 import {
+  selectLowStockItemsByUserId,
   selectPendingRequestByUserId,
   selectPurchaserStats,
 } from "@/models/dashboardModels";
@@ -6,6 +7,16 @@ import {
 export async function getDashboardStats(userId: number) {
   try {
     const data = await selectPurchaserStats(userId);
+    return data;
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
+}
+
+export async function getLowStockItems(userId: number) {
+  try {
+    const data = await selectLowStockItemsByUserId(userId);
     return data;
   } catch (e) {
     console.error(e);

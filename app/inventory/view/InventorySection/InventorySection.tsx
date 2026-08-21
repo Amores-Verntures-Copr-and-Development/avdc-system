@@ -39,7 +39,9 @@ import {
 } from "lucide-react";
 import Modal from "@/components/shared/Modal";
 import Popup from "@/components/shared/Popup";
-import AddItemModal from "../../components/AddItemModal";
+import AddItemModal, {
+  AddToProductOptions,
+} from "../../components/AddItemModal";
 import AddItemStoreModal from "../../components/AddItemStoreModal";
 import CreateInventoryReport from "../../components/CreateInventoryReport";
 import CreateRequestModal from "../../components/CreateRequestModal";
@@ -538,7 +540,10 @@ const InventorySection: React.FC<InventorySectionProps> = ({
       return false;
     }
   };
-  const handleAddInventoryItem = async (data: CreateFirstItem) => {
+  const handleAddInventoryItem = async (
+    data: CreateFirstItem,
+    productOptions?: AddToProductOptions,
+  ) => {
     setIsAddingItem(true);
     try {
       const newData: CreateFirstItem = {
@@ -560,12 +565,82 @@ const InventorySection: React.FC<InventorySectionProps> = ({
         console.log("Res: ", res);
         throw new Error(res.err);
       }
-      toast.success("Inventory added successfully!");
+
+      if (productOptions) {
+        const newInventoryItemId: number | null = res.data?.inventoryItemId;
+        if (!newInventoryItemId) {
+          toast.error(
+            "Item was added, but couldn't be linked to a Product (missing ID).",
+          );
+          mutate();
+          return true;
+        }
+
+        const variant: CreateProductVariantDto = {
+          prodId: productOptions.prodId ?? 0,
+          inventoryItemId: newInventoryItemId,
+          prodVarCreatedBy: user?.userId ?? 0,
+          prodVarName: data.itemName,
+          prodVarPrice: productOptions.prodVarPrice,
+          prodVarUnit: data.itemUnit,
+          isDeductInv: true,
+        };
+
+        if (productOptions.isAddAsVariant && productOptions.prodId) {
+          const variantResult = await fetch(
+            `api/products/${user?.storeId}/product-variants/${productOptions.prodId}/create-bulk`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify([variant]),
+            },
+          );
+          const variantRes = await variantResult.json();
+          if (!variantRes.success) {
+            throw new Error(
+              variantRes.message ||
+                variantRes.error ||
+                "Item was added, but failed to attach as a Product variant.",
+            );
+          }
+        } else {
+          const productResult = await fetch(
+            `/api/products/${user?.storeId}/bulk`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify([
+                {
+                  prodCatId: null,
+                  prodCreatedBy: user?.userId ?? 0,
+                  prodName: data.itemName,
+                  storeId: user?.storeId,
+                  productVariants: [variant],
+                },
+              ]),
+            },
+          );
+          const productRes = await productResult.json();
+          if (!productRes.success) {
+            throw new Error(
+              productRes.message ||
+                productRes.error ||
+                "Item was added, but failed to create the linked Product.",
+            );
+          }
+        }
+      }
+
+      toast.success(
+        productOptions
+          ? "Inventory item added and listed in Products!"
+          : "Inventory added successfully!",
+      );
       mutate();
       return true;
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
-      toast.error("Failed to add item in inventory.");
+      toast.error(e?.message || "Failed to add item in inventory.");
       return false;
     } finally {
       setIsAddingItem(false);

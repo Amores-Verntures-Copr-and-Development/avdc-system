@@ -37,7 +37,7 @@ export async function PUT(
       throw new Error("Sale not found");
     }
 
-    assertStoreAccess(actingUser, Number(existingSale.storeId));
+    await assertStoreAccess(actingUser, Number(existingSale.storeId));
 
     const data = (await request.json()) as Partial<Sales>;
     data.salesId = salesId;

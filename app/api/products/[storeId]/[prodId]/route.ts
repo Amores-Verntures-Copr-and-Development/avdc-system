@@ -4,10 +4,12 @@ import {
   updateProductById,
 } from "@/controllers/ProductController";
 import { Products } from "@/types/products";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; prodId: string }> },
 ) {
   try {
@@ -22,6 +24,10 @@ export async function GET(
     if (!prodId) {
       throw new Error("No productId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const res = await getProduct({
       keyFields: { prodId: prodId, storeId: storeId },
     });
@@ -52,7 +58,7 @@ export async function GET(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; prodId: string }> },
 ) {
   try {
@@ -67,6 +73,10 @@ export async function DELETE(
     if (!prodId) {
       throw new Error("No productId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const res = await deleteProductController({ prodId: prodId });
 
     if (!res.success) {
@@ -95,7 +105,7 @@ export async function DELETE(
 }
 
 export async function PUT(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; prodId: string }> },
 ) {
   try {
@@ -110,6 +120,10 @@ export async function PUT(
     if (!prodId) {
       throw new Error("No productId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as Partial<Products>;
     const res = await updateProductById(data);
 

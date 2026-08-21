@@ -138,7 +138,6 @@ export async function processCreateSales(data: CreateSaleDto) {
         updates: componentVar,
         keyFields: ["inventoryItemId"],
       });
-      console.log({ inventoryMovement });
       await createInventoryMovement({ connection, data: inventoryMovement });
     }
 

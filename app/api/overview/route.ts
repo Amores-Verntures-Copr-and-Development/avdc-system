@@ -1,6 +1,6 @@
 import { OverviewController } from "@/controllers/OverviewController";
 import { verifyExternalDashboardSession } from "@/services/externalDashboardAccess/dashboard-session-jwt";
-import { getExternalDashboardAccessByUserId } from "@/services/externalDashboardAccess/get-external-dashboard-access";
+import { resolveExternalDashboardScope } from "@/services/externalDashboardAccess/resolve-scope";
 import { NextRequest, NextResponse } from "next/server";
 
 // Only consumer of this route is avdc-track - scoped to whichever stores
@@ -29,25 +29,24 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const access = await getExternalDashboardAccessByUserId(userId);
-    if (!access || access.edaStatus !== "active") {
+    const { access, storeIds: grantedStoreIds, isPermittedStore } =
+      await resolveExternalDashboardScope(userId);
+    if (!access) {
       return NextResponse.json(
         { error: "External dashboard access has been revoked" },
         { status: 403 },
       );
     }
 
-    let storeIds = access.edaIsAllStores ? undefined : access.storeIds;
+    let storeIds: number[] | undefined = grantedStoreIds;
 
     const { searchParams } = new URL(req.url);
     const storeIdParam = searchParams.get("storeId");
 
     if (storeIdParam) {
       const requestedStoreId = Number(storeIdParam);
-      const isPermitted =
-        access.edaIsAllStores || access.storeIds.includes(requestedStoreId);
 
-      if (!isPermitted) {
+      if (!isPermittedStore(requestedStoreId)) {
         return NextResponse.json(
           { error: "Store is outside your granted access" },
           { status: 403 },

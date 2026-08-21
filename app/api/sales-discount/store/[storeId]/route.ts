@@ -3,11 +3,13 @@ import {
   getSalesDiscountByStore,
 } from "@/controllers/SalesDiscountController";
 import { CreateDiscountDto } from "@/dtos/discounts.dto";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
@@ -16,6 +18,10 @@ export async function POST(
     if (!storeId || storeId === 0) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as CreateDiscountDto;
     const res = await createSalesDiscounts(data);
     if (!res.success) {
@@ -42,7 +48,7 @@ export async function POST(
   }
 }
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> }
 ) {
   try {
@@ -52,6 +58,9 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await getSalesDiscountByStore(storeId);
 

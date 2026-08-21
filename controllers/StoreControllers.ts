@@ -10,6 +10,8 @@ import {
   findStoreByPOID,
 } from "@/services/store/get-store";
 import { processCreateStore } from "@/services/store/process-create-store";
+import { selectUserCompanyId } from "@/models/billingModel";
+import { selectCompanies } from "@/models/companyModel";
 import { EmployeeInterface } from "@/types/employees";
 import {
   getStoreEmployee,
@@ -44,7 +46,15 @@ export const updateStoreFeaturesController = async ({
   actingUser: AuthUser;
 }) => {
   try {
-    assertIsAdminOrOwner(actingUser, "update store features");
+    // The kiosk banner image is a low-stakes cosmetic setting any staff
+    // member at the store can change - only the actual feature toggles
+    // (Kiosk/Order enabled) are gated to Owner/Admin.
+    if (
+      data.storeKioskEnabled !== undefined ||
+      data.storeOrderEnabled !== undefined
+    ) {
+      assertIsAdminOrOwner(actingUser, "update store features");
+    }
 
     await updateStoreFeatures({ storeId, ...data });
 
@@ -61,9 +71,25 @@ export const updateStoreFeaturesController = async ({
   }
 };
 
-export const createStore = async (data: CreateStoreDto) => {
+export const createStore = async (
+  data: CreateStoreDto,
+  actingUser: AuthUser,
+) => {
   try {
-    await processCreateStore(data);
+    assertIsAdminOrOwner(actingUser, "create a store");
+
+    const companyId = await selectUserCompanyId({ userId: actingUser.userId });
+
+    if (companyId) {
+      const [company] = await selectCompanies({ keyFields: { companyId } });
+      if (company && company.storeCount >= company.companyMaxStores) {
+        throw new Error(
+          "Store limit reached. Please ask your Super Admin to increase your maximum store limit.",
+        );
+      }
+    }
+
+    await processCreateStore({ ...data, companyId });
     return {
       success: true,
       message: "Store created successfully!",
@@ -71,8 +97,47 @@ export const createStore = async (data: CreateStoreDto) => {
   } catch (e) {
     return {
       success: false,
-      message: "Failed to create store!",
+      message: e instanceof Error ? e.message : "Failed to create store!",
       error: e,
+    };
+  }
+};
+
+// Lightweight companion to the Billing controller's numbers, but visible to
+// Owner *and* Admin (not just Owner) since both can create stores - unlike
+// billing, this never exposes pricing, just usage vs the cap.
+export const getMyStoreLimitController = async (actingUser: AuthUser) => {
+  try {
+    assertIsAdminOrOwner(actingUser, "view the store limit");
+
+    const companyId = await selectUserCompanyId({ userId: actingUser.userId });
+    if (!companyId) {
+      // Super Admin (or any user not tied to a company) has no cap.
+      return {
+        data: { activeStoreCount: 0, maxStores: null },
+        message: "No store limit applies to this account.",
+        success: true,
+      };
+    }
+
+    const [company] = await selectCompanies({ keyFields: { companyId } });
+    if (!company) {
+      throw new Error("Company not found");
+    }
+
+    return {
+      data: {
+        activeStoreCount: company.storeCount,
+        maxStores: company.companyMaxStores,
+      },
+      message: "Store limit fetched successfully!",
+      success: true,
+    };
+  } catch (e) {
+    return {
+      error: e,
+      message: e instanceof Error ? e.message : "Failed to fetch store limit!",
+      success: false,
     };
   }
 };
@@ -82,19 +147,39 @@ export const getStore = async ({
   skip = 0,
   empKeyfields,
   keyfields,
+  actingUser,
 }: {
   search?: string;
   limit?: number;
   skip?: number;
   empKeyfields?: Partial<EmployeeInterface>;
   keyfields?: Partial<StoreInterface>;
+  // Optional only because a couple of internal/trusted callers (the
+  // Loyverse OAuth callback, which validates a signed state token instead
+  // of a session) don't have a request-scoped user. Any route handling a
+  // client request must pass this so results get scoped to the caller's
+  // own company - see the companyId merge below.
+  actingUser?: AuthUser;
 }) => {
   try {
+    // superadmin is the one platform-wide role; everyone else only ever
+    // sees their own company's stores, regardless of what keyfields the
+    // caller asked for.
+    const scopedKeyfields =
+      actingUser && actingUser.userRole !== "superadmin"
+        ? { ...keyfields, companyId: actingUser.companyId ?? undefined }
+        : keyfields;
+
     let data;
     if (empKeyfields) {
       data = await findStoreByEmpFields({ keyFields: empKeyfields });
     } else {
-      data = await selectStores({ search, limit, skip, keyfields });
+      data = await selectStores({
+        search,
+        limit,
+        skip,
+        keyfields: scopedKeyfields,
+      });
     }
     return {
       success: true,

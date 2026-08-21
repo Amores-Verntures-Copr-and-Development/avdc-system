@@ -1,5 +1,7 @@
 import { GrantExternalDashboardAccessDto } from "@/dtos/externalDashboardAccess.dto";
 import { AuthUser } from "@/lib/auth/getCurrentUser";
+import { selectUserCompanyId } from "@/models/billingModel";
+import { selectStoreIdsByCompanyId } from "@/models/storeModels";
 import { grantOrUpdateExternalDashboardAccess } from "@/services/externalDashboardAccess/grant-external-dashboard-access";
 import { revokeExternalDashboardAccess } from "@/services/externalDashboardAccess/revoke-external-dashboard-access";
 import { regenerateExternalDashboardAccessToken } from "@/services/externalDashboardAccess/regenerate-token";
@@ -26,12 +28,54 @@ function assertCanManageExternalDashboardAccess(actingUser: AuthUser) {
   }
 }
 
+// Never trust that a target userId belongs to the acting owner/admin's own
+// company - a grant/revoke/regenerate against another company's user would
+// otherwise let one client company disrupt or hijack another's external
+// dashboard access. superadmin is platform-wide and exempt.
+async function assertTargetUserInSameCompany(
+  actingUser: AuthUser,
+  targetUserId: number,
+) {
+  if (actingUser.userRole === "superadmin") return;
+
+  const targetCompanyId = await selectUserCompanyId({ userId: targetUserId });
+
+  if (
+    !targetCompanyId ||
+    !actingUser.companyId ||
+    targetCompanyId !== actingUser.companyId
+  ) {
+    throw new Error(
+      "You can only manage external dashboard access for a user in your own company",
+    );
+  }
+}
+
 export const grantOrUpdateAccess = async (
   data: GrantExternalDashboardAccessDto,
   actingUser: AuthUser,
 ) => {
   try {
     assertCanManageExternalDashboardAccess(actingUser);
+    await assertTargetUserInSameCompany(actingUser, data.userId);
+
+    // A grant also hands out access to a specific storeIds list - never
+    // trust that those belong to the granting user's own company either.
+    if (actingUser.userRole !== "superadmin" && actingUser.companyId) {
+      if (!data.edaIsAllStores && data.storeIds && data.storeIds.length > 0) {
+        const companyStoreIds = await selectStoreIdsByCompanyId(
+          actingUser.companyId,
+        );
+        const foreignStoreId = data.storeIds.find(
+          (storeId) => !companyStoreIds.includes(storeId),
+        );
+        if (foreignStoreId !== undefined) {
+          throw new Error(
+            "You can only grant access to stores in your own company",
+          );
+        }
+      }
+    }
 
     const { access, rawToken } =
       await grantOrUpdateExternalDashboardAccess(data);
@@ -55,6 +99,7 @@ export const grantOrUpdateAccess = async (
 export const revokeAccess = async (userId: number, actingUser: AuthUser) => {
   try {
     assertCanManageExternalDashboardAccess(actingUser);
+    await assertTargetUserInSameCompany(actingUser, userId);
 
     const access = await revokeExternalDashboardAccess(userId);
 
@@ -78,6 +123,7 @@ export const regenerateToken = async (
 ) => {
   try {
     assertCanManageExternalDashboardAccess(actingUser);
+    await assertTargetUserInSameCompany(actingUser, userId);
 
     const { rawToken } =
       await regenerateExternalDashboardAccessToken(userId);

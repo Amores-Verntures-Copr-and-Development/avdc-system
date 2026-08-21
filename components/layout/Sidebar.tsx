@@ -170,10 +170,14 @@ const Sidebar = () => {
       <aside
         style={{ willChange: "transform, width" }}
         className={`
-          fixed left-0 top-0 z-50 flex h-dvh flex-col
-          border-r border-gray-100 bg-white/95 shadow-xl backdrop-blur-md
+          fixed left-0 top-0 z-50 flex h-dvh flex-col contain-layout
+          border-r border-gray-100
           transition-[transform,width] duration-300 ease-out
-          ${!isMobile ? "static shadow-none" : ""}
+          ${
+            isMobile
+              ? "bg-white/95 shadow-xl backdrop-blur-md"
+              : "static bg-white"
+          }
           ${
             isCollapsed
               ? isMobile

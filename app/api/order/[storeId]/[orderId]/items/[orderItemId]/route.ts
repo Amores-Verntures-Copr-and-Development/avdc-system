@@ -30,7 +30,7 @@ export async function PUT(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, Number(storeId));
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const body = (await request.json()) as Omit<
       UpdateOrderItemDto,
@@ -81,7 +81,7 @@ export async function DELETE(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, Number(storeId));
+    await assertStoreAccess(actingUser, Number(storeId));
 
     if (
       actingUser.userRole === "employee" &&

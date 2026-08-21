@@ -10,4 +10,5 @@ export interface UserAccessToken {
   userRole: string;
   empPosition: number;
   storeId: number | null;
+  companyId: number | null;
 }

@@ -74,7 +74,7 @@ export async function POST(request: Request) {
       {
         success: true,
         message: "Item added successfully!",
-        // data: res, // could sanitize before returning
+        data: res.data,
       },
       { status: 201 },
     );

@@ -10,6 +10,8 @@ export type UserAuth = {
   userFullName: string;
   empPosition: EmployeePosition;
   storeId: number | null;
+  companyId: number | null;
+  companyName: string | null;
 };
 
 export function useSession() {

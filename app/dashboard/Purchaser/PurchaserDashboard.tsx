@@ -32,6 +32,16 @@ interface PendingRequest extends Request, StoreInterface {
   requestItemsCount: number;
 }
 
+interface LowStockItem {
+  inventoryItemId: number;
+  itemId: number;
+  itemName: string;
+  itemUnit: string;
+  inventoryItemQuantity: number;
+  inventoryItemMin: number;
+  categoryName: string | null;
+}
+
 const StatCard = ({
   title,
   value,
@@ -132,6 +142,14 @@ const PurchaserDashboard = () => {
     fetcher,
   );
 
+  const { data: lowStockRes = { data: [] } } = useSWR<
+    ApiResponse<LowStockItem[]>
+  >(
+    user ? `/api/dashboard/purchaser/${user?.userId}/low-stock` : null,
+    fetcher,
+  );
+  const lowStockItems = lowStockRes?.data ?? [];
+
   const defaultStats: DashboardStats = {
     totalPurchase: 0,
     inventoryCost: 0,
@@ -189,6 +207,58 @@ const PurchaserDashboard = () => {
             accent="bg-rose-500"
           />
         </div>
+
+        {/* Low Stock Items */}
+        <SectionCard
+          title="Low Stock Items"
+          subtitle={`${lowStockItems.length} item${lowStockItems.length === 1 ? "" : "s"}`}
+        >
+          {lowStockItems.length > 0 ? (
+            <div className="flex flex-col divide-y divide-gray-50 max-h-64 overflow-y-auto">
+              {lowStockItems.map((item) => (
+                <div
+                  key={item.inventoryItemId}
+                  className="flex items-center justify-between gap-3 py-2 first:pt-0"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-800 truncate">
+                      {item.itemName}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {item.categoryName ?? "Uncategorized"}
+                    </p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <span
+                      className={`text-sm font-semibold ${
+                        item.inventoryItemQuantity === 0
+                          ? "text-rose-600"
+                          : "text-amber-600"
+                      }`}
+                    >
+                      {item.inventoryItemQuantity} {item.itemUnit}
+                    </span>
+                    <p className="text-xs text-gray-400">
+                      min {item.inventoryItemMin}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
+                <AlertTriangle size={18} className="text-emerald-500" />
+              </div>
+              <p className="text-sm font-medium text-gray-600">
+                No low stock items
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Everything is above its reorder point
+              </p>
+            </div>
+          )}
+        </SectionCard>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-3 sm:gap-4">

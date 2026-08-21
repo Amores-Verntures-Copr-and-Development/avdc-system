@@ -1,5 +1,6 @@
 "use client";
 
+import { Card } from "@/components/shared/CustomCard";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
 import { DisplayUserInfoDto } from "@/dtos/user.dto";
@@ -34,21 +35,19 @@ const AccountPage = () => {
   ];
 
   return (
-    <PageLayout className="p-2 gap-4">
+    <PageLayout className="p-2 gap-2">
       <PageHeader title="Account" subtitle="Manage your profile and security" />
 
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto lg:flex-row lg:overflow-hidden">
-        <div className="w-full shrink-0 lg:w-72">
-          <ProfileSummaryCard user={user} userInfo={userInfo} />
-        </div>
+      <div className="flex w-full max-w-2xl flex-col gap-4">
+        <ProfileSummaryCard user={user} userInfo={userInfo} />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
-          <div className="flex gap-1 border-b border-gray-200">
+        <Card>
+          <div className="flex gap-1 border-b border-gray-100 px-3 pt-2">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+                className={`flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors ${
                   activeTab === tab.key
                     ? "border-primary-1 text-primary-1"
                     : "border-transparent text-gray-500 hover:text-gray-700"
@@ -60,17 +59,19 @@ const AccountPage = () => {
             ))}
           </div>
 
-          {activeTab === "info" ? (
-            <EditInfoForm
-              userId={user?.userId}
-              userInfo={userInfo}
-              isLoading={isLoading}
-              onSaved={() => mutate()}
-            />
-          ) : (
-            <ChangePasswordForm userId={user?.userId} />
-          )}
-        </div>
+          <div className="p-5">
+            {activeTab === "info" ? (
+              <EditInfoForm
+                userId={user?.userId}
+                userInfo={userInfo}
+                isLoading={isLoading}
+                onSaved={() => mutate()}
+              />
+            ) : (
+              <ChangePasswordForm userId={user?.userId} />
+            )}
+          </div>
+        </Card>
       </div>
     </PageLayout>
   );

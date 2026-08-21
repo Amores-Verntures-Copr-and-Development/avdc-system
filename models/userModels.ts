@@ -12,8 +12,8 @@ export const insertUser = async ({
   data: CreateUserDto;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Users(userName,userFname,userLname,userMname,userPassword,userRole,userEmail,userAddedBy) 
-                VALUES(?,?,?,?,?,?,?,?)`;
+  const sql = `INSERT INTO Users(userName,userFname,userLname,userMname,userPassword,userRole,userEmail,userAddedBy,companyId)
+                VALUES(?,?,?,?,?,?,?,?,?)`;
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.userName,
     data.userFname,
@@ -23,15 +23,18 @@ export const insertUser = async ({
     data.userRole,
     data.userEmail,
     data.userAddedBy,
+    data.companyId ?? null,
   ]);
   return result.insertId;
 };
 export const selectUsers = async ({
   userName,
   search,
+  companyId,
 }: {
   userName?: string;
   search?: string;
+  companyId?: number | null;
 }) => {
   const whereClauses: string[] = [];
   const values: any[] = [];
@@ -43,6 +46,14 @@ export const selectUsers = async ({
     whereClauses.push(`u.userFname LIKE ? OR u.userLname LIKE ?`);
     values.push(`%${search}%`, `%${search}%`);
   }
+  if (companyId !== undefined) {
+    if (companyId === null) {
+      whereClauses.push(`u.companyId IS NULL`);
+    } else {
+      whereClauses.push(`u.companyId = ?`);
+      values.push(companyId);
+    }
+  }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const pool = await getDBConnection();
@@ -52,6 +63,22 @@ export const selectUsers = async ({
         FROM Users u LEFT JOIN Employees e ON e.userId = u.userId LEFT JOIN Users us ON us.userId = u.userAddedBy ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
 
+  return rows;
+};
+
+export const selectCompanyOwners = async ({
+  companyId,
+}: {
+  companyId: number;
+}) => {
+  const pool = await getDBConnection();
+  const sql = `
+    SELECT userId, userFname, userLname, userEmail, userStatus, userCreatedAt
+    FROM Users
+    WHERE companyId = ? AND userRole = 'owner'
+    ORDER BY userCreatedAt DESC
+  `;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, [companyId]);
   return rows;
 };
 
@@ -66,7 +93,7 @@ export const selectUser = async ({ userName }: { userName?: string }) => {
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const pool = await getDBConnection();
   const sql = `
-          SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,e.empPosition,u.userPassword,(
+          SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,u.companyId,e.empPosition,u.userPassword,(
     SELECT JSON_ARRAYAGG(
       JSON_OBJECT(
         'storeEmpId', se.storeEmpId,

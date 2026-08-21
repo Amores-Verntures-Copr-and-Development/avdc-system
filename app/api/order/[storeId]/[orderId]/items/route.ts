@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, Number(storeId));
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const res = await OrderItemController.get(orderId);
 
@@ -64,7 +64,7 @@ export async function POST(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, Number(storeId));
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const body = (await request.json()) as CreateOrderItemDto[];
 

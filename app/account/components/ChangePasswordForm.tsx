@@ -1,4 +1,3 @@
-import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import { handleChange } from "@/utils/handle-change";
@@ -90,55 +89,51 @@ const ChangePasswordForm = ({ userId }: ChangePasswordFormProps) => {
   };
 
   return (
-    <BigCard title="Change Password" subtitle="Update your account password">
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <div className="md:col-span-2">
-            <Input
-              label="Current Password"
-              type="password"
-              name="currentPassword"
-              sizes="sm"
-              value={form.currentPassword}
-              onChange={handlePasswordChange}
-              error={errors.currentPassword}
-            />
-          </div>
-
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="sm:col-span-2">
           <Input
-            label="New Password"
+            label="Current Password"
             type="password"
-            name="newPassword"
+            name="currentPassword"
             sizes="sm"
-            value={form.newPassword}
+            value={form.currentPassword}
             onChange={handlePasswordChange}
-            error={errors.newPassword}
-          />
-          <Input
-            label="Confirm New Password"
-            type="password"
-            name="confirmPassword"
-            sizes="sm"
-            value={form.confirmPassword}
-            onChange={handlePasswordChange}
-            error={errors.confirmPassword}
+            error={errors.currentPassword}
           />
         </div>
 
-        <div className="mt-auto flex justify-end border-t border-gray-100 pt-4">
-          <div>
-            <Button
-              label="Update Password"
-              size="sm"
-              onClick={handleSave}
-              color="primary"
-              icon={KeyRound}
-              loading={isSaving}
-            />
-          </div>
-        </div>
+        <Input
+          label="New Password"
+          type="password"
+          name="newPassword"
+          sizes="sm"
+          value={form.newPassword}
+          onChange={handlePasswordChange}
+          error={errors.newPassword}
+        />
+        <Input
+          label="Confirm New Password"
+          type="password"
+          name="confirmPassword"
+          sizes="sm"
+          value={form.confirmPassword}
+          onChange={handlePasswordChange}
+          error={errors.confirmPassword}
+        />
       </div>
-    </BigCard>
+
+      <div className="flex justify-end border-t border-gray-100 pt-4">
+        <Button
+          label="Update Password"
+          size="sm"
+          onClick={handleSave}
+          color="primary"
+          icon={KeyRound}
+          loading={isSaving}
+        />
+      </div>
+    </div>
   );
 };
 

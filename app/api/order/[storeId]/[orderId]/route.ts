@@ -35,7 +35,7 @@ export async function GET(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, storeId);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await getOrderController({
       keyFields: { storeId, orderId },
@@ -83,7 +83,7 @@ export async function PUT(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, storeId);
+    await assertStoreAccess(actingUser, storeId);
 
     const body = (await request.json()) as Omit<UpdateOrderDto, "orderId">;
     const data: UpdateOrderDto = { ...body, orderId };
@@ -132,7 +132,7 @@ export async function DELETE(
     }
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, storeId);
+    await assertStoreAccess(actingUser, storeId);
 
     if (
       actingUser.userRole === "employee" &&

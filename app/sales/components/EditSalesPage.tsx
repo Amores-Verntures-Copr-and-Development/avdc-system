@@ -59,11 +59,6 @@ const EditSalesPage = ({
     SalePayments[]
   >([]);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [clearSignal, setClearSignal] = useState(0);
-  const handleClearCustomerComponent = () => {
-    setClearSignal((prev) => prev + 1);
-    setCustomerName(null);
-  };
   // Editable header fields
   const [customerName, setCustomerName] = useState<{
     customerName: string;
@@ -314,9 +309,8 @@ const EditSalesPage = ({
               <DropdownSearch<Customer>
                 sizes="xs"
                 label="Customer"
-                placeholder={
-                  customerName ? customerName.customerName : "Walk in"
-                }
+                placeholder="Walk-in Customer"
+                selectedValue={customerName?.customerName ?? ""}
                 searchFn={searchCustomers}
                 onSelect={function (row: Customer): void {
                   if (row) {
@@ -335,7 +329,6 @@ const EditSalesPage = ({
                   <span>{customer.customerName}</span>
                 )}
                 displayValue={(customer: Customer) => customer.customerName}
-                clearSignal={clearSignal}
               />
               {/* <label className="text-xs text-gray-500 mb-1 block">
                 Customer Name

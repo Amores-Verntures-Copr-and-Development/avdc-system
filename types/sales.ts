@@ -156,3 +156,21 @@ export interface SalesByProductVariant {
   totalSales: number;
   totalTransactions: number;
 }
+
+// One row per sale that included a given product variant - powers the
+// "which transactions is this variant's total made up of" drill-down modal.
+export interface SalesTransactionByProductVariant {
+  salesId: number;
+  salesNo: string;
+  salesCreatedAt: string;
+  salesStatus: SalesStatus;
+  customerId: number | null;
+  customerName: string | null;
+  storeName: string | null;
+  quantity: number;
+  salesItemPrice: number;
+  subtotal: number;
+  paymentMethods:
+    | { payMetName: string; salesPaymentAmount: number }[]
+    | null;
+}

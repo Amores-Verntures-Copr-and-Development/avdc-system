@@ -1,11 +1,18 @@
 import { getOwnerDashboardStats } from "@/controllers/DashboardController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { resolveStoreScope } from "@/lib/auth/resolveStoreScope";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
+    const actingUser = getCurrentUser(req);
     const { searchParams } = new URL(req.url);
-    const storeId = searchParams.get("store") || "";
-    const res = await getOwnerDashboardStats({ storeId: Number(storeId) });
+    const storeIdParam = searchParams.get("store") || "";
+    const scope = await resolveStoreScope(
+      actingUser,
+      storeIdParam ? Number(storeIdParam) : undefined,
+    );
+    const res = await getOwnerDashboardStats(scope);
 
     if (!res.success) {
       throw new Error(`${res.error}`);

@@ -22,7 +22,7 @@ import {
 import React, { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-import SalesCard from "./components/SalesCard";
+import StatCard from "@/components/shared/StatCard";
 
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
@@ -55,7 +55,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const [showSalesBreakdown, setShowSalesBreakdown] = useState<
     "totalSales" | "todaysSales" | null
   >(null);
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(true);
   const url =
     user?.empPosition === "supervisor" || user?.empPosition === "staff"
       ? `/api/sales/${storeId}`
@@ -78,8 +78,10 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     const from = searchParams.get("from");
     const to = searchParams.get("to");
     const method = searchParams.get("method");
+    const customerType = searchParams.get("customerType");
     const params = new URLSearchParams();
     if (method) params.append("method", method);
+    if (customerType) params.append("customerType", customerType);
     if (search) params.append("search", search);
     if (status) params.append("status", status);
     if (category) params.append("category", category);
@@ -648,6 +650,8 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
       : undefined) ??
     null;
 
+  const hasStoreContext = hasStore || Boolean(filterStoreId);
+
   const { data: paymentMethodResponse = { data: [] } } = useSWR<{
     data: PaymentMethods[];
   }>(
@@ -658,9 +662,25 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         : null,
     fetcher,
   );
-  const paymentMethodOptions: FilterOption[] = paymentMethodResponse.data.map(
-    (p) => ({ label: p.payMetName, value: String(p.payMetName) }),
+
+  // No store is currently selected (admin browsing across every store) -
+  // there's no single store's payment methods to show, so fall back to
+  // the distinct names across all stores (same source the Customers page
+  // filter uses) instead of leaving this filter empty.
+  const { data: uniquePaymentMethodNamesRes } = useSWR<ApiResponse<string[]>>(
+    !hasStoreContext ? "/api/payment-method/names" : null,
+    fetcher,
   );
+
+  const paymentMethodOptions: FilterOption[] = hasStoreContext
+    ? paymentMethodResponse.data.map((p) => ({
+        label: p.payMetName,
+        value: String(p.payMetName),
+      }))
+    : (uniquePaymentMethodNamesRes?.data ?? []).map((name) => ({
+        label: name,
+        value: name,
+      }));
 
   const canCreateSalesRole = !["staff", "supervisor", "purchaser"].includes(
     user?.empPosition ?? "",
@@ -687,6 +707,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     const store = searchParams.get("store");
     const from = searchParams.get("from");
     const to = searchParams.get("to");
+    const customerType = searchParams.get("customerType");
 
     const params = new URLSearchParams();
     if (search) params.append("search", search);
@@ -695,6 +716,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     if (unit) params.append("unit", unit);
     if (method) params.append("method", method);
     if (store) params.append("store", store);
+    if (customerType) params.append("customerType", customerType);
     if (to) params.append("to", to);
     if (from) params.append("from", from);
 
@@ -705,6 +727,59 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
 
   const { data: responseDetails } = useSWR(
     user ? debounceDetailsApi : null,
+    fetcher,
+  );
+
+  // The Total Sales card has its own period selector (Today / This Week /
+  // This Month / ...), independent of the table's date-range filter, so it
+  // needs its own scoped fetch against the same details endpoint.
+  const [salesPeriod, setSalesPeriod] = useState<
+    "today" | "week" | "month" | "year" | "all"
+  >("month");
+
+  const salesPeriodRange = useMemo(() => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const toDateStr = (d: Date) =>
+      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const now = new Date();
+    const today = toDateStr(now);
+
+    switch (salesPeriod) {
+      case "today":
+        return { from: today, to: today };
+      case "week": {
+        const start = new Date(now);
+        start.setDate(now.getDate() - now.getDay());
+        return { from: toDateStr(start), to: today };
+      }
+      case "year": {
+        const start = new Date(now.getFullYear(), 0, 1);
+        return { from: toDateStr(start), to: today };
+      }
+      case "all":
+        return { from: "", to: "" };
+      case "month":
+      default: {
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { from: toDateStr(start), to: today };
+      }
+    }
+  }, [salesPeriod]);
+
+  const salesCardUrl = useMemo(() => {
+    const store = searchParams.get("store");
+    const params = new URLSearchParams();
+    if (store) params.append("store", store);
+    if (salesPeriodRange.from) params.append("from", salesPeriodRange.from);
+    if (salesPeriodRange.to) params.append("to", salesPeriodRange.to);
+
+    return `${detailsUrl}?${params.toString()}`;
+  }, [detailsUrl, searchParams, salesPeriodRange]);
+
+  const debounceSalesCardApi = useDebounce(salesCardUrl, 300);
+
+  const { data: salesCardResponse } = useSWR(
+    user && detailsUrl ? debounceSalesCardApi : null,
     fetcher,
   );
 
@@ -731,12 +806,20 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     [router],
   );
   const details = responseDetails?.data[0];
-  const totalSales = details?.totalSales ?? 0;
   const totalCountSales = details?.totalCountSales ?? 0;
   const totalCustomer = details?.totalCustomer ?? 0;
   const todaySales = details?.todaySales ?? 0;
-  const totalSalesPaymentMethods = details?.totalSalesPaymentMethods ?? [];
   const todaysSalesPaymentMethods = details?.todaysSalesPaymentMethods ?? [];
+  const ordersTrend = details?.ordersTrend ?? [];
+  const customersTrend = details?.customersTrend ?? [];
+  const todaySalesTrend = details?.todaySalesTrend ?? [];
+  const ordersGrowthPct = details?.ordersGrowthPct ?? 0;
+  const customersGrowthPct = details?.customersGrowthPct ?? 0;
+
+  const salesCardDetails = salesCardResponse?.data?.[0];
+  const totalSales = salesCardDetails?.totalSales ?? 0;
+  const totalSalesPaymentMethods =
+    salesCardDetails?.totalSalesPaymentMethods ?? [];
 
   const storeOptions = Array.isArray(stores)
     ? stores.map((store) => ({
@@ -758,8 +841,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     },
     {
       id: "customerType",
-      label: "Walk-in",
-      options: [],
+      label: "Customer Type",
+      options: [
+        { label: "Customer", value: "customer" },
+        { label: "Walk-in", value: "walk-in" },
+      ],
     },
   ];
 
@@ -846,47 +932,74 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         <div className="flex flex-1 flex-col min-h-0 gap-2">
           {showBreakdown && (
             <div className="grid grid-cols-4 gap-3  xl:grid-cols-4">
-              <SalesCard
+              <StatCard
                 icon={PhilippinePeso}
                 title="Total Sales"
                 value={formatPeso(totalSales)}
+                headerRight={
+                  <div className="w-20 2xl:w-28">
+                    <DynamicDropdown
+                      options={[
+                        { label: "Today", value: "today" },
+                        { label: "This Week", value: "week" },
+                        { label: "This Month", value: "month" },
+                        { label: "This Year", value: "year" },
+                        { label: "All Time", value: "all" },
+                      ]}
+                      value={salesPeriod}
+                      onChange={(value) =>
+                        setSalesPeriod(
+                          (value ||
+                            "month") as typeof salesPeriod,
+                        )
+                      }
+                      placeholder="This Month"
+                      icon={<></>}
+                      size="xs"
+                    />
+                  </div>
+                }
               >
                 <PaymentBreakdown
                   data={totalSalesPaymentMethods}
                   total={totalSales}
                 />
-              </SalesCard>
+              </StatCard>
 
-              <SalesCard
+              <StatCard
                 icon={CalendarCheck}
                 title="Total Orders"
                 value={totalCountSales}
                 bgColor="bg-emerald-50"
                 textColor="text-emerald-600"
                 subtitle="All time orders"
+                trend={ordersTrend}
+                trendColor="#16a34a"
+                growthPct={ordersGrowthPct}
               />
 
-              <SalesCard
+              <StatCard
                 icon={Users}
-                title="Total Customer"
+                title="Total Customers"
                 value={totalCustomer}
                 bgColor="bg-amber-50"
                 textColor="text-amber-600"
                 subtitle="Unique customers"
+                trend={customersTrend}
+                trendColor="#f59e0b"
+                growthPct={customersGrowthPct}
               />
 
-              <SalesCard
+              <StatCard
                 icon={Calendar}
                 title="Today's Sales"
                 value={formatPeso(todaySales)}
                 bgColor="bg-blue-50"
                 textColor="text-blue-600"
-              >
-                <PaymentBreakdown
-                  data={todaysSalesPaymentMethods}
-                  total={todaySales}
-                />
-              </SalesCard>
+                subtitle="As of today 11:59 PM"
+                trend={todaySalesTrend}
+                trendColor="#3b82f6"
+              />
             </div>
           )}
           <div className="flex gap-2">

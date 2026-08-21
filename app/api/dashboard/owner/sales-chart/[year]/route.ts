@@ -1,17 +1,24 @@
 import { getOwnerSalesChartData } from "@/controllers/DashboardController";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { resolveStoreScope } from "@/lib/auth/resolveStoreScope";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ year: string }> },
 ) {
   try {
+    const actingUser = getCurrentUser(req);
     const slug = (await params).year;
     const { searchParams } = new URL(req.url);
-    const storeId = searchParams.get("store") || "";
+    const storeIdParam = searchParams.get("store") || "";
+    const scope = await resolveStoreScope(
+      actingUser,
+      storeIdParam ? Number(storeIdParam) : undefined,
+    );
     const res = await getOwnerSalesChartData({
       year: slug,
-      storeId: Number(storeId),
+      ...scope,
     });
 
     if (!res.success) {

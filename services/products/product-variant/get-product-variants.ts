@@ -1,4 +1,5 @@
 import {
+  selectKioskProductVariants,
   selectProductCountVariantForOnline,
   selectProductCountVariants,
   selectProductVariantForOnline,
@@ -57,6 +58,16 @@ export async function getProductVariants({
   } catch (e) {
     throw e;
   }
+}
+
+export async function getKioskProductVariants({
+  connection,
+  storeId,
+}: {
+  connection?: PoolConnection;
+  storeId: number;
+}) {
+  return selectKioskProductVariants({ connection, storeId });
 }
 
 export async function getProductVariantForOnline({

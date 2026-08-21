@@ -38,6 +38,7 @@ export async function processStockAdjustment(data: CreateInventoryMovementDto) {
         itemMovementReference: "adjustment",
         itemMovementQuantity: Number(data.itemMovementQuantity),
         itemMovementRemarks: data.itemMovementRemarks,
+        itemMovementReason: data.itemMovementReason ?? null,
       },
     ];
     await createInventoryMovement({ connection, data: inventoryMovement });
@@ -95,6 +96,7 @@ export async function processStockBulkAdjustment(
         itemMovementReference: "adjustment",
         itemMovementQuantity: Number(item.itemMovementQuantity),
         itemMovementRemarks: item.itemMovementRemarks,
+        itemMovementReason: item.itemMovementReason ?? null,
       })
     );
     await createInventoryMovement({ connection, data: inventoryMovement });

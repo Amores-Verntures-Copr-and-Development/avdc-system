@@ -1,4 +1,4 @@
-import BigCard from "@/components/shared/BigCard";
+import { Card, CardContent } from "@/components/shared/CustomCard";
 import { UserAuth } from "@/hooks/useSession";
 import { DisplayUserInfoDto } from "@/dtos/user.dto";
 import { Mail, ShieldCheck, Store } from "lucide-react";
@@ -41,57 +41,51 @@ const ProfileSummaryCard = ({ user, userInfo }: ProfileSummaryCardProps) => {
       .join("") || "?";
 
   return (
-    <BigCard title="Profile" isRounded>
-      <div className="flex flex-col items-center gap-3 py-4">
-        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary-1 to-primary-1/60 text-xl font-bold text-white shadow-md">
+    <Card>
+      <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center">
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-1 to-primary-1/60 text-lg font-bold text-white shadow-sm">
           {initials}
         </div>
 
-        <div className="text-center">
-          <h2 className="text-sm font-semibold text-gray-900">{fullName}</h2>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <h2 className="truncate text-base font-semibold text-gray-900">
+            {fullName}
+          </h2>
+
           {userInfo?.userEmail && (
-            <p className="mt-0.5 flex items-center justify-center gap-1 text-xs text-gray-500">
-              <Mail className="h-3 w-3" />
-              {userInfo.userEmail}
+            <p className="flex items-center gap-1.5 text-xs text-gray-500">
+              <Mail className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{userInfo.userEmail}</span>
             </p>
           )}
-        </div>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-          {user?.userRole && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-primary-1/10 px-2.5 py-1 text-[10px] font-semibold text-primary-1">
-              <ShieldCheck className="h-3 w-3" />
-              {roleLabel[user.userRole] ?? user.userRole}
-            </span>
-          )}
+          <div className="flex flex-wrap items-center gap-2 pt-0.5">
+            {user?.userRole && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary-1/10 px-2.5 py-1 text-[10px] font-semibold text-primary-1">
+                <ShieldCheck className="h-3 w-3" />
+                {roleLabel[user.userRole] ?? user.userRole}
+              </span>
+            )}
 
-          {user?.empPosition && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-600">
-              {positionLabel[user.empPosition] ?? user.empPosition}
-            </span>
-          )}
-        </div>
+            {user?.empPosition && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-600">
+                {positionLabel[user.empPosition] ?? user.empPosition}
+              </span>
+            )}
 
-        {userInfo?.storeEmployees && userInfo.storeEmployees.length > 0 && (
-          <div className="w-full border-t border-gray-100 pt-3">
-            <p className="mb-1.5 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-              <Store className="h-3 w-3" />
-              Assigned Store{userInfo.storeEmployees.length > 1 ? "s" : ""}
-            </p>
-            <div className="flex flex-col gap-1">
-              {userInfo.storeEmployees.map((store) => (
-                <span
-                  key={store.storeId}
-                  className="rounded-lg bg-gray-50 px-2 py-1.5 text-xs font-medium text-gray-700"
-                >
-                  {store.storeName}
-                </span>
-              ))}
-            </div>
+            {userInfo?.storeEmployees?.map((store) => (
+              <span
+                key={store.storeId}
+                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-600"
+              >
+                <Store className="h-3 w-3" />
+                {store.storeName}
+              </span>
+            ))}
           </div>
-        )}
-      </div>
-    </BigCard>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

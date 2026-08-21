@@ -23,6 +23,7 @@ export const logIn = async (data: UserAuthInterface) => {
       user.userRole,
       user.empPosition,
       hasOneStore ? user?.storeEmployees[0].storeId : null,
+      user.companyId ?? null,
     );
     // Return structured response
     return {
@@ -34,6 +35,7 @@ export const logIn = async (data: UserAuthInterface) => {
         userRole: user.userRole,
         empPosition: user.empPosition,
         storeId: hasOneStore ? user?.storeEmployees[0].storeId : null,
+        companyId: user.companyId ?? null,
       },
       accessToken,
       refreshToken,

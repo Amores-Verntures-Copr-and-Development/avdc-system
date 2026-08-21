@@ -14,4 +14,5 @@ export interface UserInterface {
   userCreatedAt: string;
   userUpdatedAt: string;
   userDeletedAt: string;
+  companyId: number | null;
 }

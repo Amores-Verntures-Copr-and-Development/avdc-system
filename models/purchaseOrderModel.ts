@@ -439,6 +439,7 @@ SELECT
             LEFT JOIN Categories c ON c.categoryId = i.categoryId
             WHERE poi.poId = ?
                 AND poi.suppId = ?
+                AND poi.poItemStatus != 'removed'
                 AND i.itemId IS NOT NULL
                 AND ro_sub.requestId = ro.requestId  -- Correlate with main query
         ),
@@ -496,7 +497,7 @@ LEFT JOIN InventoryItems ii
 LEFT JOIN RequestItems ri
        ON ri.invItem = ii.inventoryItemId AND ri.requestId = por.requestId
 LEFT JOIN RequestOrders ro ON ro.requestId = por.requestId
-WHERE poi.poId = ? AND poi.suppId = ? AND ri.reqItemId IS NOT NULL
+WHERE poi.poId = ? AND poi.suppId = ? AND poi.poItemStatus != 'removed' AND ri.reqItemId IS NOT NULL
 GROUP BY i.itemId,i.itemPrice, i.itemName, i.itemUnit, poi.poItemId, poi.suppId, c.categoryName, c.categoryType, ic.toItemId,ro.storeId,i.itemPrice;`;
   const [rows] = await pool.execute(sql, [poId, suppId]);
   return rows as RequestItemWithPOItem[];

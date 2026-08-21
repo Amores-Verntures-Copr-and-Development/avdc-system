@@ -2,6 +2,7 @@ import { getOwnerDashboardServices } from "@/services/dashboard/owner/get-owner-
 import {
   findPendingRequestByUserId,
   getDashboardStats,
+  getLowStockItems,
 } from "@/services/dashboard/purchaser/get-dashboard-stats";
 import { getStoreDashboard } from "@/services/dashboard/store/get-store-dashboard";
 
@@ -15,6 +16,31 @@ export const getDashboardStatsByRole = async (
     if (position === "purchaser" && userId) {
       data = await getDashboardStats(userId);
       message = "Purchaser Dashboard Stats Fetched!";
+    }
+    return {
+      success: true,
+      data: data,
+      message: message,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      error: e,
+      message: "Failed to fetched",
+    };
+  }
+};
+
+export const getLowStockItemsController = async (
+  position: "purchaser" | "admin",
+  userId?: number,
+) => {
+  try {
+    let data: any;
+    let message: string = "";
+    if (position === "purchaser" && userId) {
+      data = await getLowStockItems(userId);
+      message = "Low Stock Items Fetched!";
     }
     return {
       success: true,
@@ -57,11 +83,16 @@ export const getPendingRequest = async (
 
 export const getOwnerDashboardStats = async ({
   storeId,
+  storeIds,
 }: {
   storeId?: number;
+  storeIds?: number[];
 }) => {
   try {
-    const data = await getOwnerDashboardServices.getTotalMetrics({ storeId });
+    const data = await getOwnerDashboardServices.getTotalMetrics({
+      storeId,
+      storeIds,
+    });
     return {
       success: true,
       data: data,
@@ -76,9 +107,15 @@ export const getOwnerDashboardStats = async ({
   }
 };
 
-export const getOwnerRecentStoreSales = async () => {
+export const getOwnerRecentStoreSales = async ({
+  storeIds,
+}: {
+  storeIds?: number[];
+} = {}) => {
   try {
-    const data = await getOwnerDashboardServices.getRecentStoreSales();
+    const data = await getOwnerDashboardServices.getRecentStoreSales({
+      storeIds,
+    });
     return {
       success: true,
       data: data,
@@ -96,14 +133,17 @@ export const getOwnerRecentStoreSales = async () => {
 export const getOwnerSalesChartData = async ({
   year,
   storeId,
+  storeIds,
 }: {
   year: string;
   storeId?: number;
+  storeIds?: number[];
 }) => {
   try {
     const data = await getOwnerDashboardServices.getSalesChartData({
       year,
       storeId,
+      storeIds,
     });
     return {
       success: true,

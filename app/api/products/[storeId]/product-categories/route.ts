@@ -6,10 +6,12 @@ import {
 } from "@/controllers/ProductController";
 import { CreateProductCategoryDto } from "@/dtos/products.dto";
 import { ProductCategories } from "@/types/products";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -18,6 +20,10 @@ export async function POST(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as CreateProductCategoryDto[];
     const res = await createProductCategories(data);
     if (!res.success) {
@@ -45,7 +51,7 @@ export async function POST(
 }
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -54,6 +60,10 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const res = await getProductCategories({ keyFields: { storeId: storeId } });
 
     if (!res.success) {
@@ -82,7 +92,7 @@ export async function GET(
 }
 
 export async function PUT(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -91,6 +101,10 @@ export async function PUT(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as Partial<ProductCategories>[];
     const res = await updateProductCategoriesController({ data });
 
@@ -119,7 +133,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -128,6 +142,10 @@ export async function DELETE(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as Partial<ProductCategories>[];
     const res = await deleteProductCategoriesController({ data });
 

@@ -20,6 +20,9 @@ import {
   ListOrdered,
   Ticket,
   Tablet,
+  Briefcase,
+  Settings,
+  Receipt,
 } from "lucide-react";
 
 export interface SideMenuSection {
@@ -249,6 +252,24 @@ export const sideMenu: SideMenuGroup[] = [
   {
     key: "Administration",
     sections: [
+      {
+        name: "Companies",
+        href: "/companies",
+        icon: Briefcase,
+        roles: ["superadmin"],
+      },
+      {
+        name: "Platform Settings",
+        href: "/platform-settings",
+        icon: Settings,
+        roles: ["superadmin"],
+      },
+      {
+        name: "Billing",
+        href: "/billing",
+        icon: Receipt,
+        roles: ["owner"],
+      },
       {
         name: "Users",
         href: "/users",

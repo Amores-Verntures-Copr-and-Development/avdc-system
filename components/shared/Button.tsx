@@ -331,7 +331,7 @@ const Button: React.FC<ButtonProps> = ({
       <button
         onClick={(e) => {
           e.stopPropagation();
-
+          e.preventDefault();
           if (!isDisabled && onClick) {
             onClick();
           }

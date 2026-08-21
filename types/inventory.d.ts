@@ -50,6 +50,16 @@ export interface InventoryLogInterface {
   logCreatedBy: number; // userId
 }
 
+// Only meaningful when itemMovementReference is "adjustment" - a structured
+// classification alongside the free-text itemMovementRemarks, so adjustments
+// can be filtered/reported on (e.g. "how much shrinkage was from damage").
+export type AdjustmentReason =
+  | "damage"
+  | "loss"
+  | "expiry"
+  | "count_correction"
+  | "other";
+
 export interface InventoryItemMovement {
   invItemMovementId: number;
   inventoryId: number;
@@ -67,6 +77,7 @@ export interface InventoryItemMovement {
     | "stocking";
   itemMovementQuantity: number;
   itemMovementRemarks?: string;
+  itemMovementReason?: AdjustmentReason | null;
   itemMovementCreatedAt?: string;
 }
 

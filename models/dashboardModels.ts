@@ -58,6 +58,46 @@ WHERE u.userId = ?
   return rows;
 };
 
+// Backs the Purchaser Dashboard's "Low Stock Items" widget - same
+// StockPurchasers -> StockRooms -> Inventories join used by the lowStock
+// count in selectPurchaserStats above, so the list and the count stay
+// consistent with each other.
+export const selectLowStockItemsByUserId = async (
+  userId: number,
+  limit: number = 20,
+) => {
+  const pool = await getDBConnection();
+  const sql = `
+    SELECT
+      ii.inventoryItemId,
+      it.itemId,
+      it.itemName,
+      it.itemUnit,
+      ii.inventoryItemQuantity,
+      ii.inventoryItemMin,
+      c.categoryName
+    FROM InventoryItems ii
+    LEFT JOIN Items it
+      ON it.itemId = ii.inventoryItemReferenceId
+     AND ii.inventoryItemReferenceType = 'item'
+    LEFT JOIN Categories c
+      ON c.categoryId = it.categoryId
+    LEFT JOIN Inventories i
+      ON i.inventoryId = ii.inventoryId
+    LEFT JOIN StockRooms sr
+      ON sr.stockRoomId = i.inventoryReferenceId
+     AND i.inventoryReference = 'stock-room'
+    LEFT JOIN StockPurchasers sp
+      ON sp.stockRoomId = sr.stockRoomId
+    WHERE sp.userId = ?
+      AND ii.inventoryItemQuantity < ii.inventoryItemMin
+    ORDER BY ii.inventoryItemQuantity ASC
+    LIMIT ${Number(limit)}
+  `;
+  const [rows] = await pool.execute(sql, [userId]);
+  return rows;
+};
+
 export const selectPendingRequestByUserId = async (userId: number) => {
   const pool = await getDBConnection();
   const sql = `
@@ -74,13 +114,39 @@ WHERE sp.userId = ? AND ro.requestStatus = 'pending';`;
   return rows;
 };
 
+// storeId (single) or storeIds (a company's full store list) scope the
+// three Sales-backed metrics below to one company - without either, an
+// owner with no store selected would see totals blended across every
+// company's sales. totalStores/totalInventoryCost/totalPurchase are left
+// exactly as they were (pre-existing, already either global or scoped via
+// a separate mechanism this fix doesn't touch).
 export const selectOwnerDashboardStats = async ({
   storeId,
+  storeIds,
 }: {
   storeId?: number;
+  storeIds?: number[];
 }) => {
   const pool = await getDBConnection();
   const params: any[] = [];
+
+  let salesFilterClause = "";
+  let salesFilterParams: number[] = [];
+  if (storeId) {
+    salesFilterClause = `s.storeId = ?`;
+    salesFilterParams = [storeId];
+  } else if (storeIds && storeIds.length > 0) {
+    salesFilterClause = `s.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    salesFilterParams = storeIds;
+  }
+
+  let salesPaymentsFilterClause = "";
+  if (storeId) {
+    salesPaymentsFilterClause = `s2.storeId = ?`;
+  } else if (storeIds && storeIds.length > 0) {
+    salesPaymentsFilterClause = `s2.storeId IN (${storeIds.map(() => "?").join(",")})`;
+  }
+
   // Sales.salesTotalAmount is never decremented on refund (SalesRefunds is
   // a separate append-only ledger, same as everywhere else this is netted
   // in the app) - left un-netted here, "Total Sales" overstated actual
@@ -94,9 +160,9 @@ export const selectOwnerDashboardStats = async ({
     FROM SalesRefunds
     GROUP BY salesId
   ) sr ON sr.salesId = s.salesId
-  ${storeId ? `WHERE s.storeId = ?` : ``}
+  ${salesFilterClause ? `WHERE ${salesFilterClause}` : ``}
 ) AS totalSales,
-(SELECT COUNT(*) FROM Sales s ${storeId ? `WHERE s.storeId = ?` : ``}) AS totalTransactions,
+(SELECT COUNT(*) FROM Sales s ${salesFilterClause ? `WHERE ${salesFilterClause}` : ``}) AS totalTransactions,
 (SELECT COUNT(*) FROM Stores s) AS totalStores,
 (SELECT SUM(ii.inventoryItemQuantity * i.itemPrice ) FROM InventoryItems ii INNER JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND  ii.inventoryItemReferenceType = 'item' ${storeId ? ` LEFT JOIN Inventories iis ON iis.inventoryId = ii.inventoryId` : ``} WHERE ii.inventoryItemDeletedAt IS NULL ${storeId ? ` AND inventoryReference = 'store' AND inventoryReferenceId = ?` : ``})
 AS totalInventoryCost,
@@ -108,21 +174,28 @@ AS totalInventoryCost,
     FROM SalesPayments sp
     INNER JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
     INNER JOIN Sales s2 ON s2.salesId = sp.salesId
-    ${storeId ? `WHERE s2.storeId = ?` : ``}
+    ${salesPaymentsFilterClause ? `WHERE ${salesPaymentsFilterClause}` : ``}
     GROUP BY pm.payMetName
     ORDER BY totalAmount DESC
   ) pmTotals
 ) AS paymentMethods
 ; `;
+  params.push(...salesFilterParams, ...salesFilterParams);
   if (storeId) {
-    params.push(storeId, storeId, storeId, storeId);
+    params.push(storeId);
   }
+  params.push(...salesFilterParams);
   const [rows] = await pool.execute(sql, params);
   return rows;
 };
 
-export const selectStoresRecentSales = async () => {
+export const selectStoresRecentSales = async ({
+  storeIds,
+}: {
+  storeIds?: number[];
+} = {}) => {
   const pool = await getDBConnection();
+  const hasFilter = Array.isArray(storeIds) && storeIds.length > 0;
   const sql = `SELECT
   s.storeId,
     s.storeName,
@@ -148,18 +221,21 @@ LEFT JOIN (
     FROM SalesRefunds
     GROUP BY salesId
 ) sr ON sr.salesId = sl.salesId
+${hasFilter ? `WHERE s.storeId IN (${storeIds!.map(() => "?").join(",")})` : ``}
 ORDER BY sl.salesCreatedAt DESC;`;
 
-  const [rows] = await pool.execute(sql);
+  const [rows] = await pool.execute(sql, hasFilter ? storeIds : []);
   return rows;
 };
 
 export const selectSalesChartData = async ({
   year,
   storeId,
+  storeIds,
 }: {
   year?: string;
   storeId?: number;
+  storeIds?: number[];
 }) => {
   const pool = await getDBConnection();
 
@@ -182,6 +258,9 @@ export const selectSalesChartData = async ({
   if (storeId) {
     sql += ` AND s.storeId = ?`;
     params.push(storeId);
+  } else if (storeIds && storeIds.length > 0) {
+    sql += ` AND s.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    params.push(...storeIds);
   }
 
   sql += `

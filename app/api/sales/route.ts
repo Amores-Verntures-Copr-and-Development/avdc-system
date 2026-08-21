@@ -16,6 +16,11 @@ export async function GET(_request: Request) {
     const method = searchParams.get("method") || "";
     const includeSaleItems = searchParams.get("includeSaleItems") || "";
     const customer = searchParams.get("customer") || "";
+    const customerTypeParam = searchParams.get("customerType");
+    const customerType =
+      customerTypeParam === "customer" || customerTypeParam === "walk-in"
+        ? customerTypeParam
+        : undefined;
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
@@ -28,6 +33,7 @@ export async function GET(_request: Request) {
       to,
       includeSaleItems: includeSaleItems === "true",
       customer: customer === "true",
+      customerType,
       offset: offset,
       limit: limitNumber,
       method,

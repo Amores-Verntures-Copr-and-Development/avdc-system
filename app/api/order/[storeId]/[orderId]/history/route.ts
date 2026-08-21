@@ -17,7 +17,7 @@ export async function GET(
     const { storeId, orderId } = await params;
 
     const actingUser = getCurrentUser(request);
-    assertStoreAccess(actingUser, Number(storeId));
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const res = await getOrderStatusHistory({ orderId: Number(orderId) });
 

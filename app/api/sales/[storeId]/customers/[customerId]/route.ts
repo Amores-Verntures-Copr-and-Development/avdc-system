@@ -1,4 +1,6 @@
 import { getSales } from "@/controllers/SaleController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -17,6 +19,9 @@ export async function GET(
     if (!customerId) {
       throw new Error("No customer ID found!");
     }
+
+    const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const res = await getSales({
       customerId: Number(customerId),

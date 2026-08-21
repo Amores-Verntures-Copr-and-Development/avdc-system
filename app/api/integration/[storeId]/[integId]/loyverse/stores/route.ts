@@ -1,4 +1,6 @@
 import { LoyverseIntegrationController } from "@/controllers/IntegrationController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -6,15 +8,18 @@ export async function GET(
   {
     params,
   }: {
-    params: Promise<{ integId: string }>;
+    params: Promise<{ storeId: string; integId: string }>;
   },
 ) {
   try {
-    const { integId } = await params;
+    const { storeId, integId } = await params;
 
     if (!integId) {
       throw new Error("No integration ID found!");
     }
+
+    const actingUser = getCurrentUser(req);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const res = await LoyverseIntegrationController.get({
       keyFields: { integId: Number(integId) },
@@ -73,16 +78,19 @@ export async function PATCH(
   {
     params,
   }: {
-    params: Promise<{ integId: string }>;
+    params: Promise<{ storeId: string; integId: string }>;
   },
 ) {
   try {
-    const { integId } = await params;
+    const { storeId, integId } = await params;
     const body = await req.json();
 
     if (!integId) {
       throw new Error("No integration ID found!");
     }
+
+    const actingUser = getCurrentUser(req);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     if (!body.storeId) {
       throw new Error("No store ID to be updated!");

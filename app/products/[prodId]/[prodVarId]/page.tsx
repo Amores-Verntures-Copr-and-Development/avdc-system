@@ -2,20 +2,24 @@
 
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import Modal from "@/components/shared/Modal";
 import PageLayout from "@/components/shared/PageLayout";
 import VariantComponentPage from "@/app/products/components/VariantComponentPage";
+import AddVariantModal from "@/app/products/components/AddVariantModal";
 import {
+  CreateProductVariantDto,
   DisplaProductVariantsDtos,
   DisplayProductsDtos,
 } from "@/dtos/products.dto";
 import { useSession } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
+import toast from "react-hot-toast";
 
 const Page = () => {
   const params = useParams();
@@ -25,6 +29,8 @@ const Page = () => {
   const prodId = Number(params.prodId);
   const prodVarId = Number(params.prodVarId);
   const [showAddComponent, setShowAddComponent] = useState(false);
+  const [showAddVariant, setShowAddVariant] = useState(false);
+  const [isAddingVariant, setIsAddingVariant] = useState(false);
 
   const { data: productResponse, isLoading: isProductLoading } = useSWR<
     ApiResponse<DisplayProductsDtos[]>
@@ -44,6 +50,48 @@ const Page = () => {
   const product = productResponse?.data?.[0] ?? null;
   const variant = variantResponse?.data ?? null;
 
+  // Clicking a single-variant product row skips straight to this page (see
+  // goToProduct in ProductStorePage.tsx) instead of the variant list, since
+  // there's nothing to disambiguate - but that also means the list's "Add
+  // Variant" button is unreachable from here, so this page needs its own.
+  const handleAddVariant = async (
+    prodVariant: CreateProductVariantDto,
+  ): Promise<number | null> => {
+    setIsAddingVariant(true);
+    const newData: CreateProductVariantDto = {
+      ...prodVariant,
+      prodId,
+      prodVarCreatedBy: user?.userId ?? 0,
+    };
+    try {
+      const response = await fetch(
+        `/api/products/${storeId}/product-variants/${prodId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newData),
+          credentials: "include",
+        },
+      );
+
+      const res = await response.json();
+
+      if (!res.success) {
+        throw new Error(res.err);
+      }
+      toast.success(res.message);
+      return res.data ?? null;
+    } catch (e) {
+      console.log(e);
+      toast.error("Failed to add variant!");
+      return null;
+    } finally {
+      setIsAddingVariant(false);
+    }
+  };
+
   if (isProductLoading || isVariantLoading) return <LoaderComponent />;
 
   return (
@@ -61,8 +109,14 @@ const Page = () => {
           </span>
         </div>
 
-        <div>
-          {" "}
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            icon={Plus}
+            label="Add Variant"
+            className="font-semibold"
+            onClick={() => setShowAddVariant(true)}
+          />
           <Button
             color="secondary"
             size="sm"
@@ -81,6 +135,20 @@ const Page = () => {
         showAddComponent={showAddComponent}
         setShowAddComponent={setShowAddComponent}
       />
+
+      <Modal
+        title={`Add ${product?.prodName ?? ""} variant`}
+        isOpen={showAddVariant}
+        onClose={() => setShowAddVariant(false)}
+      >
+        <AddVariantModal
+          storeId={storeId ?? 0}
+          prodId={prodId}
+          onSubmit={handleAddVariant}
+          mutate={() => setShowAddVariant(false)}
+          isSubmitting={isAddingVariant}
+        />
+      </Modal>
     </PageLayout>
   );
 };

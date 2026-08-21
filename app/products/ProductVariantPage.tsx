@@ -166,8 +166,9 @@ const ProductVariantPage = ({
       : null,
     fetcher,
   );
-  const handleAddVariant = async (prodVariant: CreateProductVariantDto) => {
-    console.log({ data });
+  const handleAddVariant = async (
+    prodVariant: CreateProductVariantDto,
+  ): Promise<number | null> => {
     setIsSubmitting(true);
     const newData: CreateProductVariantDto = {
       ...prodVariant,
@@ -196,11 +197,11 @@ const ProductVariantPage = ({
       if (mutate) {
         mutate();
       }
-      return true;
+      return res.data ?? null;
     } catch (e) {
       console.log(e);
-      toast.success("Failed!");
-      return false;
+      toast.error("Failed!");
+      return null;
     } finally {
       setIsSubmitting(false);
     }
@@ -424,6 +425,8 @@ const ProductVariantPage = ({
         }}
       >
         <AddVariantModal
+          storeId={data?.storeId ?? 0}
+          prodId={data?.prodId ?? 0}
           onSubmit={handleAddVariant}
           mutate={mutate}
           isSubmitting={isSubmitting}

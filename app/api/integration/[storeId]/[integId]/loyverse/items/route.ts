@@ -1,5 +1,7 @@
 import { LoyverseIntegrationController } from "@/controllers/IntegrationController";
 import { LoyverseItem } from "@/types/loyverse-integration";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,14 +9,17 @@ export async function GET(
   {
     params,
   }: {
-    params: Promise<{ integId: string }>;
+    params: Promise<{ storeId: string; integId: string }>;
   },
 ) {
   try {
-    const { integId } = await params;
+    const { storeId, integId } = await params;
     if (!integId) {
       throw new Error("No integration ID found!");
     }
+
+    const actingUser = getCurrentUser(req);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const integRes = await LoyverseIntegrationController.get({
       keyFields: { integId: Number(integId) },

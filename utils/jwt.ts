@@ -15,6 +15,7 @@ export type AccessTokenPayload = {
   userRole: string;
   empPosition: number;
   storeId: number | null;
+  companyId: number | null;
 };
 
 export type CustomerAccessTokenPayload = {
@@ -93,7 +94,8 @@ export const generateTokens = (
   userLname: string,
   userRole: string,
   empPosition: number,
-  storeId: number | null
+  storeId: number | null,
+  companyId: number | null
 ) => {
   const userFullName = userLname ? `${userFname} ${userLname}` : userFname;
   const accessToken = signToken(
@@ -105,6 +107,7 @@ export const generateTokens = (
       userRole,
       empPosition,
       storeId,
+      companyId,
     },
     accessTokenOptions
   );

@@ -33,6 +33,10 @@ const StorePage = () => {
   const router = useRouter();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
   const isSupervisor = user?.empPosition === "supervisor";
+  // Owner and company Admin manage stores day-to-day; superadmin (isAdmin)
+  // retains full access too. Matches the server-side check in createStore.
+  const canManageStores =
+    isAdmin || user?.userRole === "owner" || user?.empPosition === "admin";
   const url =
     isAdmin || !hasStore
       ? "/api/stores/"
@@ -44,6 +48,13 @@ const StorePage = () => {
     isLoading,
     mutate,
   } = useSWR<{ data: StoreInterface[] }>(user ? url : null, fetcher);
+
+  const { data: limitResponse } = useSWR<{
+    data: { activeStoreCount: number; maxStores: number | null };
+  }>(canManageStores ? "/api/stores/limit" : null, fetcher);
+  const maxStores = limitResponse?.data?.maxStores ?? null;
+  const activeStoreCount = limitResponse?.data?.activeStoreCount ?? 0;
+  const isAtStoreLimit = maxStores !== null && activeStoreCount >= maxStores;
   const handleSubmit = async (data: CreateStoreDto) => {
     try {
       const result = await fetch("api/stores", {
@@ -69,17 +80,30 @@ const StorePage = () => {
   };
   return (
     <PageLayout className="p-2 gap-2">
-      <PageHeader title={"Stores"} subtitle="Manage your company stores." />
+      <div className="flex items-center justify-between">
+        <PageHeader title={"Stores"} subtitle="Manage your company stores." />
+        {canManageStores && maxStores !== null && (
+          <span className="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600">
+            {activeStoreCount} / {maxStores} stores used
+          </span>
+        )}
+      </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table
           renderTopActions={
-            isAdmin && (
-              <div>
+            canManageStores && (
+              <div className="flex items-center gap-2">
+                {isAtStoreLimit && (
+                  <span className="text-xs font-medium text-rose-500">
+                    Store limit reached - ask your Super Admin to increase it.
+                  </span>
+                )}
                 <Button
                   icon={Plus}
                   label="Add Store"
                   className="font-semibold"
                   size="sm"
+                  disabled={isAtStoreLimit}
                   onClick={() => {
                     setShowAddStoreModal(true);
                   }}

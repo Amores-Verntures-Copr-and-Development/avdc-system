@@ -130,6 +130,7 @@ export const getSalesByStoreId = async ({
   search,
   includeSaleItems,
   customer,
+  customerType,
   from,
   to,
   keyFields,
@@ -143,6 +144,7 @@ export const getSalesByStoreId = async ({
   search?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  customerType?: "customer" | "walk-in";
   from?: string;
   to?: string;
   keyFields?: Partial<Sales>;
@@ -158,6 +160,7 @@ export const getSalesByStoreId = async ({
       search,
       includeSaleItems,
       customer,
+      customerType,
       from,
       to,
       offset,
@@ -170,6 +173,7 @@ export const getSalesByStoreId = async ({
       keyFields: { storeId: storeId },
       search,
       customer,
+      customerType,
       from,
       to,
       excludeStatus,
@@ -198,6 +202,7 @@ export const getSales = async ({
   to,
   includeSaleItems,
   customer,
+  customerType,
   limit,
   offset,
   customerId,
@@ -212,6 +217,7 @@ export const getSales = async ({
   to?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  customerType?: "customer" | "walk-in";
   limit?: number;
   offset?: number;
   customerId?: number;
@@ -228,6 +234,7 @@ export const getSales = async ({
       to,
       includeSaleItems,
       customer,
+      customerType,
       offset,
       limit,
       customerId,
@@ -243,6 +250,7 @@ export const getSales = async ({
       to,
       storeId,
       customerId,
+      customerType,
       method,
     });
 
@@ -298,6 +306,7 @@ export const getTotalSalesDetails = async ({
   storeId,
   search,
   customer,
+  customerType,
   from,
   to,
   store,
@@ -305,6 +314,7 @@ export const getTotalSalesDetails = async ({
   storeId?: number;
   search?: string;
   customer?: boolean;
+  customerType?: "customer" | "walk-in";
   from?: string;
   to?: string;
   store?: string;
@@ -315,6 +325,7 @@ export const getTotalSalesDetails = async ({
       from,
       to,
       store,
+      customerType,
     });
     return {
       success: true,
@@ -376,6 +387,57 @@ export const getSalesByProductVariant = async ({
     return {
       success: false,
       message: "Failed to fetch sales by product variant!",
+      error: e,
+    };
+  }
+};
+
+export const getSalesTransactionsByProductVariant = async ({
+  prodVarId,
+  storeId,
+  storeName,
+  from,
+  to,
+  limit,
+  offset,
+}: {
+  prodVarId: number;
+  storeId?: number;
+  storeName?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  try {
+    const data = await getSalesServices.getSalesTransactionsByProductVariant({
+      prodVarId,
+      storeId,
+      storeName,
+      from,
+      to,
+      limit,
+      offset,
+    });
+    const count =
+      await getSalesServices.getSalesTransactionsByProductVariantCount({
+        prodVarId,
+        storeId,
+        storeName,
+        from,
+        to,
+      });
+
+    return {
+      success: true,
+      message: "Sales transactions for product variant fetched successfully!",
+      data: data ?? null,
+      count: count[0]?.count ?? 0,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch sales transactions for product variant!",
       error: e,
     };
   }

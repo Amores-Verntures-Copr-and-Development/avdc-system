@@ -34,6 +34,18 @@ const columns: Column<DisplayInventoryMovementDto>[] = [
     },
   },
   { name: "Reference", key: "itemMovementReference" },
+  {
+    name: "Reason",
+    key: "itemMovementReason",
+    selector: (row) =>
+      row.itemMovementReason ? (
+        <span className="px-2 py-1 rounded-lg font-semibold bg-gray-100 text-gray-600 text-[10px]">
+          {row.itemMovementReason.replace("_", " ")}
+        </span>
+      ) : (
+        ""
+      ),
+  },
   { name: "Quantity", key: "itemMovementQuantity" },
   {
     name: "Created At",

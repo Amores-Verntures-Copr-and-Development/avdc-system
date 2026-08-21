@@ -1,4 +1,6 @@
 import { StoreDashboardController } from "@/controllers/DashboardController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -16,6 +18,9 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store ID found!");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await StoreDashboardController(storeId);
 

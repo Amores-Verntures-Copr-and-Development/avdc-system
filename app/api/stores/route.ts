@@ -1,12 +1,24 @@
 import { CreateStoreDto } from "@/dtos/store.dto";
 import { createStore, getStore } from "@/controllers/StoreControllers";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { NextRequest, NextResponse } from "next/server";
+
+function errorStatus(err: any): number {
+  if (err?.message === "Unauthorized") return 401;
+  if (err?.message === "Store limit reached. Please ask your Super Admin to increase your maximum store limit.")
+    return 403;
+  if (err?.message?.startsWith("Only Owner or Admin can")) return 403;
+  return 500;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const data = (await request.json()) as CreateStoreDto;
+    const actingUser = getCurrentUser(request);
+    // companyId is always resolved server-side from the acting user, never
+    // trusted from the request body.
+    const body = (await request.json()) as Omit<CreateStoreDto, "companyId">;
 
-    const res = await createStore(data);
+    const res = await createStore(body, actingUser);
 
     if (!res.success) {
       // propagate the actual message if available
@@ -23,21 +35,22 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
   } catch (err: any) {
-    console.error("POST /api/auth/users error:", err);
+    console.error("POST /api/stores error:", err);
     return NextResponse.json(
       {
         success: false,
-        message: "Store add failed!",
+        message: err?.message || "Store add failed!",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: errorStatus(err) },
     );
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const res = await getStore({});
+    const actingUser = getCurrentUser(request);
+    const res = await getStore({ actingUser });
 
     if (!res.success) {
       // propagate the actual message if available

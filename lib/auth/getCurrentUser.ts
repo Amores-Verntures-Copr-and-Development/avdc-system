@@ -9,6 +9,7 @@ export interface AuthUser {
   userFullName: string;
   empPosition: number;
   storeId: number | null;
+  companyId: number | null;
 }
 
 export function getCurrentUser(req: NextRequest): AuthUser {

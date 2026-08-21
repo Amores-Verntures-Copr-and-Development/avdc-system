@@ -6,11 +6,13 @@ export interface StoreInterface {
   storeDescription?: string | null;
   storeLocation?: string | null;
   storeKioskEnabled?: boolean;
+  storeKioskBannerImage?: string | null;
   storeOrderEnabled?: boolean;
   storeCreatedAt: string;
   storeUpdatedAt: string;
   storeDeletedAt?: string | null;
   storeCreatedBy: number; // userId
+  companyId: number | null;
 }
 
 export interface StoreEmployee {

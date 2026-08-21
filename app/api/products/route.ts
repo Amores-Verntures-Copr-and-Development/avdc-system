@@ -31,8 +31,23 @@ export async function GET(_request: Request) {
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
     const store = searchParams.get("store") || "";
+    const category = searchParams.get("category") || "";
+    const unit = searchParams.get("unit") || "";
+    const barcode = searchParams.get("barcode") || "";
+    const limit = searchParams.get("limit") || "";
+    const page = searchParams.get("page") || "";
+    const limitNumber = Number(limit) || 100;
+    const pageNumber = Number(page) || 1;
 
-    const res = await getProduct({ search, storeName: store });
+    const res = await getProduct({
+      search,
+      storeName: store,
+      category,
+      unit,
+      barcode,
+      limit: limitNumber,
+      offset: limitNumber * (pageNumber - 1),
+    });
 
     if (!res.success) {
       console.log(res.message);
@@ -44,6 +59,7 @@ export async function GET(_request: Request) {
         success: true,
         message: res.message,
         data: res.data, // could sanitize before returning
+        count: res.count,
       },
       { status: 201 },
     );

@@ -4,6 +4,8 @@ import {
   getStoreEmployeeDetailsByFields,
 } from "@/controllers/StoreControllers";
 import { createStoreEmployees } from "@/services/store/store-employee/create-store-employee";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -12,6 +14,9 @@ export async function GET(
 ) {
   try {
     const { storeId } = await params;
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const res = await getStoreEmployeeDetailsByFields({
       keyFields: { storeId: Number(storeId) },
@@ -36,6 +41,10 @@ export async function POST(
 ) {
   try {
     const { storeId } = await params;
+
+    const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, Number(storeId));
+
     const body = await request.json();
     const res = await getStoreEmployeeDetailsByFields({
       keyFields: {

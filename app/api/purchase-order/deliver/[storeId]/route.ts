@@ -1,9 +1,11 @@
 import { deliverItemToStore } from "@/controllers/PurchaseOrderController";
 import { DeliverItemsToStore } from "@/dtos/purchase.dto";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -12,6 +14,10 @@ export async function PUT(
     if (!storeId) {
       throw new Error("No store Id found!");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as DeliverItemsToStore;
     const res = await deliverItemToStore(data);
 

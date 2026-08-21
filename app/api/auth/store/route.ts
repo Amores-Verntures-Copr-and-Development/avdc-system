@@ -1,10 +1,8 @@
 // app/api/auth/update-token/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { generateTokens } from "@/utils/jwt";
-import {
-  getStore,
-  getStoresByEmployeeByUserId,
-} from "@/controllers/StoreControllers";
+import { getStoresByEmployeeByUserId } from "@/controllers/StoreControllers";
+import { selectStoreCompanyId } from "@/models/storeModels";
 import jwt from "jsonwebtoken";
 export async function PUT(req: NextRequest) {
   try {
@@ -27,6 +25,7 @@ export async function PUT(req: NextRequest) {
       userFname: string;
       empPosition: number;
       storeId: number | null;
+      companyId: number | null;
     };
     if (!decoded) {
       return NextResponse.json(
@@ -46,27 +45,39 @@ export async function PUT(req: NextRequest) {
     }
 
     // 3b. Verify the caller is actually allowed to switch to this store -
-    // owner/superadmin manage every store; anyone else must have an
-    // employee assignment for it. Without this check, any authenticated
-    // user (including "staff") could mint themselves a valid cookie
-    // claiming any storeId, regardless of what they're actually assigned to.
-    const isStoreUnrestricted =
-      decoded.userRole === "superadmin" || decoded.userRole === "owner";
+    // owner/admin manage every store *in their own company*; superadmin
+    // manages every store platform-wide; anyone else must have an employee
+    // assignment for it. Without this check, any authenticated user
+    // (including "staff", or an owner/admin from a different client
+    // company) could mint themselves a valid cookie claiming any storeId,
+    // regardless of what they're actually assigned to or which company it
+    // belongs to.
+    const storeCompanyId = await selectStoreCompanyId(storeId);
 
-    if (isStoreUnrestricted) {
-      const storeCheck = await getStore({ keyfields: { storeId } });
-      const storeExists =
-        storeCheck.success &&
-        Array.isArray(storeCheck.data) &&
-        storeCheck.data.length > 0;
+    if (storeCompanyId === null) {
+      return NextResponse.json(
+        { success: false, message: "Store not found" },
+        { status: 404 },
+      );
+    }
 
-      if (!storeExists) {
-        return NextResponse.json(
-          { success: false, message: "Store not found" },
-          { status: 404 },
-        );
-      }
-    } else {
+    if (
+      decoded.userRole !== "superadmin" &&
+      storeCompanyId !== decoded.companyId
+    ) {
+      return NextResponse.json(
+        { success: false, message: "You do not have access to this store" },
+        { status: 403 },
+      );
+    }
+
+    const isCompanyUnrestricted =
+      decoded.userRole === "superadmin" ||
+      decoded.userRole === "owner" ||
+      (decoded as unknown as { empPosition?: string }).empPosition ===
+        "admin";
+
+    if (!isCompanyUnrestricted) {
       const membership = await getStoresByEmployeeByUserId(decoded.userId);
       const allowedStoreIds = Array.isArray(membership.data)
         ? membership.data.map((s: any) => s.storeId)
@@ -89,6 +100,7 @@ export async function PUT(req: NextRequest) {
         decoded.userRole,
         decoded.empPosition,
         storeId, // Updated storeId!
+        decoded.companyId,
       );
 
     // 5. Update user in database with new storeId (optional)

@@ -35,9 +35,33 @@ function assertIsAdminOrOwner(actingUser: AuthUser, action: string) {
   }
 }
 
-export const createUser = async (data: CreateUserDto) => {
+export const createUser = async (
+  data: CreateUserDto,
+  actingUser: AuthUser,
+) => {
   try {
-    const result = await handleCreateUser(data);
+    assertIsAdminOrOwner(actingUser, "create a user");
+
+    // superadmin is the one platform-wide role - only an existing superadmin
+    // may mint another one. Without this, an owner/admin (who otherwise
+    // just needs to be allowed to create users at all) could self-escalate
+    // by setting userRole: "superadmin" on the account they're creating.
+    if (data.userRole === "superadmin" && actingUser.userRole !== "superadmin") {
+      throw new Error("Only Super Admin can create a Super Admin account");
+    }
+
+    // companyId is always resolved server-side from the acting user, never
+    // trusted from the request body - otherwise any caller could plant a
+    // user (including an "owner") inside a company they don't belong to.
+    const scopedData: CreateUserDto = {
+      ...data,
+      companyId:
+        actingUser.userRole === "superadmin"
+          ? data.companyId
+          : actingUser.companyId ?? undefined,
+    };
+
+    const result = await handleCreateUser(scopedData);
 
     return {
       success: true,
@@ -47,15 +71,27 @@ export const createUser = async (data: CreateUserDto) => {
   } catch (e) {
     return {
       success: false,
-      message: "Failed to create user!",
+      message: e instanceof Error ? e.message : "Failed to create user!",
       error: e,
     };
   }
 };
 
-export const getUsers = async ({ search }: { search?: string }) => {
+export const getUsers = async ({
+  search,
+  actingUser,
+}: {
+  search?: string;
+  actingUser: AuthUser;
+}) => {
   try {
-    const data = await selectUsers({ search });
+    const data = await selectUsers({
+      search,
+      companyId:
+        actingUser.userRole === "superadmin"
+          ? undefined
+          : actingUser.companyId,
+    });
     return {
       success: true,
       message: "Users fetched successfully!",

@@ -1,5 +1,7 @@
 import { updateProductVariantController } from "@/controllers/ProductController";
 import { NextCloudServices } from "@/services/next-cloud/next-cloud";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -24,6 +26,10 @@ export async function POST(
     if (!prodVarId) {
       throw new Error("No product variant ID found!");
     }
+
+    const actingUser = getCurrentUser(req);
+    await assertStoreAccess(actingUser, Number(storeId));
+
     const formData = await req.formData();
     const file = formData.getAll("image") as File[];
 

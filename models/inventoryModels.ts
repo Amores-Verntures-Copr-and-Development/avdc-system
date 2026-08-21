@@ -630,9 +630,10 @@ export const insertInventoryMovement = async ({
       itemMovementReference,
       itemMovementQuantity,
       itemMovementRemarks,
+      itemMovementReason,
       itemMovementCreatedAt
     )
-    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))").join(", ")}
+    VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))").join(", ")}
   `;
   // itemMovementCreatedAt defaults to CURRENT_TIMESTAMP when not passed
   // (adjustments, PO/RO receiving, refunds, etc. all happen "now") - sales
@@ -646,6 +647,7 @@ export const insertInventoryMovement = async ({
     item.itemMovementReference,
     item.itemMovementQuantity,
     item.itemMovementRemarks || null,
+    item.itemMovementReason || null,
     item.itemMovementCreatedAt || null,
   ]);
   const [results] = await pool.execute(sql, values);
@@ -670,7 +672,7 @@ export const selectInventoryMovementItems = async ({
 }) => {
   const pool = await getDBConnection();
   let sql = `SELECT iim.invItemMovementId,iim.inventoryId,iim.inventoryItemId,iim.itemMovementType,iim.itemMovementReferenceId,iim.itemMovementReference,
-  iim.itemMovementQuantity,iim.itemMovementRemarks,iim.itemMovementCreatedAt,i.itemId,i.itemName,i.itemUnit,i.itemPrice,c.categoryName,c.categoryType
+  iim.itemMovementQuantity,iim.itemMovementRemarks,iim.itemMovementReason,iim.itemMovementCreatedAt,i.itemId,i.itemName,i.itemUnit,i.itemPrice,c.categoryName,c.categoryType
   FROM InventoryItemMovements iim
   LEFT JOIN InventoryItems ii ON ii.inventoryItemId = iim.inventoryItemId
   LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId AND ii.inventoryItemReferenceType = "item"

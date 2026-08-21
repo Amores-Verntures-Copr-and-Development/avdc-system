@@ -1,11 +1,19 @@
 import {
   selectPaymentMethodByNameAndStore,
   selectPaymentMethods,
+  selectUniquePaymentMethodNames,
 } from "@/models/paymentMethod";
 import { PaymentMethods } from "@/types/payment-methods";
 import { PoolConnection } from "mysql2/promise";
 
 export const getPaymentMethodServices = {
+  findUniquePaymentMethodNames: async () => {
+    try {
+      return await selectUniquePaymentMethodNames({});
+    } catch (e) {
+      throw e;
+    }
+  },
   findPaymentMethodByStoreId: async ({
     number,
     isOnline,

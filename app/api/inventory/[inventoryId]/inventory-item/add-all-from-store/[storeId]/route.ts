@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { addAllItemFromStoreToInventoryController } from "@/controllers/InventoryController";
 export async function POST(
   req: NextRequest,
@@ -16,6 +17,8 @@ export async function POST(
     if (!storeId) {
       throw new Error("No store ID found!");
     }
+
+    await assertStoreAccess(user, Number(storeId));
 
     const res = await addAllItemFromStoreToInventoryController({
       userId: user.userId,

@@ -3,15 +3,20 @@ import {
   addItemToStoreInventory,
   getInventory,
 } from "@/controllers/InventoryController";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await getInventory({
       controller: "store",
@@ -42,7 +47,7 @@ export async function GET(
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -57,6 +62,10 @@ export async function POST(
         { status: 500 },
       );
     }
+
+    const actingUser = getCurrentUser(request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await request.json()) as AddItemToStoreDto;
 
     const res = await addItemToStoreInventory(data);

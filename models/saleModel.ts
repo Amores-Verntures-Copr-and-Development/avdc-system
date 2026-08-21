@@ -8,6 +8,7 @@ import {
 } from "@/dtos/sales.dto";
 import { getDBConnection } from "@/lib/db";
 import { SaleItems, SalePayments, Sales } from "@/types/sales";
+import { buildDailyTrend, buildHourlyTrend, growthPct } from "@/utils/trendStats";
 import {
   Connection,
   PoolConnection,
@@ -24,6 +25,7 @@ export const selectSales = async ({
   to,
   includeSaleItems,
   customer,
+  customerType,
   limit,
   offset,
   customerId,
@@ -40,6 +42,10 @@ export const selectSales = async ({
   to?: string;
   includeSaleItems?: boolean;
   customer?: boolean;
+  // Sales list "Customer Type" filter - "customer" / "walk-in". Distinct
+  // from the `customer` flag above, which is a one-way switch used only by
+  // the Customer sales report.
+  customerType?: "customer" | "walk-in";
   limit?: number;
   offset?: number;
   customerId?: number;
@@ -215,6 +221,11 @@ WHERE 1=1`;
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
   }
+  if (customerType === "customer") {
+    sql += ` AND s.customerId IS NOT NULL`;
+  } else if (customerType === "walk-in") {
+    sql += ` AND s.customerId IS NULL`;
+  }
   if (excludeStatus) {
     sql += ` AND s.salesStatus != ?`;
     params.push(excludeStatus);
@@ -254,6 +265,7 @@ export const countSales = async ({
   to,
   customerId,
   customer,
+  customerType,
   storeId,
   method,
   excludeStatus,
@@ -265,6 +277,7 @@ export const countSales = async ({
   from?: string;
   to?: string;
   customer?: boolean;
+  customerType?: "customer" | "walk-in";
   customerId?: number;
   storeId?: number;
   method?: string;
@@ -303,6 +316,11 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
   }
   if (customer) {
     sql += ` AND s.customerId IS NOT NULL`;
+  }
+  if (customerType === "customer") {
+    sql += ` AND s.customerId IS NOT NULL`;
+  } else if (customerType === "walk-in") {
+    sql += ` AND s.customerId IS NULL`;
   }
   if (customerId) {
     sql += ` AND s.customerId = ? `;
@@ -781,12 +799,14 @@ export const selectSalesTotalDetails = async ({
   store,
   from,
   to,
+  customerType,
 }: {
   storeId?: number;
   storeIds?: number[];
   store?: string;
   from?: string;
   to?: string;
+  customerType?: "customer" | "walk-in";
 }) => {
   const pool = await getDBConnection();
 
@@ -872,6 +892,22 @@ export const selectSalesTotalDetails = async ({
     totalCustomeparams.push(`%${store}%`);
   }
 
+  if (customerType === "customer") {
+    totalSaleConditions.push("s.customerId IS NOT NULL");
+    totalSalePaymentMethodConditions.push("s.customerId IS NOT NULL");
+    todaySalePaymentMethodConditions.push("s.customerId IS NOT NULL");
+    totalCountSalesconditions.push("s.customerId IS NOT NULL");
+    todaySalesConditions.push("s.customerId IS NOT NULL");
+    totalCustomerConditions.push("s.customerId IS NOT NULL");
+  } else if (customerType === "walk-in") {
+    totalSaleConditions.push("s.customerId IS NULL");
+    totalSalePaymentMethodConditions.push("s.customerId IS NULL");
+    todaySalePaymentMethodConditions.push("s.customerId IS NULL");
+    totalCountSalesconditions.push("s.customerId IS NULL");
+    todaySalesConditions.push("s.customerId IS NULL");
+    totalCustomerConditions.push("s.customerId IS NULL");
+  }
+
   if (from && to) {
     totalSaleConditions.push(
       "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
@@ -883,15 +919,9 @@ export const selectSalesTotalDetails = async ({
     );
     totalSalePaymentMethodparams.push(from, to);
 
-    totalCountSalesconditions.push(
-      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
-    );
-    totalCountSalesparams.push(from, to);
-
-    totalCustomerConditions.push(
-      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
-    );
-    totalCustomeparams.push(from, to);
+    // totalCountSales and totalCustomer intentionally stay unfiltered by
+    // from/to - they're displayed as stable "all time" KPIs (with their own
+    // trend/growth stats below) independent of the table's date filter.
   }
 
   const totalSalesWhereClause =
@@ -1026,6 +1056,93 @@ LEFT JOIN (
     ${totalCustomerWhereClause};
   `;
 
+  // Store/customerType scope shared by the trend + month-over-month growth
+  // stats below (kept unfiltered by from/to on purpose - see totalCountSales).
+  const baseFilterClause =
+    totalCountSalesconditions.length > 0
+      ? `AND ${totalCountSalesconditions.join(" AND ")}`
+      : "";
+  const baseFilterParams = totalCountSalesparams;
+
+  // 5️⃣ Orders trend (daily count, last 14 days)
+  // period is forced to a 'YYYY-MM-DD' string (DATE_FORMAT, not DATE) so it
+  // matches the JS-generated keys below - mysql2 returns DATE columns as JS
+  // Date objects, which would silently fail to match a string key.
+  const ordersTrendSql = `
+    SELECT
+      DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m-%d') AS period,
+      COUNT(*) AS value
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    WHERE DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'))
+      >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+    ${baseFilterClause}
+    GROUP BY period
+    ORDER BY period ASC;
+  `;
+
+  // 6️⃣ Customers trend (unique customers per day, last 14 days)
+  const customersTrendSql = `
+    SELECT
+      DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m-%d') AS period,
+      COUNT(DISTINCT s.customerId) AS value
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    WHERE DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'))
+      >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
+      AND s.customerId IS NOT NULL
+    ${baseFilterClause}
+    GROUP BY period
+    ORDER BY period ASC;
+  `;
+
+  // 7️⃣ Today's sales trend (hourly)
+  const todaySalesTrendSql = `
+    SELECT
+      HOUR(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) AS period,
+      COALESCE(
+        SUM(s.salesTotalAmount) - COALESCE(SUM(sr.totalRefunds), 0),
+        0
+      ) AS value
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    LEFT JOIN (
+      SELECT salesId, SUM(salesRefAmount) AS totalRefunds
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) sr ON sr.salesId = s.salesId
+    WHERE DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) = CURDATE()
+    ${baseFilterClause}
+    GROUP BY period
+    ORDER BY period ASC;
+  `;
+
+  // 8️⃣ Orders growth (this calendar month vs last calendar month)
+  const ordersGrowthSql = `
+    SELECT
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE(), '%Y-%m') THEN 1 ELSE 0 END) AS thisMonthCount,
+      SUM(CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m') THEN 1 ELSE 0 END) AS lastMonthCount
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    WHERE 1=1
+    ${baseFilterClause};
+  `;
+
+  // 9️⃣ Customers growth (this calendar month vs last calendar month)
+  const customersGrowthSql = `
+    SELECT
+      COUNT(DISTINCT CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE(), '%Y-%m') THEN s.customerId END) AS thisMonthCustomers,
+      COUNT(DISTINCT CASE WHEN DATE_FORMAT(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'), '%Y-%m')
+        = DATE_FORMAT(CURDATE() - INTERVAL 1 MONTH, '%Y-%m') THEN s.customerId END) AS lastMonthCustomers
+    FROM Sales s
+    LEFT JOIN Stores st ON s.storeId = st.storeId
+    WHERE s.customerId IS NOT NULL
+    ${baseFilterClause};
+  `;
+
   // Execute all queries
   const [totalSalesRows]: any = await pool.query(
     totalSalesSql,
@@ -1051,6 +1168,26 @@ LEFT JOIN (
     totalCustomerSql,
     totalCustomeparams,
   );
+  const [ordersTrendRows]: any = await pool.query(
+    ordersTrendSql,
+    baseFilterParams,
+  );
+  const [customersTrendRows]: any = await pool.query(
+    customersTrendSql,
+    baseFilterParams,
+  );
+  const [todaySalesTrendRows]: any = await pool.query(
+    todaySalesTrendSql,
+    baseFilterParams,
+  );
+  const [ordersGrowthRows]: any = await pool.query(
+    ordersGrowthSql,
+    baseFilterParams,
+  );
+  const [customersGrowthRows]: any = await pool.query(
+    customersGrowthSql,
+    baseFilterParams,
+  );
 
   return [
     {
@@ -1060,6 +1197,17 @@ LEFT JOIN (
       todaySales: todaySalesRows[0].todaySales,
       totalCustomer: totalCustomerRows[0].totalCustomer,
       todaysSalesPaymentMethods: todaysSalesPaymentMethodRows,
+      ordersTrend: buildDailyTrend(ordersTrendRows, 14),
+      customersTrend: buildDailyTrend(customersTrendRows, 14),
+      todaySalesTrend: buildHourlyTrend(todaySalesTrendRows),
+      ordersGrowthPct: growthPct(
+        Number(ordersGrowthRows[0]?.thisMonthCount ?? 0),
+        Number(ordersGrowthRows[0]?.lastMonthCount ?? 0),
+      ),
+      customersGrowthPct: growthPct(
+        Number(customersGrowthRows[0]?.thisMonthCustomers ?? 0),
+        Number(customersGrowthRows[0]?.lastMonthCustomers ?? 0),
+      ),
     },
   ];
 };
@@ -1317,6 +1465,138 @@ export const countSalesByProductVariant = async ({
 
   sql += ` GROUP BY pv.prodVarId
     ) t`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as { count: number }[];
+};
+
+// Backs the "By Product Variant" tab's drill-down modal - one row per sale
+// that included the given variant, so a Qty Sold/Total Sales aggregate can
+// be traced back to the individual transactions it's made up of.
+export const selectSalesTransactionsByProductVariant = async ({
+  prodVarId,
+  storeId,
+  storeName,
+  from,
+  to,
+  limit,
+  offset,
+}: {
+  prodVarId: number;
+  storeId?: number;
+  storeName?: string;
+  from?: string;
+  to?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [prodVarId];
+
+  let sql = `
+    SELECT
+      s.salesId,
+      s.salesNo,
+      s.salesCreatedAt,
+      s.salesStatus,
+      s.customerId,
+      c.customerName,
+      st.storeName,
+      (si.salesItemQuantity - COALESCE(sir.refundedQty, 0)) AS quantity,
+      si.salesItemPrice,
+      (si.salesItemSubtotal - COALESCE(sir.refundedAmount, 0)) AS subtotal,
+      (
+        SELECT JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'payMetName', pm.payMetName,
+            'salesPaymentAmount', sp.salesPaymentAmount
+          )
+        )
+        FROM SalesPayments sp
+        LEFT JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
+        WHERE sp.salesId = s.salesId
+      ) AS paymentMethods
+    FROM SalesItems si
+    INNER JOIN Sales s ON s.salesId = si.salesId
+    LEFT JOIN Stores st ON st.storeId = s.storeId
+    LEFT JOIN Customers c ON c.customerId = s.customerId
+    LEFT JOIN (
+      SELECT
+        salesItemId,
+        SUM(salesRefItemQty) AS refundedQty,
+        SUM(salesRefItemQty * salesRefItemPrice) AS refundedAmount
+      FROM SalesItemRefunds
+      GROUP BY salesItemId
+    ) sir ON sir.salesItemId = si.salesItemId
+    WHERE si.prodVarId = ?
+  `;
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  sql += ` ORDER BY s.salesCreatedAt DESC`;
+
+  if (limit !== undefined) {
+    sql += ` LIMIT ${limit}`;
+  }
+  if (offset !== undefined) {
+    sql += ` OFFSET ${offset}`;
+  }
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
+};
+
+export const countSalesTransactionsByProductVariant = async ({
+  prodVarId,
+  storeId,
+  storeName,
+  from,
+  to,
+}: {
+  prodVarId: number;
+  storeId?: number;
+  storeName?: string;
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [prodVarId];
+
+  let sql = `
+    SELECT COUNT(*) AS count
+    FROM SalesItems si
+    INNER JOIN Sales s ON s.salesId = si.salesId
+    LEFT JOIN Stores st ON st.storeId = s.storeId
+    WHERE si.prodVarId = ?
+  `;
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as { count: number }[];

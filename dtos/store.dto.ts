@@ -3,7 +3,8 @@ import { StoreEmployee, StoreInterface } from "@/types/stores";
 export type CreateStoreDto = Pick<
   StoreInterface,
   "storeName" | "storeLocation" | "storeDescription" | "storeCreatedBy"
->;
+> &
+  Partial<Pick<StoreInterface, "companyId">>;
 
 export type CreateStoreEmployeeDto = Pick<
   StoreEmployee,
@@ -11,5 +12,8 @@ export type CreateStoreEmployeeDto = Pick<
 >;
 
 export type UpdateStoreFeaturesDto = Partial<
-  Pick<StoreInterface, "storeKioskEnabled" | "storeOrderEnabled">
+  Pick<
+    StoreInterface,
+    "storeKioskEnabled" | "storeOrderEnabled" | "storeKioskBannerImage"
+  >
 >;

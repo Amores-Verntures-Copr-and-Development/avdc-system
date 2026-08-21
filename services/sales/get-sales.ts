@@ -1,11 +1,13 @@
 import {
   countSales,
   countSalesByProductVariant,
+  countSalesTransactionsByProductVariant,
   selectDailyStoreSales,
   selectSales,
   selectSalesByProductVariant,
   selectSalesByTrend,
   selectSalesTotalDetails,
+  selectSalesTransactionsByProductVariant,
 } from "@/models/saleModel";
 import { Sales } from "@/types/sales";
 import { PoolConnection } from "mysql2/promise";
@@ -29,6 +31,7 @@ export const getSalesServices = {
     to,
     includeSaleItems,
     customer,
+    customerType,
     limit,
     offset,
     customerId,
@@ -45,6 +48,7 @@ export const getSalesServices = {
     to?: string;
     includeSaleItems?: boolean;
     customer?: boolean;
+    customerType?: "customer" | "walk-in";
     limit?: number;
     offset?: number;
     customerId?: number;
@@ -63,6 +67,7 @@ export const getSalesServices = {
         search,
         includeSaleItems,
         customer,
+        customerType,
         limit,
         offset,
         customerId,
@@ -85,6 +90,7 @@ export const getSalesServices = {
     to,
     customerId,
     customer,
+    customerType,
     storeId,
     method,
     excludeStatus,
@@ -97,6 +103,7 @@ export const getSalesServices = {
     to?: string;
     customerId?: number;
     customer?: boolean;
+    customerType?: "customer" | "walk-in";
     storeId?: number;
     method?: string;
     excludeStatus?: string;
@@ -110,6 +117,7 @@ export const getSalesServices = {
         to,
         search,
         customer,
+        customerType,
         customerId,
         storeId,
         method,
@@ -148,6 +156,7 @@ export const getSalesServices = {
     storeIds,
     search,
     customer,
+    customerType,
     from,
     to,
     store,
@@ -157,6 +166,7 @@ export const getSalesServices = {
     storeIds?: number[];
     search?: string;
     customer?: boolean;
+    customerType?: "customer" | "walk-in";
     from?: string;
     to?: string;
     store?: string;
@@ -169,6 +179,7 @@ export const getSalesServices = {
         from,
         to,
         store,
+        customerType,
       });
       return data;
     } catch (e) {
@@ -235,6 +246,56 @@ export const getSalesServices = {
       storeId,
       storeName,
       search,
+      from,
+      to,
+    });
+  },
+
+  getSalesTransactionsByProductVariant: async ({
+    prodVarId,
+    storeId,
+    storeName,
+    from,
+    to,
+    limit,
+    offset,
+  }: {
+    prodVarId: number;
+    storeId?: number;
+    storeName?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    return await selectSalesTransactionsByProductVariant({
+      prodVarId,
+      storeId,
+      storeName,
+      from,
+      to,
+      limit,
+      offset,
+    });
+  },
+
+  getSalesTransactionsByProductVariantCount: async ({
+    prodVarId,
+    storeId,
+    storeName,
+    from,
+    to,
+  }: {
+    prodVarId: number;
+    storeId?: number;
+    storeName?: string;
+    from?: string;
+    to?: string;
+  }) => {
+    return await countSalesTransactionsByProductVariant({
+      prodVarId,
+      storeId,
+      storeName,
       from,
       to,
     });

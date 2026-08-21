@@ -1,9 +1,11 @@
 import { createCustomer, getCustomer } from "@/controllers/CustomerController";
 import { CreateCustomerDto } from "@/dtos/customer.dto";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -12,6 +14,10 @@ export async function POST(
     if (!storeId) {
       throw new Error("No store found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as CreateCustomerDto[];
     const res = await createCustomer(data);
     if (!res.success) {
@@ -39,7 +45,7 @@ export async function POST(
 }
 
 export async function GET(
-  _request: Request,
+  _request: NextRequest,
   { params }: { params: Promise<{ storeId: string }> },
 ) {
   try {
@@ -48,6 +54,9 @@ export async function GET(
     if (!storeId) {
       throw new Error("No item ID found!");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, Number(storeId));
 
     const { searchParams } = new URL(_request.url);
     const search = searchParams.get("search") || "";
@@ -58,6 +67,7 @@ export async function GET(
     const rawOrder = searchParams.get("order");
     const order: "asc" | "desc" | undefined =
       rawOrder === "asc" || rawOrder === "desc" ? rawOrder : undefined;
+    const paymentMethods = searchParams.getAll("paymentMethod");
     const limitNumber = Number(limit) || 100;
     const pageNumber = Number(page) || 1;
     const res = await getCustomer({
@@ -68,6 +78,7 @@ export async function GET(
       type,
       sort,
       order,
+      paymentMethods,
     });
 
     if (!res.success) {

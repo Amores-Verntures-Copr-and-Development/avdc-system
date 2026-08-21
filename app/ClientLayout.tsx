@@ -107,7 +107,7 @@ const ClientLayout = ({ children }: { children: React.ReactNode }) => {
       />
       <div className="flex-1 min-h-0 min-w-0 flex flex-row">
         <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 contain-layout">
           <Header />
           <Suspense
             fallback={

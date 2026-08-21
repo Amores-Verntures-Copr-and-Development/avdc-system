@@ -7,18 +7,28 @@ import {
 import { get } from "http";
 
 export const getOwnerDashboardServices = {
-  getTotalMetrics: async ({storeId}:{storeId?:number}) => {
+  getTotalMetrics: async ({
+    storeId,
+    storeIds,
+  }: {
+    storeId?: number;
+    storeIds?: number[];
+  }) => {
     try {
-      const data = await selectOwnerDashboardStats({storeId});
+      const data = await selectOwnerDashboardStats({ storeId, storeIds });
       return data;
     } catch (e) {
       console.error("Error fetching owner dashboard metrics:", e);
       throw e;
     }
   },
-  getRecentStoreSales: async () => {
+  getRecentStoreSales: async ({
+    storeIds,
+  }: {
+    storeIds?: number[];
+  } = {}) => {
     try {
-      const data = await selectStoresRecentSales();
+      const data = await selectStoresRecentSales({ storeIds });
       return data;
     } catch (e) {
       console.error("Error fetching recent store sales:", e);
@@ -28,12 +38,18 @@ export const getOwnerDashboardServices = {
   getSalesChartData: async ({
     year,
     storeId,
+    storeIds,
   }: {
     year?: string;
     storeId?: number;
+    storeIds?: number[];
   }) => {
     try {
-      const monthlySales = await selectSalesChartData({ year, storeId });
+      const monthlySales = await selectSalesChartData({
+        year,
+        storeId,
+        storeIds,
+      });
 
       const allMonths = Array.from({ length: 12 }, (_, i) =>
         new Date(2000, i).toLocaleString("default", { month: "long" }),

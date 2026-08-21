@@ -23,6 +23,23 @@ export const createPaymentMethod = async (data: CreatePaymentMethodDto) => {
   }
 };
 
+export const getUniquePaymentMethodNames = async () => {
+  try {
+    const data = await getPaymentMethodServices.findUniquePaymentMethodNames();
+    return {
+      data,
+      success: true,
+      message: "Payment Method names fetched successfully!",
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch payment method names!",
+      error: e,
+    };
+  }
+};
+
 export const getPaymentMethodByStore = async (
   id: number,
   isOnline?: boolean,

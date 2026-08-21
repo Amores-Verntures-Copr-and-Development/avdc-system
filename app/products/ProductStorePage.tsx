@@ -3,7 +3,6 @@ import PageLayout from "@/components/shared/PageLayout";
 import {
   CreateProductCategoryDto,
   CreateProductDtos,
-  DisplaProductVariantsDtos,
   DisplayProductsDtos,
 } from "@/dtos/products.dto";
 import { UserAuth, useSession } from "@/hooks/useSession";
@@ -11,11 +10,10 @@ import { UserAuth, useSession } from "@/hooks/useSession";
 import { fetcher } from "@/utils/fetcher";
 import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
-import ProductCardDetails from "./components/ProductCardDetails";
+import StatCard from "@/components/shared/StatCard";
 import {
   ArrowLeftRight,
   Barcode,
-  Boxes,
   Eye,
   FolderKanban,
   Layers,
@@ -25,9 +23,10 @@ import {
   Pencil,
   PhilippinePeso,
   Plus,
+  ShoppingCart,
   Store,
   Trash,
-  Users,
+  Trophy,
 } from "lucide-react";
 import Button from "@/components/shared/Button";
 import Modal from "@/components/shared/Modal";
@@ -48,7 +47,6 @@ import ViewProductCategory from "./components/ViewProductCategory";
 import { ApiResponse } from "@/types/api";
 import { ProductCategories } from "@/types/products";
 import Popup from "@/components/shared/Popup";
-import ProductVariantTable from "./components/ProductVariantTable";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import UnlistedItems from "./components/UnlistedItems";
 import BarcodeScanner from "../pos/components/BarcodeScanner";
@@ -57,13 +55,63 @@ interface ProductStorePageProps {
   user?: UserAuth | null;
 }
 
+// A single variant is shown inline (name + price) since there's nothing to
+// disambiguate; multiple variants collapse into a count badge with a hover
+// preview instead of listing every price in the row.
+const VariantsCell = ({ row }: { row: DisplayProductsDtos }) => {
+  const variants = (row.productVariants || []).filter((v) => v !== null);
+
+  if (variants.length === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">
+        No variants
+      </span>
+    );
+  }
+
+  if (variants.length === 1) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-xs font-semibold text-gray-800">
+          {variants[0].prodVarName}
+        </span>
+        <span className="text-[11px] text-gray-500">
+          {formatPeso(variants[0].prodVarPrice)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="group relative inline-block">
+      <span className="inline-flex cursor-default items-center rounded-full bg-pink-50 px-2 py-1 text-[10px] font-semibold text-primary-1">
+        {variants.length} variants
+      </span>
+
+      <div className="invisible absolute left-0 top-full z-10 mt-1 w-48 rounded-xl border border-gray-100 bg-white p-1.5 opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100">
+        {variants.map((variant) => (
+          <div
+            key={variant.prodVarId}
+            className="flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-[11px] hover:bg-gray-50"
+          >
+            <span className="truncate text-gray-700">
+              {variant.prodVarName}
+            </span>
+            <span className="shrink-0 font-semibold text-gray-500">
+              {formatPeso(variant.prodVarPrice)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [showPopupComponent, setShowPopupComponent] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(true);
   const searchParams = useSearchParams();
-  const [productView, setProductView] = useState<
-    "product" | "product-variants"
-  >("product");
   const router = useRouter();
 
   const [showUnlistedItems, setShowUnlistedItems] = useState(false);
@@ -77,41 +125,23 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   const [showCategory, setShowCategory] = useState(false);
   const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+
+  // A single-variant product has nothing to disambiguate, so skip straight
+  // to that variant's detail page instead of an intermediate list of one.
+  const goToProduct = (row: DisplayProductsDtos) => {
+    const variants = (row.productVariants || []).filter((v) => v !== null);
+    if (variants.length === 1) {
+      router.push(`/products/${row.prodId}/${variants[0].prodVarId}`);
+      return;
+    }
+    setSelectedRow(row);
+    setShowProductVariantPage(true);
+  };
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
   const [showDeleteConfirmation, setShowDeleteComfirmation] =
     useState<DisplayProductsDtos | null>(null);
-  const prodVarUrl = hasStore
-    ? `/api/products/${storeId}/product-variants/`
-    : `/api/products/${storeId}/product-variants/`;
   const [filters, setFilters] = useState<Record<string, string[]>>({});
-  const prodVarApi = useMemo(() => {
-    const search = searchParams.get("search") || "";
-    const status = searchParams.get("status") || "";
-    const category = searchParams.get("category") || "";
-    const unit = searchParams.get("unit") || "";
-    const isAvailableOnline = searchParams.get("isAvailableOnline") || "";
-    const limit = searchParams.get("limit") || "";
-    const page = searchParams.get("page") || "1";
-    const store = searchParams.get("store");
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-
-    const params = new URLSearchParams();
-    if (search) params.append("search", search);
-    if (status) params.append("status", status);
-    if (category) params.append("category", category);
-    if (unit) params.append("unit", unit);
-    if (isAvailableOnline)
-      params.append("isAvailableOnline", isAvailableOnline);
-    if (limit) params.append("limit", limit);
-    if (store) params.append("store", store);
-    if (to) params.append("to", to);
-    if (from) params.append("from", from);
-    params.append("page", page);
-
-    return `${prodVarUrl}?${params.toString()}`;
-  }, [storeId, searchParams]);
 
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
@@ -142,6 +172,25 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     mutate,
     isLoading,
   } = useSWR<ApiResponse<DisplayProductsDtos[]>>(user ? apiUrl : null, fetcher);
+
+  // KPI cards (Total Products / Total Sold / Total Sales / Best Seller) are
+  // scoped to the whole store's catalog, independent of the table's own
+  // search/category/date filters - same pattern as the Sales page's cards.
+  const statsUrl = hasStore
+    ? `/api/products/${storeId}/details`
+    : `/api/products/details`;
+  const statsApiUrl = useMemo(() => {
+    const store = searchParams.get("store");
+    const params = new URLSearchParams();
+    if (store) params.append("store", store);
+    return `${statsUrl}?${params.toString()}`;
+  }, [statsUrl, searchParams]);
+  const { data: statsResponse } = useSWR<ApiResponse<any>>(
+    user ? statsApiUrl : null,
+    fetcher,
+  );
+  const stats = statsResponse?.data;
+
   const { stores } = useStores({ user, hasStore, isAdmin });
   const { data: reponse, mutate: mutateCategory } = useSWR<
     ApiResponse<ProductCategories[]>
@@ -152,14 +201,6 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
         value: store.storeName, // optional leading icon if you have one
       }))
     : [];
-  const {
-    data: prodVarResponse,
-    isLoading: isLoadingProdVar,
-    mutate: mutateProdVar,
-  } = useSWR<ApiResponse<DisplaProductVariantsDtos[]>>(
-    productView === "product-variants" ? prodVarApi : null,
-    fetcher,
-  );
   const columns: Column<DisplayProductsDtos>[] = [
     { key: "#", name: "#", selector: (_row, index) => index + 1 },
     { key: "prodName", name: "Product Name" },
@@ -172,43 +213,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     {
       name: "Variants",
       key: "productVariants",
-      selector: (row) => {
-        const variants = row.productVariants || [];
-        // Assuming your row has a suppliers array
-
-        return (
-          <div className="group relative">
-            <select
-              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-              disabled
-            >
-              <option value="">
-                {variants.filter((s) => s !== null).length > 0
-                  ? `Variants (${variants.filter((s) => s !== null).length})`
-                  : "No Variannts"}
-              </option>
-            </select>
-
-            {/* Show suppliers on hover */}
-            {variants.filter((s) => s !== null).length > 0 && (
-              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-                {variants
-                  .filter((variants) => variants !== null)
-                  .map((variants, index) => (
-                    <div
-                      key={index}
-                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                    >
-                      {`${variants.prodVarName} (${formatPeso(
-                        variants.prodVarPrice,
-                      )})`}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        );
-      },
+      selector: (row) => <VariantsCell row={row} />,
     },
   ];
   const adminColumn: Column<DisplayProductsDtos>[] = [
@@ -224,43 +229,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
     {
       name: "Variants",
       key: "productVariants",
-      selector: (row) => {
-        const variants = row.productVariants || [];
-        // Assuming your row has a suppliers array
-
-        return (
-          <div className="group relative">
-            <select
-              className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
-              disabled
-            >
-              <option value="">
-                {variants.filter((s) => s !== null).length > 0
-                  ? `Variants (${variants.filter((s) => s !== null).length})`
-                  : "No Variannts"}
-              </option>
-            </select>
-
-            {/* Show suppliers on hover */}
-            {variants.filter((s) => s !== null).length > 0 && (
-              <div className="absolute hidden group-hover:block z-10 top-full left-0 right-0 bg-white border border-gray-300 rounded shadow-lg max-h-32 overflow-y-auto">
-                {variants
-                  .filter((variants) => variants !== null)
-                  .map((variants, index) => (
-                    <div
-                      key={index}
-                      className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
-                    >
-                      {`${variants.prodVarName} (${formatPeso(
-                        variants.prodVarPrice,
-                      )})`}
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        );
-      },
+      selector: (row) => <VariantsCell row={row} />,
     },
   ];
   const handleAddCategory = async (data: CreateProductCategoryDto) => {
@@ -416,292 +385,275 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               title={"Products"}
               subtitle="Add, edit, and track products"
             />
-            <div className="bg-border flex gap-2 p-1  2xl:px-1.5 2xl:py-1.5 rounded-sm">
+            <div className="flex gap-2">
               <Button
-                label="Product"
+                label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
                 size="sm"
-                isRounded={false}
-                color={productView === "product" ? "primary" : "neutral"}
-                hasBorder
-                onClick={() => {
-                  setProductView("product");
-                }}
-              />
-              <Button
-                label="Product Variants"
-                size="sm"
-                color={
-                  productView === "product-variants" ? "primary" : "neutral"
-                }
-                isRounded={false}
-                hasBorder
-                onClick={() => {
-                  setProductView("product-variants");
-                }}
+                icon={Eye}
+                onClick={() => setShowBreakdown((prev) => !prev)}
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <ProductCardDetails
-              title={"Total Products"}
-              value={20}
-              icon={
-                <Package2 className="w-3 h-3 2xl:w-6 2xl:h-6 text-primary-1" />
-              }
-              iconBg="bg-pink-100"
-            />
-            <ProductCardDetails
-              title={"Total Stock"}
-              value={20}
-              icon={<Boxes className="w-3 h-3 2xl:w-6 2xl:h-6 text-blue-500" />}
-              iconBg="bg-blue-100"
-            />
-            <ProductCardDetails
-              title={"Total Sales"}
-              value={20}
-              icon={
-                <PhilippinePeso className="w-3 h-3 2xl:w-6 2xl:h-6 text-green-500" />
-              }
-              iconBg="bg-green-100"
-            />
-            <ProductCardDetails
-              title={"Total Customers"}
-              value={20}
-              icon={
-                <Users className="w-3 h-3 2xl:w-6 2xl:h-6 text-yellow-500" />
-              }
-              iconBg="bg-yellow-100"
-            />
-          </div>
+          {showBreakdown && (
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <StatCard
+                icon={Package2}
+                title="Total Products"
+                value={stats?.totalProducts ?? 0}
+                bgColor="bg-pink-100"
+                textColor="text-primary-1"
+                subtitle="All time products"
+                trend={stats?.productsTrend}
+                trendColor="#e63389"
+                growthPct={stats?.productsGrowthPct}
+                growthLabel="new products vs last month"
+              />
+              <StatCard
+                icon={ShoppingCart}
+                title="Total Sold"
+                value={stats?.totalSold ?? 0}
+                bgColor="bg-blue-100"
+                textColor="text-blue-500"
+                subtitle="Units sold"
+                trend={stats?.soldTrend}
+                trendColor="#3b82f6"
+                growthPct={stats?.soldGrowthPct}
+              />
+              <StatCard
+                icon={PhilippinePeso}
+                title="Total Sales"
+                value={formatPeso(stats?.totalSales ?? 0)}
+                bgColor="bg-green-100"
+                textColor="text-green-500"
+                subtitle="Product revenue"
+                trend={stats?.salesTrend}
+                trendColor="#16a34a"
+                growthPct={stats?.salesGrowthPct}
+              />
+              <StatCard
+                icon={Trophy}
+                title="Best Seller"
+                value={stats?.bestSeller?.prodName ?? "No sales yet"}
+                bgColor="bg-yellow-100"
+                textColor="text-yellow-500"
+                subtitle={
+                  stats?.bestSeller
+                    ? `${stats.bestSeller.totalSold} sold all time`
+                    : undefined
+                }
+                trend={stats?.bestSellerTrend}
+                trendColor="#f59e0b"
+              />
+            </div>
+          )}
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
-            {productView === "product" ? (
-              <Table
-                showFilter={true}
-                filterConfig={productConfig}
-                uniqueIdKey="prodId"
-                columns={hasStore ? columns : adminColumn}
-                data={itemResponse?.data ?? []}
-                showPagination
-                totalCount={itemResponse?.count}
-                maxHeight="h-full"
-                searchUrl="products"
-                loading={isLoading}
-                onSave={handleFilterSave}
-                onRowSelection={(row) => {
-                  setSelectedRow(row);
-                  setShowProductVariantPage(true);
-                }}
-                // filterConfig={[]}
-                showActions
-                renderActions={(row) => (
-                  <div className="flex justify-center gap-2">
-                    <IconButton
-                      onClick={function (): void {
-                        setSelectedRow(row);
-                        setShowProductVariantPage(true);
+            <Table
+              showFilter={true}
+              filterConfig={productConfig}
+              uniqueIdKey="prodId"
+              columns={hasStore ? columns : adminColumn}
+              data={itemResponse?.data ?? []}
+              showPagination
+              totalCount={itemResponse?.count}
+              maxHeight="h-full"
+              searchUrl="products"
+              loading={isLoading}
+              onSave={handleFilterSave}
+              onRowSelection={(row) => goToProduct(row)}
+              // filterConfig={[]}
+              showActions
+              renderActions={(row) => (
+                <div className="flex justify-center gap-2">
+                  <IconButton
+                    onClick={() => goToProduct(row)}
+                    label={"View"}
+                    bg={"gray"}
+                    icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setSelectedRow(row);
+                      console.log({ row });
+                      setShowEdit(true);
+                    }}
+                    label={"Edit"}
+                    bg={"green"}
+                    icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                  <IconButton
+                    onClick={() => {
+                      setShowDeleteComfirmation(row);
+                    }}
+                    label={"Delete"}
+                    bg={"red"}
+                    icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                  />
+                </div>
+              )}
+              renderTopActionButtons={[
+                {
+                  props: {
+                    label: "Scan Barcode",
+                    icon: Barcode,
+                    onClick: () => {
+                      setShowBarcode(true);
+                    },
+                    size: "sm",
+                    className: "font-semibold",
+                    color: "success",
+                  },
+                },
+                {
+                  props: {
+                    label: "View Category",
+                    icon: Eye,
+                    onClick: () => {
+                      setShowCategory(true);
+                    },
+                    size: "sm",
+                    className: "font-semibold",
+                    color: "outline",
+                  },
+                },
+                {
+                  props: {
+                    label: "Add Category",
+                    icon: FolderKanban,
+                    onClick: () => {
+                      setShowAddProductCat(true);
+                    },
+                    size: "sm",
+                    className: "font-semibold",
+                    color: "neutral",
+                  },
+                },
+                {
+                  props: {
+                    label: "Unlisted Items",
+                    icon: PackageSearch,
+                    onClick: () => {
+                      setShowUnlistedItems(true);
+                    },
+                    size: "sm",
+                    className: "font-semibold",
+                    color: "tertiary",
+                  },
+                },
+                {
+                  props: {
+                    label: "Add Product",
+                    icon: PackagePlus,
+                    onClick: () => {
+                      setShowAddProductModal(true);
+                    },
+                    size: "sm",
+                    className: "font-semibold",
+                  },
+                },
+              ]}
+              addContentLeftTitle={
+                !hasStore && (
+                  <div>
+                    <DynamicDropdown
+                      options={storeOptions}
+                      onChange={function (value: string | number): void {
+                        if (value) {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set("store", String(value));
+                          router.push(url.toString());
+                        } else {
+                          const url = new URL(window.location.href);
+                          url.searchParams.delete("store"); // remove 'store'
+                          router.push(url.toString());
+                        }
                       }}
-                      label={"View"}
-                      bg={"gray"}
-                      icon={<Eye className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
-                    <IconButton
-                      onClick={() => {
-                        setSelectedRow(row);
-                        console.log({ row });
-                        setShowEdit(true);
-                      }}
-                      label={"Edit"}
-                      bg={"green"}
-                      icon={<Pencil className="w-3 h-3 xl:w-4 xl:h-4" />}
-                    />
-                    <IconButton
-                      onClick={() => {
-                        setShowDeleteComfirmation(row);
-                      }}
-                      label={"Delete"}
-                      bg={"red"}
-                      icon={<Trash className="w-3 h-3 xl:w-4 xl:h-4" />}
+                      placeholder={`Store (${storeOptions.length})`}
+                      icon={<Store className="w-4 h-4" />}
+                      size="sm"
                     />
                   </div>
-                )}
-                renderTopActionButtons={[
-                  {
-                    props: {
-                      label: "Scan Barcode",
-                      icon: Barcode,
-                      onClick: () => {
-                        setShowBarcode(true);
-                      },
-                      size: "sm",
-                      className: "font-semibold",
-                      color: "success",
-                    },
-                  },
-                  {
-                    props: {
-                      label: "View Category",
-                      icon: Eye,
-                      onClick: () => {
-                        setShowCategory(true);
-                      },
-                      size: "sm",
-                      className: "font-semibold",
-                      color: "outline",
-                    },
-                  },
-                  {
-                    props: {
-                      label: "Add Category",
-                      icon: FolderKanban,
-                      onClick: () => {
-                        setShowAddProductCat(true);
-                      },
-                      size: "sm",
-                      className: "font-semibold",
-                      color: "neutral",
-                    },
-                  },
-                  {
-                    props: {
-                      label: "Unlisted Items",
-                      icon: PackageSearch,
-                      onClick: () => {
-                        setShowUnlistedItems(true);
-                      },
-                      size: "sm",
-                      className: "font-semibold",
-                      color: "tertiary",
-                    },
-                  },
-                  {
-                    props: {
-                      label: "Add Product",
-                      icon: PackagePlus,
-                      onClick: () => {
-                        setShowAddProductModal(true);
-                      },
-                      size: "sm",
-                      className: "font-semibold",
-                    },
-                  },
-                ]}
-                addContentLeftTitle={
-                  !hasStore && (
-                    <div>
-                      <DynamicDropdown
-                        options={storeOptions}
-                        onChange={function (value: string | number): void {
-                          if (value) {
-                            const url = new URL(window.location.href);
-                            url.searchParams.set("store", String(value));
-                            router.push(url.toString());
-                          } else {
-                            const url = new URL(window.location.href);
-                            url.searchParams.delete("store"); // remove 'store'
-                            router.push(url.toString());
-                          }
+                )
+              }
+              renderMobileCard={(row, index) => {
+                const variantCount = (row.productVariants || []).filter(
+                  (v) => v !== null,
+                ).length;
+
+                return (
+                  <div
+                    onClick={() => goToProduct(row)}
+                    className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between">
+                      <span className="rounded-full bg-pink-50 px-2 py-1 text-[11px] font-semibold text-primary-1">
+                        #{index + 1}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
+                        <Package2 className="h-5 w-5 text-gray-300" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="2xl:truncate text-[11px] 2xl:text-sm font-semibold text-gray-900">
+                          {row.prodName}
+                        </p>
+                        <p className="2xl:truncate text-[10px] 2xl:text-xs text-gray-500">
+                          {row.prodCatName || "No Category"}
+                          {!hasStore && row.storeName
+                            ? ` · ${row.storeName}`
+                            : ""}
+                        </p>
+                        <div className="mt-1 flex items-center gap-1.5">
+                          <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-semibold text-primary-1">
+                            {variantCount} variant
+                            {variantCount !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-100 pt-2 text-[11px] text-gray-400">
+                      Created {formatDateToWords(row.prodCreatedAt)}
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 border-t border-gray-100 pt-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          goToProduct(row);
                         }}
-                        placeholder={`Store (${storeOptions.length})`}
-                        icon={<Store className="w-4 h-4" />}
-                        size="sm"
-                      />
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRow(row);
+                          setShowEdit(true);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-green-200 text-green-600 hover:bg-green-50"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDeleteComfirmation(row);
+                        }}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </button>
                     </div>
-                  )
-                }
-                renderMobileCard={(row, index) => {
-                  const variantCount = (row.productVariants || []).filter(
-                    (v) => v !== null,
-                  ).length;
-
-                  return (
-                    <div
-                      onClick={() => {
-                        setSelectedRow(row);
-                        setShowProductVariantPage(true);
-                      }}
-                      className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
-                    >
-                      <div className="flex items-start justify-between">
-                        <span className="rounded-full bg-pink-50 px-2 py-1 text-[11px] font-semibold text-primary-1">
-                          #{index + 1}
-                        </span>
-                      </div>
-
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gray-100">
-                          <Package2 className="h-5 w-5 text-gray-300" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="2xl:truncate text-[11px] 2xl:text-sm font-semibold text-gray-900">
-                            {row.prodName}
-                          </p>
-                          <p className="2xl:truncate text-[10px] 2xl:text-xs text-gray-500">
-                            {row.prodCatName || "No Category"}
-                            {!hasStore && row.storeName
-                              ? ` · ${row.storeName}`
-                              : ""}
-                          </p>
-                          <div className="mt-1 flex items-center gap-1.5">
-                            <span className="rounded-full bg-pink-50 px-2 py-0.5 text-[10px] font-semibold text-primary-1">
-                              {variantCount} variant
-                              {variantCount !== 1 ? "s" : ""}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-gray-100 pt-2 text-[11px] text-gray-400">
-                        Created {formatDateToWords(row.prodCreatedAt)}
-                      </div>
-
-                      <div className="flex items-center justify-center gap-2 border-t border-gray-100 pt-2">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedRow(row);
-                            setShowProductVariantPage(true);
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedRow(row);
-                            setShowEdit(true);
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-green-200 text-green-600 hover:bg-green-50"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeleteComfirmation(row);
-                          }}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-red-200 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                }}
-              />
-            ) : (
-              <ProductVariantTable
-                storeId={storeId!}
-                mutate={mutateProdVar}
-                totalCount={prodVarResponse?.count ?? 0}
-                data={prodVarResponse?.data ?? []}
-                isLoading={isLoadingProdVar}
-                onRowSelection={(row) => {}}
-              />
-            )}
+                  </div>
+                );
+              }}
+            />
           </div>
         </>
       )}

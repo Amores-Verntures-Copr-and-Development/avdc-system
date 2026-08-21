@@ -61,6 +61,7 @@ export const selectCustomers = async ({
   to,
   sort,
   order,
+  paymentMethods,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -73,6 +74,7 @@ export const selectCustomers = async ({
   to?: string;
   sort?: string;
   order?: "asc" | "desc";
+  paymentMethods?: string[];
 }) => {
   const pool = connection ?? (await getDBConnection());
   const allowedSorts: Record<string, string> = {
@@ -190,6 +192,25 @@ export const selectCustomers = async ({
     params.push(store);
   }
 
+  // Filtered against the customer's full sales history via a correlated
+  // EXISTS (not a join on the already-aggregated `sa`) so this only
+  // narrows *which customers* show up - it must not drop the sales rows
+  // that feed totalSpent/lastVisit/firstVisit above, or a customer who
+  // also paid by other methods would show an incomplete total.
+  if (paymentMethods && paymentMethods.length > 0) {
+    sql += `
+      AND EXISTS (
+        SELECT 1
+        FROM Sales pmSales
+        JOIN SalesPayments pmPayments ON pmPayments.salesId = pmSales.salesId
+        JOIN PaymentMethods pmMethods ON pmMethods.payMetId = pmPayments.payMetId
+        WHERE pmSales.customerId = c.customerId
+          AND pmMethods.payMetName IN (${paymentMethods.map(() => "?").join(", ")})
+      )
+    `;
+    params.push(...paymentMethods);
+  }
+
   sql += `
     GROUP BY
       c.customerId,
@@ -230,6 +251,7 @@ export const selectCountCustomers = async ({
   connection,
   search,
   store,
+  paymentMethods,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -237,6 +259,7 @@ export const selectCountCustomers = async ({
   to?: string;
   search?: string;
   store?: string;
+  paymentMethods?: string[];
 }) => {
   const pool = connection ?? (await getDBConnection());
 
@@ -278,6 +301,20 @@ export const selectCountCustomers = async ({
     `;
 
     params.push(searchValue, searchValue, searchValue);
+  }
+
+  if (paymentMethods && paymentMethods.length > 0) {
+    sql += `
+      AND EXISTS (
+        SELECT 1
+        FROM Sales pmSales
+        JOIN SalesPayments pmPayments ON pmPayments.salesId = pmSales.salesId
+        JOIN PaymentMethods pmMethods ON pmMethods.payMetId = pmPayments.payMetId
+        WHERE pmSales.customerId = c.customerId
+          AND pmMethods.payMetName IN (${paymentMethods.map(() => "?").join(", ")})
+      )
+    `;
+    params.push(...paymentMethods);
   }
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);

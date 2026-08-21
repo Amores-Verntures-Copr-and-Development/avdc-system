@@ -8,8 +8,9 @@ import { SalesByProductVariant } from "@/types/sales";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
+import ProductVariantTransactionsModal from "./ProductVariantTransactionsModal";
 
 interface SalesByProductVariantTabProps {
   storeId: number | null;
@@ -28,11 +29,15 @@ const SalesByProductVariantTab = ({
   const isStoreScoped =
     user?.empPosition === "supervisor" || user?.empPosition === "staff";
 
+  const [selectedVariant, setSelectedVariant] =
+    useState<SalesByProductVariant | null>(null);
+
+  const store = searchParams.get("store") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
-    const store = searchParams.get("store") || "";
-    const from = searchParams.get("from") || "";
-    const to = searchParams.get("to") || "";
 
     const params = new URLSearchParams();
     if (isStoreScoped && storeId) params.append("storeId", String(storeId));
@@ -44,7 +49,7 @@ const SalesByProductVariantTab = ({
     params.append("page", String(page));
 
     return `/api/sales/by-product-variant?${params.toString()}`;
-  }, [storeId, isStoreScoped, searchParams, limit, page]);
+  }, [storeId, isStoreScoped, searchParams, limit, page, store, from, to]);
 
   const debouncedApiUrl = useDebounce(apiUrl, 600);
 
@@ -100,19 +105,32 @@ const SalesByProductVariantTab = ({
   ];
 
   return (
-    <Table
-      onDateRangeChange={handleDateRangeChange}
-      showDateRange
-      loading={isLoading}
-      searchUrl="/sales"
-      isRounded={false}
-      columns={columns}
-      data={response?.data ?? []}
-      maxHeight="h-full"
-      totalCount={response?.count}
-      showPagination
-      Datalabel="No sales recorded for this period"
-    />
+    <>
+      <Table
+        onDateRangeChange={handleDateRangeChange}
+        showDateRange
+        loading={isLoading}
+        searchUrl="/sales"
+        isRounded={false}
+        columns={columns}
+        data={response?.data ?? []}
+        maxHeight="h-full"
+        totalCount={response?.count}
+        showPagination
+        Datalabel="No sales recorded for this period"
+        onRowSelection={(row) => setSelectedVariant(row)}
+      />
+
+      <ProductVariantTransactionsModal
+        isOpen={selectedVariant !== null}
+        onClose={() => setSelectedVariant(null)}
+        variant={selectedVariant}
+        storeId={isStoreScoped ? storeId : null}
+        store={!isStoreScoped ? store : undefined}
+        from={from}
+        to={to}
+      />
+    </>
   );
 };
 

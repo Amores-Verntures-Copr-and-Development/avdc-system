@@ -1,6 +1,6 @@
 import { getSales, getSalesByStoreId } from "@/controllers/SaleController";
 import { verifyExternalDashboardSession } from "@/services/externalDashboardAccess/dashboard-session-jwt";
-import { getExternalDashboardAccessByUserId } from "@/services/externalDashboardAccess/get-external-dashboard-access";
+import { resolveExternalDashboardScope } from "@/services/externalDashboardAccess/resolve-scope";
 import { NextRequest, NextResponse } from "next/server";
 
 // Companion to /api/overview - same auth pattern (Bearer session token,
@@ -29,16 +29,14 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const access = await getExternalDashboardAccessByUserId(userId);
-    if (!access || access.edaStatus !== "active") {
+    const { access, isPermittedStore } =
+      await resolveExternalDashboardScope(userId);
+    if (!access) {
       return NextResponse.json(
         { error: "External dashboard access has been revoked" },
         { status: 403 },
       );
     }
-
-    const isPermittedStore = (storeId: number) =>
-      access.edaIsAllStores || access.storeIds.includes(storeId);
 
     const { searchParams } = new URL(req.url);
     const salesIdParam = searchParams.get("salesId");

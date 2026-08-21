@@ -14,6 +14,7 @@ export type CreateUserDto = Pick<
   | "userRole"
   | "userAddedBy"
 > &
+  Partial<Pick<UserInterface, "companyId">> &
   Pick<EmployeeInterface, "empPosition" | "storeId"> & {
     storeEmployee?: CreateStoreEmployeeDto[];
   };
@@ -41,6 +42,11 @@ export type DisplayUserDto = Pick<
 export type UpdateUserInfoDto = Pick<
   UserInterface,
   "userFname" | "userMname" | "userLname" | "userEmail"
+>;
+
+export type DisplayCompanyOwnerDto = Pick<
+  UserInterface,
+  "userId" | "userFname" | "userLname" | "userEmail" | "userStatus" | "userCreatedAt"
 >;
 
 export type ChangeUserPasswordDto = {

@@ -61,7 +61,13 @@ const StoreCardInSupplier = ({ data, onClick }: StoreCardInSupplierProps) => {
   const StatusIcon = statusInfo.icon;
   return (
     <div
-      onClick={() => {
+      onClick={(e) => {
+        e.preventDefault();
+        // The whole supplier row (this card's ancestor) also has an
+        // onClick that toggles it collapsed - without this, clicking a
+        // card bubbles up and collapses the row before the click handler's
+        // effect (showing this store's items) is ever visible.
+        e.stopPropagation();
         if (onClick) {
           onClick(data);
         }

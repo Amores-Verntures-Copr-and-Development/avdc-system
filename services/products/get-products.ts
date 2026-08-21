@@ -1,4 +1,8 @@
-import { selectProductCounts, selectProducts } from "@/models/productModel";
+import {
+  selectProductCounts,
+  selectProducts,
+  selectProductsDashboardStats,
+} from "@/models/productModel";
 import { Products } from "@/types/products";
 
 export async function getProducts({
@@ -44,6 +48,20 @@ export async function getProducts({
       data: data,
       total: total[0].totalItems,
     };
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getProductsDashboardStats({
+  storeId,
+  storeName,
+}: {
+  storeId?: number;
+  storeName?: string;
+}) {
+  try {
+    return await selectProductsDashboardStats({ storeId, storeName });
   } catch (e) {
     throw e;
   }

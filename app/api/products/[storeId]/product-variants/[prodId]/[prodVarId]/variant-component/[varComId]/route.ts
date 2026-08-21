@@ -3,10 +3,12 @@ import {
   updateVariantComponentController,
 } from "@/controllers/ProductController";
 import { VariantComponents } from "@/types/products";
-import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function PUT(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -29,6 +31,10 @@ export async function PUT(
     if (!prodVarId) {
       throw new Error("No prodVarId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
     const data = (await _request.json()) as Partial<VariantComponents>;
 
     const res = await updateVariantComponentController([data]);
@@ -58,7 +64,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  _request: NextRequest,
   {
     params,
   }: {
@@ -91,6 +97,9 @@ export async function DELETE(
     if (!varComId) {
       throw new Error("No prodVarId found");
     }
+
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
 
     const res = await hardDeleteVariantComponentController([
       {

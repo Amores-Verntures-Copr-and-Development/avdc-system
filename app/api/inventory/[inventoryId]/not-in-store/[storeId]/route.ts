@@ -1,4 +1,6 @@
 import { getInventoryNotInStoreController } from "@/controllers/InventoryController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -14,6 +16,10 @@ export async function GET(
     if (!storeId) {
       throw new Error("No store ID found!");
     }
+
+    const actingUser = getCurrentUser(req);
+    await assertStoreAccess(actingUser, Number(storeId));
+
     const { searchParams } = new URL(req.url);
     const limit = searchParams.get("limit") || "";
     const page = searchParams.get("page") || "";

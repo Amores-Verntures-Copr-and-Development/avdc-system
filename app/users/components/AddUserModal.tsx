@@ -1,11 +1,13 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
+import DropDownSelectCompany from "@/components/shared/DropDownSelectCompany";
 import Input from "@/components/shared/Input";
 import SectionHeader from "@/components/shared/SectionHeader";
 import Table, { Column } from "@/components/shared/Table";
 import { positionOptions, roleOptions } from "@/constants/dropdown-options";
 import { CreateUserDto } from "@/dtos/user.dto";
 import { UserAuth } from "@/hooks/useSession";
+import { Companies } from "@/types/company";
 import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { handleChange } from "@/utils/handle-change";
@@ -14,6 +16,7 @@ import {
   ArrowRight,
   AtSign,
   Briefcase,
+  Building2,
   Check,
   ClipboardCheck,
   Lock,
@@ -85,6 +88,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     empPosition: null,
     storeId: null,
     storeEmployee: [],
+    companyId: undefined,
   };
 
   const [addUserFormData, setAddUserFormData] =
@@ -157,11 +161,39 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
       toast.error("Password is required!");
       return false;
     }
+    if (addUserFormData.userRole === "owner" && !addUserFormData.companyId) {
+      toast.error("Company is required for an Owner!");
+      return false;
+    }
     return true;
   };
 
   const isEmployee = addUserFormData.userRole === "employee";
+  const isOwner = addUserFormData.userRole === "owner";
   const isSkippingEmployeeStep = !isEmployee;
+
+  // Only an existing Super Admin can create another one - hide the option
+  // entirely for everyone else rather than letting them pick it and get
+  // rejected server-side.
+  const visibleRoleOptions =
+    user?.userRole === "superadmin"
+      ? roleOptions
+      : roleOptions.filter((option) => option.value !== "superadmin");
+
+  const handleCompanyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setAddUserFormData({
+      ...addUserFormData,
+      companyId: value ? Number(value) : undefined,
+    });
+  };
+
+  const { data: companiesResponse = { data: [] } } = useSWR<{
+    data: Companies[];
+  }>(isOwner ? "/api/companies" : null, fetcher);
+  const selectedCompanyName = companiesResponse.data.find(
+    (c) => c.companyId === addUserFormData.companyId,
+  )?.companyName;
 
   // Step 1: User Information
   const renderUserInfoStep = () => (
@@ -238,9 +270,23 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             label="Role"
             value={addUserFormData.userRole ?? ""}
             onChange={handleFormChange}
-            options={roleOptions}
+            options={visibleRoleOptions}
             required
           />
+          {isOwner && (
+            <DropDownSelectCompany
+              name="companyId"
+              sizes="xs"
+              label="Company"
+              value={
+                addUserFormData.companyId != null
+                  ? String(addUserFormData.companyId)
+                  : ""
+              }
+              onChange={handleCompanyChange}
+              required
+            />
+          )}
         </div>
       </div>
     </div>
@@ -342,6 +388,16 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             }
           />
         </div>
+
+        {isOwner && (
+          <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+            <ReviewItem
+              icon={Building2}
+              label="Company"
+              value={selectedCompanyName ?? "-"}
+            />
+          </div>
+        )}
 
         {isEmployee && (
           <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">

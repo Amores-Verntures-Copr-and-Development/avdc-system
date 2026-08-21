@@ -64,7 +64,7 @@ import POSuppliersPDF from "@/components/pdf/POSuppliersPDF";
 import { PurchaseOrderPDF } from "@/components/pdf/PurchaseOrderPDF";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 
-const storeColumns: Column<RequestItems>[] = [
+export const storeColumns: Column<RequestItems>[] = [
   { name: "#", key: "#", selector: (row, index) => index + 1 },
   { name: "Item Name", key: "itemName" },
   { name: "Unit", key: "itemUnit" },
@@ -828,7 +828,9 @@ const ReceivedPOView: React.FC<ReceivedPOViewProps> = ({
                                   color="secondary"
                                   label="Send"
                                   icon={Send}
-                                  loading={sendingSupplierId === supplier.suppId}
+                                  loading={
+                                    sendingSupplierId === supplier.suppId
+                                  }
                                   disabled={
                                     sendingSupplierId !== null &&
                                     sendingSupplierId !== supplier.suppId

@@ -1,4 +1,6 @@
 import { getCategories } from "@/controllers/CategoryController";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -8,6 +10,10 @@ export async function GET(
   try {
     const slug = (await params).storeId;
     const storeId = Number(slug);
+
+    const actingUser = getCurrentUser(_Request);
+    await assertStoreAccess(actingUser, storeId);
+
     const res = await getCategories({
       controller: "storeId",
       id: storeId,

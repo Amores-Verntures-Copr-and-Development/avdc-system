@@ -11,8 +11,13 @@ export async function GET(_request: NextRequest) {
 
     const from = fromParam ? `${fromParam} 00:00:00` : "";
     const to = toParam ? `${toParam} 23:59:59` : "";
+    const customerTypeParam = searchParams.get("customerType");
+    const customerType =
+      customerTypeParam === "customer" || customerTypeParam === "walk-in"
+        ? customerTypeParam
+        : undefined;
 
-    const res = await getTotalSalesDetails({ store, from, to });
+    const res = await getTotalSalesDetails({ store, from, to, customerType });
 
     if (!res.success) {
       throw new Error(`${res.error}`);

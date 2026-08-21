@@ -27,6 +27,11 @@ const ItemMovementCard = ({ data, index }: ItemMovementCardProps) => {
               {data.itemMovementType}
             </span>
           )}
+          {data.itemMovementReason && (
+            <span className="bg-gray-100 text-gray-600 px-1 py-0.5 rounded-full font-medium text-[9px] xl:text-sm">
+              {data.itemMovementReason.replace("_", " ")}
+            </span>
+          )}
           <span className="text-gray-600 truncate max-w-[100px] text-[9px] xl:text-sm">
             {data.itemMovementRemarks}
           </span>

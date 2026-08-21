@@ -1,5 +1,7 @@
 import { createSale } from "@/controllers/SaleController";
 import { CreateSaleDto } from "@/dtos/sales.dto";
+import { getCurrentUser } from "@/lib/auth/getCurrentUser";
+import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -8,10 +10,15 @@ export async function POST(
 ) {
   try {
     const slug = (await params).storeId;
-    const data = (await _request.json()) as CreateSaleDto;
     if (!slug) {
       throw new Error("No storeId found!");
     }
+
+    const storeId = Number(slug);
+    const actingUser = getCurrentUser(_request);
+    await assertStoreAccess(actingUser, storeId);
+
+    const data = (await _request.json()) as CreateSaleDto;
     if (!data) {
       throw new Error("No data found!");
     }

@@ -16,7 +16,6 @@ import React, {
 import Pagination from "./Pagintation";
 import SearchBar from "./SearchBar";
 import FilterDropdown from "./FilterDropDown";
-import Input from "./Input";
 import DateRange from "./DateRange";
 import { createPortal } from "react-dom";
 import Button, { ButtonProps } from "./Button";
@@ -601,11 +600,9 @@ const TableInner = <T extends Record<string, any>>(
                   className="w-40 xl:w-56"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Input
-                    label=""
-                    value={localSearchQuery}
-                    onChange={(e) => setLocalSearchQuery(e.target.value)}
-                    sizes="sm"
+                  <SearchBar
+                    useUrl={false}
+                    onSearch={setLocalSearchQuery}
                     placeholder="Search..."
                   />
                 </div>

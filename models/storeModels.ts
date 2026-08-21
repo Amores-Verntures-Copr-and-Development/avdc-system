@@ -20,14 +20,38 @@ export const insertStore = async ({
   connection: PoolConnection;
 }) => {
   const pool = connection ? connection : await getDBConnection();
-  const sql = `INSERT INTO Stores(storeName,storeLocation,storeDescription,storeCreatedBy) VALUES(?,?,?,?)`;
+  const sql = `INSERT INTO Stores(storeName,storeLocation,storeDescription,storeCreatedBy,companyId) VALUES(?,?,?,?,?)`;
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.storeName,
     data.storeLocation,
     data.storeDescription,
     data.storeCreatedBy,
+    data.companyId ?? null,
   ]);
   return result.insertId;
+};
+
+// Resolves a store's owning company straight from the DB - never trust a
+// client-supplied companyId, only the storeId (which itself still has to
+// be cross-checked against the acting user's own companyId by the caller).
+export const selectStoreCompanyId = async (storeId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT companyId FROM Stores WHERE storeId = ?`,
+    [storeId],
+  );
+  return (rows[0]?.companyId as number | undefined) ?? null;
+};
+
+// All storeIds belonging to one company - used to scope aggregate
+// queries (dashboards, etc.) that otherwise only accept a single storeId.
+export const selectStoreIdsByCompanyId = async (companyId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT storeId FROM Stores WHERE companyId = ?`,
+    [companyId],
+  );
+  return rows.map((r) => r.storeId as number);
 };
 
 export const selectStores = async ({
@@ -80,10 +104,12 @@ export const updateStoreFeatures = async ({
   storeId,
   storeKioskEnabled,
   storeOrderEnabled,
+  storeKioskBannerImage,
 }: {
   storeId: number;
   storeKioskEnabled?: boolean;
   storeOrderEnabled?: boolean;
+  storeKioskBannerImage?: string | null;
 }) => {
   const pool = await getDBConnection();
   const setClauses: string[] = [];
@@ -97,6 +123,11 @@ export const updateStoreFeatures = async ({
   if (storeOrderEnabled !== undefined) {
     setClauses.push("storeOrderEnabled = ?");
     params.push(storeOrderEnabled ? 1 : 0);
+  }
+
+  if (storeKioskBannerImage !== undefined) {
+    setClauses.push("storeKioskBannerImage = ?");
+    params.push(storeKioskBannerImage);
   }
 
   if (setClauses.length === 0) return;

@@ -190,21 +190,23 @@ export default function SearchBar({
     ${height}
     pr-4 pl-5
     xl:pl-10
-    border border-gray-300
+    border border-gray-200
     bg-white text-gray-800
     text-xs xl:text-sm
-    rounded-md
-    focus:outline-none
-    focus:ring-2
-    focus:ring-blue-500
-    focus:border-blue-500
+    rounded-xl
+    shadow-sm
+    outline-none
     transition
+    hover:border-gray-300
+    focus:border-primary-1
+    focus:ring-4
+    focus:ring-primary-1/10
   `}
         />
         {localSearch && (
           <button
             onClick={clearSearch}
-            className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-red-500 text-xl font-bold"
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary-1 text-xl font-bold"
             aria-label="Clear search"
           >
             ×

@@ -22,6 +22,7 @@ interface ChartProps {
 }
 
 const formatToPeso = (value: number) => {
+  if (value >= 1_000_000) return `₱${(value / 1_000_000).toFixed(1)}M`;
   if (value >= 1000) return `₱${(value / 1000).toFixed(1)}k`;
   return `₱${value.toFixed(0)}`;
 };
@@ -29,7 +30,9 @@ const formatToPeso = (value: number) => {
 const Chart = ({ data = [], tooltipLabel = "Sales" }: ChartProps) => {
   return (
     <div className="h-full w-full rounded-2xl bg-white">
-      <ResponsiveContainer width="100%" height="100%">
+      {/* debounce avoids re-measuring/re-rendering on every frame of a
+          layout-affecting transition nearby (e.g. the sidebar collapsing) */}
+      <ResponsiveContainer width="100%" height="100%" debounce={150}>
         <AreaChart
           data={data}
           className="font-semibold"

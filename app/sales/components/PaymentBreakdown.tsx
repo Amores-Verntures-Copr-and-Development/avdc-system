@@ -23,9 +23,14 @@ export const PaymentBreakdown = ({
               <span className="truncate text-[8px] 2xl:text-xs text-gray-500">
                 {method.payMetName}
               </span>
-              <span className="text-[10px] 2xl:text-xs font-semibold text-gray-800">
-                {formatPeso(Number(method.salesPayAmount))}
-              </span>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-[10px] 2xl:text-xs font-semibold text-gray-800">
+                  {formatPeso(Number(method.salesPayAmount))}
+                </span>
+                <span className="text-[8px] 2xl:text-[10px] text-gray-400">
+                  {pct.toFixed(1)}%
+                </span>
+              </div>
             </div>
 
             <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">

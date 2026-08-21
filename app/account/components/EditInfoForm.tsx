@@ -1,4 +1,3 @@
-import BigCard from "@/components/shared/BigCard";
 import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import { DisplayUserInfoDto } from "@/dtos/user.dto";
@@ -101,66 +100,61 @@ const EditInfoForm = ({
   };
 
   return (
-    <BigCard title="Edit Info" subtitle="Update your personal details">
-      <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <Input
-            label="First Name"
-            name="userFname"
-            sizes="sm"
-            value={form.userFname}
-            onChange={handleInfoChange}
-            error={errors.userFname}
-            disabled={isLoading}
-          />
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input
+          label="First Name"
+          name="userFname"
+          sizes="sm"
+          value={form.userFname}
+          onChange={handleInfoChange}
+          error={errors.userFname}
+          disabled={isLoading}
+        />
 
-          <Input
-            label="Middle Name"
-            name="userMname"
-            sizes="sm"
-            value={form.userMname}
-            onChange={handleInfoChange}
-            disabled={isLoading}
-          />
+        <Input
+          label="Middle Name"
+          name="userMname"
+          sizes="sm"
+          value={form.userMname}
+          onChange={handleInfoChange}
+          disabled={isLoading}
+        />
 
-          <Input
-            label="Last Name"
-            name="userLname"
-            sizes="sm"
-            value={form.userLname}
-            onChange={handleInfoChange}
-            error={errors.userLname}
-            disabled={isLoading}
-          />
+        <Input
+          label="Last Name"
+          name="userLname"
+          sizes="sm"
+          value={form.userLname}
+          onChange={handleInfoChange}
+          error={errors.userLname}
+          disabled={isLoading}
+        />
 
-          <Input
-            label="Email"
-            type="email"
-            name="userEmail"
-            sizes="sm"
-            value={form.userEmail}
-            onChange={handleInfoChange}
-            error={errors.userEmail}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="mt-auto flex justify-end border-t border-gray-100 pt-4">
-          <div>
-            {" "}
-            <Button
-              label="Save Changes"
-              size="sm"
-              onClick={handleSave}
-              color="primary"
-              icon={Save}
-              loading={isSaving}
-              disabled={isLoading}
-            />
-          </div>
-        </div>
+        <Input
+          label="Email"
+          type="email"
+          name="userEmail"
+          sizes="sm"
+          value={form.userEmail}
+          onChange={handleInfoChange}
+          error={errors.userEmail}
+          disabled={isLoading}
+        />
       </div>
-    </BigCard>
+
+      <div className="flex justify-end border-t border-gray-100 pt-4">
+        <Button
+          label="Save Changes"
+          size="sm"
+          onClick={handleSave}
+          color="primary"
+          icon={Save}
+          loading={isSaving}
+          disabled={isLoading}
+        />
+      </div>
+    </div>
   );
 };
 

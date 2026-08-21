@@ -1,11 +1,21 @@
 import Button from "@/components/shared/Button";
-import Table, { Column } from "@/components/shared/Table";
+import Table, { Column, SelectOption } from "@/components/shared/Table";
 import {
   CreateInventoryMovementDto,
   DisplayInventoryItems,
 } from "@/dtos/inventory.dto";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+
+const ADJUSTMENT_REASONS: SelectOption[] = [
+  { label: "Select a reason", value: "" },
+  { label: "Damage", value: "damage" },
+  { label: "Loss", value: "loss" },
+  { label: "Expiry", value: "expiry" },
+  { label: "Count Correction", value: "count_correction" },
+  { label: "Other", value: "other" },
+];
 
 interface InStockModalProps {
   data: DisplayInventoryItems[] | null;
@@ -64,6 +74,13 @@ const InStockModal = ({
       inputType: "number",
     },
     {
+      key: "itemMovementReason",
+      name: "Reason",
+      editable: true,
+      inputType: "select",
+      options: ADJUSTMENT_REASONS,
+    },
+    {
       key: "itemMovementRemarks",
       name: "Remarks",
       editable: true,
@@ -79,6 +96,7 @@ const InStockModal = ({
           itemMovementReferenceId: null,
           itemMovementReference: "adjustment",
           itemMovementRemarks: "",
+          itemMovementReason: null,
           itemMovementType: "in",
         }))
       );
@@ -86,6 +104,13 @@ const InStockModal = ({
   }, [data]);
   const handleSubmit = async () => {
     if (!formData) {
+      return;
+    }
+    const missingReason = formData.some(
+      (row) => Number(row.itemMovementQuantity) > 0 && !row.itemMovementReason,
+    );
+    if (missingReason) {
+      toast.error("Select a reason for every item with a quantity.");
       return;
     }
     const success = await onSubmit(formData);
