@@ -159,7 +159,7 @@ WHERE si.salesId = s.salesId
       JSON_OBJECT(
         'salesPayRefId',spr.salesPayRefId,
         'salesRefId',spr.salesRefId,
-        'paymetId',spr.paymetId,
+        'payMetId',spr.paymetId,
         'salesPayRefAmount', spr.salesPayRefAmount,
         'salesPayRefReference', spr.salesPayRefReference
       )

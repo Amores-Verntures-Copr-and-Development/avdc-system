@@ -62,6 +62,7 @@ export const selectCustomers = async ({
   sort,
   order,
   paymentMethods,
+  includePaymentMethods,
 }: {
   keyFields?: Partial<Customer>;
   connection?: PoolConnection;
@@ -75,6 +76,10 @@ export const selectCustomers = async ({
   sort?: string;
   order?: "asc" | "desc";
   paymentMethods?: string[];
+  // Only the single-customer detail fetch needs this - a per-row correlated
+  // subquery isn't worth paying for on the paginated Customers list, which
+  // never displays it.
+  includePaymentMethods?: boolean;
 }) => {
   const pool = connection ?? (await getDBConnection());
   const allowedSorts: Record<string, string> = {
@@ -95,13 +100,13 @@ export const selectCustomers = async ({
     COALESCE(SUM(sa.salesTotalAmount - COALESCE(sr.totalRefunds, 0)), 0)
   `;
 
-  if (from && to) {
+  if (from && to && !(paymentMethods && paymentMethods.length > 0)) {
     totalSpentExpression = `
       COALESCE(
         SUM(
           CASE
-            WHEN sa.salesCreatedAt >= ?
-              AND sa.salesCreatedAt <= ?
+            WHEN DATE(CONVERT_TZ(sa.salesCreatedAt, '+00:00', '+08:00')) >= ?
+              AND DATE(CONVERT_TZ(sa.salesCreatedAt, '+00:00', '+08:00')) <= ?
             THEN sa.salesTotalAmount - COALESCE(sr.totalRefunds, 0)
             ELSE 0
           END
@@ -112,6 +117,121 @@ export const selectCustomers = async ({
 
     params.push(from, to);
   }
+
+  // When filtering by payment method, "Total Spent" should reflect only
+  // what was actually paid via that method (net of refunds against that
+  // same method) - not the customer's full sale totals. This can't be
+  // expressed off the `sa` join above (a sale's salesTotalAmount isn't
+  // split per payment method), so it's computed as two independent
+  // correlated subqueries over SalesPayments/SalesPaymentRefunds instead
+  // (mutually exclusive with the from/to-only branch above, since it
+  // replaces totalSpentExpression rather than extending it - the params
+  // pushed there would otherwise be left dangling with no matching `?`).
+  if (paymentMethods && paymentMethods.length > 0) {
+    const dateClause =
+      from && to
+        ? `AND DATE(CONVERT_TZ(s2.salesCreatedAt, '+00:00', '+08:00')) >= ? AND DATE(CONVERT_TZ(s2.salesCreatedAt, '+00:00', '+08:00')) <= ?`
+        : "";
+    const refundDateClause =
+      from && to
+        ? `AND DATE(CONVERT_TZ(s3.salesCreatedAt, '+00:00', '+08:00')) >= ? AND DATE(CONVERT_TZ(s3.salesCreatedAt, '+00:00', '+08:00')) <= ?`
+        : "";
+    const placeholders = paymentMethods.map(() => "?").join(", ");
+
+    totalSpentExpression = `
+      COALESCE((
+        SELECT SUM(sp.salesPaymentAmount)
+        FROM SalesPayments sp
+        JOIN Sales s2 ON s2.salesId = sp.salesId
+        JOIN PaymentMethods pm2 ON pm2.payMetId = sp.payMetId
+        WHERE s2.customerId = c.customerId
+          AND s2.storeId = c.storeId
+          AND pm2.payMetName IN (${placeholders})
+          ${dateClause}
+      ), 0)
+      -
+      COALESCE((
+        SELECT SUM(spr.salesPayRefAmount)
+        FROM SalesPaymentRefunds spr
+        JOIN SalesRefunds sr2 ON sr2.salesRefId = spr.salesRefId
+        JOIN Sales s3 ON s3.salesId = sr2.salesId
+        JOIN PaymentMethods pm3 ON pm3.payMetId = spr.paymetId
+        WHERE s3.customerId = c.customerId
+          AND s3.storeId = c.storeId
+          AND pm3.payMetName IN (${placeholders})
+          ${refundDateClause}
+      ), 0)
+    `;
+
+    params.push(...paymentMethods);
+    if (from && to) params.push(from, to);
+    params.push(...paymentMethods);
+    if (from && to) params.push(from, to);
+  }
+
+  // Per-method totals (net of refunds against that method) for this
+  // customer - separate correlated subqueries per payment method rather
+  // than one joined query, same reasoning as totalSpentExpression above:
+  // joining SalesPayments and SalesPaymentRefunds directly would fan out
+  // and double-count. Respects the same date range and payment-method
+  // filter as totalSpentExpression, so the breakdown and the total agree.
+  let paymentMethodsExpression = "";
+  if (includePaymentMethods) {
+    const methodFilterClause =
+      paymentMethods && paymentMethods.length > 0
+        ? `AND pm.payMetName IN (${paymentMethods.map(() => "?").join(", ")})`
+        : "";
+    const dateClause =
+      from && to
+        ? `AND DATE(CONVERT_TZ(s4.salesCreatedAt, '+00:00', '+08:00')) >= ? AND DATE(CONVERT_TZ(s4.salesCreatedAt, '+00:00', '+08:00')) <= ?`
+        : "";
+    const refundDateClause =
+      from && to
+        ? `AND DATE(CONVERT_TZ(s5.salesCreatedAt, '+00:00', '+08:00')) >= ? AND DATE(CONVERT_TZ(s5.salesCreatedAt, '+00:00', '+08:00')) <= ?`
+        : "";
+
+    paymentMethodsExpression = `
+      (
+        SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(
+          'payMetName', pmb.payMetName,
+          'salesPayAmount', pmb.salesPayAmount
+        )), JSON_ARRAY())
+        FROM (
+          SELECT
+            pm.payMetId,
+            pm.payMetName,
+            COALESCE(SUM(sp.salesPaymentAmount), 0) - COALESCE((
+              SELECT SUM(spr.salesPayRefAmount)
+              FROM SalesPaymentRefunds spr
+              JOIN SalesRefunds sr4 ON sr4.salesRefId = spr.salesRefId
+              JOIN Sales s5 ON s5.salesId = sr4.salesId
+              WHERE s5.customerId = c.customerId
+                AND s5.storeId = c.storeId
+                AND spr.paymetId = pm.payMetId
+                ${refundDateClause}
+            ), 0) AS salesPayAmount
+          FROM SalesPayments sp
+          JOIN Sales s4 ON s4.salesId = sp.salesId
+          JOIN PaymentMethods pm ON pm.payMetId = sp.payMetId
+          WHERE s4.customerId = c.customerId AND s4.storeId = c.storeId
+            ${methodFilterClause}
+            ${dateClause}
+          GROUP BY pm.payMetId, pm.payMetName
+        ) pmb
+      ) AS paymentMethods,
+    `;
+
+    // Push order must match placeholder order in the string above: the
+    // nested refund subquery's date range appears first (it's textually
+    // inside the SELECT list, before the outer FROM/WHERE), then the
+    // method filter, then the outer date range.
+    if (from && to) params.push(from, to);
+    if (paymentMethods && paymentMethods.length > 0) {
+      params.push(...paymentMethods);
+    }
+    if (from && to) params.push(from, to);
+  }
+
   let sql = `
     SELECT
       c.customerId,
@@ -127,6 +247,7 @@ export const selectCustomers = async ({
       ${totalSpentExpression} AS totalSpent,
       MAX(sa.salesCreatedAt) AS lastVisit,
       MIN(sa.salesCreatedAt) AS firstVisit,
+      ${paymentMethodsExpression}
       ca.cusAccId,
       ca.accountEmail,
       ca.cusAccStatus,

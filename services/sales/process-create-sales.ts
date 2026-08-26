@@ -174,7 +174,6 @@ export async function processCreateSales(data: CreateSaleDto) {
     const needDeductVariantComponentInventory = saleItemData.filter(
       (i) => (i.components?.length ?? 0) > 0,
     );
-    console.log("Agi here");
     if (!isPendingApproval && needDeductVariantComponentInventory.length > 0) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },

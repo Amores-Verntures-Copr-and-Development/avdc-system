@@ -102,6 +102,7 @@ export const getCustomer = async ({
   sort,
   order,
   paymentMethods,
+  includePaymentMethods,
 }: {
   keyFields?: Partial<Customer>;
   search?: string;
@@ -114,6 +115,7 @@ export const getCustomer = async ({
   sort?: string;
   order?: "asc" | "desc";
   paymentMethods?: string[];
+  includePaymentMethods?: boolean;
 }) => {
   try {
     const data = await customerServices.findCustomerByFields({
@@ -128,6 +130,7 @@ export const getCustomer = async ({
       sort,
       order,
       paymentMethods,
+      includePaymentMethods,
     });
     const count = await customerServices.countCustomerByStoreId({
       keyFields,

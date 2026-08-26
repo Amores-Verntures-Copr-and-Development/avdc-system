@@ -15,23 +15,42 @@ import {
   Phone,
   ShieldCheck,
 } from "lucide-react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
 import useSWR from "swr";
 import EditCustomerModal from "../components/EditCustomerModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import CusRecentActivity from "./components/CusRecentActivity";
+import { PaymentBreakdown } from "@/app/sales/components/PaymentBreakdown";
 
 const Page = () => {
   const params = useParams();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isShowEdit, setIsShowEdit] = useState(false);
   const { id } = params;
 
+  // Shared with CusRecentActivity below, so "Total Spent" up top always
+  // reflects the same range as the sales list, instead of always being
+  // the customer's lifetime total regardless of what range is selected.
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
+    from: "",
+    to: "",
+  });
+
+  const customerUrl = useMemo(() => {
+    if (!id) return null;
+
+    const searchParams = new URLSearchParams();
+    if (dateRange.from) searchParams.set("from", dateRange.from);
+    if (dateRange.to) searchParams.set("to", dateRange.to);
+
+    const query = searchParams.toString();
+    return `/api/customers/${id}${query ? `?${query}` : ""}`;
+  }, [id, dateRange]);
+
   const { data, isLoading, mutate } = useSWR<ApiResponse<DisplayCustomerDto[]>>(
-    id ? `/api/customers/${id}` : null,
+    customerUrl,
     fetcher,
   );
 
@@ -199,7 +218,7 @@ const Page = () => {
                     : "-"}
                 </p>
                 <p className="mt-1 text-[11px] 2xl:text-xs text-gray-500">
-                  Total Spent
+                  Total Spent{dateRange.from && dateRange.to ? " (selected range)" : ""}
                 </p>
               </div>
 
@@ -221,11 +240,24 @@ const Page = () => {
                 <p className="mt-1 text-xs text-gray-500">First Visit</p>
               </div>
             </div>
+            {Boolean(customer.paymentMethods?.length) && (
+              <div className="mt-4">
+                <p className="mb-2 text-[11px] 2xl:text-xs font-medium text-gray-500">
+                  Payment Methods
+                </p>
+                <PaymentBreakdown
+                  data={customer.paymentMethods}
+                  total={Number(customer.totalSpent)}
+                />
+              </div>
+            )}
           </div>
         </div>
         <CusRecentActivity
           customerId={customer.customerId}
           storeId={customer.storeId}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
         />
       </div>
       <Modal

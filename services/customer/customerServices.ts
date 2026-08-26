@@ -117,6 +117,7 @@ export const customerServices = {
     sort,
     order,
     paymentMethods,
+    includePaymentMethods,
   }: {
     keyFields?: Partial<Customer>;
     connection?: PoolConnection;
@@ -130,6 +131,7 @@ export const customerServices = {
     sort?: string;
     order?: "asc" | "desc";
     paymentMethods?: string[];
+    includePaymentMethods?: boolean;
   }) => {
     try {
       const data = await selectCustomers({
@@ -144,6 +146,7 @@ export const customerServices = {
         sort,
         order,
         paymentMethods,
+        includePaymentMethods,
       });
       return data;
     } catch (e) {

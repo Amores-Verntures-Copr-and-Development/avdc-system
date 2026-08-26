@@ -23,6 +23,8 @@ import ShowSelectedSales from "./ShowSelectedSales";
 interface CusRecentActivityProps {
   customerId: number;
   storeId: number;
+  dateRange: { from: string; to: string };
+  setDateRange: (dateRange: { from: string; to: string }) => void;
 }
 
 const orderStatusBadge: Record<string, string> = {
@@ -35,15 +37,16 @@ const orderStatusBadge: Record<string, string> = {
   CANCELLED: "bg-red-100 text-red-700",
 };
 
-const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
+const CusRecentActivity = ({
+  customerId,
+  storeId,
+  dateRange,
+  setDateRange,
+}: CusRecentActivityProps) => {
   const router = useRouter();
   const [tableView, setTableView] = useState<
     "recent" | "payments" | "refunds" | "orders"
   >("recent");
-  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
-    from: "",
-    to: "",
-  });
 
   const salesUrl = useMemo(() => {
     if (!customerId) return null;
@@ -150,7 +153,42 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
           <span className="text-[11px] ">{formatPeso(row.salesSubTotal)}</span>
         ),
       },
+      {
+        key: "discount",
+        name: "Discount",
+        selector: (row) => {
+          const totalDiscount = Array.isArray(row.salesDiscounts)
+            ? row.salesDiscounts.reduce(
+                (total, sd) => total + Number(sd.discountAmount),
+                0,
+              )
+            : 0;
 
+          return (
+            <span className="text-[11px] text-amber-600">
+              {totalDiscount !== 0 ? formatPeso(totalDiscount) : "-"}
+            </span>
+          );
+        },
+      },
+      {
+        key: "refund",
+        name: "Refund",
+        selector: (row) => {
+          const totalRefunds = Array.isArray(row.salesRefunds)
+            ? row.salesRefunds.reduce(
+                (total, sr) => total + Number(sr.salesRefAmount),
+                0,
+              )
+            : 0;
+
+          return (
+            <span className="text-[11px] text-red-600">
+              {totalRefunds !== 0 ? formatPeso(totalRefunds) : "-"}
+            </span>
+          );
+        },
+      },
       {
         key: "salesTotalAmount",
         name: "Total Amount",
@@ -175,6 +213,25 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
         name: "Payment Method",
         selector: (row) => {
           const paymentMethod = row.paymentMethods || [];
+          // Refunds are tracked per payment method (SalesPaymentRefunds.
+          // payMetId), never by mutating the original SalesPayments row -
+          // net them out here the same way the Total Amount column above
+          // nets row.salesRefunds, or this would keep showing the gross
+          // amount paid instead of what the customer actually kept spent.
+          const netAmount = (method: (typeof paymentMethod)[number]) => {
+            const refunded = Array.isArray(row.salesPaymentRefunds)
+              ? row.salesPaymentRefunds
+                  .filter((spr) => spr.payMetId === method.payMetId)
+                  .reduce(
+                    (total, spr) => total + Number(spr.salesPayRefAmount),
+                    0,
+                  )
+              : 0;
+            const net = Number(method.salesPaymentAmount) - refunded;
+            return net > Number(row.salesTotalAmount)
+              ? Number(row.salesTotalAmount)
+              : net;
+          };
           return (
             <div className="relative min-w-[100px]">
               <select
@@ -193,10 +250,7 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
                       })`
                     : paymentMethod.length === 1
                       ? `${paymentMethod[0].payMetName} (${formatPeso(
-                          Number(paymentMethod[0].salesPaymentAmount) >
-                            Number(row.salesTotalAmount)
-                            ? row.salesTotalAmount
-                            : paymentMethod[0].salesPaymentAmount,
+                          netAmount(paymentMethod[0]),
                         )})`
                       : `No payment`}
                 </option>
@@ -210,12 +264,7 @@ const CusRecentActivity = ({ customerId, storeId }: CusRecentActivityProps) => {
                         key={index}
                         className="px-2 py-1 text-[10px] xl:text-xs hover:bg-gray-100 cursor-default"
                       >
-                        {`${method.payMetName} (${formatPeso(
-                          Number(method.salesPaymentAmount) >
-                            Number(row.salesTotalAmount)
-                            ? row.salesTotalAmount
-                            : method.salesPaymentAmount,
-                        )})`}
+                        {`${method.payMetName} (${formatPeso(netAmount(method))})`}
                       </div>
                     ))}
                 </div>

@@ -6,13 +6,22 @@ import { Customer } from "@/types/customer";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const fromParam = searchParams.get("from") || "";
+    const toParam = searchParams.get("to") || "";
+    const from = fromParam ? `${fromParam} 00:00:00` : undefined;
+    const to = toParam ? `${toParam} 23:59:59` : undefined;
+
     const res = await getCustomer({
       keyFields: { customerId: Number(id) },
+      includePaymentMethods: true,
+      from,
+      to,
     });
     if (!res.success) {
       throw new Error(res.message);

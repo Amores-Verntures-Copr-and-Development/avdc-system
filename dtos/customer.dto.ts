@@ -18,6 +18,11 @@ export type CreateCustomerDto = Pick<
   | "customerSource"
 >;
 
+export interface CustomerPaymentMethodBreakdown {
+  payMetName: string;
+  salesPayAmount: number;
+}
+
 export interface DisplayCustomerDto extends Customer {
   storeName: string;
   storeId: number;
@@ -29,6 +34,7 @@ export interface DisplayCustomerDto extends Customer {
   cusAccStatus: CustomerAccountStatus | null;
   emailVerified: number | null;
   accountCreatedAt: string | null;
+  paymentMethods?: CustomerPaymentMethodBreakdown[];
 }
 
 export type CreateCustomerAccountDto = Pick<
