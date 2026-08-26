@@ -2,6 +2,7 @@ import { getSalesByStoreId } from "@/controllers/SaleController";
 import { count } from "console";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { SalesStatus } from "@/types/sales";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -40,6 +41,7 @@ export async function GET(
     const offset = limitNumber * (pageNumber - 1);
     const method = searchParams.get("method") || "";
     const noLimit = searchParams.get("nolimit") || "";
+    const status = searchParams.get("status") || "";
 
     const res = await getSalesByStoreId({
       storeId,
@@ -53,6 +55,7 @@ export async function GET(
       limit: limitNumber,
       method,
       noLimit: noLimit === "true" ? true : false,
+      keyFields: status ? { salesStatus: status as SalesStatus } : undefined,
     });
 
     if (!res.success) {

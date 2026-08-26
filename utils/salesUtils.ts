@@ -16,6 +16,22 @@ export const salesStatusOptions: SalesStatusOptions[] = [
     dot: "bg-gray-500",
   },
   {
+    label: "Pending Approval",
+    value: "pending_approval",
+    bg: "bg-orange-50",
+    color: "text-orange-700",
+    border: "border-orange-200",
+    dot: "bg-orange-500",
+  },
+  {
+    label: "Rejected",
+    value: "rejected",
+    bg: "bg-red-50",
+    color: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
+  },
+  {
     label: "Completed",
     value: "completed",
     bg: "bg-green-50",

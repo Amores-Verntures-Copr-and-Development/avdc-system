@@ -25,7 +25,7 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 import { updateSalesByFields } from "./update-sales";
-import { SalesPaymentStatus } from "../../types/sales";
+import { SalesPaymentStatus, SalesStatus } from "../../types/sales";
 import { CreateTransactionDto } from "@/dtos/transaction.dto";
 import { createTransactions } from "../transaction/create-transaction";
 import { sendEmailSalesBasePaymentMethods } from "./send-email-sales";
@@ -37,6 +37,10 @@ import {
 export async function processCreateSales(data: CreateSaleDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
+  // Pending sales are recorded for review but don't move real inventory,
+  // money, or a receipt email until process-approved-sale.ts finalizes
+  // them - approving replays the deduction/transaction/email steps below.
+  const isPendingApproval = data.salesStatus === SalesStatus.PENDING_APPROVAL;
   try {
     await connection.beginTransaction();
     const salesNo = await generateSalesNo({
@@ -55,6 +59,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       salesCreatedBy: data.salesCreatedBy,
       salesRemarks: data.salesRemarks,
       salesSource: data.salesSource ?? "pos",
+      orderId: data.orderId ?? null,
       salesCreatedAt: data.salesCreatedAt,
     };
 
@@ -109,7 +114,7 @@ export async function processCreateSales(data: CreateSaleDto) {
       (i) => i.inventoryItemId !== null,
     );
 
-    if (needDeductInventoryProdVar.length > 0) {
+    if (!isPendingApproval && needDeductInventoryProdVar.length > 0) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },
         connection,
@@ -169,7 +174,8 @@ export async function processCreateSales(data: CreateSaleDto) {
     const needDeductVariantComponentInventory = saleItemData.filter(
       (i) => (i.components?.length ?? 0) > 0,
     );
-    if (needDeductVariantComponentInventory.length > 0) {
+    console.log("Agi here");
+    if (!isPendingApproval && needDeductVariantComponentInventory.length > 0) {
       const inventory = await findInventoryByStoreFields({
         keyFields: { storeId: data.storeId },
         connection,
@@ -204,18 +210,20 @@ export async function processCreateSales(data: CreateSaleDto) {
       });
       await createInventoryMovement({ connection, data: inventoryMovement });
     }
-    const createSalesTransaction: CreateTransactionDto = {
-      referenceId: salesId,
-      transactionAmount: data.salesTotalAmount,
-      transactionCreatedBy: data.salesCreatedBy,
-      transactionRef: "sale",
-      transactionType: "in",
-      storeId: data.storeId,
-    };
-    await createTransactions({
-      connection: connection,
-      data: createSalesTransaction,
-    });
+    if (!isPendingApproval) {
+      const createSalesTransaction: CreateTransactionDto = {
+        referenceId: salesId,
+        transactionAmount: data.salesTotalAmount,
+        transactionCreatedBy: data.salesCreatedBy,
+        transactionRef: "sale",
+        transactionType: "in",
+        storeId: data.storeId,
+      };
+      await createTransactions({
+        connection: connection,
+        data: createSalesTransaction,
+      });
+    }
     const sales = await getSalesServices.findSalesBySaleId({
       connection,
       salesId,
@@ -224,13 +232,15 @@ export async function processCreateSales(data: CreateSaleDto) {
 
     await connection.commit();
 
-    void sendEmailSalesBasePaymentMethods({
-      salesId,
-      orderNumber: data.orderNumber,
-      deliveryFee: data.deliveryFee,
-      deliveryAddress: data.deliveryAddress,
-      customerPhone: data.customerPhone,
-    });
+    if (!isPendingApproval) {
+      void sendEmailSalesBasePaymentMethods({
+        salesId,
+        orderNumber: data.orderNumber,
+        deliveryFee: data.deliveryFee,
+        deliveryAddress: data.deliveryAddress,
+        customerPhone: data.customerPhone,
+      });
+    }
 
     return sales;
   } catch (e) {

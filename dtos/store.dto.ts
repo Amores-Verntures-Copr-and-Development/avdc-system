@@ -14,6 +14,9 @@ export type CreateStoreEmployeeDto = Pick<
 export type UpdateStoreFeaturesDto = Partial<
   Pick<
     StoreInterface,
-    "storeKioskEnabled" | "storeOrderEnabled" | "storeKioskBannerImage"
+    | "storeKioskEnabled"
+    | "storeOrderEnabled"
+    | "storeKioskBannerImage"
+    | "storeSalesApprovalEnabled"
   >
 >;

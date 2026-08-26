@@ -8,6 +8,7 @@ export interface StoreInterface {
   storeKioskEnabled?: boolean;
   storeKioskBannerImage?: string | null;
   storeOrderEnabled?: boolean;
+  storeSalesApprovalEnabled?: boolean;
   storeCreatedAt: string;
   storeUpdatedAt: string;
   storeDeletedAt?: string | null;

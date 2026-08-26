@@ -22,6 +22,25 @@ const STATUS_CONFIG: Record<
     dot: "bg-amber-400",
   },
 
+  [SalesStatus.PENDING_APPROVAL]: {
+    label: "Pending Approval",
+    icon: "🔔",
+    bg: "bg-orange-50",
+    text: "text-orange-700",
+    border: "border-orange-200",
+    dot: "bg-orange-500",
+    pulse: true,
+  },
+
+  [SalesStatus.REJECTED]: {
+    label: "Rejected",
+    icon: "✕",
+    bg: "bg-red-50",
+    text: "text-red-700",
+    border: "border-red-200",
+    dot: "bg-red-500",
+  },
+
   [SalesStatus.IN_PROGRESS]: {
     label: "In Progress",
     icon: "⚡",

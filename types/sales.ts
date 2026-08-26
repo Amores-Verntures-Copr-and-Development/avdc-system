@@ -15,6 +15,8 @@ export enum SalesItemStatus {
 }
 export enum SalesStatus {
   PENDING = "pending",
+  PENDING_APPROVAL = "pending_approval",
+  REJECTED = "rejected",
   IN_PROGRESS = "in_progress",
   COMPLETED = "completed",
   REFUNDED = "refunded",
@@ -39,12 +41,16 @@ export interface Sales {
   salesStatus: SalesStatus;
   salesRemarks: string;
   salesSource: SalesSource;
+  orderId: number | null;
   salesCreatedAt: string;
   salesUpdatedAt: string;
   salesDeletedAt: string;
   salesCreatedBy: number;
   customerId: number | null;
   storeId: number;
+  salesApprovedBy: number | null;
+  salesApprovedAt: string | null;
+  salesRejectionReason: string | null;
   saleItems?: SaleItems[];
   salePayments?: SalePayments[];
 }

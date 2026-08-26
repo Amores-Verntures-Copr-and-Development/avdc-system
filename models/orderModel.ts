@@ -92,12 +92,17 @@ export const selectOrders = async ({
   search,
   limit,
   offset,
+  companyId,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Orders>;
   search?: string;
   limit?: number;
   offset?: number;
+  // Scopes to every store in the acting user's company, rather than a
+  // single store - backs the "All Stores" view for roles other than
+  // supervisor/staff (see app/api/order/route.ts).
+  companyId?: number;
 }) => {
   const pool = connection ? connection : await getDBConnection();
 
@@ -118,6 +123,11 @@ export const selectOrders = async ({
       sql += ` AND o.${key} = ?`;
       params.push(value);
     }
+  }
+
+  if (companyId !== undefined) {
+    sql += ` AND st.companyId = ?`;
+    params.push(companyId);
   }
 
   if (!("orderDeletedAt" in keyFields)) {
@@ -147,14 +157,18 @@ export const selectCountOrders = async ({
   connection,
   keyFields = {},
   search,
+  companyId,
 }: {
   connection?: PoolConnection;
   keyFields?: Partial<Orders>;
   search?: string;
+  companyId?: number;
 }): Promise<number> => {
   const pool = connection ? connection : await getDBConnection();
 
-  let sql = `SELECT COUNT(*) as total FROM Orders o WHERE 1=1`;
+  let sql = `SELECT COUNT(*) as total FROM Orders o
+    LEFT JOIN Stores st ON st.storeId = o.storeId
+    WHERE 1=1`;
   const params: any[] = [];
 
   for (const [key, value] of Object.entries(keyFields)) {
@@ -164,6 +178,11 @@ export const selectCountOrders = async ({
       sql += ` AND o.${key} = ?`;
       params.push(value);
     }
+  }
+
+  if (companyId !== undefined) {
+    sql += ` AND st.companyId = ?`;
+    params.push(companyId);
   }
 
   if (!("orderDeletedAt" in keyFields)) {

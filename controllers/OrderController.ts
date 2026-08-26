@@ -62,14 +62,16 @@ export const getOrderController = async ({
   search,
   limit,
   offset,
+  companyId,
 }: {
   keyFields?: Partial<Orders>;
   search?: string;
   limit?: number;
   offset?: number;
+  companyId?: number;
 }) => {
   try {
-    const res = await getOrders({ keyFields, search, limit, offset });
+    const res = await getOrders({ keyFields, search, limit, offset, companyId });
     return {
       success: true,
       message: "Order fetched successfully!",

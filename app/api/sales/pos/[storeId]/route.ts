@@ -2,6 +2,8 @@ import { createSale } from "@/controllers/SaleController";
 import { CreateSaleDto } from "@/dtos/sales.dto";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { selectStoreSalesApprovalEnabled } from "@/models/storeModels";
+import { SalesStatus } from "@/types/sales";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -22,6 +24,20 @@ export async function POST(
     if (!data) {
       throw new Error("No data found!");
     }
+
+    // Staff/supervisor POS sales at a store with approval enabled land as
+    // pending_approval instead of completed - a manager must approve them
+    // before they count as a real sale. Owners/admins/accounting bypass
+    // this since they're the ones who'd be approving anyway.
+    const empPosition = (actingUser as unknown as { empPosition?: string })
+      .empPosition;
+    if (empPosition === "staff" || empPosition === "supervisor") {
+      const requiresApproval = await selectStoreSalesApprovalEnabled(storeId);
+      if (requiresApproval) {
+        data.salesStatus = SalesStatus.PENDING_APPROVAL;
+      }
+    }
+
     const res = await createSale(data);
     if (!res.success) {
       throw new Error(res.message || "Failed to process order");
@@ -33,6 +49,7 @@ export async function POST(
       data: res.data,
     });
   } catch (err: any) {
+    console.log({ error: err });
     return NextResponse.json(
       {
         success: false,

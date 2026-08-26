@@ -1,12 +1,15 @@
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
+import Modal from "@/components/shared/Modal";
 
 import { DisplaySalesDto, DisplaySalesItems } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
+import Link from "next/link";
 import React, { useState } from "react";
+import toast from "react-hot-toast";
 import useSWR, { mutate } from "swr";
 import { formatDiscountValue } from "../pos/components/sidebar/DiscountList";
 import RefundPage from "./components/RefundPage";
@@ -30,6 +33,10 @@ const SelectedSalesPage = ({
   const [showViews, setShowViews] = useState<
     null | "refund" | "edit" | "print"
   >(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
   const {
     data: response,
     mutate,
@@ -46,6 +53,64 @@ const SelectedSalesPage = ({
     mutateSales();
     await mutate();
   };
+
+  // Same allowlist as the server-side gate in approveSaleController -
+  // owner/superadmin/admin/accounting are trusted to clear a sale a
+  // staff/supervisor submitted for approval.
+  const canApproveSale =
+    Boolean(user?.userRole && ["owner", "superadmin"].includes(user.userRole)) ||
+    Boolean(
+      user?.empPosition && ["admin", "accounting"].includes(user.empPosition),
+    );
+
+  const handleApproveSale = async () => {
+    if (!salesData?.salesId || !salesData?.storeId) return;
+    setIsApproving(true);
+    try {
+      const res = await fetch(
+        `/api/sales/${salesData.storeId}/${salesData.salesId}/approve`,
+        { method: "POST" },
+      );
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      toast.success(`Sale ${salesData.salesNo} approved.`);
+      await updateDataSales();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to approve sale.");
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleRejectSale = async () => {
+    if (!salesData?.salesId || !salesData?.storeId) return;
+    setIsRejecting(true);
+    try {
+      const res = await fetch(
+        `/api/sales/${salesData.storeId}/${salesData.salesId}/reject`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: rejectReason.trim() || undefined }),
+        },
+      );
+      const result = await res.json();
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      toast.success(`Sale ${salesData.salesNo} rejected.`);
+      setShowRejectModal(false);
+      setRejectReason("");
+      await updateDataSales();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to reject sale.");
+    } finally {
+      setIsRejecting(false);
+    }
+  };
+
   const canEditUser =
     user?.userRole &&
     Boolean(
@@ -140,6 +205,31 @@ const SelectedSalesPage = ({
                       />
                     </div>
                   )}
+                  {canApproveSale &&
+                    salesData?.salesStatus ===
+                      SalesStatus.PENDING_APPROVAL && (
+                      <>
+                        <div>
+                          <Button
+                            label="Reject"
+                            size="sm"
+                            color="danger"
+                            hasBorder={false}
+                            onClick={() => setShowRejectModal(true)}
+                            disabled={isApproving || isRejecting}
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            label={isApproving ? "Approving..." : "Approve"}
+                            size="sm"
+                            hasBorder={false}
+                            onClick={handleApproveSale}
+                            disabled={isApproving || isRejecting}
+                          />
+                        </div>
+                      </>
+                    )}
                   <div>
                     <Button
                       label={
@@ -190,15 +280,24 @@ const SelectedSalesPage = ({
                 <div className="text-[10px] 2xl:text-xs text-gray-500 mb-1">
                   Source
                 </div>
-                <div
-                  className={`inline-flex px-2 py-1 text-center font-semibold text-[11px] 2xl:text-xs rounded-2xl ${
-                    salesData?.salesSource === "order"
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-blue-100 text-blue-700"
-                  }`}
-                >
-                  {salesData?.salesSource === "order" ? "Order" : "POS"}
-                </div>
+                {salesData?.salesSource === "order" && salesData?.orderId ? (
+                  <Link
+                    href={`/orders/${salesData.orderId}`}
+                    className="inline-flex px-2 py-1 text-center font-semibold text-[11px] 2xl:text-xs rounded-2xl bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                  >
+                    Order
+                  </Link>
+                ) : (
+                  <div
+                    className={`inline-flex px-2 py-1 text-center font-semibold text-[11px] 2xl:text-xs rounded-2xl ${
+                      salesData?.salesSource === "order"
+                        ? "bg-purple-100 text-purple-700"
+                        : "bg-blue-100 text-blue-700"
+                    }`}
+                  >
+                    {salesData?.salesSource === "order" ? "Order" : "POS"}
+                  </div>
+                )}
               </div>
               <div>
                 <div className="text-[10px] 2xl:text-xs text-gray-500 mb-1">
@@ -260,7 +359,7 @@ const SelectedSalesPage = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {response?.data.map((item, index) => {
+                  {response?.data?.map((item, index) => {
                     const modifyName = (item.prodVarName ?? "")
                       .toLowerCase()
                       .includes((item.prodName ?? "").toLowerCase())
@@ -270,7 +369,7 @@ const SelectedSalesPage = ({
                       <tr
                         key={item.salesItemId}
                         className={
-                          index !== response?.data.length - 1
+                          index !== (response?.data?.length ?? 0) - 1
                             ? "border-b border-gray-100"
                             : ""
                         }
@@ -543,6 +642,48 @@ const SelectedSalesPage = ({
               </div>
             </div>
           </div>
+          {salesData?.salesApprovedBy &&
+            (() => {
+              const isRejected = salesData.salesStatus === SalesStatus.REJECTED;
+              return (
+                <div className="bg-white rounded-lg border border-gray-200 p-6 mt-2 2xl:mt-4">
+                  <h2 className="text-sm 2xl:text-base font-semibold text-gray-900 mb-4">
+                    {isRejected ? "Rejection Information" : "Approval Information"}
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        {isRejected ? "Rejected By" : "Approved By"}
+                      </div>
+                      <div className="text-xs 2xl:text-sm text-gray-900">
+                        {salesData?.salesApprovedByName || "-"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">
+                        {isRejected ? "Rejected At" : "Approved At"}
+                      </div>
+                      <div className="text-xs 2xl:text-sm text-gray-900">
+                        {formatDateToWords(salesData?.salesApprovedAt ?? "", {
+                          showHour: true,
+                          showMinute: true,
+                        })}
+                      </div>
+                    </div>
+                    {isRejected && salesData?.salesRejectionReason && (
+                      <div className="col-span-2">
+                        <div className="text-xs text-gray-500 mb-1">
+                          Reason
+                        </div>
+                        <div className="text-xs 2xl:text-sm text-gray-900">
+                          {salesData.salesRejectionReason}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
         </div>
       ) : showViews === "refund" ? (
         <RefundPage
@@ -561,6 +702,45 @@ const SelectedSalesPage = ({
       ) : (
         <div></div>
       )}
+      <Modal
+        title="Reject Sale"
+        subtitle={`Reject sale ${salesData?.salesNo ?? ""}? This can't be undone.`}
+        isOpen={showRejectModal}
+        onClose={() => {
+          setShowRejectModal(false);
+          setRejectReason("");
+        }}
+        size="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button
+              label="Cancel"
+              size="sm"
+              color="outline"
+              onClick={() => {
+                setShowRejectModal(false);
+                setRejectReason("");
+              }}
+              disabled={isRejecting}
+            />
+            <Button
+              label={isRejecting ? "Rejecting..." : "Reject Sale"}
+              size="sm"
+              color="danger"
+              onClick={handleRejectSale}
+              disabled={isRejecting}
+            />
+          </div>
+        }
+      >
+        <textarea
+          className="w-full rounded-lg border border-gray-200 p-2 text-xs 2xl:text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-primary-1"
+          rows={4}
+          placeholder="Reason for rejecting this sale (optional)"
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 };

@@ -130,22 +130,32 @@ export const selectOwnerDashboardStats = async ({
   const pool = await getDBConnection();
   const params: any[] = [];
 
-  let salesFilterClause = "";
+  // Pending-approval and rejected sales aren't real sales - excluded from
+  // every total/count below, same as selectSalesTotalDetails in saleModel.ts.
+  const salesConditions: string[] = [
+    "s.salesStatus NOT IN ('pending_approval', 'rejected')",
+  ];
   let salesFilterParams: number[] = [];
   if (storeId) {
-    salesFilterClause = `s.storeId = ?`;
+    salesConditions.push(`s.storeId = ?`);
     salesFilterParams = [storeId];
   } else if (storeIds && storeIds.length > 0) {
-    salesFilterClause = `s.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    salesConditions.push(`s.storeId IN (${storeIds.map(() => "?").join(",")})`);
     salesFilterParams = storeIds;
   }
+  const salesFilterClause = salesConditions.join(" AND ");
 
-  let salesPaymentsFilterClause = "";
+  const salesPaymentsConditions: string[] = [
+    "s2.salesStatus NOT IN ('pending_approval', 'rejected')",
+  ];
   if (storeId) {
-    salesPaymentsFilterClause = `s2.storeId = ?`;
+    salesPaymentsConditions.push(`s2.storeId = ?`);
   } else if (storeIds && storeIds.length > 0) {
-    salesPaymentsFilterClause = `s2.storeId IN (${storeIds.map(() => "?").join(",")})`;
+    salesPaymentsConditions.push(
+      `s2.storeId IN (${storeIds.map(() => "?").join(",")})`,
+    );
   }
+  const salesPaymentsFilterClause = salesPaymentsConditions.join(" AND ");
 
   // Sales.salesTotalAmount is never decremented on refund (SalesRefunds is
   // a separate append-only ledger, same as everywhere else this is netted
@@ -209,11 +219,13 @@ export const selectStoresRecentSales = async ({
 FROM Stores s
 LEFT JOIN Sales sl
     ON sl.storeId = s.storeId
+    AND sl.salesStatus NOT IN ('pending_approval', 'rejected')
     AND DATE(sl.salesCreatedAt) = CURRENT_DATE
     AND sl.salesCreatedAt = (
         SELECT MAX(sl2.salesCreatedAt)
         FROM Sales sl2
         WHERE sl2.storeId = s.storeId
+          AND sl2.salesStatus NOT IN ('pending_approval', 'rejected')
           AND DATE(sl2.salesCreatedAt) = CURRENT_DATE
     )
 LEFT JOIN (
@@ -251,6 +263,7 @@ export const selectSalesChartData = async ({
       GROUP BY salesId
     ) sr ON sr.salesId = s.salesId
     WHERE YEAR(s.salesCreatedAt) = ?
+      AND s.salesStatus NOT IN ('pending_approval', 'rejected')
   `;
 
   const params: any[] = [year];

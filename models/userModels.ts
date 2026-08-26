@@ -31,10 +31,20 @@ export const selectUsers = async ({
   userName,
   search,
   companyId,
+  excludeEmpPositions,
+  storeId,
 }: {
   userName?: string;
   search?: string;
   companyId?: number | null;
+  // Positions to hide entirely from the result (e.g. "staff" on the
+  // Employees page) - not used by the Users admin page, which lists
+  // everyone regardless of position.
+  excludeEmpPositions?: string[];
+  // Scopes results to employees assigned (via StoreEmployees) to this
+  // store - used for a supervisor, who should only see their own store's
+  // employees rather than the whole company.
+  storeId?: number;
 }) => {
   const whereClauses: string[] = [];
   const values: any[] = [];
@@ -54,12 +64,32 @@ export const selectUsers = async ({
       values.push(companyId);
     }
   }
+  if (excludeEmpPositions && excludeEmpPositions.length > 0) {
+    whereClauses.push(
+      `(e.empPosition IS NULL OR e.empPosition NOT IN (${excludeEmpPositions.map(() => "?").join(",")}))`,
+    );
+    values.push(...excludeEmpPositions);
+  }
+  if (storeId) {
+    whereClauses.push(
+      `EXISTS (SELECT 1 FROM StoreEmployees se WHERE se.empId = e.empId AND se.storeId = ?)`,
+    );
+    values.push(storeId);
+  }
   const whereSQL =
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const pool = await getDBConnection();
   const sql = `
         SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,e.empPosition, e.empId,u.userAddedBy,u.userCreatedAt,
-        CONCAT_WS(' ', us.userFname, us.userLname) AS addedBy
+        CONCAT_WS(' ', us.userFname, us.userLname) AS addedBy,
+        (
+          SELECT JSON_ARRAYAGG(
+            JSON_OBJECT('storeId', se.storeId, 'storeName', s.storeName)
+          )
+          FROM StoreEmployees se
+          LEFT JOIN Stores s ON s.storeId = se.storeId
+          WHERE se.empId = e.empId
+        ) AS storeEmployees
         FROM Users u LEFT JOIN Employees e ON e.userId = u.userId LEFT JOIN Users us ON us.userId = u.userAddedBy ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
 

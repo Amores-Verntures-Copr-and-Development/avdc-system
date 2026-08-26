@@ -54,7 +54,7 @@ export const selectSales = async ({
   nolimit?: boolean;
   // e.g. "refunded" to hide refunded sales from a read-only view (the
   // external dashboard) without affecting the internal admin Sales page.
-  excludeStatus?: string;
+  excludeStatus?: string | string[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -62,6 +62,7 @@ export const selectSales = async ({
   s.*,
   st.storeName,
   CONCAT_WS(' ', u.userName, u.userLname) AS salesCreatedByName,
+  CONCAT_WS(' ', au.userName, au.userLname) AS salesApprovedByName,
   c.customerName,
   (
     SELECT COUNT(*)
@@ -77,6 +78,7 @@ ${
     'salesItemPrice', si.salesItemPrice,
     'salesItemSubtotal', si.salesItemSubtotal,
     'salesItemTotal', si.salesItemTotal,
+    'prodVarId', si.prodVarId,
     'prodVarName', pv.prodVarName,
     'saleItemName',
       CASE
@@ -184,6 +186,7 @@ FROM Sales s
 LEFT JOIN SalesRefunds sr ON sr.salesId = s.salesId
 LEFT JOIN Customers c ON c.customerId = s.customerId
 LEFT JOIN Users u ON u.userId = s.salesCreatedBy
+LEFT JOIN Users au ON au.userId = s.salesApprovedBy
 LEFT JOIN Stores st ON st.storeId = s.storeId
 WHERE 1=1`;
   for (const [key, value] of Object.entries(keyFields)) {
@@ -227,8 +230,13 @@ WHERE 1=1`;
     sql += ` AND s.customerId IS NULL`;
   }
   if (excludeStatus) {
-    sql += ` AND s.salesStatus != ?`;
-    params.push(excludeStatus);
+    const excluded = Array.isArray(excludeStatus)
+      ? excludeStatus
+      : [excludeStatus];
+    if (excluded.length > 0) {
+      sql += ` AND s.salesStatus NOT IN (${excluded.map(() => "?").join(",")})`;
+      params.push(...excluded);
+    }
   }
   if (method) {
     sql += `
@@ -281,7 +289,7 @@ export const countSales = async ({
   customerId?: number;
   storeId?: number;
   method?: string;
-  excludeStatus?: string;
+  excludeStatus?: string | string[];
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const params: any[] = [];
@@ -331,8 +339,13 @@ LEFT JOIN Stores st ON st.storeId = s.storeId WHERE 1=1`;
     params.push(storeId);
   }
   if (excludeStatus) {
-    sql += ` AND s.salesStatus != ?`;
-    params.push(excludeStatus);
+    const excluded = Array.isArray(excludeStatus)
+      ? excludeStatus
+      : [excludeStatus];
+    if (excluded.length > 0) {
+      sql += ` AND s.salesStatus NOT IN (${excluded.map(() => "?").join(",")})`;
+      params.push(...excluded);
+    }
   }
   if (method) {
     sql += `
@@ -373,6 +386,7 @@ export const insertSales = async ({
     "salesStatus",
     "salesRemarks",
     "salesSource",
+    "orderId",
   ];
   const values: any[] = [
     data.salesNo,
@@ -386,6 +400,7 @@ export const insertSales = async ({
     data.salesStatus,
     data.salesRemarks || "",
     data.salesSource ?? "pos",
+    data.orderId ?? null,
   ];
 
   if (data.salesCreatedAt) {
@@ -643,7 +658,7 @@ export const insertSaleItems = async ({
 
   const pool = connection ? connection : await getDBConnection();
 
-  const sql = `INSERT INTO SalesItems(salesItemQuantity, salesItemPrice, salesItemSubtotal, salesItemTotal,  salesId, prodVarId) 
+  const sql = `INSERT INTO SalesItems(salesItemQuantity, salesItemPrice, salesItemSubtotal, salesItemTotal,  salesId, prodVarId)
                VALUES ${data.map(() => "(?, ?, ?, ?, ?,?)").join(", ")}`;
 
   const values = data.flatMap((item) => [
@@ -715,7 +730,7 @@ export const selectDailyStoreSales = async () => {
   END) AS yesterdaySales
 FROM Stores st
 LEFT JOIN Sales ss
-  ON ss.storeId = st.storeId
+  ON ss.storeId = st.storeId AND ss.salesStatus NOT IN ('pending_approval', 'rejected')
 LEFT JOIN (
   SELECT salesId, SUM(salesRefAmount) AS refundAmt
   FROM SalesRefunds
@@ -810,22 +825,30 @@ export const selectSalesTotalDetails = async ({
 }) => {
   const pool = await getDBConnection();
 
-  let totalSaleConditions: string[] = [];
+  // Pending-approval and rejected sales aren't real sales (no inventory/
+  // transaction ever moved for them) - excluded from every total/count/
+  // trend below. Seeded into each conditions array up front so it's
+  // covered even where a query reuses one array's clause for several
+  // sub-queries (e.g. baseFilterClause).
+  const pendingApprovalExclusion =
+    "s.salesStatus NOT IN ('pending_approval', 'rejected')";
+
+  let totalSaleConditions: string[] = [pendingApprovalExclusion];
   let totalSalesparams: any[] = [];
 
-  let totalSalePaymentMethodConditions: string[] = [];
+  let totalSalePaymentMethodConditions: string[] = [pendingApprovalExclusion];
   let totalSalePaymentMethodparams: any[] = [];
 
-  let todaySalePaymentMethodConditions: string[] = [];
+  let todaySalePaymentMethodConditions: string[] = [pendingApprovalExclusion];
   let todaySalePaymentMethodparams: any[] = [];
 
-  let totalCountSalesconditions: string[] = [];
+  let totalCountSalesconditions: string[] = [pendingApprovalExclusion];
   let totalCountSalesparams: any[] = [];
 
-  let todaySalesConditions: string[] = [];
+  let todaySalesConditions: string[] = [pendingApprovalExclusion];
   let todaySalesparams: any[] = [];
 
-  let totalCustomerConditions: string[] = [];
+  let totalCustomerConditions: string[] = [pendingApprovalExclusion];
   let totalCustomeparams: any[] = [];
 
   if (storeId) {

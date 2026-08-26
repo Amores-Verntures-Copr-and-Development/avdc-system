@@ -43,6 +43,17 @@ export const selectStoreCompanyId = async (storeId: number) => {
   return (rows[0]?.companyId as number | undefined) ?? null;
 };
 
+// Lean, dedicated lookup (mirrors selectStoreCompanyId) - the POS
+// sale-creation route only needs this one flag, not the full Store row.
+export const selectStoreSalesApprovalEnabled = async (storeId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT storeSalesApprovalEnabled FROM Stores WHERE storeId = ?`,
+    [storeId],
+  );
+  return !!rows[0]?.storeSalesApprovalEnabled;
+};
+
 // All storeIds belonging to one company - used to scope aggregate
 // queries (dashboards, etc.) that otherwise only accept a single storeId.
 export const selectStoreIdsByCompanyId = async (companyId: number) => {
@@ -105,11 +116,13 @@ export const updateStoreFeatures = async ({
   storeKioskEnabled,
   storeOrderEnabled,
   storeKioskBannerImage,
+  storeSalesApprovalEnabled,
 }: {
   storeId: number;
   storeKioskEnabled?: boolean;
   storeOrderEnabled?: boolean;
   storeKioskBannerImage?: string | null;
+  storeSalesApprovalEnabled?: boolean;
 }) => {
   const pool = await getDBConnection();
   const setClauses: string[] = [];
@@ -128,6 +141,11 @@ export const updateStoreFeatures = async ({
   if (storeKioskBannerImage !== undefined) {
     setClauses.push("storeKioskBannerImage = ?");
     params.push(storeKioskBannerImage);
+  }
+
+  if (storeSalesApprovalEnabled !== undefined) {
+    setClauses.push("storeSalesApprovalEnabled = ?");
+    params.push(storeSalesApprovalEnabled ? 1 : 0);
   }
 
   if (setClauses.length === 0) return;
@@ -295,7 +313,7 @@ export const selectStoreSales = async ({
 
   const params: any[] = [];
 
-  let salesJoin = `LEFT JOIN Sales s ON s.storeId = st.storeId`;
+  let salesJoin = `LEFT JOIN Sales s ON s.storeId = st.storeId AND s.salesStatus NOT IN ('pending_approval', 'rejected')`;
 
   if (from && to) {
     salesJoin += ` AND DATE(s.salesCreatedAt) BETWEEN ? AND ?`;

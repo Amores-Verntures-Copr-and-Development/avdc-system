@@ -55,7 +55,7 @@ export const getSalesServices = {
     storeId?: number;
     method?: string;
     nolimit?: boolean;
-    excludeStatus?: string;
+    excludeStatus?: string | string[];
   }) => {
     try {
       const data = await selectSales({
@@ -106,7 +106,7 @@ export const getSalesServices = {
     customerType?: "customer" | "walk-in";
     storeId?: number;
     method?: string;
-    excludeStatus?: string;
+    excludeStatus?: string | string[];
   }) => {
     try {
       const data = await countSales({

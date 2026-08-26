@@ -105,6 +105,49 @@ export const getUsers = async ({
   }
 };
 
+// Backs the Employees page - unlike getUsers (the Users admin page, which
+// lists every account regardless of position), this always hides "staff"
+// and, for a supervisor, scopes the list to their own store rather than
+// the whole company.
+export const getEmployees = async ({
+  search,
+  actingUser,
+}: {
+  search?: string;
+  actingUser: AuthUser;
+}) => {
+  try {
+    const empPosition = (actingUser as unknown as { empPosition?: string })
+      .empPosition;
+    const isSupervisor = empPosition === "supervisor";
+
+    if (isSupervisor && !actingUser.storeId) {
+      throw new Error("No store assigned to this account");
+    }
+
+    const data = await selectUsers({
+      search,
+      companyId:
+        actingUser.userRole === "superadmin"
+          ? undefined
+          : actingUser.companyId,
+      excludeEmpPositions: ["staff"],
+      storeId: isSupervisor ? actingUser.storeId! : undefined,
+    });
+    return {
+      success: true,
+      message: "Employees fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: e instanceof Error ? e.message : "Failed to fetch employees!",
+      error: e,
+    };
+  }
+};
+
 export const getUserInfo = async (userId: number) => {
   try {
     const data = await getUserInfoByUserId({ userId });

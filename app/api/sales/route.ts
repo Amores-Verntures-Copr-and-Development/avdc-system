@@ -1,4 +1,5 @@
 import { getSales } from "@/controllers/SaleController";
+import { SalesStatus } from "@/types/sales";
 import { NextResponse } from "next/server";
 
 export async function GET(_request: Request) {
@@ -25,9 +26,10 @@ export async function GET(_request: Request) {
     const pageNumber = Number(page) || 1;
     const offset = limitNumber * (pageNumber - 1);
     const noLimit = searchParams.get("nolimit") || "";
+    const status = searchParams.get("status") || "";
     const res = await getSales({
       search,
-      keyFields: {},
+      keyFields: status ? { salesStatus: status as SalesStatus } : {},
       storeName: store,
       from,
       to,

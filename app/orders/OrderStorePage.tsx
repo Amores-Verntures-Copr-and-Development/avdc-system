@@ -1,18 +1,20 @@
 "use client";
 
 import Button from "@/components/shared/Button";
+import DropdownSelect from "@/components/shared/DropdownSelect";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import Table, { Column } from "@/components/shared/Table";
 import { UserAuth } from "@/hooks/useSession";
 import { ApiResponse } from "@/types/api";
+import { StoreInterface } from "@/types/stores";
 import { CreateOrderDto, DisplayOrderDto } from "@/dtos/orders.dto";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { formatPeso } from "@/utils/formatPeso";
 import { LayoutGrid, TableIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import CreateOrderModal from "./component/CreateOrderModal";
@@ -20,8 +22,14 @@ import OrderKanbanView from "./component/OrderKanbanView";
 
 interface OrderStorePageProps {
   storeId: number | null;
+  setStoreId: (storeId: number | null) => void;
+  // Everyone except staff/supervisor - can browse orders across every
+  // store in the company, not just their own session store.
+  canViewAllStores: boolean;
   user: UserAuth | null;
 }
+
+const ALL_STORES_VALUE = "";
 
 const fulfillmentBadge: Record<string, string> = {
   PICKUP: "bg-blue-100 text-blue-700",
@@ -53,9 +61,20 @@ const Badge = ({ label, className }: { label: string; className: string }) => (
   </span>
 );
 
-const orderColumns: Column<DisplayOrderDto>[] = [
+const buildOrderColumns = (
+  showStore: boolean,
+): Column<DisplayOrderDto>[] => [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
   { key: "orderNumber", name: "Order Number" },
+  ...(showStore
+    ? [
+        {
+          key: "storeName",
+          name: "Store",
+          selector: (row: DisplayOrderDto) => row.storeName || "-",
+        },
+      ]
+    : []),
   {
     key: "customerName",
     name: "Customer",
@@ -103,14 +122,39 @@ const orderColumns: Column<DisplayOrderDto>[] = [
   },
 ];
 
-const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
+const OrderStorePage = ({
+  storeId,
+  setStoreId,
+  canViewAllStores,
+  user,
+}: OrderStorePageProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showAdd, setShowAdd] = useState(false);
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
+  const { data: storesResponse } = useSWR<ApiResponse<StoreInterface[]>>(
+    canViewAllStores ? "/api/stores" : null,
+    fetcher,
+  );
+  const storeOptions = useMemo(
+    () => [
+      { label: "All Stores", value: ALL_STORES_VALUE },
+      ...(storesResponse?.data ?? [])
+        .filter((s): s is StoreInterface & { storeId: number } => !!s.storeId)
+        .map((s) => ({ label: s.storeName, value: String(s.storeId) })),
+    ],
+    [storesResponse],
+  );
+
+  const orderColumns = useMemo(
+    () => buildOrderColumns(canViewAllStores && !storeId),
+    [canViewAllStores, storeId],
+  );
+
   const apiUrl = useMemo(() => {
-    if (!storeId || viewMode !== "table") return null;
+    if (viewMode !== "table") return null;
+    if (!storeId && !canViewAllStores) return null;
 
     const search = searchParams.get("search") || "";
     const limit = searchParams.get("limit") || "";
@@ -121,8 +165,18 @@ const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
     if (limit) params.append("limit", limit);
     params.append("page", page);
 
-    return `/api/order/${storeId}?${params.toString()}`;
-  }, [storeId, searchParams, viewMode]);
+    return storeId
+      ? `/api/order/${storeId}?${params.toString()}`
+      : `/api/order?${params.toString()}`;
+  }, [storeId, canViewAllStores, searchParams, viewMode]);
+
+  // Kanban needs one specific store - fall back to Table when "All Stores"
+  // is selected while it's open.
+  useEffect(() => {
+    if (!storeId && viewMode === "kanban") {
+      setViewMode("table");
+    }
+  }, [storeId, viewMode]);
 
   const {
     data: response = { success: true, message: "", data: [], count: 0 },
@@ -160,25 +214,39 @@ const OrderStorePage = ({ storeId, user }: OrderStorePageProps) => {
 
   return (
     <>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center gap-3">
         <PageHeader title="Orders" subtitle="View and manage store orders" />
-        <div className="flex border border-gray-200 rounded-lg overflow-hidden">
-          <Button
-            size="sm"
-            isRounded={false}
-            icon={TableIcon}
-            label="Table"
-            color={viewMode === "table" ? "primary" : "secondary"}
-            onClick={() => setViewMode("table")}
-          />
-          <Button
-            size="sm"
-            isRounded={false}
-            icon={LayoutGrid}
-            label="Kanban"
-            color={viewMode === "kanban" ? "primary" : "secondary"}
-            onClick={() => setViewMode("kanban")}
-          />
+        <div className="flex items-center gap-3">
+          {canViewAllStores && (
+            <DropdownSelect
+              name="storeFilter"
+              sizes="sm"
+              value={storeId ? String(storeId) : ALL_STORES_VALUE}
+              options={storeOptions}
+              onChange={(e) =>
+                setStoreId(e.target.value ? Number(e.target.value) : null)
+              }
+            />
+          )}
+          <div className="flex border border-gray-200 rounded-lg overflow-hidden">
+            <Button
+              size="sm"
+              isRounded={false}
+              icon={TableIcon}
+              label="Table"
+              color={viewMode === "table" ? "primary" : "secondary"}
+              onClick={() => setViewMode("table")}
+            />
+            <Button
+              size="sm"
+              isRounded={false}
+              icon={LayoutGrid}
+              label="Kanban"
+              color={viewMode === "kanban" ? "primary" : "secondary"}
+              disabled={!storeId}
+              onClick={() => setViewMode("kanban")}
+            />
+          </div>
         </div>
       </div>
 

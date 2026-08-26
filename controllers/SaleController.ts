@@ -7,6 +7,8 @@ import {
   getSalesServices,
 } from "@/services/sales/get-sales";
 import { processCreateSales } from "@/services/sales/process-create-sales";
+import { processApprovedSale } from "@/services/sales/process-approved-sale";
+import { processRejectedSale } from "@/services/sales/process-rejected-sale";
 import { getSalesItemServices } from "@/services/sales/sale-items/get-sale-items";
 import { updateSalesBySalesId } from "@/services/sales/update-sales";
 import { sendEmailSalesBasePaymentMethods } from "@/services/sales/send-email-sales";
@@ -23,7 +25,7 @@ export const createSale = async (data: CreateSaleDto) => {
   } catch (e) {
     return {
       success: false,
-      message: "Failed to process order!",
+      message: e instanceof Error ? e.message : "Failed to process order!",
       error: e,
     };
   }
@@ -82,6 +84,101 @@ export const sendSalesReceiptEmailController = async ({
     return {
       success: false,
       message: "Failed to send receipt email!",
+      error: e,
+    };
+  }
+};
+
+// Shared by approve/reject - restricted to owner/admin/accounting (mirrors
+// canEditUser's gate in SelectedSalesPage.tsx), since those are the roles
+// trusted to act on what staff/supervisor submitted for approval.
+function canActOnPendingSale(actingUser: {
+  userRole: string;
+  empPosition?: string;
+}) {
+  return (
+    ["owner", "superadmin"].includes(actingUser.userRole) ||
+    (!!actingUser.empPosition &&
+      ["admin", "accounting"].includes(actingUser.empPosition))
+  );
+}
+
+// Approves a pending_approval sale, triggering the inventory/transaction/
+// email steps process-create-sales.ts deferred.
+export const approveSaleController = async ({
+  salesId,
+  actingUser,
+}: {
+  salesId: number;
+  actingUser: {
+    userId: number;
+    userRole: string;
+    empPosition?: string;
+  };
+}) => {
+  try {
+    if (!salesId) {
+      throw new Error("No sales ID found!");
+    }
+    if (!canActOnPendingSale(actingUser)) {
+      throw new Error("Only an owner, admin, or accounting can approve a sale");
+    }
+
+    const res = await processApprovedSale({
+      salesId,
+      approvedBy: actingUser.userId,
+    });
+    return {
+      success: true,
+      message: "Sale approved successfully!",
+      data: res ?? null,
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: e?.message ?? "Failed to approve sale!",
+      error: e,
+    };
+  }
+};
+
+// Rejects a pending_approval sale - no inventory/transaction/email to undo
+// since process-create-sales.ts never ran those for a pending sale.
+export const rejectSaleController = async ({
+  salesId,
+  reason,
+  actingUser,
+}: {
+  salesId: number;
+  reason?: string;
+  actingUser: {
+    userId: number;
+    userRole: string;
+    empPosition?: string;
+  };
+}) => {
+  try {
+    if (!salesId) {
+      throw new Error("No sales ID found!");
+    }
+    if (!canActOnPendingSale(actingUser)) {
+      throw new Error("Only an owner, admin, or accounting can reject a sale");
+    }
+
+    const res = await processRejectedSale({
+      salesId,
+      rejectedBy: actingUser.userId,
+      reason,
+    });
+    return {
+      success: true,
+      message: "Sale rejected successfully!",
+      data: res ?? null,
+    };
+  } catch (e: any) {
+    return {
+      success: false,
+      message: e?.message ?? "Failed to reject sale!",
       error: e,
     };
   }
@@ -152,11 +249,11 @@ export const getSalesByStoreId = async ({
   offset?: number;
   method?: string;
   noLimit?: boolean;
-  excludeStatus?: string;
+  excludeStatus?: string | string[];
 }) => {
   try {
     const data = await getSalesServices.getSales({
-      keyFields: { storeId: storeId },
+      keyFields: { storeId: storeId, ...keyFields },
       search,
       includeSaleItems,
       customer,
@@ -170,7 +267,7 @@ export const getSalesByStoreId = async ({
       excludeStatus,
     });
     const count = await getSalesServices.getSalesCount({
-      keyFields: { storeId: storeId },
+      keyFields: { storeId: storeId, ...keyFields },
       search,
       customer,
       customerType,

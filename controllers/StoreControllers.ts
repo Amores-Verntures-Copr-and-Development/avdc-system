@@ -51,7 +51,8 @@ export const updateStoreFeaturesController = async ({
     // (Kiosk/Order enabled) are gated to Owner/Admin.
     if (
       data.storeKioskEnabled !== undefined ||
-      data.storeOrderEnabled !== undefined
+      data.storeOrderEnabled !== undefined ||
+      data.storeSalesApprovalEnabled !== undefined
     ) {
       assertIsAdminOrOwner(actingUser, "update store features");
     }

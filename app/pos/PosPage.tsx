@@ -593,7 +593,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
         return;
       }
 
-      if (e.key.length !== 1) return;
+      if (!e.key || e.key.length !== 1) return;
 
       buffer += e.key;
 

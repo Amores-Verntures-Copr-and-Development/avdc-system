@@ -1,9 +1,9 @@
-import { getSalesItemBySalesId } from "@/controllers/SaleController";
+import { NextRequest, NextResponse } from "next/server";
+import { approveSaleController } from "@/controllers/SaleController";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
-import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
+export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ storeId: string; salesId: string }> },
 ) {
@@ -12,7 +12,6 @@ export async function GET(
     const storeId = Number(slug);
     const slug2 = (await params).salesId;
     const salesId = Number(slug2);
-
     if (!storeId) {
       throw new Error("No store found");
     }
@@ -23,27 +22,30 @@ export async function GET(
     const actingUser = getCurrentUser(_request);
     await assertStoreAccess(actingUser, storeId);
 
-    const res = await getSalesItemBySalesId(salesId);
-
+    const res = await approveSaleController({
+      salesId,
+      actingUser: actingUser as unknown as {
+        userId: number;
+        userRole: string;
+        empPosition?: string;
+      },
+    });
     if (!res.success) {
-      throw new Error(`${res.error}`);
+      throw new Error(res.message || "Failed to approve sale");
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: res.message,
-        data: res.data,
-      },
-      { status: 201 },
-    );
-  } catch (err: any) {
-    console.log({ err });
+    return NextResponse.json({
+      success: true,
+      message: res.message,
+      data: res.data,
+    });
+  } catch (e: any) {
+    console.log(e);
     return NextResponse.json(
       {
         success: false,
-        message: err?.message,
-        error: err?.message || String(err),
+        message: e?.message || "Failed to approve sale",
+        error: e?.message || String(e),
       },
       { status: 500 },
     );

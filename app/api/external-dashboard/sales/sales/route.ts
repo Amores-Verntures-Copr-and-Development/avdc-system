@@ -111,6 +111,10 @@ export async function GET(req: NextRequest) {
       to,
       offset,
       limit,
+      // Same exclusions as /api/external-dashboard/sales - refunded sales
+      // clutter this read-only view, and pending-approval/rejected sales
+      // aren't real sales at all.
+      excludeStatus: ["refunded", "pending_approval", "rejected"],
     });
 
     if (!res.success) {

@@ -21,6 +21,7 @@ import {
   MapPin,
   Pencil,
   Puzzle,
+  ShieldCheck,
   Store,
   Tablet,
 } from "lucide-react";
@@ -66,7 +67,7 @@ const Page = () => {
   const { storeName } = params;
   const [showIntegration, setShowIntegration] = useState(false);
   const [updatingFeature, setUpdatingFeature] = useState<
-    "kiosk" | "order" | null
+    "kiosk" | "order" | "salesApproval" | null
   >(null);
   const { user } = useSession();
   const { data, mutate: mutateStore } = useSWR<ApiResponse<StoreInterface[]>>(
@@ -82,8 +83,20 @@ const Page = () => {
     user?.userRole === "owner" ||
     (user?.userRole === "employee" && user?.empPosition === "admin");
 
+  const featureFields = {
+    kiosk: "storeKioskEnabled",
+    order: "storeOrderEnabled",
+    salesApproval: "storeSalesApprovalEnabled",
+  } as const;
+
+  const featureLabels = {
+    kiosk: "Kiosk",
+    order: "Order",
+    salesApproval: "Sales Approval",
+  } as const;
+
   const handleToggleFeature = async (
-    feature: "kiosk" | "order",
+    feature: "kiosk" | "order" | "salesApproval",
     enabled: boolean,
   ) => {
     if (!store?.storeId) return;
@@ -93,11 +106,7 @@ const Page = () => {
       const res = await fetch(`/api/stores/${store.storeId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(
-          feature === "kiosk"
-            ? { storeKioskEnabled: enabled }
-            : { storeOrderEnabled: enabled },
-        ),
+        body: JSON.stringify({ [featureFields[feature]]: enabled }),
       });
       const result = await res.json();
 
@@ -106,7 +115,7 @@ const Page = () => {
       }
 
       toast.success(
-        `${feature === "kiosk" ? "Kiosk" : "Order"} ${enabled ? "enabled" : "disabled"} for this store.`,
+        `${featureLabels[feature]} ${enabled ? "enabled" : "disabled"} for this store.`,
       );
       mutateStore();
     } catch (e: any) {
@@ -194,12 +203,10 @@ const Page = () => {
                     <Tablet className="h-4 w-4 text-primary-1" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Kiosk
-                    </p>
+                    <p className="text-sm font-semibold text-gray-900">Kiosk</p>
                     <p className="text-xs text-gray-500">
-                      Shows the Kiosks page in the sidebar for this
-                      store&apos;s staff and supervisors.
+                      Shows the Kiosks page in the sidebar for this store&apos;s
+                      staff and supervisors.
                     </p>
                   </div>
                 </div>
@@ -217,12 +224,10 @@ const Page = () => {
                     <ListOrdered className="h-4 w-4 text-primary-1" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">
-                      Order
-                    </p>
+                    <p className="text-sm font-semibold text-gray-900">Order</p>
                     <p className="text-xs text-gray-500">
-                      Shows the Orders page in the sidebar for this
-                      store&apos;s staff.
+                      Shows the Orders page in the sidebar for this store&apos;s
+                      staff.
                     </p>
                   </div>
                 </div>
@@ -230,6 +235,31 @@ const Page = () => {
                   initial={!!store?.storeOrderEnabled}
                   onToggle={(enabled) => handleToggleFeature("order", enabled)}
                   disabled={updatingFeature === "order"}
+                  sizes="sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-1/10">
+                    <ShieldCheck className="h-4 w-4 text-primary-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Sales Approval
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Requires approval sale before it&apos;s finalized for this
+                      store.
+                    </p>
+                  </div>
+                </div>
+                <Toggle
+                  initial={!!store?.storeSalesApprovalEnabled}
+                  onToggle={(enabled) =>
+                    handleToggleFeature("salesApproval", enabled)
+                  }
+                  disabled={updatingFeature === "salesApproval"}
                   sizes="sm"
                 />
               </div>

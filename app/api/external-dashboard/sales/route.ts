@@ -113,7 +113,9 @@ export async function GET(req: NextRequest) {
       limit,
       // Refunded sales clutter a read-only owner-facing view - the internal
       // admin Sales page still shows them for reconciliation purposes.
-      excludeStatus: "refunded",
+      // Pending-approval and rejected sales aren't real sales - not shown
+      // here at all.
+      excludeStatus: ["refunded", "pending_approval", "rejected"],
     });
 
     if (!res.success) {

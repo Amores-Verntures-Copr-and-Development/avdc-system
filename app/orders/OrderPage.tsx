@@ -11,11 +11,15 @@ const OrderPage = () => {
   const { user, hasStore, loading } = useSession();
   const [storeId, setStoreId] = useState<number | null>(null);
 
+  // hasStore means "scoped to a single store" (staff/supervisor) - only
+  // those roles get force-pinned to their session store. Everyone else
+  // defaults to storeId=null ("All Stores") and can narrow via the
+  // dropdown in OrderStorePage.
   useEffect(() => {
-    if (hasStore || user?.storeId) {
-      setStoreId(user?.storeId ?? 0);
+    if (hasStore && user?.storeId) {
+      setStoreId(user.storeId);
     }
-  }, [user]);
+  }, [user, hasStore]);
 
   if (loading) return <LoaderComponent />;
 
@@ -24,7 +28,12 @@ const OrderPage = () => {
       {loading ? (
         <LoaderComponent />
       ) : (
-        <OrderStorePage storeId={storeId} user={user} />
+        <OrderStorePage
+          storeId={storeId}
+          setStoreId={setStoreId}
+          canViewAllStores={!hasStore}
+          user={user}
+        />
       )}
     </PageLayout>
   );

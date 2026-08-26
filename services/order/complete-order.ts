@@ -85,6 +85,7 @@ export async function processCompleteOrder({
     salesStatus: SalesStatus.COMPLETED,
     salesRemarks: `Converted from Order ${order.orderNumber}`,
     salesSource: "order",
+    orderId: order.orderId,
     orderNumber: order.orderNumber,
     deliveryFee: order.deliveryFee,
     deliveryAddress: order.deliveryAddress,

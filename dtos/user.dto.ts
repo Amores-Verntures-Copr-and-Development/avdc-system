@@ -37,6 +37,7 @@ export type DisplayUserDto = Pick<
   Pick<EmployeeInterface, "empId" | "empPosition" | "storeId"> & {
     addedBy: String;
     fullName: string;
+    storeEmployees?: { storeId: number; storeName: string }[] | null;
   };
 
 export type UpdateUserInfoDto = Pick<

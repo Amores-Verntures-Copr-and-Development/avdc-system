@@ -847,6 +847,20 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         { label: "Walk-in", value: "walk-in" },
       ],
     },
+    {
+      id: "status",
+      label: "Status",
+      options: [
+        { label: "Pending Approval", value: SalesStatus.PENDING_APPROVAL },
+        { label: "Rejected", value: SalesStatus.REJECTED },
+        { label: "Pending", value: SalesStatus.PENDING },
+        { label: "In Progress", value: SalesStatus.IN_PROGRESS },
+        { label: "Completed", value: SalesStatus.COMPLETED },
+        { label: "Refunded", value: SalesStatus.REFUNDED },
+        { label: "Cancelled", value: SalesStatus.CANCELLED },
+        { label: "Voided", value: SalesStatus.VOIDED },
+      ],
+    },
   ];
 
   const today = new Date();

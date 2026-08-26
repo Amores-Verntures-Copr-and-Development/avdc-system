@@ -69,6 +69,7 @@ export async function PATCH(
       message: res.message,
     });
   } catch (err: any) {
+    console.log({ error: err });
     const isAuthError = err?.message === "Unauthorized";
     const isForbidden =
       err?.message?.includes("Only Owner or Admin") ||
