@@ -22,6 +22,7 @@ import DynamicDropdown from "@/components/shared/DynamicDropdown";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PlusIcon, Store } from "lucide-react";
 import { StoreInterface } from "@/types/stores";
+import { PaymentMethods } from "@/types/payment-methods";
 
 const columns: Column<DisplayCustomerDto>[] = [
   { key: "#", name: "#", selector: (_row, index) => index + 1 },
@@ -135,25 +136,55 @@ const CustomerPage = () => {
   } = useSWR<ApiResponse<DisplayCustomerDto[]>>(getApiUrl, fetcher);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Payment methods are configured per store, so the same names (Cash,
-  // Credit, GCash...) exist as separate rows per store - this endpoint
-  // returns the distinct names so the filter doesn't show duplicates.
-  const { data: paymentMethodNamesRes } = useSWR<ApiResponse<string[]>>(
-    "/api/payment-method/names",
+  // A staff/supervisor is locked to their own store (hasStore); an admin
+  // can also narrow to one store via the dropdown below - either way, the
+  // payment-method options should scope to that store instead of showing
+  // every store's payment methods.
+  const filterStoreId =
+    selectedStore ??
+    (Array.isArray(stores)
+      ? stores.find((s) => s.storeName === defaultStoreFromUrl)?.storeId
+      : undefined) ??
+    null;
+  const hasStoreContext = hasStore || Boolean(filterStoreId);
+
+  const { data: paymentMethodResponse = { data: [] } } = useSWR<{
+    data: PaymentMethods[];
+  }>(
+    hasStore
+      ? `/api/payment-method/store/${user?.storeId}/`
+      : filterStoreId
+        ? `/api/payment-method/store/${filterStoreId}/`
+        : null,
     fetcher,
   );
+
+  // No store is currently selected (admin browsing across every store) -
+  // there's no single store's payment methods to show, so fall back to
+  // the distinct names across all stores instead of leaving this filter
+  // empty (same source the Sales page filter falls back to).
+  const { data: paymentMethodNamesRes } = useSWR<ApiResponse<string[]>>(
+    !hasStoreContext ? "/api/payment-method/names" : null,
+    fetcher,
+  );
+
   const paymentMethodConfig = useMemo(
     () => [
       {
         id: "paymentMethod",
         label: "Payment Method",
-        options: (paymentMethodNamesRes?.data ?? []).map((name) => ({
-          label: name,
-          value: name,
-        })),
+        options: hasStoreContext
+          ? paymentMethodResponse.data.map((p) => ({
+              label: p.payMetName,
+              value: String(p.payMetName),
+            }))
+          : (paymentMethodNamesRes?.data ?? []).map((name) => ({
+              label: name,
+              value: name,
+            })),
       },
     ],
-    [paymentMethodNamesRes],
+    [hasStoreContext, paymentMethodResponse, paymentMethodNamesRes],
   );
   const handleFilterSave = useCallback(
     (newFilters: Record<string, string[]>) => {
