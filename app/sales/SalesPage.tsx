@@ -731,8 +731,9 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   );
 
   // The Total Sales card has its own period selector (Today / This Week /
-  // This Month / ...), independent of the table's date-range filter, so it
-  // needs its own scoped fetch against the same details endpoint.
+  // This Month / ...) as a fallback, but the table's date-range filter
+  // (when the user has explicitly picked a range there) takes priority -
+  // otherwise the card silently ignores the date the user just chose.
   const [salesPeriod, setSalesPeriod] = useState<
     "today" | "week" | "month" | "year" | "all"
   >("month");
@@ -766,15 +767,29 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     }
   }, [salesPeriod]);
 
+  const tableDateFrom = searchParams.get("from") || "";
+  const tableDateTo = searchParams.get("to") || "";
+  const hasTableDateRange = Boolean(tableDateFrom && tableDateTo);
+
   const salesCardUrl = useMemo(() => {
     const store = searchParams.get("store");
+    const range = hasTableDateRange
+      ? { from: tableDateFrom, to: tableDateTo }
+      : salesPeriodRange;
     const params = new URLSearchParams();
     if (store) params.append("store", store);
-    if (salesPeriodRange.from) params.append("from", salesPeriodRange.from);
-    if (salesPeriodRange.to) params.append("to", salesPeriodRange.to);
+    if (range.from) params.append("from", range.from);
+    if (range.to) params.append("to", range.to);
 
     return `${detailsUrl}?${params.toString()}`;
-  }, [detailsUrl, searchParams, salesPeriodRange]);
+  }, [
+    detailsUrl,
+    searchParams,
+    salesPeriodRange,
+    hasTableDateRange,
+    tableDateFrom,
+    tableDateTo,
+  ]);
 
   const debounceSalesCardApi = useDebounce(salesCardUrl, 300);
 
@@ -951,27 +966,33 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
                 title="Total Sales"
                 value={formatPeso(totalSales)}
                 headerRight={
-                  <div className="w-20 2xl:w-28">
-                    <DynamicDropdown
-                      options={[
-                        { label: "Today", value: "today" },
-                        { label: "This Week", value: "week" },
-                        { label: "This Month", value: "month" },
-                        { label: "This Year", value: "year" },
-                        { label: "All Time", value: "all" },
-                      ]}
-                      value={salesPeriod}
-                      onChange={(value) =>
-                        setSalesPeriod(
-                          (value ||
-                            "month") as typeof salesPeriod,
-                        )
-                      }
-                      placeholder="This Month"
-                      icon={<></>}
-                      size="xs"
-                    />
-                  </div>
+                  hasTableDateRange ? (
+                    <span className="text-[10px] 2xl:text-xs text-gray-500 whitespace-nowrap">
+                      Custom range
+                    </span>
+                  ) : (
+                    <div className="w-20 2xl:w-28">
+                      <DynamicDropdown
+                        options={[
+                          { label: "Today", value: "today" },
+                          { label: "This Week", value: "week" },
+                          { label: "This Month", value: "month" },
+                          { label: "This Year", value: "year" },
+                          { label: "All Time", value: "all" },
+                        ]}
+                        value={salesPeriod}
+                        onChange={(value) =>
+                          setSalesPeriod(
+                            (value ||
+                              "month") as typeof salesPeriod,
+                          )
+                        }
+                        placeholder="This Month"
+                        icon={<></>}
+                        size="xs"
+                      />
+                    </div>
+                  )
                 }
               >
                 <PaymentBreakdown
