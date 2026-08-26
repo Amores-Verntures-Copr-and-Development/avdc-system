@@ -291,7 +291,7 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         selector: (row) => {
           const paymentMethod = row.paymentMethods || [];
           return (
-            <div className="relative min-w-[100px]">
+            <div className="group relative min-w-[100px]">
               <select
                 className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
                 disabled

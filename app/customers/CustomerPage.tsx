@@ -396,7 +396,17 @@ const CustomerPage = () => {
           totalCount={response?.count}
           maxHeight="h-full"
           loading={isLoading}
-          onRowSelection={(row) => router.push(`/customers/${row.customerId}`)}
+          onRowSelection={(row) => {
+            const from = searchParams.get("from");
+            const to = searchParams.get("to");
+            const params = new URLSearchParams();
+            if (from) params.set("from", from);
+            if (to) params.set("to", to);
+            const query = params.toString();
+            router.push(
+              `/customers/${row.customerId}${query ? `?${query}` : ""}`,
+            );
+          }}
         />
       </div>
       <Modal

@@ -15,8 +15,8 @@ import {
   Phone,
   ShieldCheck,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import React, { useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import EditCustomerModal from "../components/EditCustomerModal";
 import { formatDateToWords } from "@/utils/formatDateToWords";
@@ -27,16 +27,44 @@ import { PaymentBreakdown } from "@/app/sales/components/PaymentBreakdown";
 const Page = () => {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isShowEdit, setIsShowEdit] = useState(false);
   const { id } = params;
 
   // Shared with CusRecentActivity below, so "Total Spent" up top always
   // reflects the same range as the sales list, instead of always being
   // the customer's lifetime total regardless of what range is selected.
-  const [dateRange, setDateRange] = useState<{ from: string; to: string }>({
-    from: "",
-    to: "",
-  });
+  // Seeded from the URL so a date range picked on the Customers list page
+  // carries over here instead of resetting to "all time" on navigation.
+  const [dateRange, setDateRange] = useState<{ from: string; to: string }>(
+    () => ({
+      from: searchParams.get("from") || "",
+      to: searchParams.get("to") || "",
+    }),
+  );
+
+  // Keeps the URL in sync with whatever range is picked (or cleared) here,
+  // same as the Customers list page - so the state isn't just local, it's
+  // reflected in from/to and survives a refresh/share/back-navigation.
+  const handleDateRangeChange = useCallback(
+    (range: { from: string; to: string }) => {
+      setDateRange(range);
+
+      const url = new URL(window.location.href);
+      if (range.from) {
+        url.searchParams.set("from", range.from);
+      } else {
+        url.searchParams.delete("from");
+      }
+      if (range.to) {
+        url.searchParams.set("to", range.to);
+      } else {
+        url.searchParams.delete("to");
+      }
+      router.push(url.toString());
+    },
+    [router],
+  );
 
   const customerUrl = useMemo(() => {
     if (!id) return null;
@@ -257,7 +285,7 @@ const Page = () => {
           customerId={customer.customerId}
           storeId={customer.storeId}
           dateRange={dateRange}
-          setDateRange={setDateRange}
+          setDateRange={handleDateRangeChange}
         />
       </div>
       <Modal

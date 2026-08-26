@@ -1,10 +1,12 @@
 import SalesStatusBadge from "@/app/sales/components/SalesStatusBadge";
 import Modal from "@/components/shared/Modal";
 import Table, { Column } from "@/components/shared/Table";
+import { FilterConfig } from "@/components/shared/FilterDropDown";
 import { DisplayCustomerDto } from "@/dtos/customer.dto";
 import { DisplayOrderDto } from "@/dtos/orders.dto";
 import { DisplaySalesDto } from "@/dtos/sales.dto";
 import { ApiResponse } from "@/types/api";
+import { PaymentMethods } from "@/types/payment-methods";
 import { SalesStatus } from "@/types/sales";
 import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
@@ -27,6 +29,24 @@ interface CusRecentActivityProps {
   setDateRange: (dateRange: { from: string; to: string }) => void;
 }
 
+// Refunds are tracked per payment method (SalesPaymentRefunds.payMetId),
+// never by mutating the original SalesPayments row - net them out here
+// so a method never shows more than what the customer actually kept paid
+// via it, and so a split-tender sale's other payment method(s) don't leak
+// into a single method's total.
+const netAmountForMethod = (
+  row: DisplaySalesDto,
+  method: { payMetId: number; salesPaymentAmount: number },
+) => {
+  const refunded = Array.isArray(row.salesPaymentRefunds)
+    ? row.salesPaymentRefunds
+        .filter((spr) => spr.payMetId === method.payMetId)
+        .reduce((total, spr) => total + Number(spr.salesPayRefAmount), 0)
+    : 0;
+  const net = Number(method.salesPaymentAmount) - refunded;
+  return net > Number(row.salesTotalAmount) ? Number(row.salesTotalAmount) : net;
+};
+
 const orderStatusBadge: Record<string, string> = {
   PENDING: "bg-gray-100 text-gray-700",
   CONFIRMED: "bg-blue-100 text-blue-700",
@@ -47,6 +67,9 @@ const CusRecentActivity = ({
   const [tableView, setTableView] = useState<
     "recent" | "payments" | "refunds" | "orders"
   >("recent");
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string[]>(
+    [],
+  );
 
   const salesUrl = useMemo(() => {
     if (!customerId) return null;
@@ -54,20 +77,65 @@ const CusRecentActivity = ({
     const params = new URLSearchParams();
     if (dateRange.from) params.set("from", dateRange.from);
     if (dateRange.to) params.set("to", dateRange.to);
+    if (paymentMethodFilter[0]) params.set("method", paymentMethodFilter[0]);
 
     const query = params.toString();
     return `/api/sales/${storeId}/customers/${customerId}${query ? `?${query}` : ""}`;
-  }, [customerId, storeId, dateRange]);
+  }, [customerId, storeId, dateRange, paymentMethodFilter]);
 
   const { data: salesData, isLoading: isLoadingSales } = useSWR<
     ApiResponse<DisplaySalesDto[]>
   >(salesUrl, fetcher);
 
+  // Store-scoped, same as the Customers list filter - a staff/supervisor's
+  // options shouldn't include payment methods from other stores.
+  const { data: paymentMethodRes } = useSWR<ApiResponse<PaymentMethods[]>>(
+    storeId ? `/api/payment-method/store/${storeId}/` : null,
+    fetcher,
+  );
+
+  const paymentMethodFilterConfig: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: "method",
+        label: "Payment Method",
+        options: (paymentMethodRes?.data ?? []).map((p) => ({
+          label: p.payMetName,
+          value: p.payMetName,
+        })),
+      },
+    ],
+    [paymentMethodRes],
+  );
+
+  const handlePaymentMethodFilterSave = (
+    filters: Record<string, string[]>,
+  ) => {
+    setPaymentMethodFilter(filters.method ?? []);
+  };
+
   // Nets out refunds the same way the "Total Amount" column below does,
   // so this reflects actual net spend for whatever date range is selected
-  // - not the sale's original gross amount.
+  // - not the sale's original gross amount. When a payment method is
+  // selected, a matching sale may still be a split-tender sale (e.g. paid
+  // partly Cash, partly Credit) - the filter only decides which SALES show
+  // up, so this sums just that method's own portion per sale, not the
+  // sale's full total, or filtering to Credit would still include Cash.
   const totalSpentInRange = useMemo(() => {
+    const selectedMethod = paymentMethodFilter[0];
+
     return (salesData?.data ?? []).reduce((sum, row) => {
+      if (selectedMethod) {
+        const matching = (row.paymentMethods ?? []).filter(
+          (m) => m.payMetName === selectedMethod,
+        );
+        const methodTotal = matching.reduce(
+          (total, m) => total + netAmountForMethod(row, m),
+          0,
+        );
+        return sum + methodTotal;
+      }
+
       const totalRefunds = Array.isArray(row.salesRefunds)
         ? row.salesRefunds.reduce(
             (total, sr) => total + Number(sr.salesRefAmount),
@@ -77,7 +145,7 @@ const CusRecentActivity = ({
 
       return sum + (Number(row.salesTotalAmount) - totalRefunds);
     }, 0);
-  }, [salesData?.data]);
+  }, [salesData?.data, paymentMethodFilter]);
 
   const { data: ordersData, isLoading: isLoadingOrders } = useSWR<
     ApiResponse<DisplayOrderDto[]>
@@ -213,27 +281,10 @@ const CusRecentActivity = ({
         name: "Payment Method",
         selector: (row) => {
           const paymentMethod = row.paymentMethods || [];
-          // Refunds are tracked per payment method (SalesPaymentRefunds.
-          // payMetId), never by mutating the original SalesPayments row -
-          // net them out here the same way the Total Amount column above
-          // nets row.salesRefunds, or this would keep showing the gross
-          // amount paid instead of what the customer actually kept spent.
-          const netAmount = (method: (typeof paymentMethod)[number]) => {
-            const refunded = Array.isArray(row.salesPaymentRefunds)
-              ? row.salesPaymentRefunds
-                  .filter((spr) => spr.payMetId === method.payMetId)
-                  .reduce(
-                    (total, spr) => total + Number(spr.salesPayRefAmount),
-                    0,
-                  )
-              : 0;
-            const net = Number(method.salesPaymentAmount) - refunded;
-            return net > Number(row.salesTotalAmount)
-              ? Number(row.salesTotalAmount)
-              : net;
-          };
+          const netAmount = (method: (typeof paymentMethod)[number]) =>
+            netAmountForMethod(row, method);
           return (
-            <div className="relative min-w-[100px]">
+            <div className="group relative min-w-[100px]">
               <select
                 className="border border-gray-300 rounded px-1 py-0.5 xl:px-2 xl:py-1 w-full text-[10px] xl:text-xs bg-gray-50 appearance-none cursor-default"
                 disabled
@@ -360,6 +411,10 @@ const CusRecentActivity = ({
             onRowSelection={(row) => setSelectedRow(row)}
             showDateRange
             onDateRangeChange={setDateRange}
+            showFilter
+            filterConfig={paymentMethodFilterConfig}
+            initialFilters={{ method: paymentMethodFilter }}
+            onSave={handlePaymentMethodFilterSave}
           />
         )}
       </div>

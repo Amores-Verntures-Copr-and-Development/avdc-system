@@ -12,6 +12,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
+    const method = searchParams.get("method") || undefined;
 
     if (!storeId) {
       throw new Error("No store ID found!");
@@ -28,6 +29,7 @@ export async function GET(
       storeId: Number(storeId),
       from,
       to,
+      method,
     });
 
     return NextResponse.json(
