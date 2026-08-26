@@ -61,15 +61,12 @@ export const receiveRequestItems = async ({
           );
 
         if (isAllRequestDeliveredOrReceived) {
+          // poItemOrderedQty is what was ordered on the PO - never touch it
+          // here. Only the status changes to reflect all requesting stores
+          // having confirmed receipt.
           const updatePoItem: Partial<PurchaseOrderItems> = {
             poItemId: poItems[0].poItemId,
             poItemStatus: "received_store",
-            ...(poItems[0].poItemStatus === "sent" && {
-              poItemOrderedQty: checkRequestItems.reduce(
-                (total, r) => total + Number(r.reqItemReceived),
-                0,
-              ),
-            }),
           };
           updatePoItems.push(updatePoItem);
         }

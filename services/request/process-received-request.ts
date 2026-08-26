@@ -97,31 +97,21 @@ export async function processReceivedRequest(data: Request) {
               reqItemId: reqItem.reqItemId,
             });
             if (poItems && poItems.length > 0) {
-              const isDeliveredStatus = poItems[0].poItemStatus === "delivered";
               const checkRequestItems =
                 await findRequestItemsByPoItemIdWithConverions({
                   connection,
                   poItemId: poItems[0].poItemId,
                 });
 
-              const sumOfOrderReceived = checkRequestItems.reduce(
-                (sumItems, i) => {
-                  return sumItems + Number(i.reqItemReceived);
-                },
-                0,
-              );
-
               const requestItemsIsAllDelivered = checkRequestItems.every(
                 (req) => ["received", "complete"].includes(req.reqItemStatus),
               );
 
+              // poItemOrderedQty is what was ordered on the PO - never
+              // overwritten here, only the status changes.
               if (requestItemsIsAllDelivered) {
                 updatePoItems.push({
                   poItemId: poItems[0].poItemId,
-                  poItemOrderedQty:
-                    isDeliveredStatus && Number(sumOfOrderReceived) !== 0
-                      ? Number(sumOfOrderReceived)
-                      : poItems[0].poItemOrderedQty,
                 });
               }
             }
@@ -134,7 +124,6 @@ export async function processReceivedRequest(data: Request) {
         const updatePoItemsDeliveredToStore: Partial<PurchaseOrderItems>[] =
           updatePoItems.map((i) => ({
             poItemId: i.poItemId,
-            poItemOrderedQty: i.poItemOrderedQty,
             poItemStatus: "received_store",
           }));
         await updatePurchaseOrderItems({

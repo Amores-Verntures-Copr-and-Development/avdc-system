@@ -6,17 +6,23 @@ import {
   Package,
   PackageCheck,
   PackageMinus,
+  PackagePlus,
   SlidersHorizontal,
   X,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import useSWR from "swr";
 
 import Table, { Column } from "@/components/shared/Table";
 import { getPurchaseStatusOption } from "@/utils/purchaserOrderUtils";
 import { PurchaseOrderItems } from "@/types/purchaseOrders";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import IconButton from "@/components/shared/IconButton";
+import { useSession } from "@/hooks/useSession";
+import { fetcher } from "@/utils/fetcher";
+import { ApiResponse } from "@/types/api";
+import { InventoryInterface, InventoryItemInterface } from "@/types/inventory";
 
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 
@@ -39,7 +45,77 @@ const ReceivedComponent = ({
   onReceivePO,
   poCreatedBy,
 }: ReceivedComponentProps) => {
+  const { user } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [addingToInventoryId, setAddingToInventoryId] = useState<
+    number | null
+  >(null);
+
+  // PO items receive into the purchasing user's stock-room inventory (same
+  // resolution process-received-purchase.ts uses server-side) - an item
+  // that isn't in there yet needs an InventoryItems row before it can
+  // actually receive quantity.
+  const { data: purchaserInventoryRes } = useSWR<
+    ApiResponse<InventoryInterface[]>
+  >(
+    poCreatedBy ? `/api/inventory/stock-room/${poCreatedBy}` : null,
+    fetcher,
+  );
+  const destinationInventoryId = purchaserInventoryRes?.data?.[0]?.inventoryId;
+
+  const {
+    data: inventoryItemsRes,
+    mutate: mutateInventoryItems,
+  } = useSWR<ApiResponse<InventoryItemInterface[]>>(
+    destinationInventoryId
+      ? `/api/inventory/item/${destinationInventoryId}?limit=1000`
+      : null,
+    fetcher,
+  );
+  const itemIdsInInventory = useMemo(
+    () =>
+      new Set(
+        (inventoryItemsRes?.data ?? []).map(
+          (i) => i.inventoryItemReferenceId,
+        ),
+      ),
+    [inventoryItemsRes],
+  );
+
+  const handleAddToInventory = async (itemId: number) => {
+    if (!destinationInventoryId) return;
+    setAddingToInventoryId(itemId);
+    try {
+      const res = await fetch(
+        `/api/inventory/${destinationInventoryId}/inventory-item`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inventoryId: destinationInventoryId,
+            inventoryItemReferenceType: "item",
+            inventoryItemReferenceId: itemId,
+            inventoryItemQuantity: 0,
+            inventoryItemMin: 0,
+            inventoryItemCreatedBy: user?.userId,
+          }),
+        },
+      );
+      const result = await res.json();
+      // Already-present is not a failure from this button's point of view -
+      // either way the item now has a row to receive into.
+      if (!result.success && !result.message?.includes("already")) {
+        throw new Error(result.message);
+      }
+      toast.success("Item added to inventory.");
+      await mutateInventoryItems();
+      mutateInventory();
+    } catch (e: any) {
+      toast.error(e.message || "Failed to add item to inventory.");
+    } finally {
+      setAddingToInventoryId(null);
+    }
+  };
 
   const [supplierReceivedData, setSupplierReceivedData] = useState<
     DisplayPOItemsSupplier[] | null
@@ -354,17 +430,29 @@ const ReceivedComponent = ({
         }
         renderActions={(row) =>
           row.poItemStatus === "sent" ? (
-            <IconButton
-              icon={<PackageCheck size={18} />}
-              onClick={() => {
-                if (!row.suppId) {
-                  return;
-                }
-                // handleAutoFill(row.suppId, row.poItemId);
-              }}
-              label="Auto-Fill Received Qty"
-              bg="primary"
-            />
+            <div className="flex gap-2 items-center justify-center">
+              {!itemIdsInInventory.has(row.itemId) && (
+                <IconButton
+                  icon={<PackagePlus size={18} />}
+                  onClick={() => handleAddToInventory(row.itemId)}
+                  label="Add to Inventory"
+                  bg="blue"
+                  loading={addingToInventoryId === row.itemId}
+                  disable={addingToInventoryId === row.itemId}
+                />
+              )}
+              <IconButton
+                icon={<PackageCheck size={18} />}
+                onClick={() => {
+                  if (!row.suppId) {
+                    return;
+                  }
+                  // handleAutoFill(row.suppId, row.poItemId);
+                }}
+                label="Auto-Fill Received Qty"
+                bg="primary"
+              />
+            </div>
           ) : row.poItemStatus === "received" ? (
             isAdjustReceive?.poItemId === row.poItemId ? (
               <div className="flex gap-2 items-center justify-center">

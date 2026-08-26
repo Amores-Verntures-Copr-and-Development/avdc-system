@@ -7,16 +7,12 @@ import { InventoryItemInterface } from "@/types/inventory";
 import { updateInventoryItem } from "@/services/inventory/inventory-items/update-inventory-items";
 import { CreateInventoryMovementDto } from "@/dtos/inventory.dto";
 import { createInventoryMovement } from "@/services/inventory/inventory-movement/create-inventory-movement";
-import { findPurchaserOrderItemByReqItemId } from "@/services/purchase/purchase-items/get-purchase-tems";
-import { findRequestItemsByPoItemIdWithConverions } from "./get-request-items";
-import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 
 export async function processAdditionalReceiveRequestItem(
   data: AdditionalReceiveDto,
 ) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
-  let checkRequestItems: any = [];
   await connection.beginTransaction();
   try {
     await connection.beginTransaction();
@@ -36,41 +32,9 @@ export async function processAdditionalReceiveRequestItem(
       connection: connection,
     });
 
-    const poItems = await findPurchaserOrderItemByReqItemId({
-      connection,
-      reqItemId: requestItemUpdate.reqItemId!,
-    });
-
-    if (poItems.length > 0) {
-      checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
-        connection,
-        poItemId: poItems[0].poItemId,
-      });
-    }
-    const sumOfOrderReceived = checkRequestItems.reduce(
-      (sumItems: number, i: any) => {
-        return sumItems + Number(i.reqItemReceived);
-      },
-      0,
-    );
-    const requestItemsIsAllDelivered = Boolean(
-      checkRequestItems.length &&
-      checkRequestItems.every((req: any) =>
-        ["received", "complete"].includes(req.reqItemStatus),
-      ),
-    );
-    if (requestItemsIsAllDelivered) {
-      await updatePurchaseOrderItems({
-        connection,
-        updates: [
-          {
-            poItemId: poItems[0].poItemId,
-            poItemOrderedQty: Number(sumOfOrderReceived),
-          },
-        ],
-        keyFields: ["poItemId"],
-      });
-    }
+    // poItemOrderedQty (what was ordered on the PO) is never touched by a
+    // request-item receive adjustment - only the request item and
+    // inventory quantities change here.
     const inventoryItem = await findInventoryItemsByField({
       connection: connection,
       keyFields: { inventoryItemId: requestItemUpdate.invItem },

@@ -2,9 +2,6 @@ import { DeductReceiveDto } from "@/app/requisitions/components/DeductReceiveMod
 import { getDBConnection } from "@/lib/db";
 import { RequestItems } from "@/types/request";
 import { updateRequestItems } from "./update-request-items";
-import { findPurchaserOrderItemByReqItemId } from "@/services/purchase/purchase-items/get-purchase-tems";
-import { findRequestItemsByPoItemIdWithConverions } from "./get-request-items";
-import { updatePurchaseOrderItems } from "@/services/purchase/purchase-items/update-purchase-items";
 import { findInventoryItemsByField } from "@/services/inventory/inventory-items/get-inventory-items";
 import { InventoryItemInterface } from "@/types/inventory";
 import { updateInventoryItem } from "@/services/inventory/inventory-items/update-inventory-items";
@@ -14,7 +11,6 @@ import { createInventoryMovement } from "@/services/inventory/inventory-movement
 export async function processDeductReceiveItem(data: DeductReceiveDto) {
   const pool = await getDBConnection();
   const connection = await pool.getConnection();
-  let checkRequestItems: any = [];
   try {
     await connection.beginTransaction();
     if (Number(data.requestItems.reqItemReceived) < data.deductReceive) {
@@ -36,41 +32,9 @@ export async function processDeductReceiveItem(data: DeductReceiveDto) {
       updates: [requestItemUpdate],
       connection: connection,
     });
-    const poItems = await findPurchaserOrderItemByReqItemId({
-      connection,
-      reqItemId: requestItemUpdate.reqItemId!,
-    });
-
-    // No linked PO item (e.g. request was never actually ordered) - skip the
-    // PO reconciliation step and just deduct the request/inventory below.
-    if (poItems && poItems.length > 0) {
-      checkRequestItems = await findRequestItemsByPoItemIdWithConverions({
-        connection,
-        poItemId: poItems[0].poItemId,
-      });
-
-      const sumOfOrderReceived = checkRequestItems.reduce(
-        (sumItems: any, i: any) => {
-          return sumItems + Number(i.reqItemReceived);
-        },
-        0,
-      );
-      const requestItemsIsAllDelivered = checkRequestItems.every((req: any) =>
-        ["received", "complete"].includes(req.reqItemStatus),
-      );
-      if (requestItemsIsAllDelivered) {
-        await updatePurchaseOrderItems({
-          connection,
-          updates: [
-            {
-              poItemId: poItems[0].poItemId,
-              poItemOrderedQty: Number(sumOfOrderReceived),
-            },
-          ],
-          keyFields: ["poItemId"],
-        });
-      }
-    }
+    // poItemOrderedQty (what was ordered on the PO) is never touched by a
+    // request-item receive/deduct adjustment - only the request item and
+    // inventory quantities change here.
     const inventoryItem = await findInventoryItemsByField({
       connection: connection,
       keyFields: { inventoryItemId: requestItemUpdate.invItem },
