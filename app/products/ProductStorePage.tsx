@@ -35,7 +35,6 @@ import Table, { Column } from "@/components/shared/Table";
 import toast from "react-hot-toast";
 import { formatPeso } from "@/utils/formatPeso";
 import { formatDateToWords } from "@/utils/formatDateToWords";
-import ProductVariantPage from "./ProductVariantPage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStores } from "@/hooks/userStore";
 import DynamicDropdown from "@/components/shared/DynamicDropdown";
@@ -50,6 +49,7 @@ import Popup from "@/components/shared/Popup";
 import ConfirmationModal from "@/components/shared/ConfirmationModal";
 import UnlistedItems from "./components/UnlistedItems";
 import BarcodeScanner from "../pos/components/BarcodeScanner";
+import StoreVariantsView from "./components/StoreVariantsView";
 interface ProductStorePageProps {
   storeId: number | null;
   user?: UserAuth | null;
@@ -123,25 +123,40 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   );
   const [showBarcode, setShowBarcode] = useState(false);
   const [showCategory, setShowCategory] = useState(false);
-  const [showProductVariantPage, setShowProductVariantPage] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
   // A single-variant product has nothing to disambiguate, so skip straight
   // to that variant's detail page instead of an intermediate list of one.
   const goToProduct = (row: DisplayProductsDtos) => {
     const variants = (row.productVariants || []).filter((v) => v !== null);
+    // Carry the product's store so the detail page can load it even for admins
+    // who have no personal store to fall back to.
+    const storeQuery = row.storeId ? `?storeId=${row.storeId}` : "";
     if (variants.length === 1) {
-      router.push(`/products/${row.prodId}/${variants[0].prodVarId}`);
+      router.push(
+        `/products/${row.prodId}/${variants[0].prodVarId}${storeQuery}`,
+      );
       return;
     }
-    setSelectedRow(row);
-    setShowProductVariantPage(true);
+    router.push(`/products/${row.prodId}${storeQuery}`);
   };
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const url = hasStore ? `/api/products/${storeId}` : `/api/products/`;
   const [showDeleteConfirmation, setShowDeleteComfirmation] =
     useState<DisplayProductsDtos | null>(null);
   const [filters, setFilters] = useState<Record<string, string[]>>({});
+
+  // The Products/Variants view is URL-driven (?view=variants) so it survives
+  // refresh and is shareable, like the rest of this page's state.
+  const view =
+    searchParams.get("view") === "variants" ? "variants" : "products";
+  const setView = (next: "products" | "variants") => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "variants") params.set("view", "variants");
+    else params.delete("view");
+    params.delete("page");
+    router.push(`?${params.toString()}`);
+  };
 
   const apiUrl = useMemo(() => {
     const search = searchParams.get("search") || "";
@@ -368,33 +383,49 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
   };
   return (
     <PageLayout className=" gap-2 2xl:gap-4 p-2">
-      {selectedRow && showProductVariantPage ? (
-        <ProductVariantPage
-          data={selectedRow}
-          onBack={() => {
-            setSelectedRow(null);
-            setShowProductVariantPage(false);
-          }}
-          user={user}
-        />
-      ) : (
-        <>
+      <>
           <div className="flex justify-between items-center">
             {" "}
             <PageHeader
               title={"Products"}
               subtitle="Add, edit, and track products"
             />
-            <div className="flex gap-2">
-              <Button
-                label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
-                size="sm"
-                icon={Eye}
-                onClick={() => setShowBreakdown((prev) => !prev)}
-              />
+            <div className="flex items-center gap-2">
+              <div className="inline-flex rounded-lg border border-gray-200 bg-white p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setView("products")}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold transition ${
+                    view === "products"
+                      ? "bg-pink-600 text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  Products
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("variants")}
+                  className={`rounded-md px-3 py-1 text-xs font-semibold transition ${
+                    view === "variants"
+                      ? "bg-pink-600 text-white"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  Variants
+                </button>
+              </div>
+              {view === "products" && (
+                <Button
+                  label={showBreakdown ? "Hide Breakdowns" : "Show Breakdowns"}
+                  size="sm"
+                  icon={Eye}
+                  onClick={() => setShowBreakdown((prev) => !prev)}
+                />
+              )}
             </div>
           </div>
-          {showBreakdown && (
+          {showBreakdown && view === "products" && (
             <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
               <StatCard
                 icon={Package2}
@@ -447,6 +478,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
             </div>
           )}
           <div className="flex-1 min-h-0  flex flex-col justify-between overflow-hidden">
+            {view === "products" ? (
             <Table
               showFilter={true}
               filterConfig={productConfig}
@@ -553,9 +585,10 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               ]}
               addContentLeftTitle={
                 !hasStore && (
-                  <div>
+                  <div className="order-first mr-auto w-full sm:w-64">
                     <DynamicDropdown
                       options={storeOptions}
+                      value={searchParams.get("store") ?? ""}
                       onChange={function (value: string | number): void {
                         if (value) {
                           const url = new URL(window.location.href);
@@ -654,9 +687,16 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                 );
               }}
             />
+            ) : (
+              <StoreVariantsView
+                hasStore={hasStore}
+                storeId={storeId}
+                stores={Array.isArray(stores) ? stores : []}
+                user={user}
+              />
+            )}
           </div>
         </>
-      )}
 
       <Modal
         title="Create Product"

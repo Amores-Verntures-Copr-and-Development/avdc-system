@@ -3,6 +3,7 @@ import {
   getProductVariantController,
 } from "@/controllers/ProductController";
 import { CreateProductVariantDto } from "@/dtos/products.dto";
+import { ProductVariants } from "@/types/products";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { NextRequest, NextResponse } from "next/server";
@@ -80,13 +81,20 @@ export async function GET(
         : statusParam === "slow"
           ? "slow"
           : undefined;
+    const isAvailableKioskParam = searchParams.get("isAvailableKiosk");
+    // Keys are hardcoded here (only the values come from the query), so the
+    // generic `pv.${key} = ?` builder in the model stays injection-safe.
+    const keyFields: Partial<ProductVariants> = {};
+    if (isAvailableOnlineParam === "1" || isAvailableOnlineParam === "0") {
+      keyFields.isAvailableOnline = isAvailableOnlineParam === "1";
+    }
+    if (isAvailableKioskParam === "1" || isAvailableKioskParam === "0") {
+      keyFields.isAvailableKiosk = isAvailableKioskParam === "1";
+    }
     const res = await getProductVariantController(
       storeId
         ? {
-            keyFields:
-              isAvailableOnlineParam === "1" || isAvailableOnlineParam === "0"
-                ? { isAvailableOnline: isAvailableOnlineParam === "1" }
-                : {},
+            keyFields,
             search,
             statusSold: status,
             from,

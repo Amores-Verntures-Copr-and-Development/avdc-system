@@ -1,5 +1,6 @@
 "use client";
 
+import AccessDenied from "@/components/shared/AccessDenied";
 import Button from "@/components/shared/Button";
 import LoaderComponent from "@/components/shared/LoaderComponent";
 import Modal from "@/components/shared/Modal";
@@ -16,7 +17,7 @@ import { ApiResponse } from "@/types/api";
 import { fetcher } from "@/utils/fetcher";
 import { ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import toast from "react-hot-toast";
@@ -24,24 +25,36 @@ import toast from "react-hot-toast";
 const Page = () => {
   const params = useParams();
   const router = useRouter();
-  const { user } = useSession();
-  const storeId = user?.storeId;
+  const searchParams = useSearchParams();
+  const { user, hasStore, loading } = useSession();
+  const urlStoreId = Number(searchParams.get("storeId")) || null;
+  // Supervisors/Staff are locked to their own store: the URL's storeId can't
+  // grant access to another store. Admins/company users have no personal store,
+  // so the product's store comes from the URL (see goToProduct / variant list).
+  const storeId = hasStore ? user?.storeId : (urlStoreId ?? user?.storeId);
+  const deniedStore =
+    hasStore && urlStoreId !== null && urlStoreId !== user?.storeId;
   const prodId = Number(params.prodId);
   const prodVarId = Number(params.prodVarId);
   const [showAddComponent, setShowAddComponent] = useState(false);
   const [showAddVariant, setShowAddVariant] = useState(false);
   const [isAddingVariant, setIsAddingVariant] = useState(false);
 
+  const canFetch = !!user && !deniedStore && !!storeId;
+
   const { data: productResponse, isLoading: isProductLoading } = useSWR<
     ApiResponse<DisplayProductsDtos[]>
-  >(storeId && prodId ? `/api/products/${storeId}/${prodId}` : null, fetcher);
+  >(
+    canFetch && prodId ? `/api/products/${storeId}/${prodId}` : null,
+    fetcher,
+  );
 
   const {
     data: variantResponse,
     mutate,
     isLoading: isVariantLoading,
   } = useSWR<{ data: DisplaProductVariantsDtos | null }>(
-    storeId && prodVarId
+    canFetch && prodVarId
       ? `/api/products/${storeId}/product-variants/${prodId}/${prodVarId}`
       : null,
     fetcher,
@@ -92,7 +105,17 @@ const Page = () => {
     }
   };
 
-  if (isProductLoading || isVariantLoading) return <LoaderComponent />;
+  if (loading || isProductLoading || isVariantLoading)
+    return <LoaderComponent />;
+
+  if (deniedStore)
+    return (
+      <AccessDenied
+        message="You don't have access to this store. You can only view products from your assigned store."
+        onBack={() => router.push("/products")}
+        backLabel="Back to Products"
+      />
+    );
 
   return (
     <PageLayout className="p-2 flex flex-col gap-2">

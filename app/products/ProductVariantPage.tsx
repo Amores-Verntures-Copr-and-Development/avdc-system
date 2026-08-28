@@ -147,6 +147,9 @@ const ProductVariantPage = ({
   user,
 }: ProductVariantPageProps) => {
   const router = useRouter();
+  // Carry the product's store so the variant detail page can load it even for
+  // admins who have no personal store to fall back to.
+  const storeQuery = data?.storeId ? `?storeId=${data.storeId}` : "";
   const [isDeleting, setIsDeleting] = useState(false);
   const [showBarcode, setShowBarcode] =
     useState<DisplaProductVariantsDtos | null>(null);
@@ -259,13 +262,13 @@ const ProductVariantPage = ({
           loading={isLoading}
           showActions
           onRowSelection={(row) =>
-            router.push(`/products/${row.prodId}/${row.prodVarId}`)
+            router.push(`/products/${row.prodId}/${row.prodVarId}${storeQuery}`)
           }
           renderActions={(row) => (
             <div className="flex gap-1 xl:gap-2 px-1 justify-center">
               <IconButton
                 onClick={() =>
-                  router.push(`/products/${row.prodId}/${row.prodVarId}`)
+                  router.push(`/products/${row.prodId}/${row.prodVarId}${storeQuery}`)
                 }
                 label={"View"}
                 bg={"nobg"}
@@ -310,7 +313,7 @@ const ProductVariantPage = ({
             return (
               <div
                 onClick={() =>
-                  router.push(`/products/${row.prodId}/${row.prodVarId}`)
+                  router.push(`/products/${row.prodId}/${row.prodVarId}${storeQuery}`)
                 }
                 className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
               >
@@ -385,7 +388,7 @@ const ProductVariantPage = ({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      router.push(`/products/${row.prodId}/${row.prodVarId}`);
+                      router.push(`/products/${row.prodId}/${row.prodVarId}${storeQuery}`);
                     }}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50"
                   >
