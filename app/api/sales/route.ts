@@ -27,9 +27,13 @@ export async function GET(_request: Request) {
     const offset = limitNumber * (pageNumber - 1);
     const noLimit = searchParams.get("nolimit") || "";
     const status = searchParams.get("status") || "";
+    const createdBy = searchParams.get("createdBy") || "";
     const res = await getSales({
       search,
-      keyFields: status ? { salesStatus: status as SalesStatus } : {},
+      keyFields: {
+        ...(status ? { salesStatus: status as SalesStatus } : {}),
+        ...(createdBy ? { salesCreatedBy: Number(createdBy) } : {}),
+      },
       storeName: store,
       from,
       to,

@@ -6,6 +6,7 @@ import {
   selectSales,
   selectSalesByProductVariant,
   selectSalesByTrend,
+  selectSalesCreators,
   selectSalesTotalDetails,
   selectSalesTransactionsByProductVariant,
 } from "@/models/saleModel";
@@ -277,6 +278,10 @@ export const getSalesServices = {
       limit,
       offset,
     });
+  },
+
+  getSalesCreators: async ({ storeId }: { storeId?: number } = {}) => {
+    return await selectSalesCreators({ storeId });
   },
 
   getSalesTransactionsByProductVariantCount: async ({

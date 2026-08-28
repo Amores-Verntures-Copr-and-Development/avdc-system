@@ -264,6 +264,33 @@ WHERE 1=1`;
   return rows;
 };
 
+// Distinct list of users who have created at least one sale - backs the
+// Sales page's "Created By" filter dropdown (mirrors
+// selectUniquePaymentMethodNames's role for the Payment Method filter).
+export const selectSalesCreators = async ({
+  connection,
+  storeId,
+}: {
+  connection?: PoolConnection;
+  storeId?: number;
+} = {}) => {
+  const pool = connection ? connection : await getDBConnection();
+  const params: any[] = [];
+  let sql = `
+    SELECT DISTINCT u.userId, CONCAT_WS(' ', u.userName, u.userLname) AS userFullName
+    FROM Sales s
+    INNER JOIN Users u ON u.userId = s.salesCreatedBy
+    WHERE u.userDeletedAt IS NULL
+  `;
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+  sql += ` ORDER BY userFullName ASC`;
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows as { userId: number; userFullName: string }[];
+};
+
 export const countSales = async ({
   keyFields = {},
   connection,

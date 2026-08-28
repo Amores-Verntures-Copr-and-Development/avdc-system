@@ -222,6 +222,23 @@ export const refundSalesController = async ({
   }
 };
 
+export const getSalesCreators = async ({ storeId }: { storeId?: number } = {}) => {
+  try {
+    const data = await getSalesServices.getSalesCreators({ storeId });
+    return {
+      success: true,
+      message: "Sales creators fetched successfully!",
+      data,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch sales creators!",
+      error: e,
+    };
+  }
+};
+
 export const getSalesByStoreId = async ({
   storeId,
   search,

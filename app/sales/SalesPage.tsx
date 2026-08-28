@@ -79,9 +79,11 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
     const to = searchParams.get("to");
     const method = searchParams.get("method");
     const customerType = searchParams.get("customerType");
+    const createdBy = searchParams.get("createdBy");
     const params = new URLSearchParams();
     if (method) params.append("method", method);
     if (customerType) params.append("customerType", customerType);
+    if (createdBy) params.append("createdBy", createdBy);
     if (search) params.append("search", search);
     if (status) params.append("status", status);
     if (category) params.append("category", category);
@@ -685,6 +687,29 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
   const canCreateSalesRole = !["staff", "supervisor", "purchaser"].includes(
     user?.empPosition ?? "",
   );
+
+  // Staff and supervisors only ever see their own store's sales, so a
+  // "Created By" filter would be redundant for them - restrict it to
+  // roles that browse sales across creators.
+  const canFilterByCreatedBy = !["staff", "supervisor"].includes(
+    user?.empPosition ?? "",
+  );
+
+  const { data: salesCreatorsRes } = useSWR<
+    ApiResponse<{ userId: number; userFullName: string }[]>
+  >(
+    canFilterByCreatedBy
+      ? `/api/sales/created-by${filterStoreId ? `?storeId=${filterStoreId}` : ""}`
+      : null,
+    fetcher,
+  );
+
+  const createdByOptions: FilterOption[] = (salesCreatorsRes?.data ?? []).map(
+    (creator) => ({
+      label: creator.userFullName,
+      value: String(creator.userId),
+    }),
+  );
   const needsStoreSelection = !hasStore || isAdmin;
   const hasStoreSelected =
     !needsStoreSelection ||
@@ -876,6 +901,18 @@ const SalesPage = ({ storeId, user, hasStore, isAdmin }: SalesPageProps) => {
         { label: "Voided", value: SalesStatus.VOIDED },
       ],
     },
+    ...(canFilterByCreatedBy
+      ? [
+          {
+            id: "createdBy",
+            label: "Created By",
+            options:
+              createdByOptions.length > 0
+                ? createdByOptions
+                : [{ label: "No results", value: "" }],
+          },
+        ]
+      : []),
   ];
 
   const today = new Date();
