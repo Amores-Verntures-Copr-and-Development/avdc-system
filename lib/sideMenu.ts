@@ -23,6 +23,7 @@ import {
   Briefcase,
   Settings,
   Receipt,
+  LineChart,
 } from "lucide-react";
 
 export interface SideMenuSection {
@@ -187,6 +188,17 @@ export const sideMenu: SideMenuGroup[] = [
         href: "/vouchers",
         icon: Ticket,
         roles: ["superadmin", "owner", "admin", "accounting"],
+      },
+    ],
+  },
+  {
+    key: "Reports",
+    sections: [
+      {
+        name: "Financial Reports",
+        href: "/financial-reports",
+        icon: LineChart,
+        roles: ["superadmin", "owner", "admin", "accounting", "hr"],
       },
     ],
   },

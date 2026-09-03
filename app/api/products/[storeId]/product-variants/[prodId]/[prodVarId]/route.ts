@@ -6,6 +6,10 @@ import {
 import { ProductVariants } from "@/types/products";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import {
+  assertProductVariantBelongsToStore,
+  assertInventoryItemBelongsToStore,
+} from "@/lib/auth/assertProductVariantAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -27,6 +31,7 @@ export async function GET(
 
     const actingUser = getCurrentUser(_request);
     await assertStoreAccess(actingUser, storeId);
+    await assertProductVariantBelongsToStore(prodVarId, storeId);
 
     const res = await getProductVariantController({
       keyFields: { prodVarId },
@@ -87,8 +92,49 @@ export async function PUT(
 
     const actingUser = getCurrentUser(_request);
     await assertStoreAccess(actingUser, storeId);
+    await assertProductVariantBelongsToStore(prodVarId, storeId);
 
-    const data = (await _request.json()) as Partial<ProductVariants>;
+    const body = (await _request.json()) as Partial<ProductVariants>;
+    // Explicit allowlist, not a body spread - PRODUCT_VARIANT_COLUMNS also
+    // permits prodId, prodVarImage, and the audit columns, none of which
+    // this endpoint should ever let a client set: prodId would silently
+    // move the variant into a different (possibly cross-store) product,
+    // and prodVarImage is only ever written by the dedicated image
+    // upload/delete route, which controls the stored filename's format.
+    // prodVarId itself always comes from the path, never the body -
+    // otherwise a request authorized for this store's prodVarId could
+    // still target a different store's variant by key confusion.
+    //
+    // Only copy fields actually present in the body (not just allowed) -
+    // the update builder below sends every present key as a bind param, so
+    // an omitted field must stay absent rather than become an explicit
+    // `undefined`, which mysql2 rejects.
+    const ALLOWED_FIELDS = [
+      "prodVarName",
+      "prodVarPrice",
+      "prodVarPriceOnline",
+      "prodVarUnit",
+      "isDeductInv",
+      "isAvailableOnline",
+      "isAvailableKiosk",
+      "kioskOrder",
+      "inventoryItemId",
+    ] as const satisfies readonly (keyof ProductVariants)[];
+
+    const data: Partial<ProductVariants> = { prodVarId };
+    for (const field of ALLOWED_FIELDS) {
+      if (field in body) {
+        (data as any)[field] = body[field];
+      }
+    }
+
+    if (data.inventoryItemId != null) {
+      // Otherwise this variant could be pointed at another store's
+      // inventory item, so future sales would decrement the wrong store's
+      // stock.
+      await assertInventoryItemBelongsToStore(data.inventoryItemId, storeId);
+    }
+
     const res = await updateProductVariantController(data);
     if (!res.success) {
       console.log(res.message);
@@ -143,6 +189,7 @@ export async function DELETE(
 
     const actingUser = getCurrentUser(_request);
     await assertStoreAccess(actingUser, storeId);
+    await assertProductVariantBelongsToStore(prodVarId, storeId);
 
     const res = await deleteProductVariantController({ prodVarId: prodVarId });
 

@@ -590,14 +590,14 @@ const TableInner = <T extends Record<string, any>>(
 
             <div className="flex flex-1 flex-wrap items-center justify-start sm:justify-end  2xl:justify-end gap-2 md:gap-3">
               {searchUrl && (
-                <div className="w-36 xl:w-48">
+                <div className="w-36 xl:w-48 [&_input]:shadow-none">
                   <SearchBar url={searchUrl} />
                 </div>
               )}
 
               {localSearch && (
                 <div
-                  className="w-40 xl:w-56"
+                  className="w-40 xl:w-56 [&_input]:shadow-none"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <SearchBar
@@ -651,7 +651,7 @@ const TableInner = <T extends Record<string, any>>(
                           width: position.width,
                         }}
                       >
-                        <div className="flex  flex-col gap-2">
+                        <div className="flex flex-col gap-2 [&_button]:shadow-none">
                           {renderTopActionButtons
                             .filter((button) => button.isShow ?? true)
                             .map((button, index) => (
@@ -675,7 +675,7 @@ const TableInner = <T extends Record<string, any>>(
                     )}
 
                   {/* Desktop */}
-                  <div className="hidden items-center gap-2 2xl:flex">
+                  <div className="hidden items-center gap-2 2xl:flex [&_button]:shadow-none">
                     {renderTopActionButtons
                       .filter((button) => button.isShow ?? true)
                       .map((button, index) => (
@@ -685,7 +685,7 @@ const TableInner = <T extends Record<string, any>>(
                 </div>
               )}
               <div
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 [&_button]:shadow-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 {renderTopActions}

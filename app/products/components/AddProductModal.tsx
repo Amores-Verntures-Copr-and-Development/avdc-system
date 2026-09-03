@@ -2,13 +2,16 @@ import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 
 import Input from "@/components/shared/Input";
+import Table, { Column } from "@/components/shared/Table";
+import Toggle from "@/components/shared/Toggle";
 
-import { CreateProductDtos } from "@/dtos/products.dto";
+import { CreateProductDtos, CreateProductVariantDto } from "@/dtos/products.dto";
 import { UserAuth } from "@/hooks/useSession";
 import { ProductCategories } from "@/types/products";
 
 import { handleChange } from "@/utils/handle-change";
-import React, { useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
+import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 interface AddProductModalProps {
@@ -20,6 +23,42 @@ interface AddProductModalProps {
   onCancel: () => void;
   categories: ProductCategories[];
 }
+
+interface VariantRow {
+  id: number;
+  prodVarName: string;
+  prodVarPrice: string;
+  prodVarUnit: string;
+}
+
+const emptyVariantRow = (id: number): VariantRow => ({
+  id,
+  prodVarName: "",
+  prodVarPrice: "",
+  prodVarUnit: "",
+});
+
+const variantColumns: Column<VariantRow>[] = [
+  {
+    name: "Variant Name",
+    key: "prodVarName",
+    editable: true,
+    inputType: "text",
+  },
+  {
+    name: "Price",
+    key: "prodVarPrice",
+    editable: true,
+    inputType: "number",
+  },
+  {
+    name: "Unit",
+    key: "prodVarUnit",
+    editable: true,
+    inputType: "text",
+    inputProps: { placeholder: "pc" },
+  },
+];
 
 const AddProductModal = ({
   user,
@@ -36,13 +75,75 @@ const AddProductModal = ({
     prodCreatedBy: user?.userId ?? 0,
     prodName: "",
   });
+  const [hasVariants, setHasVariants] = useState(false);
+  const [variantPrice, setVariantPrice] = useState("");
+  const [variantUnit, setVariantUnit] = useState("");
+  const [variantRows, setVariantRows] = useState<VariantRow[]>([
+    emptyVariantRow(1),
+  ]);
+  const nextVariantRowId = useRef(2);
   const handleDataChange = handleChange(formData, setFormData);
+
+  const addVariantRow = () => {
+    setVariantRows((prev) => [
+      ...prev,
+      emptyVariantRow(nextVariantRowId.current++),
+    ]);
+  };
+
+  const removeVariantRow = (id: number) => {
+    setVariantRows((prev) => prev.filter((row) => row.id !== id));
+  };
+
   const handleAddProduct = async () => {
     if (formData.prodName === "") {
       toast.error("No product name is found!");
       return;
     }
-    const success = await onSubmit(formData);
+
+    let productVariants: CreateProductVariantDto[];
+
+    if (hasVariants) {
+      const validRows = variantRows.filter(
+        (row) => row.prodVarName.trim() !== "",
+      );
+
+      if (validRows.length === 0) {
+        toast.error("Please add at least one variant.");
+        return;
+      }
+
+      productVariants = validRows.map((row) => ({
+        prodId: 0,
+        prodVarCreatedBy: user?.userId ?? 0,
+        prodVarName: row.prodVarName,
+        prodVarPrice: Number(row.prodVarPrice) || 0,
+        prodVarUnit: row.prodVarUnit.trim() || "pc",
+        isDeductInv: false,
+        inventoryItemId: null,
+      }));
+    } else {
+      if (variantPrice === "" || Number(variantPrice) < 0) {
+        toast.error("Please enter a price for this product.");
+        return;
+      }
+
+      productVariants = [
+        {
+          prodId: 0,
+          prodVarCreatedBy: user?.userId ?? 0,
+          prodVarName: formData.prodName,
+          prodVarPrice: Number(variantPrice),
+          prodVarUnit: variantUnit.trim() || "pc",
+          isDeductInv: false,
+          inventoryItemId: null,
+        },
+      ];
+    }
+
+    const payload: CreateProductDtos = { ...formData, productVariants };
+
+    const success = await onSubmit(payload);
 
     if (success) {
       if (mutate) {
@@ -53,14 +154,16 @@ const AddProductModal = ({
           prodCreatedBy: user?.userId ?? 0,
           prodName: "",
         });
+        setHasVariants(false);
+        setVariantPrice("");
+        setVariantUnit("");
+        setVariantRows([emptyVariantRow(nextVariantRowId.current++)]);
       }
     }
   };
   return (
-    <div className="flex flex-col gap-2 w-full h-full">
-      <span className="text-sm font-semibold"></span>
-
-      <div className="flex flex-col">
+    <div className="flex flex-col gap-3 w-full h-full">
+      <div className="flex flex-col gap-2">
         <div className="flex gap-2">
           <Input
             label={"Name"}
@@ -84,6 +187,70 @@ const AddProductModal = ({
             onChange={handleDataChange}
           />
         </div>
+
+        <div className="flex items-end gap-3">
+          <Toggle
+            sizes="xs"
+            label="Has variants"
+            flexType="flex-col"
+            initial={hasVariants}
+            onToggle={(state) => setHasVariants(state)}
+          />
+
+          {!hasVariants && (
+            <Input
+              label="Price"
+              sizes="sm"
+              type="number"
+              value={variantPrice}
+              onChange={(e) => setVariantPrice(e.target.value)}
+              name="prodVarPrice"
+            />
+          )}
+
+          {!hasVariants && (
+            <Input
+              label="Unit"
+              sizes="sm"
+              placeholder="pc"
+              value={variantUnit}
+              onChange={(e) => setVariantUnit(e.target.value)}
+              name="prodVarUnit"
+            />
+          )}
+        </div>
+
+        {hasVariants && (
+          <Table
+            columns={variantColumns}
+            data={variantRows}
+            uniqueIdKey="id"
+            updateData={(data) => setVariantRows(data)}
+            debounceTime={0}
+            showActions
+            renderActions={(row) => (
+              <button
+                type="button"
+                onClick={() => removeVariantRow(row.id)}
+                className="text-gray-400 hover:text-red-500"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
+            renderTopActionButtons={[
+              {
+                props: {
+                  label: "Add Variant",
+                  icon: Plus,
+                  size: "xs",
+                  color: "secondary",
+                  onClick: addVariantRow,
+                },
+              },
+            ]}
+            maxHeight="200px"
+          />
+        )}
       </div>
       <div className="flex justify-end gap-2 mt-auto">
         <Button

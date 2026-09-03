@@ -705,7 +705,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       const res = await result.json();
 
       if (!res.success) {
-        throw new Error(res.err);
+        throw new Error(res.message || res.error || "Failed to process order");
       }
 
       const sales = res.data as Sales[];
@@ -725,7 +725,11 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
       return true;
     } catch (e) {
       console.log(e);
-      toast.error("Failed to add Inventory.");
+      toast.error(
+        e instanceof Error && e.message
+          ? e.message
+          : "Failed to add Inventory.",
+      );
       return false;
     } finally {
       setIsConfirmingOrder(false);
@@ -1358,7 +1362,7 @@ const PosPage = ({ storeId, user }: PosPageProps) => {
               setRecentSales(null);
             }
           }}
-          size="xl"
+          size={isPaymentSuccess ? "md" : "xl"}
         >
           {!isPaymentSuccess ? (
             <CheckOutModal

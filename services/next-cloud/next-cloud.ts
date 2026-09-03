@@ -20,8 +20,15 @@ const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
 function sanitizeUploadFilename(originalName: string): string {
   const base = originalName.split(/[/\\]/).pop() || "upload";
   const cleaned = base.replace(/[^A-Za-z0-9._-]/g, "_");
-  return cleaned || "upload";
+  // A name made up of only dots (".", "..", "...") survives the character
+  // class above untouched - with no "/" left to split into segments, a bare
+  // ".." here is still resolved as a traversal segment by the WebDAV path.
+  return cleaned && !/^\.+$/.test(cleaned) ? cleaned : "upload";
 }
+
+// Matches a name produced by sanitizeUploadFilename: safe characters only,
+// and not reducible to a pure "." / ".." traversal segment.
+const SAFE_STORED_FILENAME = /^(?!\.+$)[A-Za-z0-9._-]+$/;
 
 export const NextCloudServices = {
   uploadFile: async (prodVarId: number, image: File) => {
@@ -73,6 +80,47 @@ export const NextCloudServices = {
       return {
         success: false as const,
         message: "Failed to upload files",
+        error: e,
+      };
+    }
+  },
+
+  // Re-validates rather than trusting the caller (even though today every
+  // caller passes a filename read back from the DB, i.e. one uploadFile
+  // already sanitized) - encodeURIComponent alone doesn't stop traversal
+  // segments like ".." from reaching the WebDAV path, so this is the one
+  // place that must hold the line if a future caller ever passes raw input.
+  deleteFile: async (fileName: string) => {
+    try {
+      if (!SAFE_STORED_FILENAME.test(fileName)) {
+        return {
+          success: false as const,
+          message: "Invalid file name",
+        };
+      }
+
+      const nextCloudUrl = `${process.env.NEXT_CLOUD_URL}/${encodeURIComponent(mainFolder)}/${encodeURIComponent(folder)}/${encodeURIComponent(fileName)}`;
+      const deleteResponse = await fetch(nextCloudUrl, {
+        method: "DELETE",
+        headers: {
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.NEXT_CLOUD_USERNAME}:${process.env.NEXT_CLOUD_PASSWORD}`,
+            ).toString("base64"),
+        },
+      });
+      // 404 just means it's already gone - nothing left to clean up.
+      if (!deleteResponse.ok && deleteResponse.status !== 404) {
+        throw new Error(
+          `Nextcloud delete failed: ${deleteResponse.status} ${deleteResponse.statusText}`,
+        );
+      }
+      return { success: true as const };
+    } catch (e) {
+      return {
+        success: false as const,
+        message: "Failed to delete old file",
         error: e,
       };
     }

@@ -25,6 +25,7 @@ import { createInventoryMovement } from "../inventory/inventory-movement/create-
 import { getSalesServices } from "./get-sales";
 import { createSalesDiscounts } from "./sale-discounts/create-sales-discounts";
 import { updateSalesByFields } from "./update-sales";
+import { selectInventoryItemCosts } from "@/models/inventoryModels";
 import { SalesPaymentStatus, SalesStatus } from "../../types/sales";
 import { CreateTransactionDto } from "@/dtos/transaction.dto";
 import { createTransactions } from "../transaction/create-transaction";
@@ -78,19 +79,46 @@ export async function processCreateSales(data: CreateSaleDto) {
       ],
       keyFields: ["salesId"],
     });
+    // Cost is never trusted from the client - resolve current Items.itemPrice
+    // for every inventoryItemId this sale touches (direct variant link or
+    // recipe components) in one batch query, then snapshot it per sale item
+    // below. Same resolution the live totalCost/profit figures use in
+    // selectProductVariants, just captured once so it survives future cost
+    // changes (see saleItemCost on SalesItems).
+    const inventoryItemIdsForCost = new Set<number>();
+    data.salesItems?.forEach((item) => {
+      if (item.inventoryItemId) inventoryItemIdsForCost.add(item.inventoryItemId);
+      item.components?.forEach((c) => inventoryItemIdsForCost.add(c.inventoryItemId));
+    });
+    const itemCosts = await selectInventoryItemCosts({
+      connection,
+      inventoryItemIds: Array.from(inventoryItemIdsForCost),
+    });
+
     const saleItemData: CreateSaleItemDto[] =
-      data.salesItems?.map((item) => ({
-        salesItemPrice: item.salesItemPrice,
-        salesItemQuantity: item.salesItemQuantity,
-        salesItemSubtotal: item.salesItemSubtotal,
-        salesItemTotal: item.salesItemTotal,
-        salesId: salesId,
-        saleItemQuantity: item.salesItemQuantity,
-        prodVarId: item.prodVarId,
-        inventoryItemId: item.inventoryItemId,
-        components: item.components,
-        salesItemDiscounts: item.salesItemDiscounts,
-      })) ?? [];
+      data.salesItems?.map((item) => {
+        const saleItemCost = item.inventoryItemId
+          ? (itemCosts.get(item.inventoryItemId) ?? 0)
+          : (item.components ?? []).reduce(
+              (sum, c) =>
+                sum + (itemCosts.get(c.inventoryItemId) ?? 0) * c.quantityRequired,
+              0,
+            );
+
+        return {
+          salesItemPrice: item.salesItemPrice,
+          salesItemQuantity: item.salesItemQuantity,
+          salesItemSubtotal: item.salesItemSubtotal,
+          salesItemTotal: item.salesItemTotal,
+          salesId: salesId,
+          saleItemQuantity: item.salesItemQuantity,
+          prodVarId: item.prodVarId,
+          inventoryItemId: item.inventoryItemId,
+          components: item.components,
+          salesItemDiscounts: item.salesItemDiscounts,
+          saleItemCost,
+        };
+      }) ?? [];
 
     //insert into saleItems table
     if (saleItemData.length > 0) {

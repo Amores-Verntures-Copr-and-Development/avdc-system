@@ -62,6 +62,7 @@ export interface SaleItems {
   salesItemSubtotal: number;
   salesItemTotal: number;
   salesItemPrice: number;
+  saleItemCost: number;
   salesItemStatus: SalesItemStatus;
   salesItemRefundedBy: number;
   salesItemRefundedAt: string;
@@ -179,4 +180,12 @@ export interface SalesTransactionByProductVariant {
   paymentMethods:
     | { payMetName: string; salesPaymentAmount: number }[]
     | null;
+}
+
+// One row per day/week/month bucket for a given product variant - powers
+// the drill-down modal's Qty Sold / Total Sales trend chart.
+export interface SalesTrendByProductVariant {
+  period: string;
+  totalQtySold: number;
+  totalSales: number;
 }

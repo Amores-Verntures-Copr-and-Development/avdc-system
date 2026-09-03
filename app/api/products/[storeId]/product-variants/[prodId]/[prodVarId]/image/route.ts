@@ -1,7 +1,9 @@
 import { updateProductVariantController } from "@/controllers/ProductController";
 import { NextCloudServices } from "@/services/next-cloud/next-cloud";
+import { selectProductVariantImage } from "@/models/productModel";
 import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
+import { assertProductVariantBelongsToStore } from "@/lib/auth/assertProductVariantAccess";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -29,17 +31,34 @@ export async function POST(
 
     const actingUser = getCurrentUser(req);
     await assertStoreAccess(actingUser, Number(storeId));
+    await assertProductVariantBelongsToStore(Number(prodVarId), Number(storeId));
 
-    const formData = await req.formData();
-    const file = formData.getAll("image") as File[];
+    // Image is sent as a base64 JSON payload (not multipart/form-data): the
+    // HTTPS origin was corrupting multipart bodies (stale service worker /
+    // proxy), producing "Failed to parse body as FormData". JSON is unaffected.
+    const body = (await req.json()) as {
+      image?: string;
+      fileName?: string;
+      fileType?: string;
+    };
 
-    if (!file[0]) {
+    if (!body.image) {
       throw new Error("No image file found!");
     }
 
+    const base64 = body.image.includes(",")
+      ? body.image.split(",").pop()!
+      : body.image;
+    const buffer = Buffer.from(base64, "base64");
+    const file = new File([buffer], body.fileName || `${prodVarId}.png`, {
+      type: body.fileType || "image/png",
+    });
+
+    const previousImage = await selectProductVariantImage(Number(prodVarId));
+
     const imageUpload = await NextCloudServices.uploadFile(
       Number(prodVarId),
-      file[0],
+      file,
     );
     console.log({ imageUpload });
     if (!imageUpload.success) {
@@ -53,6 +72,16 @@ export async function POST(
 
     if (!res.success) {
       throw new Error("Failed to upload image!");
+    }
+
+    // Best-effort: the DB already points at the new image, so a delete
+    // failure here shouldn't fail the request - it just leaves the old
+    // file orphaned instead of blocking the upload the user asked for.
+    if (previousImage && previousImage !== imageUpload.fileName) {
+      const cleanup = await NextCloudServices.deleteFile(previousImage);
+      if (!cleanup.success) {
+        console.log({ cleanupError: cleanup });
+      }
     }
 
     return NextResponse.json(

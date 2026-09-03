@@ -38,8 +38,9 @@ const sizeClasses: Record<ButtonSize, string> = {
   sm: `
     text-[10px]
     lg:text-xs
-    px-2 py-1
-    xl:px-3 xl:py-1.5
+    h-8
+    px-2
+    xl:px-3
   `,
 
   md: `

@@ -52,7 +52,18 @@ export async function PATCH(
     const storeId = Number((await params).storeId);
     const actingUser = getCurrentUser(request);
     await assertStoreAccess(actingUser, storeId);
-    const data = (await request.json()) as UpdateStoreFeaturesDto;
+    const body = (await request.json()) as UpdateStoreFeaturesDto;
+    // storeKioskBannerImage is deliberately excluded from this generic
+    // endpoint - it's exempt from the admin/owner gate below (feature
+    // toggles only), so allowing it here would let any store user write an
+    // arbitrary value into a field that later gets passed straight into a
+    // Nextcloud file path. Only the kiosk-banner upload/delete routes,
+    // which control the filename format themselves, may set it.
+    const data: UpdateStoreFeaturesDto = {
+      storeKioskEnabled: body.storeKioskEnabled,
+      storeOrderEnabled: body.storeOrderEnabled,
+      storeSalesApprovalEnabled: body.storeSalesApprovalEnabled,
+    };
 
     const res = await updateStoreFeaturesController({
       storeId,

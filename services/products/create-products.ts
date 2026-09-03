@@ -40,6 +40,17 @@ export async function createProducts({
     }
 
     const id = await insertProducts({ connection, data });
+
+    if (data.productVariants?.length) {
+      await insertProductVariantsBulk({
+        connection,
+        data: data.productVariants.map((variant) => ({
+          ...variant,
+          prodId: id,
+        })),
+      });
+    }
+
     return id;
   } catch (e) {
     throw e;

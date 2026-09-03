@@ -68,6 +68,33 @@ const VARIANT_COMPONENT_COLUMNS = new Set<keyof VariantComponents>([
   "isDeductVar",
 ]);
 
+// Lean, dedicated lookup (mirrors selectStoreCompanyId in storeModels.ts) -
+// fetches the current image filename before it's overwritten, so the old
+// Nextcloud file can be deleted instead of orphaned.
+export const selectProductVariantImage = async (prodVarId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT prodVarImage FROM ProductVariants WHERE prodVarId = ?`,
+    [prodVarId],
+  );
+  return (rows[0]?.prodVarImage as string | undefined) ?? null;
+};
+
+// Resolves which store actually owns a product variant, straight from the
+// DB - a route must never trust a client-supplied prodVarId to already
+// belong to the storeId in its own URL/body.
+export const selectProductVariantStoreId = async (prodVarId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT p.storeId AS storeId
+       FROM ProductVariants pv
+       JOIN Products p ON p.prodId = pv.prodId
+      WHERE pv.prodVarId = ?`,
+    [prodVarId],
+  );
+  return (rows[0]?.storeId as number | undefined) ?? null;
+};
+
 export const insertProducts = async ({
   connection,
   data,
@@ -706,16 +733,23 @@ export const selectProductsDashboardStats = async ({
     ${soldWhereClause};
   `;
 
-  // 7️⃣ Best seller (highest units sold, all time)
+  // 7️⃣ Best seller (highest units sold, all time) - grouped by variant, not
+  // product, so e.g. "Iced Coffee - Large" and "Iced Coffee - Small" compete
+  // as separate entries instead of being summed into one "Iced Coffee" row.
   const bestSellerSql = `
-    SELECT p.prodId, p.prodName, COALESCE(SUM(si.salesItemQuantity), 0) AS totalSold
+    SELECT
+      pv.prodVarId,
+      pv.prodVarName,
+      p.prodId,
+      p.prodName,
+      COALESCE(SUM(si.salesItemQuantity), 0) AS totalSold
     FROM SalesItems si
     JOIN Sales s ON s.salesId = si.salesId
     JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
     JOIN Products p ON p.prodId = pv.prodId
     LEFT JOIN Stores st ON st.storeId = p.storeId
     ${soldWhereClause}
-    GROUP BY p.prodId, p.prodName
+    GROUP BY pv.prodVarId, pv.prodVarName, p.prodId, p.prodName
     ORDER BY totalSold DESC
     LIMIT 1;
   `;
@@ -759,15 +793,13 @@ export const selectProductsDashboardStats = async ({
         COALESCE(SUM(si.salesItemQuantity), 0) AS value
       FROM SalesItems si
       JOIN Sales s ON s.salesId = si.salesId
-      JOIN ProductVariants pv ON pv.prodVarId = si.prodVarId
-      JOIN Products p ON p.prodId = pv.prodId
-      WHERE p.prodId = ?
+      WHERE si.prodVarId = ?
         AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00'))
           >= DATE_SUB(CURDATE(), INTERVAL 13 DAY)
       GROUP BY period
       ORDER BY period ASC;
       `,
-      [bestSeller.prodId],
+      [bestSeller.prodVarId],
     );
     bestSellerTrend = buildDailyTrend(bestSellerTrendRows as any[], 14);
   }
@@ -805,6 +837,8 @@ export const selectProductsDashboardStats = async ({
     ),
     bestSeller: bestSeller
       ? {
+          prodVarId: bestSeller.prodVarId,
+          prodVarName: bestSeller.prodVarName,
           prodId: bestSeller.prodId,
           prodName: bestSeller.prodName,
           totalSold: Number(bestSeller.totalSold),

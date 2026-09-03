@@ -11,6 +11,7 @@ import { StoreInterface } from "@/types/stores";
 import { fetcher } from "@/utils/fetcher";
 import { formatPeso } from "@/utils/formatPeso";
 import { getNextCloudImageUrl } from "@/utils/getNextCloudImageUrl";
+import { fileToDataUrl } from "@/utils/fileToDataUrl";
 import {
   Camera,
   ImageIcon,
@@ -80,11 +81,15 @@ const KiosksPage = () => {
 
     setIsUploadingBanner(true);
     try {
-      const formData = new FormData();
-      formData.append("image", file);
+      const dataUrl = await fileToDataUrl(file);
       const res = await fetch(`/api/stores/${storeId}/kiosk-banner`, {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: dataUrl,
+          fileName: file.name,
+          fileType: file.type,
+        }),
         credentials: "include",
       });
       const json = await res.json();

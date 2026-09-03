@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/getCurrentUser";
 import { assertStoreAccess } from "@/lib/auth/assertStoreAccess";
 import { selectStoreSalesApprovalEnabled } from "@/models/storeModels";
 import { SalesStatus } from "@/types/sales";
+import { BusinessError } from "@/lib/errors";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -40,7 +41,13 @@ export async function POST(
 
     const res = await createSale(data);
     if (!res.success) {
-      throw new Error(res.message || "Failed to process order");
+      // Re-throw the original error when it's a BusinessError (e.g. "out of
+      // stock") so its type - and therefore its safe-to-display message -
+      // survives into the catch below; anything else becomes a plain Error,
+      // which the catch treats as unsafe to show verbatim.
+      throw res.error instanceof BusinessError
+        ? res.error
+        : new Error(res.message || "Failed to process order");
     }
 
     return NextResponse.json({
@@ -50,13 +57,19 @@ export async function POST(
     });
   } catch (err: any) {
     console.log({ error: err });
+    // Only a BusinessError's message is safe to show a cashier verbatim -
+    // anything else (a raw DB/driver error, a bug) could leak internal
+    // detail (table/column names, connection errors) onto the POS screen.
+    const isBusinessError = err instanceof BusinessError;
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to create sale",
+        message: isBusinessError
+          ? err.message
+          : "Failed to create sale. Please try again.",
         error: err?.message || String(err),
       },
-      { status: 500 },
+      { status: isBusinessError ? 409 : 500 },
     );
   }
 }

@@ -3,12 +3,14 @@ import {
   countSalesByProductVariant,
   countSalesTransactionsByProductVariant,
   selectDailyStoreSales,
+  selectFinancialSummary,
   selectSales,
   selectSalesByProductVariant,
   selectSalesByTrend,
   selectSalesCreators,
   selectSalesTotalDetails,
   selectSalesTransactionsByProductVariant,
+  selectSalesTrendByProductVariant,
 } from "@/models/saleModel";
 import { Sales } from "@/types/sales";
 import { PoolConnection } from "mysql2/promise";
@@ -188,6 +190,30 @@ export const getSalesServices = {
     }
   },
 
+  getFinancialSummary: async ({
+    storeId,
+    from,
+    to,
+  }: {
+    storeId: number;
+    from?: string;
+    to?: string;
+  }) => {
+    try {
+      const { totalSales, totalCost } = await selectFinancialSummary({
+        storeId,
+        from,
+        to,
+      });
+      const grossProfit = totalSales - totalCost;
+      const grossMarginPct = totalSales > 0 ? (grossProfit / totalSales) * 100 : 0;
+
+      return { totalSales, totalCost, grossProfit, grossMarginPct };
+    } catch (e) {
+      throw e;
+    }
+  },
+
   getSalesByTrend: async ({
     trend,
     from,
@@ -282,6 +308,31 @@ export const getSalesServices = {
 
   getSalesCreators: async ({ storeId }: { storeId?: number } = {}) => {
     return await selectSalesCreators({ storeId });
+  },
+
+  getSalesTrendByProductVariant: async ({
+    prodVarId,
+    trend,
+    storeId,
+    storeName,
+    from,
+    to,
+  }: {
+    prodVarId: number;
+    trend?: "month" | "weeks" | "days";
+    storeId?: number;
+    storeName?: string;
+    from?: string;
+    to?: string;
+  }) => {
+    return await selectSalesTrendByProductVariant({
+      prodVarId,
+      trend,
+      storeId,
+      storeName,
+      from,
+      to,
+    });
   },
 
   getSalesTransactionsByProductVariantCount: async ({

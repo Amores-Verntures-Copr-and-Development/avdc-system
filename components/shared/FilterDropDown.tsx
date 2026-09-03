@@ -172,14 +172,14 @@ const FilterDropdown = ({
         type="button"
         onClick={toggleDropdown}
         className={`
-          flex items-center gap-1 2xl:gap-2
+          flex h-8 items-center justify-center gap-1 2xl:gap-2
           rounded-xl border border-gray-200
-          bg-white p-1 2xl:px-2.5 py-1 2xl:py-1.5
+          bg-white px-2 2xl:px-2.5
           text-[8px] 2xl:text-xs font-medium text-gray-700
           transition-all
           hover:border-gray-300
           hover:bg-gray-50
-          
+
           ${showFilters ? "border-gray-300 bg-gray-50" : ""}
         `}
       >

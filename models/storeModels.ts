@@ -54,6 +54,18 @@ export const selectStoreSalesApprovalEnabled = async (storeId: number) => {
   return !!rows[0]?.storeSalesApprovalEnabled;
 };
 
+// Lean, dedicated lookup (mirrors selectStoreCompanyId) - fetches the
+// current banner filename before it's overwritten/cleared, so the old
+// Nextcloud file can be deleted instead of orphaned.
+export const selectStoreKioskBannerImage = async (storeId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT storeKioskBannerImage FROM Stores WHERE storeId = ?`,
+    [storeId],
+  );
+  return (rows[0]?.storeKioskBannerImage as string | undefined) ?? null;
+};
+
 // All storeIds belonging to one company - used to scope aggregate
 // queries (dashboards, etc.) that otherwise only accept a single storeId.
 export const selectStoreIdsByCompanyId = async (companyId: number) => {

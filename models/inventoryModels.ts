@@ -14,6 +14,7 @@ import {
 import { StockPurchasers } from "@/types/stockRoom";
 import { StoreInterface } from "@/types/stores";
 import { assertKnownColumns } from "@/lib/db/assertKnownColumns";
+import { BusinessError } from "@/lib/errors";
 export type UpdateInventoryQtyMode = "replace" | "increment" | "decrement";
 
 // Column names are interpolated directly into raw SQL below (CASE/WHERE
@@ -129,6 +130,55 @@ WHERE 1=1`;
   }
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as InventoryInterface[];
+};
+
+// Resolves which store actually owns an inventory item, straight from the
+// DB - used to verify a client-supplied inventoryItemId (e.g. linking a
+// product variant to it) actually belongs to the acting user's own store,
+// rather than trusting the id at face value.
+export const selectInventoryItemStoreId = async (inventoryItemId: number) => {
+  const pool = await getDBConnection();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT s.storeId AS storeId
+       FROM InventoryItems ii
+       JOIN Inventories i ON i.inventoryId = ii.inventoryId
+       JOIN Stores s ON s.storeId = i.inventoryReferenceId AND i.inventoryReference = 'store'
+      WHERE ii.inventoryItemId = ?`,
+    [inventoryItemId],
+  );
+  return (rows[0]?.storeId as number | undefined) ?? null;
+};
+
+// Snapshot lookup for saleItemCost - resolves the *current* cost of each
+// inventoryItemId at the moment a sale is created, the same way pv.inventoryItemId
+// / VariantComponents.inventoryItemId resolve to Items.itemPrice for the live
+// totalCost/profit figures on selectProductVariants above.
+export const selectInventoryItemCosts = async ({
+  connection,
+  inventoryItemIds,
+}: {
+  connection?: PoolConnection;
+  inventoryItemIds: number[];
+}): Promise<Map<number, number>> => {
+  const costs = new Map<number, number>();
+  if (!inventoryItemIds.length) return costs;
+
+  const pool = connection ? connection : await getDBConnection();
+  const placeholders = inventoryItemIds.map(() => "?").join(",");
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT ii.inventoryItemId, i.itemPrice
+       FROM InventoryItems ii
+       LEFT JOIN Items i ON i.itemId = ii.inventoryItemReferenceId
+         AND ii.inventoryItemReferenceType = 'item'
+      WHERE ii.inventoryItemId IN (${placeholders})`,
+    inventoryItemIds,
+  );
+
+  rows.forEach((row) => {
+    costs.set(row.inventoryItemId, Number(row.itemPrice) || 0);
+  });
+
+  return costs;
 };
 
 export const selectInventoryByRequestId = async ({
@@ -548,6 +598,32 @@ export const updateInventoryItems = async ({
   if (updateFields.length === 0)
     throw new Error("No fields to update (all are key fields).");
 
+  // Two rows can legitimately share the same key - e.g. two different sale
+  // items in one order both consuming the same recipe component. Without
+  // merging them first, the CASE below only applies whichever WHEN matches
+  // (the others are silently dropped), and the floor guard further down
+  // would check stock against a single row's amount instead of the combined
+  // total. Increment/decrement amounts are summed per key; a "replace" field
+  // just keeps the last value, matching a plain UPDATE's overwrite semantics.
+  const mergedByKey = new Map<string, Partial<InventoryItemInterface>>();
+  for (const row of updates) {
+    const key = keyFields.map((k) => (row as any)[k]).join("|");
+    const existing = mergedByKey.get(key);
+    if (!existing) {
+      mergedByKey.set(key, { ...row });
+      continue;
+    }
+    for (const field of updateFields) {
+      const mode =
+        fieldModes[field as keyof InventoryItemInterface] ?? "replace";
+      (existing as any)[field] =
+        mode === "increment" || mode === "decrement"
+          ? ((existing as any)[field] ?? 0) + ((row as any)[field] ?? 0)
+          : (row as any)[field];
+    }
+  }
+  const mergedUpdates = Array.from(mergedByKey.values());
+
   const setClauses: string[] = [];
   const params: any[] = [];
 
@@ -555,7 +631,7 @@ export const updateInventoryItems = async ({
   for (const field of updateFields) {
     const caseParts: string[] = [];
 
-    for (const row of updates) {
+    for (const row of mergedUpdates) {
       const whenClause = keyFields.map((k) => `${k} = ?`).join(" AND ");
       caseParts.push(`WHEN ${whenClause} THEN ?`);
 
@@ -584,7 +660,7 @@ export const updateInventoryItems = async ({
   }
 
   // ✅ WHERE clause (unique key combinations)
-  const uniqueKeyCombinations = updates.map((row) =>
+  const uniqueKeyCombinations = mergedUpdates.map((row) =>
     keyFields.map((k) => (row as any)[k]),
   );
 
@@ -600,14 +676,49 @@ export const updateInventoryItems = async ({
   // Add WHERE params
   uniqueKeyCombinations.forEach((vals) => params.push(...vals));
 
+  // A decrementing field must never be allowed to go negative - without this
+  // floor, two concurrent requests decrementing the same row (e.g. two
+  // checkouts racing for the last unit of stock) both unconditionally
+  // succeed instead of the second one failing, since a bare UPDATE has
+  // nothing to check the current value against. Row-level locking during the
+  // UPDATE still serializes the two, but only this guard makes the second
+  // one actually lose.
+  const decrementFields = updateFields.filter(
+    (field) =>
+      (fieldModes[field as keyof InventoryItemInterface] ?? "replace") ===
+      "decrement",
+  );
+  const guardClauses: string[] = [];
+  for (const field of decrementFields) {
+    for (const row of mergedUpdates) {
+      const keyConds = keyFields.map((k) => `${k} = ?`).join(" AND ");
+      // Only constrains the row it applies to - every other row is left
+      // untouched by this clause.
+      guardClauses.push(`(NOT (${keyConds}) OR ${field} >= ?)`);
+      keyFields.forEach((k) => params.push((row as any)[k]));
+      params.push((row as any)[field]);
+    }
+  }
+
   const sql = `
     UPDATE InventoryItems
     SET ${setClauses.join(", ")},
         inventoryItemUpdatedAt = NOW()
-    WHERE ${whereSql};
+    WHERE ${whereSql}
+    ${guardClauses.length > 0 ? `AND ${guardClauses.join(" AND ")}` : ""};
   `;
 
-  const [result] = await pool.execute(sql, params);
+  const [result] = await pool.execute<ResultSetHeader>(sql, params);
+
+  // A row rejected by the floor check (or one that no longer exists) simply
+  // doesn't match the WHERE clause, so fewer rows are affected than
+  // requested - that's how an out-of-stock item is detected here.
+  if (guardClauses.length > 0 && result.affectedRows < mergedUpdates.length) {
+    throw new BusinessError(
+      "Not enough stock available for one or more items. Please refresh and try again.",
+    );
+  }
+
   return result;
 };
 

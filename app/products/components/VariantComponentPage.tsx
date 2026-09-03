@@ -53,6 +53,11 @@ import { DisplayAllInventory } from "@/app/inventory/InventoryPage";
 import { formatQuantityByUnit } from "@/utils/formatQuantityByUnit";
 import Image from "next/image";
 import { removeBackground } from "@imgly/background-removal";
+import { fileToDataUrl } from "@/utils/fileToDataUrl";
+import { SalesTrendByProductVariant } from "@/types/sales";
+import ProductVariantTrendChart, {
+  TrendGranularity,
+} from "./ProductVariantTrendChart";
 interface VariantComponentPageProps {
   data: DisplaProductVariantsDtos | null;
   showAddComponent: boolean;
@@ -90,6 +95,17 @@ const VariantComponentPage = ({
   const { data: responseKioskMenu } = useSWR<
     ApiResponse<DisplayKioskProductVariantDto[]>
   >(storeId ? `/api/products/${storeId}/kiosk-menu` : null, fetcher);
+  const [trendGranularity, setTrendGranularity] =
+    useState<TrendGranularity>("days");
+  const { data: trendResponse, isLoading: isTrendLoading } = useSWR<
+    ApiResponse<SalesTrendByProductVariant[]>
+  >(
+    data?.prodVarId && storeId
+      ? `/api/sales/by-product-variant/${data.prodVarId}/trend?storeId=${storeId}&trend=${trendGranularity}`
+      : null,
+    fetcher,
+  );
+  const trendData = trendResponse?.data ?? [];
   // New kiosk items default to the end of the line rather than 0 (unranked),
   // so staff adding one variant at a time don't have to go back and manually
   // renumber it - it can always be dragged earlier later.
@@ -127,14 +143,18 @@ const VariantComponentPage = ({
     setIsUploadingImage(true);
 
     try {
-      const formData = new FormData();
-      formData.append("image", imageFile);
+      const dataUrl = await fileToDataUrl(imageFile);
 
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${data.prodId}/${data.prodVarId}/image`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: dataUrl,
+            fileName: imageFile.name,
+            fileType: imageFile.type,
+          }),
           credentials: "include",
         },
       );
@@ -897,6 +917,21 @@ const VariantComponentPage = ({
           </div>
         )}
       </BigCard>
+
+      <div className="lg:col-span-2">
+        <BigCard
+          title="Sales Trend"
+          subtitle="Quantity sold and total sales for this variant over time"
+          isRounded={false}
+        >
+          <ProductVariantTrendChart
+            data={trendData}
+            granularity={trendGranularity}
+            onGranularityChange={setTrendGranularity}
+            isLoading={isTrendLoading}
+          />
+        </BigCard>
+      </div>
 
       <Modal
         size="lg"

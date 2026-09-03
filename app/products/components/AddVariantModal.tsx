@@ -2,6 +2,7 @@ import Button from "@/components/shared/Button";
 import Input from "@/components/shared/Input";
 import { CreateProductVariantDto } from "@/dtos/products.dto";
 import { handleChange } from "@/utils/handle-change";
+import { fileToDataUrl } from "@/utils/fileToDataUrl";
 import { ImageIcon, Upload } from "lucide-react";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -46,13 +47,17 @@ const AddVariantModal = ({
     if (!imageFile) return;
     setIsUploadingImage(true);
     try {
-      const imageForm = new FormData();
-      imageForm.append("image", imageFile);
+      const dataUrl = await fileToDataUrl(imageFile);
       const result = await fetch(
         `/api/products/${storeId}/product-variants/${prodId}/${prodVarId}/image`,
         {
           method: "POST",
-          body: imageForm,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: dataUrl,
+            fileName: imageFile.name,
+            fileType: imageFile.type,
+          }),
           credentials: "include",
         },
       );

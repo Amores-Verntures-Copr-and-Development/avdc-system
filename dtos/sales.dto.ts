@@ -101,6 +101,10 @@ export type CreateSaleItemDto = Pick<
   inventoryItemId: number | null;
   components?: ComponentsVariant[];
   salesItemDiscounts?: CreateSaleItemDisc[];
+  // Per-unit cost at the moment of sale - resolved server-side in
+  // processCreateSales from inventoryItemId/components, never trusted from
+  // the client. Optional here since callers building this DTO don't set it.
+  saleItemCost?: number;
 };
 
 export type CreateSalePaymentDto = Pick<

@@ -33,29 +33,23 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
   loading = false,
 }) => {
   const sizeClass = {
-    xs: "h-8 xl:h-8 text-xs px-2",
-    sm: "h-8 xl:h-8 text-xs xl:text-sm px-2",
-    md: "h-8 xl:h-10 text-xs xl:text-base px-3",
-    lg: "h-12 text-md md:text-lg px-4",
+    xs: "h-7 text-[11px] px-2",
+    sm: "h-8 text-xs xl:text-sm px-2",
+    md: "h-9 text-xs xl:text-sm px-3",
+    lg: "h-10 text-sm md:text-base px-3",
   }[sizes];
-  const selectStyles = {
-    xs: "text-[10px] xl:text-xs",
-    sm: "text-md xl:text-sm",
-    md: "text-md md:text-base",
-    lg: "text-md md:text-lg",
-  }[sizes || "md"];
   const labelClass = {
-    xs: "text-[10px] xl:text-xs",
-    sm: "text-[10px] lg:text-md xl:text-sm",
-    md: "text-sm xl:text-md md:text-base",
-    lg: "text-md md:text-lg",
+    xs: "text-[10px]",
+    sm: "text-[10px] xl:text-xs",
+    md: "text-xs xl:text-sm",
+    lg: "text-sm xl:text-base",
   }[sizes];
   return (
     <div className="flex flex-1 flex-col gap-1 w-full">
       {label && (
         <label
           htmlFor={name}
-          className={`${labelClass} font-semibold text-gray-700`}
+          className={`${labelClass} font-medium text-gray-500`}
         >
           {label}
         </label>
@@ -68,10 +62,10 @@ const DropdownSelect: React.FC<DropdownSelectProps> = ({
           value={value}
           onChange={onChange}
           required={required}
-          className={`w-full border ${selectStyles}  text-black border-gray-300 rounded-md py-1 pl-3  
-  ${error ? "border-red-500" : "border-gray-300"} 
+          className={`w-full border text-black rounded-lg pl-3 transition-colors
+  ${error ? "border-red-500" : "border-gray-200"}
   ${sizeClass}
-  disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-400`}
+  disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400`}
         >
           {placeholder && !loading && (
             <option value="" disabled hidden>

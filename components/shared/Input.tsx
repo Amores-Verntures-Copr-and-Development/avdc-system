@@ -38,17 +38,17 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
       : type;
 
     const labelClass = {
-      xs: "text-[10px] xl:text-xs",
-      sm: "text-[10px] lg:text-md xl:text-sm",
-      md: "text-sm xl:text-md md:text-base",
-      lg: "text-md md:text-lg",
+      xs: "text-[10px]",
+      sm: "text-[10px] xl:text-xs",
+      md: "text-xs xl:text-sm",
+      lg: "text-sm xl:text-base",
     }[sizes];
 
     const sizeClass = {
-      xs: "h-8 xl:h-8 text-xs px-2",
-      sm: "h-8 xl:h-8 text-xs xl:text-sm px-2",
-      md: "h-8 xl:h-10 text-xs xl:text-base px-3",
-      lg: "h-12 text-md md:text-lg px-4",
+      xs: "h-7 text-[11px] px-2",
+      sm: "h-8 text-xs xl:text-sm px-2",
+      md: "h-9 text-xs xl:text-sm px-3",
+      lg: "h-10 text-sm md:text-base px-3",
     }[sizes];
 
     const leftPaddingWithIcon = leadingIcon ? "pl-9" : "";
@@ -72,7 +72,7 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
         {showLabel && (
           <label
             htmlFor={name}
-            className={`${labelClass} font-semibold text-gray-700`}
+            className={`${labelClass} font-medium text-gray-500`}
           >
             {label}
           </label>
@@ -96,13 +96,10 @@ const Input = React.forwardRef<HTMLInputElement, DynamicInputProps>(
             readOnly={readOnly}
             defaultValue={defaultValue}
             placeholder={placeholder || (showLabel ? "" : label)}
-            className={`w-full border border-gray-300 text-black rounded-md
-              focus:outline-none focus:ring-2
-              ${
-                readOnly
-                  ? "bg-gray-100 cursor-not-allowed"
-                  : "focus:ring-blue-400"
-              }
+            className={`w-full border border-gray-200 text-black rounded-lg
+              transition-colors placeholder:text-gray-400
+              focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400
+              ${readOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
               ${sizeClass}
               ${leftPaddingWithIcon}
               ${rightPaddingWithToggle}`}

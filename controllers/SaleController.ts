@@ -456,6 +456,36 @@ export const getTotalSalesDetails = async ({
   }
 };
 
+export const getFinancialSummaryController = async ({
+  storeId,
+  from,
+  to,
+}: {
+  storeId: number;
+  from?: string;
+  to?: string;
+}) => {
+  try {
+    const data = await getSalesServices.getFinancialSummary({
+      storeId,
+      from,
+      to,
+    });
+    return {
+      success: true,
+      message: "Financial summary fetched",
+      data,
+    };
+  } catch (e) {
+    console.log({ e });
+    return {
+      success: false,
+      message: "Failed to fetch financial summary!",
+      error: e,
+    };
+  }
+};
+
 export const getSalesByProductVariant = async ({
   storeId,
   storeName,
@@ -552,6 +582,45 @@ export const getSalesTransactionsByProductVariant = async ({
     return {
       success: false,
       message: "Failed to fetch sales transactions for product variant!",
+      error: e,
+    };
+  }
+};
+
+export const getSalesTrendByProductVariant = async ({
+  prodVarId,
+  trend,
+  storeId,
+  storeName,
+  from,
+  to,
+}: {
+  prodVarId: number;
+  trend?: "month" | "weeks" | "days";
+  storeId?: number;
+  storeName?: string;
+  from?: string;
+  to?: string;
+}) => {
+  try {
+    const data = await getSalesServices.getSalesTrendByProductVariant({
+      prodVarId,
+      trend,
+      storeId,
+      storeName,
+      from,
+      to,
+    });
+
+    return {
+      success: true,
+      message: "Sales trend for product variant fetched successfully!",
+      data: data ?? null,
+    };
+  } catch (e) {
+    return {
+      success: false,
+      message: "Failed to fetch sales trend for product variant!",
       error: e,
     };
   }

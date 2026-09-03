@@ -464,7 +464,16 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
               <StatCard
                 icon={Trophy}
                 title="Best Seller"
-                value={stats?.bestSeller?.prodName ?? "No sales yet"}
+                value={
+                  stats?.bestSeller
+                    ? stats.bestSeller.prodVarName?.trim() &&
+                      !stats.bestSeller.prodName
+                        ?.toLowerCase()
+                        .includes(stats.bestSeller.prodVarName.trim().toLowerCase())
+                      ? `${stats.bestSeller.prodName} ${stats.bestSeller.prodVarName}`
+                      : stats.bestSeller.prodName
+                    : "No sales yet"
+                }
                 bgColor="bg-yellow-100"
                 textColor="text-yellow-500"
                 subtitle={
@@ -522,6 +531,9 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                   />
                 </div>
               )}
+              // Only "Add Product" is colored (the primary action) - the
+              // rest share the same neutral outline style so they recede
+              // instead of competing with it for attention.
               renderTopActionButtons={[
                 {
                   props: {
@@ -532,7 +544,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     },
                     size: "sm",
                     className: "font-semibold",
-                    color: "success",
+                    color: "outline",
                   },
                 },
                 {
@@ -556,7 +568,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     },
                     size: "sm",
                     className: "font-semibold",
-                    color: "neutral",
+                    color: "outline",
                   },
                 },
                 {
@@ -568,7 +580,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     },
                     size: "sm",
                     className: "font-semibold",
-                    color: "tertiary",
+                    color: "outline",
                   },
                 },
                 {
@@ -580,6 +592,7 @@ const ProductStorePage = ({ storeId, user }: ProductStorePageProps) => {
                     },
                     size: "sm",
                     className: "font-semibold",
+                    color: "primary",
                   },
                 },
               ]}

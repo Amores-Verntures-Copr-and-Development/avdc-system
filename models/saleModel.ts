@@ -685,8 +685,8 @@ export const insertSaleItems = async ({
 
   const pool = connection ? connection : await getDBConnection();
 
-  const sql = `INSERT INTO SalesItems(salesItemQuantity, salesItemPrice, salesItemSubtotal, salesItemTotal,  salesId, prodVarId)
-               VALUES ${data.map(() => "(?, ?, ?, ?, ?,?)").join(", ")}`;
+  const sql = `INSERT INTO SalesItems(salesItemQuantity, salesItemPrice, salesItemSubtotal, salesItemTotal, salesId, prodVarId, saleItemCost)
+               VALUES ${data.map(() => "(?, ?, ?, ?, ?, ?, ?)").join(", ")}`;
 
   const values = data.flatMap((item) => [
     item.salesItemQuantity,
@@ -695,6 +695,7 @@ export const insertSaleItems = async ({
     item.salesItemTotal,
     item.salesId,
     item.prodVarId,
+    item.saleItemCost ?? 0,
   ]);
 
   const [result] = await pool.execute<ResultSetHeader>(sql, values);
@@ -1034,6 +1035,7 @@ export const selectSalesTotalDetails = async ({
     ON spr.salesRefId = sr.salesRefId
   ${totalSalesPaymentMethodsClause}
   GROUP BY pm.payMetName
+  HAVING pm.payMetName IS NOT NULL
 `;
 
   // 2️⃣ Total Count of Sales
@@ -1062,6 +1064,7 @@ export const selectSalesTotalDetails = async ({
     ON spr.salesRefId = sr.salesRefId
   ${todaysSalesPaymentMethodsClause}
   GROUP BY pm.payMetName
+  HAVING pm.payMetName IS NOT NULL
 `;
 
   // 3️⃣ Today Sales (CURDATE)
@@ -1261,6 +1264,70 @@ LEFT JOIN (
     },
   ];
 };
+
+// Financial Reports summary - totalSales mirrors the totalSalesSql above
+// (net of whole-sale refunds), totalCost sums SalesItems.saleItemCost (the
+// per-unit cost snapshotted at sale time, see saleItemCost) net of refunded
+// quantities the same way selectSalesByProductVariant nets refunded qty/amount.
+export const selectFinancialSummary = async ({
+  storeId,
+  from,
+  to,
+}: {
+  storeId: number;
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+
+  const conditions: string[] = [
+    "s.salesStatus NOT IN ('pending_approval', 'rejected')",
+    "s.storeId = ?",
+  ];
+  const params: any[] = [storeId];
+
+  if (from && to) {
+    conditions.push(
+      "DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?",
+    );
+    params.push(from, to);
+  }
+
+  const whereClause = `WHERE ${conditions.join(" AND ")}`;
+
+  const sql = `
+    SELECT
+      COALESCE(SUM(s.salesTotalAmount) - COALESCE(SUM(refunds.totalRefunds), 0), 0) AS totalSales,
+      COALESCE(SUM(cogs.totalCost), 0) AS totalCost
+    FROM Sales s
+    LEFT JOIN (
+      SELECT salesId, SUM(salesRefAmount) AS totalRefunds
+      FROM SalesRefunds
+      GROUP BY salesId
+    ) refunds ON refunds.salesId = s.salesId
+    LEFT JOIN (
+      SELECT si.salesId,
+        SUM(si.saleItemCost * (si.salesItemQuantity - COALESCE(sir.refundedQty, 0))) AS totalCost
+      FROM SalesItems si
+      LEFT JOIN (
+        SELECT salesItemId, SUM(salesRefItemQty) AS refundedQty
+        FROM SalesItemRefunds
+        GROUP BY salesItemId
+      ) sir ON sir.salesItemId = si.salesItemId
+      GROUP BY si.salesId
+    ) cogs ON cogs.salesId = s.salesId
+    ${whereClause};
+  `;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  const row = rows[0] ?? {};
+
+  return {
+    totalSales: Number(row.totalSales) || 0,
+    totalCost: Number(row.totalCost) || 0,
+  };
+};
+
 export const insertSaleDiscounts = async ({
   connection,
   data,
@@ -1518,6 +1585,79 @@ export const countSalesByProductVariant = async ({
 
   const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
   return rows as { count: number }[];
+};
+
+// Same period-bucketing as selectSalesByTrend, scoped to one variant - backs
+// the drill-down modal's Qty Sold / Total Sales trend chart.
+export const selectSalesTrendByProductVariant = async ({
+  prodVarId,
+  trend,
+  storeId,
+  storeName,
+  from,
+  to,
+}: {
+  prodVarId: number;
+  trend?: "month" | "weeks" | "days";
+  storeId?: number;
+  storeName?: string;
+  from?: string;
+  to?: string;
+}) => {
+  const pool = await getDBConnection();
+  const params: any[] = [prodVarId];
+
+  let periodExpression = "";
+  switch (trend) {
+    case "month":
+      periodExpression = "DATE_FORMAT(s.salesCreatedAt, '%Y-%m')";
+      break;
+    case "weeks":
+      periodExpression = "YEARWEEK(s.salesCreatedAt, 1)";
+      break;
+    case "days":
+    default:
+      periodExpression = "DATE(s.salesCreatedAt)";
+  }
+
+  let sql = `
+    SELECT
+      ${periodExpression} AS period,
+      SUM(si.salesItemQuantity - COALESCE(sir.refundedQty, 0)) AS totalQtySold,
+      SUM(si.salesItemSubtotal - COALESCE(sir.refundedAmount, 0)) AS totalSales
+    FROM SalesItems si
+    INNER JOIN Sales s ON s.salesId = si.salesId
+    LEFT JOIN Stores st ON st.storeId = s.storeId
+    LEFT JOIN (
+      SELECT
+        salesItemId,
+        SUM(salesRefItemQty) AS refundedQty,
+        SUM(salesRefItemQty * salesRefItemPrice) AS refundedAmount
+      FROM SalesItemRefunds
+      GROUP BY salesItemId
+    ) sir ON sir.salesItemId = si.salesItemId
+    WHERE si.prodVarId = ?
+  `;
+
+  if (storeId) {
+    sql += ` AND s.storeId = ?`;
+    params.push(storeId);
+  }
+
+  if (storeName) {
+    sql += ` AND st.storeName LIKE ?`;
+    params.push(`%${storeName}%`);
+  }
+
+  if (from && to) {
+    sql += ` AND DATE(CONVERT_TZ(s.salesCreatedAt, '+00:00', '+08:00')) BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+
+  sql += ` GROUP BY ${periodExpression} ORDER BY period ASC`;
+
+  const [rows] = await pool.execute<RowDataPacket[]>(sql, params);
+  return rows;
 };
 
 // Backs the "By Product Variant" tab's drill-down modal - one row per sale
