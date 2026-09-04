@@ -43,5 +43,6 @@ export async function loginWithPassword({
     userFullName: `${user.userFname} ${user.userLname}`.trim(),
     isAllStores: Boolean(access.edaIsAllStores),
     storeIds: access.storeIds,
+    storeAccess: access.storeAccess,
   };
 }

@@ -46,6 +46,7 @@ export async function verifyExternalDashboardToken(rawToken: string) {
         : "",
       isAllStores: Boolean(access.edaIsAllStores),
       storeIds: access.storeIds,
+      storeAccess: access.storeAccess,
     };
   } finally {
     connection.release();

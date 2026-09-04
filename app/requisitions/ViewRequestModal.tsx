@@ -4,11 +4,15 @@ import Modal from "@/components/shared/Modal";
 
 import Table, { Column } from "@/components/shared/Table";
 import {
+  CreateRequestFormDto,
   CreateRequestItemDto,
   DisplayRequestItems,
   DisplayRequestOrderDto,
   RequestOrderPdf,
 } from "@/dtos/request.dto";
+import CreateRequestModal, {
+  CreateRequestModalItem,
+} from "@/app/inventory/components/CreateRequestModal";
 import { UserAuth } from "@/hooks/useSession";
 import { Request, RequestItems } from "@/types/request";
 import { fetcher } from "@/utils/fetcher";
@@ -101,6 +105,16 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
   const [selectedRows, setSelectedRows] = useState<
     DisplayRequestItems[] | null
   >(null);
+  // "Recreate Request" - pick some of this request's own items as a
+  // starting point for a brand new request order, instead of browsing the
+  // whole inventory catalog from scratch.
+  const [isSelectingRecreateItems, setIsSelectingRecreateItems] =
+    useState(false);
+  const [selectedRecreateItems, setSelectedRecreateItems] = useState<
+    DisplayRequestItems[] | null
+  >(null);
+  const [showRecreateRequestModal, setShowRecreateRequestModal] =
+    useState(false);
   const {
     data: itemResponse = { data: [] },
     isLoading: loading,
@@ -821,6 +835,48 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
       setSelectedRows(null);
     }
   };
+  const handleTableSelectionChange = (rows: DisplayRequestItems[]) => {
+    if (isSelectingRecreateItems) {
+      setSelectedRecreateItems(rows.length > 0 ? rows : null);
+      return;
+    }
+    handleRowSelection(rows);
+  };
+  const recreateRequestItems: CreateRequestModalItem[] = (
+    selectedRecreateItems ?? []
+  ).map((item) => ({
+    inventoryItemId: item.invItem,
+    itemName: item.itemName,
+    itemUnit: item.itemUnit,
+    itemPrice: Number(item.itemPrice),
+    categoryName: "",
+    inventoryItemQuantity: 0,
+    reqItemQuantity: item.reqItemQuantity,
+  }));
+  const handleRecreateRequest = async (data: CreateRequestFormDto) => {
+    try {
+      const result = await fetch(`/api/requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const res = await result.json();
+      if (!res.success) {
+        throw new Error(
+          res.message || res.error || "Failed to create request order.",
+        );
+      }
+      toast.success("Request order created successfully!");
+      setShowRecreateRequestModal(false);
+      setIsSelectingRecreateItems(false);
+      setSelectedRecreateItems(null);
+      mutateRequest();
+      return true;
+    } catch (e: any) {
+      toast.error(e.message || "Failed to create request order.");
+      return false;
+    }
+  };
   const handleFillUpAll = () => {
     if (requestItemData) {
       setRequestItemData((prev) =>
@@ -1464,7 +1520,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             }
             maxHeight="h-full"
             uniqueIdKey="reqItemId"
-            showCheckBox={isSelectingAddItemPO}
+            showCheckBox={isSelectingAddItemPO || isSelectingRecreateItems}
             isRounded={false}
             updateData={setRequestItemData}
             columns={
@@ -1485,7 +1541,7 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
             }
             data={requestItemData}
             loading={loading}
-            onSelectionChange={handleRowSelection}
+            onSelectionChange={handleTableSelectionChange}
           />
         </div>
         <div className="border-t border-gray-300 flex justify-between p-1 xl:p-4 gap-4 items-center mt-auto">
@@ -1564,6 +1620,45 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
                   </>
                 ) : isRequestor ? (
                   <>
+                    {isSelectingRecreateItems ? (
+                      <>
+                        <div>
+                          <Button
+                            icon={X}
+                            onClick={() => {
+                              setIsSelectingRecreateItems(false);
+                              setSelectedRecreateItems(null);
+                            }}
+                            size="sm"
+                            label="Cancel"
+                            className="font-semibold"
+                            color="outline"
+                          />
+                        </div>
+                        <div>
+                          <Button
+                            icon={Repeat}
+                            onClick={() => setShowRecreateRequestModal(true)}
+                            size="sm"
+                            label={`Create New Request (${selectedRecreateItems?.length ?? 0})`}
+                            className="font-semibold"
+                            color="primary"
+                            disabled={!selectedRecreateItems?.length}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <Button
+                          icon={Repeat}
+                          onClick={() => setIsSelectingRecreateItems(true)}
+                          size="sm"
+                          label="Recreate Request"
+                          className="font-semibold"
+                          color="outline"
+                        />
+                      </div>
+                    )}
                     {showEditMode &&
                       selectedReq?.requestStatus === "pending" && (
                         <>
@@ -1985,6 +2080,26 @@ const ViewRequestModal: React.FC<ViewRequestModalProps> = ({
           }}
         />
       </Popup>
+      <Modal
+        title="Create Request"
+        subtitle="Recreate a new request from these items"
+        isOpen={showRecreateRequestModal}
+        onClose={() => setShowRecreateRequestModal(false)}
+        size="xl"
+        className="bg-white"
+      >
+        <CreateRequestModal
+          data={recreateRequestItems}
+          user={user}
+          onCancel={() => setShowRecreateRequestModal(false)}
+          onSubmit={handleRecreateRequest}
+          onRemoveItem={(id) =>
+            setSelectedRecreateItems((prev) =>
+              (prev ?? []).filter((item) => item.invItem !== id),
+            )
+          }
+        />
+      </Modal>
     </>
   );
 };

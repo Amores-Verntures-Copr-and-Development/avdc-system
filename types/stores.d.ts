@@ -9,6 +9,11 @@ export interface StoreInterface {
   storeKioskBannerImage?: string | null;
   storeOrderEnabled?: boolean;
   storeSalesApprovalEnabled?: boolean;
+  storeInstallmentEnabled?: boolean;
+  // Only present on rows selectStores joins against Companies for - the
+  // company-level entitlement that gates whether storeInstallmentEnabled
+  // may be turned on for this store.
+  companyInstallmentEnabled?: boolean;
   storeCreatedAt: string;
   storeUpdatedAt: string;
   storeDeletedAt?: string | null;

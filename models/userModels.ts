@@ -80,7 +80,7 @@ export const selectUsers = async ({
     whereClauses.length > 0 ? `WHERE ${whereClauses.join(" AND ")}` : "";
   const pool = await getDBConnection();
   const sql = `
-        SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,e.empPosition, e.empId,u.userAddedBy,u.userCreatedAt,
+        SELECT u.userId,u.userName,u.userFname,u.userLname,u.userRole,u.userEmail,u.userStatus,u.companyId,co.companyName,e.empPosition, e.empId,u.userAddedBy,u.userCreatedAt,
         CONCAT_WS(' ', us.userFname, us.userLname) AS addedBy,
         (
           SELECT JSON_ARRAYAGG(
@@ -90,7 +90,11 @@ export const selectUsers = async ({
           LEFT JOIN Stores s ON s.storeId = se.storeId
           WHERE se.empId = e.empId
         ) AS storeEmployees
-        FROM Users u LEFT JOIN Employees e ON e.userId = u.userId LEFT JOIN Users us ON us.userId = u.userAddedBy ${whereSQL}`;
+        FROM Users u
+        LEFT JOIN Employees e ON e.userId = u.userId
+        LEFT JOIN Users us ON us.userId = u.userAddedBy
+        LEFT JOIN Companies co ON co.companyId = u.companyId
+        ${whereSQL}`;
   const [rows] = await pool.execute<RowDataPacket[]>(sql, values);
 
   return rows;

@@ -79,9 +79,14 @@ export const createUser = async (
 
 export const getUsers = async ({
   search,
+  companyId,
   actingUser,
 }: {
   search?: string;
+  // Only a superadmin may pick an arbitrary company - anyone else is always
+  // pinned to their own, regardless of what's passed in, so this can never
+  // be used to peek at another company's users via query tampering.
+  companyId?: number;
   actingUser: AuthUser;
 }) => {
   try {
@@ -89,7 +94,7 @@ export const getUsers = async ({
       search,
       companyId:
         actingUser.userRole === "superadmin"
-          ? undefined
+          ? companyId
           : actingUser.companyId,
     });
     return {

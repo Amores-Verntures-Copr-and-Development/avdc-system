@@ -15,6 +15,7 @@ const COMPANY_COLUMNS = new Set<keyof Companies>([
   "companyDeletedAt",
   "companyCreatedBy",
   "companyMaxStores",
+  "companyInstallmentEnabled",
 ]);
 
 export const insertCompany = async ({
@@ -26,8 +27,11 @@ export const insertCompany = async ({
 }) => {
   const pool = connection ? connection : await getDBConnection();
   const sql = `
-    INSERT INTO Companies (companyName, companyEmail, companyPhone, companyStatus, companyCreatedBy)
-    VALUES (?,?,?,?,?)
+    INSERT INTO Companies (
+      companyName, companyEmail, companyPhone, companyStatus,
+      companyCreatedBy, companyMaxStores, companyInstallmentEnabled
+    )
+    VALUES (?,?,?,?,?,?,?)
   `;
   const [result] = await pool.execute<ResultSetHeader>(sql, [
     data.companyName,
@@ -35,6 +39,8 @@ export const insertCompany = async ({
     data.companyPhone ?? null,
     data.companyStatus ?? "active",
     data.companyCreatedBy,
+    data.companyMaxStores ?? 0,
+    data.companyInstallmentEnabled ? 1 : 0,
   ]);
   return result.insertId;
 };

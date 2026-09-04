@@ -22,17 +22,20 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
     ref
   ) => {
     const showLabel = !placeholder;
+    // Mirrors Input's labelClass/sizeClass scales exactly (same text sizes,
+    // horizontal padding, border/focus colors) so a Textarea sitting next to
+    // an Input reads as the same field style, just taller.
     const labelClass = {
-      xs: "text-[10px] xl:text-xs",
-      sm: "text-md xl:text-sm",
-      md: "text-md md:text-base",
-      lg: "text-md md:text-lg",
+      xs: "text-[10px]",
+      sm: "text-[10px] xl:text-xs",
+      md: "text-xs xl:text-sm",
+      lg: "text-sm xl:text-base",
     }[sizes];
     const sizeClass = {
-      xs: "text-xs px-2 py-1",
-      sm: "text-sm px-2 py-1.5",
-      md: "text-base px-3 py-2",
-      lg: "text-lg px-4 py-3",
+      xs: "min-h-16 text-[11px] px-2 py-1.5",
+      sm: "min-h-20 text-xs xl:text-sm px-2 py-2",
+      md: "min-h-24 text-xs xl:text-sm px-3 py-2",
+      lg: "min-h-28 text-sm md:text-base px-3 py-2.5",
     }[sizes];
 
     return (
@@ -40,7 +43,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {showLabel && (
           <label
             htmlFor={name}
-            className={`${labelClass} font-semibold text-gray-700`}
+            className={`${labelClass} font-medium text-gray-500`}
           >
             {label}
           </label>
@@ -52,16 +55,14 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           required={required}
           readOnly={readOnly}
           placeholder={placeholder || (showLabel ? "" : label)}
-          className={`w-full border border-gray-300 text-black rounded-md focus:outline-none focus:ring-2
-            ${
-              readOnly
-                ? "bg-gray-100 cursor-not-allowed"
-                : "focus:ring-blue-400"
-            }
+          className={`w-full border border-gray-200 text-black rounded-lg
+            transition-colors placeholder:text-gray-400
+            focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400
+            ${readOnly ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
             ${sizeClass} resize-none`}
           {...rest}
         />
-        {error && <span className="text-sm text-red-500">{error}</span>}
+        {error && <span className="text-xs text-red-500">{error}</span>}
       </div>
     );
   }

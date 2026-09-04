@@ -91,7 +91,14 @@ export const selectStores = async ({
   const pool = await getDBConnection();
 
   const params: any[] = [];
-  let sql = `SELECT * FROM Stores s WHERE 1=1`;
+  // companyInstallmentEnabled (not a Stores column) rides along so callers
+  // can gate storeInstallmentEnabled's toggle by the company's entitlement
+  // without a second round trip.
+  let sql = `
+    SELECT s.*, c.companyInstallmentEnabled
+    FROM Stores s
+    LEFT JOIN Companies c ON c.companyId = s.companyId
+    WHERE 1=1`;
   for (const [key, value] of Object.entries(keyfields)) {
     if (value === undefined) continue;
 
@@ -129,12 +136,14 @@ export const updateStoreFeatures = async ({
   storeOrderEnabled,
   storeKioskBannerImage,
   storeSalesApprovalEnabled,
+  storeInstallmentEnabled,
 }: {
   storeId: number;
   storeKioskEnabled?: boolean;
   storeOrderEnabled?: boolean;
   storeKioskBannerImage?: string | null;
   storeSalesApprovalEnabled?: boolean;
+  storeInstallmentEnabled?: boolean;
 }) => {
   const pool = await getDBConnection();
   const setClauses: string[] = [];
@@ -158,6 +167,11 @@ export const updateStoreFeatures = async ({
   if (storeSalesApprovalEnabled !== undefined) {
     setClauses.push("storeSalesApprovalEnabled = ?");
     params.push(storeSalesApprovalEnabled ? 1 : 0);
+  }
+
+  if (storeInstallmentEnabled !== undefined) {
+    setClauses.push("storeInstallmentEnabled = ?");
+    params.push(storeInstallmentEnabled ? 1 : 0);
   }
 
   if (setClauses.length === 0) return;

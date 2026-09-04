@@ -27,6 +27,7 @@ export async function getExternalDashboardIdentity(userId: number) {
       userFullName: user ? `${user.userFname} ${user.userLname}`.trim() : "",
       isAllStores: Boolean(access.edaIsAllStores),
       storeIds: access.storeIds,
+      storeAccess: access.storeAccess,
     };
   } finally {
     connection.release();

@@ -64,11 +64,11 @@ export async function grantOrUpdateExternalDashboardAccess(
       edaId = result.insertId;
     }
 
-    if (!data.edaIsAllStores && data.storeIds && data.storeIds.length > 0) {
+    if (!data.edaIsAllStores && data.storeAccess && data.storeAccess.length > 0) {
       await insertExternalDashboardAccessStores({
         connection,
         edaId,
-        storeIds: data.storeIds,
+        storeAccess: data.storeAccess,
       });
     }
 

@@ -63,6 +63,7 @@ export async function PATCH(
       storeKioskEnabled: body.storeKioskEnabled,
       storeOrderEnabled: body.storeOrderEnabled,
       storeSalesApprovalEnabled: body.storeSalesApprovalEnabled,
+      storeInstallmentEnabled: body.storeInstallmentEnabled,
     };
 
     const res = await updateStoreFeaturesController({
@@ -84,7 +85,8 @@ export async function PATCH(
     const isAuthError = err?.message === "Unauthorized";
     const isForbidden =
       err?.message?.includes("Only Owner or Admin") ||
-      err?.message === "You do not have access to this store";
+      err?.message === "You do not have access to this store" ||
+      err?.message?.includes("Installment is not enabled");
 
     return NextResponse.json(
       {

@@ -12,8 +12,22 @@ import { Trash } from "lucide-react";
 
 import React, { useRef, useState } from "react";
 import toast from "react-hot-toast";
+// Only the fields this modal actually reads - lets callers that don't have
+// a full DisplayInventoryItems on hand (e.g. re-requesting from an existing
+// request order's own items) pass a lighter-weight shape instead.
+export type CreateRequestModalItem = Pick<
+  DisplayInventoryItems,
+  | "inventoryItemId"
+  | "itemName"
+  | "itemUnit"
+  | "itemPrice"
+  | "categoryName"
+  | "inventoryItemQuantity"
+  | "reqItemQuantity"
+>;
+
 interface CreateRequestModalProps {
-  data: DisplayInventoryItems[];
+  data: CreateRequestModalItem[];
   onCancel: () => void;
   onSubmit: (items: CreateRequestFormDto) => Promise<boolean>;
   user?: UserAuth | null;

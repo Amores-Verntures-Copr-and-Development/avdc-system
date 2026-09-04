@@ -21,7 +21,6 @@ export function useStores({
       mutate: async () => {},
     };
   }
-  const localStorageKey = `user_${user.userId}_stores`;
   const apiUrl =
     !hasStore || isAdmin ? `/api/stores` : `/api/stores/userId/${user.userId}`;
   const { data, error, isLoading, mutate } = useSWR<
@@ -29,15 +28,6 @@ export function useStores({
   >(
     user ? apiUrl : null,
     async (url) => {
-      // Check localStorage first
-      const stored = localStorage.getItem(localStorageKey);
-      if (stored) {
-        const storedData = JSON.parse(stored);
-
-        return storedData;
-      }
-
-      // Fetch from API if not in localStorage
       const res = await fetch(url, { credentials: "include" });
 
       if (res.status === 401) {
@@ -48,14 +38,7 @@ export function useStores({
         throw new Error(`Failed to fetch stores: ${res.status}`);
       }
 
-      const responseData = await res.json();
-
-      // Store in localStorage
-      if (responseData) {
-        localStorage.setItem(localStorageKey, JSON.stringify(responseData));
-      }
-
-      return responseData;
+      return res.json();
     },
     {
       revalidateOnFocus: false,

@@ -14,9 +14,10 @@ function errorStatus(err: any): number {
 export async function POST(request: NextRequest) {
   try {
     const actingUser = getCurrentUser(request);
-    // companyId is always resolved server-side from the acting user, never
-    // trusted from the request body.
-    const body = (await request.json()) as Omit<CreateStoreDto, "companyId">;
+    // companyId is only honored from the body for a superadmin (who must
+    // say which company they're adding to) - createStore resolves it from
+    // the acting user for everyone else, ignoring whatever the body says.
+    const body = (await request.json()) as CreateStoreDto;
 
     const res = await createStore(body, actingUser);
 
@@ -50,7 +51,14 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const actingUser = getCurrentUser(request);
-    const res = await getStore({ actingUser });
+    const { searchParams } = new URL(request.url);
+    const companyIdParam = searchParams.get("companyId");
+    // Only meaningful for a superadmin - getStore forces companyId back to
+    // the acting user's own company for anyone else, regardless of this.
+    const keyfields = companyIdParam
+      ? { companyId: Number(companyIdParam) }
+      : undefined;
+    const res = await getStore({ actingUser, keyfields });
 
     if (!res.success) {
       // propagate the actual message if available

@@ -15,6 +15,7 @@ import { fetcher } from "@/utils/fetcher";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import {
   ArrowLeft,
+  Banknote,
   Calendar,
   IdCard,
   ListOrdered,
@@ -67,7 +68,7 @@ const Page = () => {
   const { storeName } = params;
   const [showIntegration, setShowIntegration] = useState(false);
   const [updatingFeature, setUpdatingFeature] = useState<
-    "kiosk" | "order" | "salesApproval" | null
+    "kiosk" | "order" | "salesApproval" | "installment" | null
   >(null);
   const { user } = useSession();
   const { data, mutate: mutateStore } = useSWR<ApiResponse<StoreInterface[]>>(
@@ -87,16 +88,18 @@ const Page = () => {
     kiosk: "storeKioskEnabled",
     order: "storeOrderEnabled",
     salesApproval: "storeSalesApprovalEnabled",
+    installment: "storeInstallmentEnabled",
   } as const;
 
   const featureLabels = {
     kiosk: "Kiosk",
     order: "Order",
     salesApproval: "Sales Approval",
+    installment: "Installment",
   } as const;
 
   const handleToggleFeature = async (
-    feature: "kiosk" | "order" | "salesApproval",
+    feature: "kiosk" | "order" | "salesApproval" | "installment",
     enabled: boolean,
   ) => {
     if (!store?.storeId) return;
@@ -260,6 +263,35 @@ const Page = () => {
                     handleToggleFeature("salesApproval", enabled)
                   }
                   disabled={updatingFeature === "salesApproval"}
+                  sizes="sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary-1/10">
+                    <Banknote className="h-4 w-4 text-primary-1" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      Installment
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {store?.companyInstallmentEnabled
+                        ? "Tracks installment plans and scheduled check deposits for this store."
+                        : "Ask your Super Admin to enable Installment for your company first."}
+                    </p>
+                  </div>
+                </div>
+                <Toggle
+                  initial={!!store?.storeInstallmentEnabled}
+                  onToggle={(enabled) =>
+                    handleToggleFeature("installment", enabled)
+                  }
+                  disabled={
+                    updatingFeature === "installment" ||
+                    !store?.companyInstallmentEnabled
+                  }
                   sizes="sm"
                 />
               </div>

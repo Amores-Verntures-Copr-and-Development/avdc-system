@@ -1,6 +1,9 @@
 import Button from "@/components/shared/Button";
+import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
+import Toggle from "@/components/shared/Toggle";
 import { CreateCompanyDto } from "@/dtos/company.dto";
+import { Companies } from "@/types/company";
 import { handleChange } from "@/utils/handle-change";
 import React, { useState } from "react";
 
@@ -11,6 +14,12 @@ interface AddCompanyModalProps {
   ) => Promise<boolean>;
 }
 
+const statusOptions = [
+  { label: "Active", value: "active" },
+  { label: "Suspended", value: "suspended" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
 const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
   onSubmit,
   onCancel,
@@ -19,6 +28,9 @@ const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
     companyName: "",
     companyEmail: "",
     companyPhone: "",
+    companyStatus: "active",
+    companyMaxStores: 0,
+    companyInstallmentEnabled: false,
   });
   const [isSaving, setIsSaving] = useState(false);
   const handleFormChange = handleChange(form, setForm);
@@ -34,13 +46,26 @@ const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 2xl:grid-cols-2 gap-4">
         <Input
           label={"Company Name"}
           sizes="sm"
           value={form.companyName}
           name="companyName"
           onChange={handleFormChange}
+        />
+        <DropdownSelect
+          label={"Status"}
+          sizes="sm"
+          value={form.companyStatus ?? "active"}
+          options={statusOptions}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              companyStatus: e.target.value as Companies["companyStatus"],
+            })
+          }
+          name={"companyStatus"}
         />
         <Input
           label={"Email"}
@@ -55,6 +80,25 @@ const AddCompanyModal: React.FC<AddCompanyModalProps> = ({
           value={form.companyPhone ?? ""}
           name="companyPhone"
           onChange={handleFormChange}
+        />
+        <Input
+          label={"Max Stores"}
+          type="number"
+          min={0}
+          sizes="sm"
+          value={form.companyMaxStores ?? ""}
+          name="companyMaxStores"
+          onChange={(e) =>
+            setForm({ ...form, companyMaxStores: Number(e.target.value) })
+          }
+        />
+        <Toggle
+          label="Installment Feature"
+          sizes="sm"
+          initial={!!form.companyInstallmentEnabled}
+          onToggle={(enabled) =>
+            setForm({ ...form, companyInstallmentEnabled: enabled })
+          }
         />
       </div>
       <div className="flex justify-end space-x-2">

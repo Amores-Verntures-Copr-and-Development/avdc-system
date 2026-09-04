@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const { access, isPermittedStore } =
+    const { access, isPermittedStore, isSalesPermitted } =
       await resolveExternalDashboardScope(userId);
     if (!access) {
       return NextResponse.json(
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Sale not found" }, { status: 404 });
       }
 
-      if (!isPermittedStore(sale.storeId)) {
+      if (!isPermittedStore(sale.storeId) || !isSalesPermitted(sale.storeId)) {
         return NextResponse.json(
           { error: "Sale is outside your granted access" },
           { status: 403 },
@@ -85,9 +85,9 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (!isPermittedStore(storeId)) {
+    if (!isPermittedStore(storeId) || !isSalesPermitted(storeId)) {
       return NextResponse.json(
-        { error: "Store is outside your granted access" },
+        { error: "Store is outside your granted sales access" },
         { status: 403 },
       );
     }

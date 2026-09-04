@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/shared/Button";
+import DropDownSelectCompany from "@/components/shared/DropDownSelectCompany";
 import IconButton from "@/components/shared/IconButton";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
@@ -16,7 +17,7 @@ import useSWR from "swr";
 import { StoreInterface } from "@/types/stores";
 import { formatDateToWords } from "@/utils/formatDateToWords";
 import { useSession } from "@/hooks/useSession";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 const storeColumn: Column<StoreInterface>[] = [
   { name: "#", key: "#", selector: (_row, index) => index + 1 },
   { name: "Name", key: "storeName" },
@@ -31,18 +32,27 @@ const storeColumn: Column<StoreInterface>[] = [
 const StorePage = () => {
   const { user, isAdmin, hasStore } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showAddStoreModal, setShowAddStoreModal] = useState(false);
   const isSupervisor = user?.empPosition === "supervisor";
   // Owner and company Admin manage stores day-to-day; superadmin (isAdmin)
   // retains full access too. Matches the server-side check in createStore.
   const canManageStores =
     isAdmin || user?.userRole === "owner" || user?.empPosition === "admin";
+
+  // A superadmin isn't tied to one company, so the store list (and which
+  // company a new store gets added to) has to come from an explicit filter
+  // instead - every other role only ever sees/adds to their own company,
+  // enforced server-side regardless of this.
+  const companyIdParam = searchParams.get("companyId");
   const url =
-    isAdmin || !hasStore
-      ? "/api/stores/"
-      : isSupervisor
-        ? `/api/stores/userId/${user?.userId}/store-employee`
-        : null;
+    isAdmin
+      ? `/api/stores/${companyIdParam ? `?companyId=${companyIdParam}` : ""}`
+      : !hasStore
+        ? "/api/stores/"
+        : isSupervisor
+          ? `/api/stores/userId/${user?.userId}/store-employee`
+          : null;
   const {
     data: response = { data: [] },
     isLoading,
@@ -55,6 +65,17 @@ const StorePage = () => {
   const maxStores = limitResponse?.data?.maxStores ?? null;
   const activeStoreCount = limitResponse?.data?.activeStoreCount ?? 0;
   const isAtStoreLimit = maxStores !== null && activeStoreCount >= maxStores;
+  const handleCompanyFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    const url = new URL(window.location.href);
+    if (e.target.value) {
+      url.searchParams.set("companyId", e.target.value);
+    } else {
+      url.searchParams.delete("companyId");
+    }
+    router.push(url.toString());
+  };
   const handleSubmit = async (data: CreateStoreDto) => {
     try {
       const result = await fetch("api/stores", {
@@ -90,6 +111,18 @@ const StorePage = () => {
       </div>
       <div className="flex-1 min-h-0  flex flex-col justify-between">
         <Table
+          addContentLeftTitle={
+            isAdmin && (
+              <div className="order-first mr-auto w-full sm:w-64">
+                <DropDownSelectCompany
+                  name="companyFilter"
+                  sizes="sm"
+                  value={companyIdParam ?? ""}
+                  onChange={handleCompanyFilterChange}
+                />
+              </div>
+            )
+          }
           renderTopActions={
             canManageStores && (
               <div className="flex items-center gap-2">
@@ -158,6 +191,10 @@ const StorePage = () => {
             setShowAddStoreModal(false);
           }}
           onSubmit={handleSubmit}
+          isSuperAdmin={isAdmin}
+          defaultCompanyId={
+            isAdmin && companyIdParam ? Number(companyIdParam) : undefined
+          }
         />
       </Modal>
     </PageLayout>

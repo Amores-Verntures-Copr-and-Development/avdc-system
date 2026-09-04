@@ -14,6 +14,12 @@ import toast from "react-hot-toast";
 interface StoreOption {
   storeId: number;
   storeName: string;
+  storeInstallmentEnabled?: boolean;
+}
+
+interface StoreAccessState {
+  sales: boolean;
+  installment: boolean;
 }
 
 interface ExternalDashboardAccessModalProps {
@@ -35,7 +41,9 @@ const ExternalDashboardAccessModal = ({
   );
   const [enabled, setEnabled] = useState(false);
   const [isAllStores, setIsAllStores] = useState(true);
-  const [selectedStoreIds, setSelectedStoreIds] = useState<number[]>([]);
+  const [storeAccess, setStoreAccess] = useState<
+    Record<number, StoreAccessState>
+  >({});
   const [rawToken, setRawToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
@@ -53,7 +61,17 @@ const ExternalDashboardAccessModal = ({
         setAccess(data);
         setEnabled(data?.edaStatus === "active");
         setIsAllStores(data ? Boolean(data.edaIsAllStores) : true);
-        setSelectedStoreIds(data?.storeIds ?? []);
+        setStoreAccess(
+          Object.fromEntries(
+            (data?.storeAccess ?? []).map((s) => [
+              s.storeId,
+              {
+                sales: Boolean(s.edasSalesEnabled),
+                installment: Boolean(s.edasInstallmentEnabled),
+              },
+            ]),
+          ),
+        );
       } catch {
         toast.error("Failed to load external dashboard access");
       } finally {
@@ -64,13 +82,26 @@ const ExternalDashboardAccessModal = ({
     load();
   }, [userId]);
 
-  const toggleStore = (storeId: number) => {
-    setSelectedStoreIds((prev) =>
-      prev.includes(storeId)
-        ? prev.filter((id) => id !== storeId)
-        : [...prev, storeId],
-    );
+  // A store counts as "selected" once either flag is on - unchecking both
+  // is how you remove the store from the grant entirely.
+  const toggleStoreAccess = (
+    storeId: number,
+    field: keyof StoreAccessState,
+  ) => {
+    setStoreAccess((prev) => {
+      const current = prev[storeId] ?? { sales: false, installment: false };
+      const next = { ...current, [field]: !current[field] };
+
+      if (!next.sales && !next.installment) {
+        const { [storeId]: _omit, ...rest } = prev;
+        return rest;
+      }
+
+      return { ...prev, [storeId]: next };
+    });
   };
+
+  const selectedStoreIds = Object.keys(storeAccess).map(Number);
 
   const handleSave = async () => {
     // Toggled off with an existing active grant - this is a revoke, which
@@ -99,7 +130,13 @@ const ExternalDashboardAccessModal = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             edaIsAllStores: isAllStores,
-            storeIds: isAllStores ? [] : selectedStoreIds,
+            storeAccess: isAllStores
+              ? []
+              : selectedStoreIds.map((storeId) => ({
+                  storeId,
+                  edasSalesEnabled: storeAccess[storeId].sales,
+                  edasInstallmentEnabled: storeAccess[storeId].installment,
+                })),
           }),
         },
       );
@@ -187,8 +224,8 @@ const ExternalDashboardAccessModal = ({
             External Dashboard Access
           </p>
           <p className="text-xs text-gray-500">
-            Lets {userName} view sales data in the external avdc-track
-            dashboard.
+            Lets {userName} view sales and installment data in the external
+            avdc-track dashboard.
           </p>
         </div>
         <Toggle sizes="sm" initial={enabled} onToggle={setEnabled} />
@@ -235,21 +272,52 @@ const ExternalDashboardAccessModal = ({
           </div>
 
           {!isAllStores && (
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
-              {stores.map((store) => (
-                <label
-                  key={store.storeId}
-                  className="flex cursor-pointer items-center gap-2 rounded-md border border-gray-200 px-2 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
-                >
-                  <input
-                    type="checkbox"
-                    className="h-3.5 w-3.5 rounded border-gray-300"
-                    checked={selectedStoreIds.includes(store.storeId)}
-                    onChange={() => toggleStore(store.storeId)}
-                  />
-                  {store.storeName}
-                </label>
-              ))}
+            <div className="flex flex-col gap-1.5">
+              {stores.map((store) => {
+                const scope = storeAccess[store.storeId] ?? {
+                  sales: false,
+                  installment: false,
+                };
+
+                return (
+                  <div
+                    key={store.storeId}
+                    className="flex items-center justify-between gap-3 rounded-md border border-gray-200 px-2.5 py-1.5"
+                  >
+                    <span className="truncate text-xs text-gray-700">
+                      {store.storeName}
+                    </span>
+
+                    <div className="flex shrink-0 items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                        <input
+                          type="checkbox"
+                          className="h-3.5 w-3.5 rounded border-gray-300"
+                          checked={scope.sales}
+                          onChange={() =>
+                            toggleStoreAccess(store.storeId, "sales")
+                          }
+                        />
+                        Sales
+                      </label>
+
+                      {store.storeInstallmentEnabled && (
+                        <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-gray-600">
+                          <input
+                            type="checkbox"
+                            className="h-3.5 w-3.5 rounded border-gray-300"
+                            checked={scope.installment}
+                            onChange={() =>
+                              toggleStoreAccess(store.storeId, "installment")
+                            }
+                          />
+                          Installment
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

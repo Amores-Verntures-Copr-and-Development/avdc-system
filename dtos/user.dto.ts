@@ -33,10 +33,12 @@ export type DisplayUserDto = Pick<
   | "userRole"
   | "userAddedBy"
   | "userCreatedAt"
+  | "companyId"
 > &
   Pick<EmployeeInterface, "empId" | "empPosition" | "storeId"> & {
-    addedBy: String;
+    addedBy: string;
     fullName: string;
+    companyName?: string | null;
     storeEmployees?: { storeId: number; storeName: string }[] | null;
   };
 

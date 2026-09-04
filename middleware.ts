@@ -79,6 +79,7 @@ export function middleware(request: NextRequest) {
       "/api/external-dashboard/auth",
       "/api/external-dashboard/session",
       "/api/external-dashboard/sales",
+      "/api/external-dashboard/installments",
       "/api/auth/customers/login",
       "/api/products/st-martins-cafe",
       "/api/nextcloud-image",

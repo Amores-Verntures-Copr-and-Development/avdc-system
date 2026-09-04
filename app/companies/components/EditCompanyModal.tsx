@@ -1,6 +1,7 @@
 import Button from "@/components/shared/Button";
 import DropdownSelect from "@/components/shared/DropdownSelect";
 import Input from "@/components/shared/Input";
+import Toggle from "@/components/shared/Toggle";
 import { Companies } from "@/types/company";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
@@ -33,6 +34,7 @@ const EditCompanyModal = ({ data, mutate, onCancel }: EditCompanyModalProps) => 
           companyPhone: form.companyPhone,
           companyStatus: form.companyStatus,
           companyMaxStores: Number(form.companyMaxStores),
+          companyInstallmentEnabled: !!form.companyInstallmentEnabled,
         }),
       });
       const resData = await res.json();
@@ -96,6 +98,14 @@ const EditCompanyModal = ({ data, mutate, onCancel }: EditCompanyModalProps) => 
             setForm({ ...form, companyMaxStores: Number(e.target.value) })
           }
           name={"companyMaxStores"}
+        />
+        <Toggle
+          label="Installment Feature"
+          sizes="sm"
+          initial={!!form.companyInstallmentEnabled}
+          onToggle={(enabled) =>
+            setForm({ ...form, companyInstallmentEnabled: enabled })
+          }
         />
       </div>
       <div className="flex justify-end gap-2">

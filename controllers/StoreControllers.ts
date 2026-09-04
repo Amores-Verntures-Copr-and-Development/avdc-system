@@ -3,7 +3,11 @@ import {
   CreateStoreEmployeeDto,
   UpdateStoreFeaturesDto,
 } from "@/dtos/store.dto";
-import { selectStores, updateStoreFeatures } from "../models/storeModels";
+import {
+  selectStoreCompanyId,
+  selectStores,
+  updateStoreFeatures,
+} from "../models/storeModels";
 import { AuthUser } from "@/lib/auth/getCurrentUser";
 import {
   findStoreByEmpFields,
@@ -52,9 +56,25 @@ export const updateStoreFeaturesController = async ({
     if (
       data.storeKioskEnabled !== undefined ||
       data.storeOrderEnabled !== undefined ||
-      data.storeSalesApprovalEnabled !== undefined
+      data.storeSalesApprovalEnabled !== undefined ||
+      data.storeInstallmentEnabled !== undefined
     ) {
       assertIsAdminOrOwner(actingUser, "update store features");
+    }
+
+    // A store may only turn Installment on if its own company has been
+    // granted that entitlement - checked server-side so the toggle can't be
+    // flipped by posting directly to this endpoint even if the UI hides it.
+    if (data.storeInstallmentEnabled) {
+      const companyId = await selectStoreCompanyId(storeId);
+      const [company] = companyId
+        ? await selectCompanies({ keyFields: { companyId } })
+        : [];
+      if (!company?.companyInstallmentEnabled) {
+        throw new Error(
+          "Installment is not enabled for your company. Ask your Super Admin to enable it first.",
+        );
+      }
     }
 
     await updateStoreFeatures({ storeId, ...data });
@@ -79,7 +99,18 @@ export const createStore = async (
   try {
     assertIsAdminOrOwner(actingUser, "create a store");
 
-    const companyId = await selectUserCompanyId({ userId: actingUser.userId });
+    // A superadmin isn't tied to one company, so they must say which company
+    // the new store belongs to (from the filtered company on the Stores
+    // page); everyone else can only ever create a store in their own
+    // company, regardless of what the request body says.
+    const companyId =
+      actingUser.userRole === "superadmin"
+        ? data.companyId
+        : await selectUserCompanyId({ userId: actingUser.userId });
+
+    if (actingUser.userRole === "superadmin" && !companyId) {
+      throw new Error("Select a company before adding a store.");
+    }
 
     if (companyId) {
       const [company] = await selectCompanies({ keyFields: { companyId } });

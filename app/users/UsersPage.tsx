@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@/components/shared/Button";
+import DropdownSelect from "@/components/shared/DropdownSelect";
 import Modal from "@/components/shared/Modal";
 import PageHeader from "@/components/shared/PageHeader";
 import PageLayout from "@/components/shared/PageLayout";
@@ -22,6 +23,13 @@ import ExternalDashboardAccessModal from "./components/ExternalDashboardAccessMo
 import ResetPasswordModal from "./components/ResetPasswordModal";
 import { ApiResponse } from "@/types/api";
 import { StoreInterface } from "@/types/stores";
+import { Companies } from "@/types/company";
+
+const companyColumn = {
+  name: "Company",
+  key: "companyName",
+  selector: (row: DisplayUserDto) => row.companyName || "-",
+};
 
 const userColumn = [
   { name: "ID", key: "userId" },
@@ -50,6 +58,7 @@ const UserPage = () => {
     useState<DisplayUserDto | null>(null);
   const [resetPasswordUser, setResetPasswordUser] =
     useState<DisplayUserDto | null>(null);
+  const [companyFilter, setCompanyFilter] = useState("");
   const { user } = useSession();
 
   // Gates both External Dashboard Access management and password resets -
@@ -60,11 +69,33 @@ const UserPage = () => {
     user?.userRole === "owner" ||
     user?.empPosition === "admin";
 
+  // Every other role is already pinned to their own company server-side
+  // (see getUsers in UserControllers.ts) - a company filter only means
+  // anything for a superadmin, who otherwise sees every company at once.
+  const isSuperAdmin = user?.userRole === "superadmin";
+
+  const { data: companiesResponse } = useSWR<ApiResponse<Companies[]>>(
+    isSuperAdmin ? "/api/companies" : null,
+    fetcher,
+  );
+  const companies = companiesResponse?.data ?? [];
+
+  const columns = useMemo(
+    () => (isSuperAdmin ? [...userColumn, companyColumn] : userColumn),
+    [isSuperAdmin],
+  );
+
+  const usersUrl = useMemo(() => {
+    if (!isSuperAdmin || !companyFilter) return "/api/users/";
+
+    return `/api/users/?companyId=${companyFilter}`;
+  }, [isSuperAdmin, companyFilter]);
+
   const {
     data: response = { data: [] },
     isLoading,
     mutate,
-  } = useSWR<{ data: DisplayUserDto[] }>("/api/users/", fetcher);
+  } = useSWR<{ data: DisplayUserDto[] }>(usersUrl, fetcher);
 
   const { data: storesResponse } = useSWR<ApiResponse<StoreInterface[]>>(
     isAdminOrOwner ? "/api/stores" : null,
@@ -74,7 +105,11 @@ const UserPage = () => {
     () =>
       (storesResponse?.data ?? [])
         .filter((s): s is StoreInterface & { storeId: number } => !!s.storeId)
-        .map((s) => ({ storeId: s.storeId, storeName: s.storeName })),
+        .map((s) => ({
+          storeId: s.storeId,
+          storeName: s.storeName,
+          storeInstallmentEnabled: !!s.storeInstallmentEnabled,
+        })),
     [storesResponse],
   );
   const handleAddUser = async (data: CreateUserDto) => {
@@ -116,7 +151,25 @@ const UserPage = () => {
           loading={isLoading}
           showActions
           renderTopActions={
-            <div>
+            <div className="flex items-center gap-2">
+              {isSuperAdmin && (
+                <div className="w-40">
+                  <DropdownSelect
+                    name="companyId"
+                    value={companyFilter}
+                    onChange={(e) => setCompanyFilter(e.target.value)}
+                    options={[
+                      { value: "", label: "All Companies" },
+                      ...companies.map((c) => ({
+                        value: String(c.companyId),
+                        label: c.companyName,
+                      })),
+                    ]}
+                    sizes="sm"
+                  />
+                </div>
+              )}
+
               <Button
                 icon={Plus}
                 label="Add User"
@@ -130,7 +183,7 @@ const UserPage = () => {
           }
           searchUrl="/users"
           maxHeight="h-full"
-          columns={userColumn}
+          columns={columns}
           data={response.data}
           totalCount={10}
           showPagination

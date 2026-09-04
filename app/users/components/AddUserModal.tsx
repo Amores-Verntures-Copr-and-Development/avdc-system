@@ -26,7 +26,7 @@ import {
   Store,
   User as UserIcon,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 
@@ -171,6 +171,23 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   const isEmployee = addUserFormData.userRole === "employee";
   const isOwner = addUserFormData.userRole === "owner";
   const isSkippingEmployeeStep = !isEmployee;
+  const isSuperAdmin = user?.userRole === "superadmin";
+
+  // A superadmin isn't tied to one company, so they must pick which company
+  // the new Owner belongs to. Everyone else already belongs to exactly one
+  // company - the backend forces companyId to actingUser.companyId for them
+  // regardless of what's submitted, so auto-connecting it here (instead of
+  // showing an editable dropdown of every company in the system) keeps the
+  // form honest about what will actually happen.
+  useEffect(() => {
+    if (isOwner && !isSuperAdmin && user?.companyId) {
+      setAddUserFormData((prev) =>
+        prev.companyId === user.companyId
+          ? prev
+          : { ...prev, companyId: user.companyId },
+      );
+    }
+  }, [isOwner, isSuperAdmin, user?.companyId]);
 
   // Only an existing Super Admin can create another one - hide the option
   // entirely for everyone else rather than letting them pick it and get
@@ -190,10 +207,12 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
   const { data: companiesResponse = { data: [] } } = useSWR<{
     data: Companies[];
-  }>(isOwner ? "/api/companies" : null, fetcher);
-  const selectedCompanyName = companiesResponse.data.find(
-    (c) => c.companyId === addUserFormData.companyId,
-  )?.companyName;
+  }>(isOwner && isSuperAdmin ? "/api/companies" : null, fetcher);
+  const selectedCompanyName = isSuperAdmin
+    ? companiesResponse.data.find(
+        (c) => c.companyId === addUserFormData.companyId,
+      )?.companyName
+    : user?.companyName;
 
   // Step 1: User Information
   const renderUserInfoStep = () => (
@@ -273,20 +292,31 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             options={visibleRoleOptions}
             required
           />
-          {isOwner && (
-            <DropDownSelectCompany
-              name="companyId"
-              sizes="xs"
-              label="Company"
-              value={
-                addUserFormData.companyId != null
-                  ? String(addUserFormData.companyId)
-                  : ""
-              }
-              onChange={handleCompanyChange}
-              required
-            />
-          )}
+          {isOwner &&
+            (isSuperAdmin ? (
+              <DropDownSelectCompany
+                name="companyId"
+                sizes="xs"
+                label="Company"
+                value={
+                  addUserFormData.companyId != null
+                    ? String(addUserFormData.companyId)
+                    : ""
+                }
+                onChange={handleCompanyChange}
+                required
+              />
+            ) : (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-500">
+                  Company
+                </span>
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">
+                  <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                  {user?.companyName ?? "Your company"}
+                </div>
+              </div>
+            ))}
         </div>
       </div>
     </div>

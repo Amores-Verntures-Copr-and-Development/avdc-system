@@ -18,5 +18,6 @@ export type UpdateStoreFeaturesDto = Partial<
     | "storeOrderEnabled"
     | "storeKioskBannerImage"
     | "storeSalesApprovalEnabled"
+    | "storeInstallmentEnabled"
   >
 >;

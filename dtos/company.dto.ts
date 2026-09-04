@@ -1,7 +1,16 @@
 import { Companies } from "@/types/company";
 
 export type CreateCompanyDto = Pick<Companies, "companyName" | "companyCreatedBy"> &
-  Partial<Pick<Companies, "companyEmail" | "companyPhone" | "companyStatus">>;
+  Partial<
+    Pick<
+      Companies,
+      | "companyEmail"
+      | "companyPhone"
+      | "companyStatus"
+      | "companyMaxStores"
+      | "companyInstallmentEnabled"
+    >
+  >;
 
 export type UpdateCompanyDto = Pick<Companies, "companyId"> &
   Partial<
@@ -12,6 +21,7 @@ export type UpdateCompanyDto = Pick<Companies, "companyId"> &
       | "companyPhone"
       | "companyStatus"
       | "companyMaxStores"
+      | "companyInstallmentEnabled"
     >
   >;
 

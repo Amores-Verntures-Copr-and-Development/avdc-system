@@ -59,17 +59,21 @@ export const grantOrUpdateAccess = async (
     assertCanManageExternalDashboardAccess(actingUser);
     await assertTargetUserInSameCompany(actingUser, data.userId);
 
-    // A grant also hands out access to a specific storeIds list - never
-    // trust that those belong to the granting user's own company either.
+    // A grant also hands out access to a specific store list - never trust
+    // that those belong to the granting user's own company either.
     if (actingUser.userRole !== "superadmin" && actingUser.companyId) {
-      if (!data.edaIsAllStores && data.storeIds && data.storeIds.length > 0) {
+      if (
+        !data.edaIsAllStores &&
+        data.storeAccess &&
+        data.storeAccess.length > 0
+      ) {
         const companyStoreIds = await selectStoreIdsByCompanyId(
           actingUser.companyId,
         );
-        const foreignStoreId = data.storeIds.find(
-          (storeId) => !companyStoreIds.includes(storeId),
+        const foreignStore = data.storeAccess.find(
+          (s) => !companyStoreIds.includes(s.storeId),
         );
-        if (foreignStoreId !== undefined) {
+        if (foreignStore !== undefined) {
           throw new Error(
             "You can only grant access to stores in your own company",
           );

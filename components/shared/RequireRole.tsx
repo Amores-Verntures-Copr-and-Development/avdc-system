@@ -72,6 +72,9 @@ const RequireRole = ({ children }: RequireRoleProps) => {
   const featureFlags: Record<string, boolean> = {
     kiosk: user?.storeId ? !!currentStore?.storeKioskEnabled : true,
     order: user?.storeId ? !!currentStore?.storeOrderEnabled : true,
+    installment: user?.storeId
+      ? !!currentStore?.storeInstallmentEnabled
+      : true,
   };
 
   const featureMatch = matchedSection?.requiresFeature

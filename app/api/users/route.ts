@@ -48,7 +48,9 @@ export async function GET(request: NextRequest) {
     const actingUser = getCurrentUser(request);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";
-    const res = await getUsers({ search, actingUser });
+    const companyIdParam = searchParams.get("companyId");
+    const companyId = companyIdParam ? Number(companyIdParam) : undefined;
+    const res = await getUsers({ search, companyId, actingUser });
 
     if (!res.success) {
       throw new Error("Failed to insert user");

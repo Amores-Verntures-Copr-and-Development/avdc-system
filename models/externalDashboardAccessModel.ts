@@ -17,7 +17,19 @@ const SELECT_EDA_SQL = `
         WHERE edas.edaId = eda.edaId
       ),
       JSON_ARRAY()
-    ) AS storeIds
+    ) AS storeIds,
+    COALESCE(
+      (
+        SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'storeId', edas.storeId,
+          'edasSalesEnabled', edas.edasSalesEnabled,
+          'edasInstallmentEnabled', edas.edasInstallmentEnabled
+        ))
+        FROM ExternalDashboardAccessStore edas
+        WHERE edas.edaId = eda.edaId
+      ),
+      JSON_ARRAY()
+    ) AS storeAccess
   FROM ExternalDashboardAccess eda
   LEFT JOIN Users u ON u.userId = eda.edaCreatedBy
 `;
@@ -56,22 +68,31 @@ export const insertExternalDashboardAccess = async ({
 export const insertExternalDashboardAccessStores = async ({
   connection,
   edaId,
-  storeIds,
+  storeAccess,
 }: {
   connection?: PoolConnection;
   edaId: number;
-  storeIds: number[];
+  storeAccess: {
+    storeId: number;
+    edasSalesEnabled: boolean;
+    edasInstallmentEnabled: boolean;
+  }[];
 }) => {
-  if (storeIds.length === 0) return;
+  if (storeAccess.length === 0) return;
 
   const pool = connection ? connection : await getDBConnection();
 
   const sql = `
-    INSERT INTO ExternalDashboardAccessStore (edaId, storeId)
-    VALUES ${storeIds.map(() => "(?, ?)").join(", ")}
+    INSERT INTO ExternalDashboardAccessStore (edaId, storeId, edasSalesEnabled, edasInstallmentEnabled)
+    VALUES ${storeAccess.map(() => "(?, ?, ?, ?)").join(", ")}
   `;
 
-  const values = storeIds.flatMap((storeId) => [edaId, storeId]);
+  const values = storeAccess.flatMap((s) => [
+    edaId,
+    s.storeId,
+    s.edasSalesEnabled ? 1 : 0,
+    s.edasInstallmentEnabled ? 1 : 0,
+  ]);
 
   await pool.execute<ResultSetHeader>(sql, values);
 };

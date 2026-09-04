@@ -24,6 +24,7 @@ import {
   Settings,
   Receipt,
   LineChart,
+  Banknote,
 } from "lucide-react";
 
 export interface SideMenuSection {
@@ -32,10 +33,11 @@ export interface SideMenuSection {
   icon: LucideIcon;
   roles?: (string | undefined)[];
   alsoShowIf?: "hasStockRoom" | "hasStore";
-  // Per-store feature toggle (Stores.storeKioskEnabled/storeOrderEnabled) -
-  // only enforced for users scoped to a single store (employees); Owner/
-  // Admin/Super Admin aren't tied to one store so this is skipped for them.
-  requiresFeature?: "kiosk" | "order";
+  // Per-store feature toggle (Stores.storeKioskEnabled/storeOrderEnabled/
+  // storeInstallmentEnabled) - only enforced for users scoped to a single
+  // store (employees); Owner/Admin/Super Admin aren't tied to one store so
+  // this is skipped for them.
+  requiresFeature?: "kiosk" | "order" | "installment";
   // Shows a small count badge next to the label (e.g. pending orders).
   badgeKey?: "pendingOrders";
 }
@@ -79,6 +81,20 @@ export const sideMenu: SideMenuGroup[] = [
         icon: Tablet,
         roles: ["supervisor", "staff"],
         requiresFeature: "kiosk",
+      },
+      {
+        name: "Installments",
+        href: "/installments",
+        icon: Banknote,
+        roles: [
+          "superadmin",
+          "admin",
+          "supervisor",
+          "accounting",
+          "staff",
+          "owner",
+        ],
+        requiresFeature: "installment",
       },
     ],
   },

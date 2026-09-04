@@ -11,4 +11,7 @@ export interface Companies {
   companyDeletedAt: string | null;
   companyCreatedBy: number;
   companyMaxStores: number;
+  // Platform-level entitlement - a store can only turn on its own
+  // storeInstallmentEnabled toggle when this is true.
+  companyInstallmentEnabled: boolean;
 }

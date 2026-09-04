@@ -18,6 +18,8 @@ export async function resolveExternalDashboardScope(userId: number) {
       access: null,
       storeIds: [] as number[],
       isPermittedStore: () => false,
+      isSalesPermitted: () => false,
+      isInstallmentPermitted: () => false,
     };
   }
 
@@ -30,9 +32,30 @@ export async function resolveExternalDashboardScope(userId: number) {
     ? companyStoreIds
     : access.storeIds.filter((id) => companyStoreIds.includes(id));
 
+  const isPermittedStore = (storeId: number) => storeIds.includes(storeId);
+
+  // "All Stores" grants full access to every data type on every company
+  // store - the per-store sales/installment split only applies to an
+  // explicit storeIds grant, where each row carries its own two flags.
+  const isSalesPermitted = (storeId: number) => {
+    if (!isPermittedStore(storeId)) return false;
+    if (access.edaIsAllStores) return true;
+    const scope = access.storeAccess.find((s) => s.storeId === storeId);
+    return scope ? Boolean(scope.edasSalesEnabled) : true;
+  };
+
+  const isInstallmentPermitted = (storeId: number) => {
+    if (!isPermittedStore(storeId)) return false;
+    if (access.edaIsAllStores) return true;
+    const scope = access.storeAccess.find((s) => s.storeId === storeId);
+    return scope ? Boolean(scope.edasInstallmentEnabled) : true;
+  };
+
   return {
     access,
     storeIds,
-    isPermittedStore: (storeId: number) => storeIds.includes(storeId),
+    isPermittedStore,
+    isSalesPermitted,
+    isInstallmentPermitted,
   };
 }
